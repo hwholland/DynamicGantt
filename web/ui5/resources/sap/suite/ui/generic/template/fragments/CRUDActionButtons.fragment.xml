@@ -1,0 +1,38 @@
+<core:FragmentDefinition
+    xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
+    xmlns="sap.m" xmlns:build="sap.build" xmlns:core="sap.ui.core">
+
+    <template:if test="{= !(${listEntitySet>Org.OData.Capabilities.V1.DeleteRestrictions/Deletable/Bool} === 'false') }">
+        <template:if test="{= ${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isListReportTemplate'}
+        					&amp;&amp; !${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isComplexTable'}
+        					}">
+	        <Button id="deleteEntry"
+	                text="{i18n>DELETE}"
+	                press="._templateEventHandlers.deleteEntries" type="Transparent"/>
+        </template:if>
+    </template:if>
+    <template:if test="{= !(${listEntitySet>Org.OData.Capabilities.V1.InsertRestrictions/Insertable/Bool} === 'false') }">
+        <template:if test="{= ${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isListReportTemplate'}}">
+        <template:then>
+	        <OverflowToolbarButton 
+                id="addEntry"
+                icon="sap-icon://add"
+                tooltip="{path:'i18n>CREATE_NEW_OBJECT_DYN', formatter: '._templateFormatters.formatNewObjectTooltip'}"
+                text="{path:'i18n>CREATE_NEW_OBJECT_DYN', formatter: '._templateFormatters.formatNewObjectTooltip'}"
+                press="._templateEventHandlers.addEntry"
+                type="Transparent"
+                visible="{= ${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isComplexTable'} ? '{ui>/editable}' : 'true'}" />
+        </template:then>
+        <template:else>
+            <OverflowToolbarButton
+                id="{path: 'facet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::addEntry"
+                icon="sap-icon://add" 
+                press="._templateEventHandlers.addEntry"
+                tooltip="{i18n>ADD}"  
+                text="{i18n>ADD}"
+                visible="{= ${parts: [{path: 'listEntitySet>'}, {path: 'parameter>/settings/subPages/'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.hasSubObjectPage'} ? '{= ${ui>/editable}}' : 'false'}" />
+        </template:else>
+	    </template:if>
+    </template:if>
+
+</core:FragmentDefinition>

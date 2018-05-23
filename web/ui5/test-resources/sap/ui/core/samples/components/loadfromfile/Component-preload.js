@@ -1,0 +1,3 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/ui/core/samples/components/loadfromfile/Component.js": "/*!\n * UI development toolkit for HTML5 (OpenUI5)\n * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.\n * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.\n */\nsap.ui.define([\"jquery.sap.global\",\"sap/ui/core/Component\",\"sap/ui/core/UIComponent\"],function(e,o,n){\"use strict\";return n.extend(\"samples.components.loadfromfile.Component\",{metadata:\"json\"})});"
+}, "web/ui5/test-resources/sap/ui/core/samples/components/loadfromfile/Component-preload");

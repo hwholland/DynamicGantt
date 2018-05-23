@@ -1,0 +1,4 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/m/demokit/sample/ActionListItem/Component.js": "sap.ui.define([\"sap/ui/core/UIComponent\"],function(e){\"use strict\";return e.extend(\"sap.m.sample.ActionListItem.Component\",{metadata:{rootView:\"sap.m.sample.ActionListItem.List\",dependencies:{libs:[\"sap.m\",\"sap.ui.layout\"]},config:{sample:{files:[\"List.view.xml\"]}}}})});",
+	"web/ui5/test-resources/sap/m/demokit/sample/ActionListItem/List.view.xml": "<mvc:View\n\txmlns:l=\"sap.ui.layout\"\n\txmlns:mvc=\"sap.ui.core.mvc\"\n\txmlns=\"sap.m\"><List\n\t\theaderText=\"Actions\" ><ActionListItem text=\"Reject\" /><ActionListItem text=\"Accept\" /><ActionListItem text=\"Email\" /><ActionListItem text=\"Forward\" /><ActionListItem text=\"Delete\" /></List></mvc:View>"
+}, "web/ui5/test-resources/sap/m/demokit/sample/ActionListItem/Component-preload");

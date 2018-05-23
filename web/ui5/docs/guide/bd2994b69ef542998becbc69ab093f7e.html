@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="The API consists of several elements that are described in the sections that follow."/>
+<meta name="description" content="The API consists of several elements that are described in the sections that follow."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=40732629044712054"/>
+<title>API for Developers of Smart Template Extensions</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loiobd2994b69ef542998becbc69ab093f7e">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">API for Developers of Smart Template Extensions</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">The API consists of several elements that are described in the sections that follow.
+	</p>
+
+		<div class="section"><div class="section_title">Standard SAPUI5 API</div><div type="Standard SAPUI5 API">
+			
+			<p class="p">In extension coding, you can use the standard <span class="ph pname">SAPUI5</span> programming API. However, this should be handled with care.</p>
+
+			<p class="p">After you have defined a view extension, you can access and modify the properties of all UI elements defined within these extensions (for example, change the visibility programmatically). However, you cannot access any UI elements that are not defined within your view extensions.</p>
+
+			<div class="p">In addition, do not use the following: <ul class="ul">
+					<li class="li">Services provided by the namespace <samp class="ph codeph">sap.ui.generic.app</samp>,
+						since these services are only intended to be used by freestyle-apps or are
+						used within the generic smart template implementation. </li>
+
+					<li class="li">Services provided by the namespace <samp class="ph codeph">sap.ui.generic.template</samp>
+						directly: Unwanted side effects may occur if two layers (smart template
+						coding and extension coding) access these services at the same time. </li>
+
+				</ul>
+</div>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Models</div><div type="Models">
+			
+			<p class="p">Several models (instances of <samp class="ph codeph">sap.ui.model.Model</samp>) are attached to the smart template artifacts.</p>
+
+			<ul class="ul">
+			<li class="li">
+					<span class="ph emphasis emphasis">OData Model</span>
+					<p class="p">The most prominent is the default model, which is in fact the OData model
+						specified in the <samp class="ph codeph">manifest.json</samp> file. You can use this model
+						for data-binding in your own view extensions.</p>
+<p class="p">Accessing the model
+						programmatically (through the standard <span class="ph pname">SAPUI5</span> API methods)
+						should be done with care, since side effects may interfere with the smart
+						template coding that also uses this model.</p>
+<p class="p">This applies in particular
+						to function imports. Therefore, use method <samp class="ph codeph">invokeActions</samp> of
+						the extension API (see below) to call function imports. </p>
+
+				</li>
+
+			<li class="li">
+					<span class="ph emphasis emphasis">UI Model</span>
+					<p class="p">Each view has its own model attached that has the name <samp class="ph codeph">ui</samp>.
+						This model can be used in view and controller extensions for read
+						purposes.</p>
+<div class="p">This model contains the following properties, all of which
+						have Boolean values: <ul class="ul">
+							<li class="li"><samp class="ph codeph">enabled</samp>: Indicates whether active UI elements (such
+								as buttons) should be enabled.</li>
+
+							<li class="li"><samp class="ph codeph">editable</samp>: Indicates whether input fields or similar
+								UI elements should be in an editable state.</li>
+
+							<li class="li"><samp class="ph codeph">createMode</samp>: Indicates whether the UI displays an
+								entity that is about to be created (no active version exists
+								yet).</li>
+
+						</ul>
+</div>
+<p class="p">Note that it is also possible to register changes to these
+						properties. However, the logic at which point in time these properties are
+						set and reset can still be changed.</p>
+
+					<div class="note caution"><span class="cautiontitle">Caution</span>  It is strictly forbidden to perform any change operations
+						on the properties of the UI model. </div>
+
+				</li>
+
+			<li class="li">
+			<span class="ph emphasis emphasis">Smart Template Private Model</span>
+			<p class="p">There is an additional model that is attached to each view which contains properties used for internal purposes within the smart template.
+			</p>
+
+			<div class="note caution"><span class="cautiontitle">Caution</span> 
+				It is strictly forbidden to access this model in any way. Do not access any model other than the default model and the model with name <samp class="ph codeph">ui</samp> unless you have attached it to the <samp class="ph codeph">ManagedObject</samp> yourself.
+			</div>
+
+			</li>
+
+			<li class="li">
+					<span class="ph emphasis emphasis">Application-Specific Models</span>
+					<p class="p">You may want to define your own JSON model and attach it to UI elements. You
+						can do this easily if the model is attached to a UI element that only exists
+						within the scope of an extension. However, models that are attached to a
+						higher level (for example, to the whole view) should only be used if
+						absolutely necessary. </p>
+
+					<p class="p">In this case, you should use a name containing
+						your own namespace to clearly separate this model from models defined by
+						other parts of the framework. </p>
+
+			</li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">API Methods</div><div type="API Methods">
+			
+			<p class="p">When coding the implementation of an extension hook or an event handler used in a view
+				extension, you can use the public methods of
+					<samp class="ph codeph">sap.ui.core.mvc.Controller</samp>. For important information about
+				using standard <span class="ph pname">SAPUI5</span> programming APIs, see the relevant section above.</p>
+
+			<p class="p">In addition, you may want to access a service provided by the smart template framework. From
+				the controller, you can access these services through
+					<samp class="ph codeph">&lt;YourController&gt;.extensionAPI</samp>.</p>
+
+			<div class="p">By doing so, you obtain an object that is specific to the template you are currently
+				enhancing, as shown in the examples below:
+<div class="table-wrapper tablenoborder"><table summary="" id="loiobd2994b69ef542998becbc69ab093f7e__table_w5j_vkl_4v" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="50%"/><col width="50%"/></colgroup>
+
+						
+						
+						<thead class="thead" align="left">
+							<tr class="row">
+								<th class="entry" valign="top" width="NaN%" id="d10613003e188">
+									<p class="p">Template</p>
+
+								</th>
+
+								<th class="entry" valign="top" width="NaN%" id="d10613003e194">
+									<p class="p">Instance</p>
+
+								</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry" valign="top" width="NaN%" headers="d10613003e188 ">
+									<p class="p">List Report</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="NaN%" headers="d10613003e194 ">
+									<p class="p"><samp class="ph codeph">sap.suite.ui.generic.template.ListReport.extensionAPI.ExtensionAPI</samp></p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="NaN%" headers="d10613003e188 ">
+									<p class="p">Object Page</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="NaN%" headers="d10613003e194 ">
+									<p class="p"><samp class="ph codeph">sap.suite.ui.generic.template.ObjectPage.extensionAPI.ExtensionAPI</samp></p>
+
+								</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+</div>
+
+			<div class="note note"><span class="notetitle">Note</span> Do not rely on the names of these classes in your coding, as they can still be
+				changed. However, the set of methods provided by these objects will only be extended
+				in a compatible way. </div>
+
+			
+			<p class="p">
+				<span class="ph">
+					For more information, see
+					<a class="xref" href="../../docs/api/symbols/sap.suite.ui.generic.template.ListReport.extensionAPI.ExtensionAPI.html" alt="../../docs/api/symbols/sap.suite.ui.generic.template.ListReport.extensionAPI.ExtensionAPI.html" title="../../docs/api/symbols/sap.suite.ui.generic.template.ListReport.extensionAPI.ExtensionAPI.html">API Reference: sap.suite.ui.generic.template.ListReport.extensionAPI.ExtensionAPI</a>
+						and <a class="xref" href="../../docs/api/symbols/sap.suite.ui.generic.template.ObjectPage.extensionAPI.ExtensionAPI.html" alt="../../docs/api/symbols/sap.suite.ui.generic.template.ObjectPage.extensionAPI.ExtensionAPI.html" title="../../docs/api/symbols/sap.suite.ui.generic.template.ObjectPage.extensionAPI.ExtensionAPI.html">API Reference: sap.suite.ui.generic.template.ObjectPage.extensionAPI.ExtensionAPI</a>
+					
+				</span>
+				
+			</p>
+
+			<p class="p">
+				
+			</p>
+
+			<p class="p">Any other methods or properties of the controller (in particular any components with a name starting with <samp class="ph codeph">‘_’</samp>) should be considered private and therefore not be used.				
+			</p>
+
+			<div class="note caution"><span class="cautiontitle">Caution</span> 
+			Do not create any instances of classes in the namespace <samp class="ph codeph">sap.suite.ui.generic.template</samp> on your own, as it is not intended for public use.
+			</div>
+
+			<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">/*
+ * Assumed use case: When the price is changed to a critical value (more than 1000), an email should be generated and sent.
+ * This should not happen for changes to the draft but only after activation has been successfully processed in the
+ * back-end system.
+ */
+				
+ (function() {
+	"use strict";
+				
+	function onAfterActivate(oEvent) {
+		/*
+		* AfterActivate event is raised at the end of front-end processing for activation. The object handed into the
+		* handler contains a promise that is resolved after a successful response from the back-end system.
+		*/
+		oEvent.activationPromise.then(function(oResponse) {
+			if (oResponse.data.Price &gt; 1000) {
+			sap.m.URLHelper.triggerEmail(null, "critical price change", "changed price of " + oResponse.data.Product_Text
+			+ " to " + oResponse.data.Price + " " + oResponse.data.Currency);
+			}
+		});
+	}		</pre></div>
+
+			</div>
+
+			
+			
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="API for Developers of Smart Template Extensions";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

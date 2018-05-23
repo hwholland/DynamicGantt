@@ -1,0 +1,5 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/ui/comp/demokit/sample/smartlink/productPage/Component.js": "jQuery.sap.declare(\"sap.ui.comp.sample.smartlink.productPage.Component\"),sap.ui.core.UIComponent.extend(\"sap.ui.comp.sample.smartlink.productPage.Component\",{metadata:{rootView:\"sap.ui.comp.sample.smartlink.productPage.Example\",dependencies:{libs:[\"sap.m\"]}}});",
+	"web/ui5/test-resources/sap/ui/comp/demokit/sample/smartlink/productPage/Example.controller.js": "sap.ui.controller(\"sap.ui.comp.sample.smartlink.productPage.Example\",{});",
+	"web/ui5/test-resources/sap/ui/comp/demokit/sample/smartlink/productPage/Example.view.xml": "<core:View xmlns:core=\"sap.ui.core\" xmlns:l=\"sap.ui.layout\"\r\n\txmlns=\"sap.m\" controllerName=\"sap.ui.comp.sample.smartlink.productPage.Example\"><l:VerticalLayout class=\"sapUiContentPadding\"><l:content><VBox><Text class=\"sapUiSmallMarginTop, sapUiLargeMarginBottom\" text=\"Product Page\" /></VBox></l:content></l:VerticalLayout></core:View>"
+}, "web/ui5/test-resources/sap/ui/comp/demokit/sample/smartlink/productPage/Component-preload");

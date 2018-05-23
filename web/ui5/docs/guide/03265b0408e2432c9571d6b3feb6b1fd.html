@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=12475298295100945"/>
+<title>Developing Apps with Smart Templates</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio03265b0408e2432c9571d6b3feb6b1fd">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Developing Apps with Smart Templates</h1>
+
+	<div class="body conbody">
+		<p class="p">You can use smart templates to create SAP Fiori applications based on OData services and
+			annotations requiring no JavaScript UI coding. An app based on smart templates uses
+			predefined template views and controllers that are provided centrally, so no
+			application-specific view instances are required. The <span class="ph pname">SAPUI5</span> runtime interprets
+			metadata and annotations of the underlying OData service and uses the corresponding
+			views for the SAP Fiori app at startup.</p>
+
+		<p class="p">The predefined view templates and controllers ensure UI design consistency across similar
+			apps. Also the metadata-driven development model significantly reduces the amount of
+			front-end code per app, so the developer can focus on the business logic. </p>
+
+		<p class="p">Smart templates offer the following features:</p>
+
+		<div class="p">
+			<ul class="ul" id="loio03265b0408e2432c9571d6b3feb6b1fd__ul_i5f_44d_jt">
+				<li class="li">
+					<p class="p">Reuse functionality that does not require specific programming</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">A common look and feel and UI behavior for all apps</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><span class="ph uicontrol">Edit</span> mode control, switching between display and edit, and submitting
+						changes</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Message handling</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">SAP Fiori launchpad integration</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Supports <a class="xref" href="a8e55aa2f8bc4127923b20685a6d1621.html" title="SAPUI5 flexibility services enable functions for different user groups to personalize SAP Fiori apps and adapt their user interface at runtime.">SAPUI5 Flexibility Services</a></p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">SAP Web IDE wizard for app creation</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Smart templates controls the UI using OData annotations, which semantically enrich the OData
+						metadata</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Multi-device support</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Status colors and icons to indicate criticality</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Header facets to define which information is displayed on the header</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Value help</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Handling of draft documents (draft saving is available)</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Extend the header area of the object page</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Supports multiple row selection in list report tables</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Supports smart link navigation for object pages in a smart table passing the
+						header parameter</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Drop-down menu to filter the editing status</p>
+
+				</li>
+
+			</ul>
+
+		</div>
+
+		<div class="p">
+			<div class="fig fignone"><div class="figcontainer">
+				
+				<img class="image" width="1400px" src="loio97df6d51e1f7412ebe70d54a7cdf294e_LowRes.png"/>
+			<div class="figcap">Example: List Report and Object Page for Manage Products App</div></div></div>
+
+		</div>
+
+		<div class="section"><div class="section_title">Overview Pages</div><div type="Overview Pages">
+			
+			<p class="p">An overview page is a data-driven SAP Fiori app based on <span class="ph pname">SAPUI5</span> and smart templates technology
+				for organizing large amounts of information. Information is visualized in a card
+				format, different cards for different types of content, in an attractive and
+				efficient way. The user-friendly experience makes viewing, filtering, and acting
+				upon data quick and simple. While simultaneously presenting the big picture at a
+				glance, business users can focus on the most important tasks enabling faster
+				decision making as well as immediate action.</p>
+
+			<p class="p">You can create overview pages and add cards to the page using the overview page wizard in SAP Web IDE.</p>
+
+			<p class="p">For more information, see <a class="xref" href="c64ef8c6c65d4effbfd512e9c9aa5044.html" title="Overview pages provide quick access to vital business information at a glance, in the form of visual, actionable cards. Business users can focus on the most important tasks, enabling faster decision making as well as immediate action. Based on SAPUI5 technology, OData services and annotations, overview pages are a type of smart template, built and enhanced by developers.">Overview Pages: Create Interactive Overviews of a Subject Area</a>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">System Requirements</div><div type="System Requirements">
+			
+			<ul class="ul" id="loio03265b0408e2432c9571d6b3feb6b1fd__ul_ezx_1vz_qt">
+				<li class="li">
+					<p class="p">SAP Web IDE 1.17 (or higher) including the annotation modeler plugin (for more information
+						see the <a class="xref" href="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html" alt="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html" title="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html">Annotation Modeler</a> in the documentation of SAP
+						Web IDE)</p>
+
+				</li>
+
+				<li class="li">
+					<div class="p"><span class="ph pname">SAP NetWeaver</span> 7.5 SP01 or higher.<div class="note note"><span class="notetitle">Note</span> 
+							<p class="p">We recommend that you download the most up-to-date version to ensure
+								that you have the latest features.</p>
+
+						</div>
+</div>
+
+				</li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Prerequisites</div><div type="Prerequisites">
+			
+			<p class="p">You have completed the following tutorials:</p>
+
+			<ul class="ul" id="loio03265b0408e2432c9571d6b3feb6b1fd__ul_dbm_nqd_jt">
+				<li class="li">
+					<p class="p"><a class="xref" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">SAPUI5: UI Development
+							Toolkit for HTML5 Walkthrough</a></p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><a class="xref" href="64bde9a8879d4f418e2849f7285dd757.html" title="In this tutorial you learn how to work with smart controls.">Smart Controls</a></p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><a class="extlink" href="http://help.sap.com/disclaimer?site=https://www.youtube.com/playlist?list=PLkzo92owKnVwnV5o1psI7XSA-AquO9_9g" alt="https://www.youtube.com/playlist?list=PLkzo92owKnVwnV5o1psI7XSA-AquO9_9g" title="https://www.youtube.com/playlist?list=PLkzo92owKnVwnV5o1psI7XSA-AquO9_9g">SAP HANA Academy tutorials<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><a class="xref" href="http://hcp.sap.com/developers/TutorialCatalog/wide100_01_getting_sap_web_ide.html" alt="http://hcp.sap.com/developers/TutorialCatalog/wide100_01_getting_sap_web_ide.html" title="http://hcp.sap.com/developers/TutorialCatalog/wide100_01_getting_sap_web_ide.html">SAP Web IDE</a></p>
+
+				</li>
+
+			</ul>
+
+		</div></div>
+
+	</div>
+
+<div class="related-links"> 
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Developing Apps with Smart Templates";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

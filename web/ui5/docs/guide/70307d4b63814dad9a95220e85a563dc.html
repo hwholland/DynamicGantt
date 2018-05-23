@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="The ProcessFlow control allows you to show flows of multiple object types, for example, documents or approvals."/>
+<meta name="description" content="The ProcessFlow control allows you to show flows of multiple object types, for example, documents or approvals."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=21789561596372775"/>
+<title>Process Flow</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio70307d4b63814dad9a95220e85a563dc">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Process Flow</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">The <samp class="ph codeph">ProcessFlow</samp> control allows you to show flows of multiple object
+		types, for example, documents or approvals. </p>
+
+		<div class="section"><div class="section_title">Overview</div><div type="Overview">
+			
+			<p class="p">Process Flow is a complex control that enables you to display documents or other
+				items in their flow.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Details</div><div type="Details">
+			
+			<ul class="ul" id="loio70307d4b63814dad9a95220e85a563dc__ul_dp2_3cn_qr">
+				<li class="li">
+					<p class="p"><span class="ph emphasis emphasis">Responsiveness</span></p>
+
+					<p class="p">The <samp class="ph codeph">ProcessFlow</samp> control can react to the size of the
+						container into which it is put. It provides four zoom levels that are used
+						depending on the container size at the time of the initial load. Afterwards,
+						the users can change the zoom levels according to their needs.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><span class="ph emphasis emphasis">Behavior and Interaction</span></p>
+
+					<ul class="ul" id="loio70307d4b63814dad9a95220e85a563dc__ul_tbk_5ns_qt">
+						<li class="li">
+							<p class="p"><samp class="ph codeph">ProcessFlow</samp> control offers different zooming and
+								moving behaviors:</p>
+
+							<ul class="ul" id="loio70307d4b63814dad9a95220e85a563dc__ul_tj2_ddn_qr">
+								<li class="li">
+									<p class="p">You can move the whole flow by holding down the left mouse
+										button like you would navigate a street map in a web
+										browser.</p>
+
+								</li>
+
+								<li class="li">
+									<p class="p">To zoom in or out, the user can either use the mouse wheel or
+										choose the respective buttons, if the
+											<samp class="ph codeph">ProcessFlow</samp> control is used in
+										combination with a corresponding toolbar. The zoom has
+										semantic effects: Detailed information is added or removed
+										depending on the zoom level.</p>
+
+								</li>
+
+							</ul>
+
+							<p class="p">Both behaviors can be switched off by setting the respective properties accordingly. For
+								more information, see the API Reference Documentation.</p>
+
+						</li>
+
+						<li class="li">
+							<div class="p">For a better user experience, clickable chevrons (arrows) are
+								included in the header. These can be used in case of an overflow,
+								for example, when the complete <samp class="ph codeph">ProcessFlow</samp> control
+								cannot be displayed because the visible area is limited. The
+								chevrons indicate that some horizontal content is not visible.<ul class="ul" id="loio70307d4b63814dad9a95220e85a563dc__ul_yx3_nvh_ys">
+									<li class="li">
+										<p class="p">For desktops, click these chevrons and move the complete
+											process flow by one lane.</p>
+
+									</li>
+
+									<li class="li">
+										<p class="p">For mobile devices, the chevrons are just indicators; you
+											scroll the <samp class="ph codeph">ProcessFlow</samp> control by
+											touch.</p>
+
+									</li>
+
+								</ul>
+Next to the chevrons, the number of lanes that are not visible
+								is displayed.</div>
+
+						</li>
+
+						<li class="li">
+							<p class="p">By using the aggregated node type in
+									<samp class="ph codeph">sap.suite.ui.commons.ProcessFlowNode</samp>, you can
+								group nodes that are semantically equal or have some properties in
+								common . Possible values of the <samp class="ph codeph">type</samp> property are
+									<samp class="ph codeph">single</samp> (default) or
+								<samp class="ph codeph">aggregated</samp>, which can be set by the
+								application.</p>
+
+						</li>
+
+						<li class="li">Connection labels between process flow nodes are available to provide
+							detailed information to a connection. If connections are not unique, you
+							can select a connection by clicking the label. You can hide or unhide
+							these labels. For more information, see the sample in the
+								<span class="ph uicontrol">Explored</span> app in the Demo Kit.</li>
+
+					</ul>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><span class="ph emphasis emphasis">Events</span></p>
+
+					<div class="p"> Each node provides a click event. You can use this event as follows: <ul class="ul" id="loio70307d4b63814dad9a95220e85a563dc__ul_mj5_xdn_qr">
+							<li class="li">
+								<p class="p">To display a popover containing further information to a certain
+									object type. From this quick overview, you can navigate to the
+									object type itself.</p>
+
+							</li>
+
+							<li class="li">
+								<p class="p">If no additional information needs to be displayed, an action
+									sheet can be triggered instead of the popover to allow the user
+									to perform an action on the item.</p>
+
+							</li>
+
+						</ul>
+If there is no further information and no actions, a node can also be
+						read-only.</div>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><span class="ph emphasis emphasis">Filter</span></p>
+
+					<p class="p">The <samp class="ph codeph">ProcessFlow</samp> control can be used in combination with a
+						filter bar. The filter bar allows you to filter for certain types or
+						attributes. Depending on the filter criteria, the application is able to
+						highlight a path of nodes, which is displayed in a highlighted manner. The
+						aggregation in the header nodes is also adapted automatically by the
+							<samp class="ph codeph">ProcessFlow</samp> control. <span class="ph">For more
+							information, choose the <span class="ph uicontrol">ToggleHightPath</span>
+							pushbutton in the <a class="xref" target="_blank" href="../../explored.html#/sample/sap.suite.ui.commons.sample.ProcessFlowMultipleRootNodes/preview" alt="../../explored.html#/sample/sap.suite.ui.commons.sample.ProcessFlowMultipleRootNodes/preview" title="../../explored.html#/sample/sap.suite.ui.commons.sample.ProcessFlowMultipleRootNodes/preview">sample</a> in the
+								<span class="ph uicontrol">Explored</span> app in the Demo Kit.</span></p>
+
+				</li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">API Reference/Explored Samples</div><div type="API Reference/Explored Samples"><span class="ph">For more information about
+				the <samp class="ph codeph">ProcessFlow</samp> control, see the <a class="xref" href="../../docs/api/symbols/sap.suite.ui.commons.ProcessFlow.html" alt="../../docs/api/symbols/sap.suite.ui.commons.ProcessFlow.html" title="../../docs/api/symbols/sap.suite.ui.commons.ProcessFlow.html">API Reference Documentation</a> in the Demo
+				Kit and the <a class="xref" target="_blank" href="../../explored.html#/entity/sap.suite.ui.commons.ProcessFlow/samples" alt="../../explored.html#/entity/sap.suite.ui.commons.ProcessFlow/samples" title="../../explored.html#/entity/sap.suite.ui.commons.ProcessFlow/samples">sample</a> in the
+					<span class="ph emphasis emphasis">Explored</span> app in the Demo Kit.</span></div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Process Flow";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

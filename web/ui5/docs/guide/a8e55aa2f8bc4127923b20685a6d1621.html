@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="SAPUI5 flexibility services enable functions for different user groups to personalize SAP Fiori apps and adapt their user interface at runtime."/>
+<meta name="description" content="SAPUI5 flexibility services enable functions for different user groups to personalize SAP Fiori apps and adapt their user interface at runtime."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5948240184507976"/>
+<title>SAPUI5 Flexibility Services</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioa8e55aa2f8bc4127923b20685a6d1621">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1"><span class="ph pname">SAPUI5</span> Flexibility
+		Services</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc"><span class="ph pname">SAPUI5</span> flexibility services
+		enable functions for different user groups to personalize SAP Fiori apps and adapt their
+		user interface at runtime.
+		</p>
+
+		<p class="p">The functions are based on content which is stored in the layered repository in multiple,
+			separate layers:
+			</p>
+
+		<div class="p">
+			
+<div class="table-wrapper tablenoborder"><table summary="" id="loioa8e55aa2f8bc4127923b20685a6d1621__table_w35_xf3_dw" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="25%"/><col width="25%"/><col width="25%"/><col width="25%"/></colgroup>
+
+					
+					
+					
+					
+					<thead class="thead" align="left">
+						<tr class="row">
+							<th class="entry" valign="top" width="25%" id="d9609883e41">
+								<p class="p">Function</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="25%" id="d9609883e47">
+								<p class="p">User</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="25%" id="d9609883e53">
+								<p class="p">Control</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="25%" id="d9609883e59">
+								<p class="p">Layer in the Layered Repository</p>
+
+							</th>
+
+						</tr>
+
+					</thead>
+
+					<tbody class="tbody">
+						<tr class="row">
+							<td class="entry" valign="top" width="25%" headers="d9609883e41 ">
+								<p class="p">Personalization of table and filter bar</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e47 ">
+								<p class="p">End user</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e53 ">
+								<p class="p"><samp class="ph codeph">SmartTable</samp></p>
+
+								<p class="p"><samp class="ph codeph">SmartFilterBar</samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e59 ">
+								<p class="p"><samp class="ph codeph">USER</samp></p>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="25%" headers="d9609883e41 ">
+								<p class="p">Handling of variants for table and filter bar</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e47 ">
+								<p class="p">End user</p>
+
+								<p class="p">Key user</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e53 ">
+								<p class="p"><samp class="ph codeph">SmartVariantManagement</samp></p>
+
+								<p class="p"><samp class="ph codeph">SmartTable</samp></p>
+
+								<p class="p"><samp class="ph codeph">SmartFilterBar</samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e59 ">
+								<p class="p"><samp class="ph codeph">USER</samp></p>
+
+								<p class="p"><samp class="ph codeph">CUSTOMER</samp></p>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="25%" headers="d9609883e41 ">
+								<p class="p">UI adaptation at runtime</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e47 ">
+								<p class="p">Key user</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e53 ">
+								<p class="p"><samp class="ph codeph">SmartForm</samp></p>
+
+								<p class="p"><samp class="ph codeph">ObjectPage</samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="25%" headers="d9609883e59 ">
+								<p class="p"><samp class="ph codeph">CUSTOMER</samp></p>
+
+							</td>
+
+						</tr>
+
+					</tbody>
+
+				</table>
+</div>
+
+		</div>
+
+		<p class="p">Here you can find more information:</p>
+
+		<div class="p">
+			
+<div class="table-wrapper tablenoborder"><table summary="" id="loioa8e55aa2f8bc4127923b20685a6d1621__table_c53_pg3_dw" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="50%"/><col width="50%"/></colgroup>
+
+					
+					
+					<tbody class="tbody">
+						<tr class="row">
+							<td class="entry" valign="top" width="50%">
+								<p class="p">Smart controls</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="50%">
+								<p class="p"><a class="xref" href="0cbbeba6fa6c45e4a339bc75d56299a2.html" title="This library contains composite controls.">sap.ui.comp</a> library</p>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="50%">
+								<p class="p">UI adaptation at runtime</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="50%">
+								<div class="p">
+									<ul class="ul" id="loioa8e55aa2f8bc4127923b20685a6d1621__ul_ep5_5g3_dw">
+										<li class="li">
+											<p class="p">For key users, see SAP Library for <a class="xref" href="http://help.sap.com/nw-uiaddon20" alt="http://help.sap.com/nw-uiaddon20" title="http://help.sap.com/nw-uiaddon20">User Interface
+												Add-On 2.0</a> for SAP NetWeaver on SAP Help
+												Portal. Under <span class="ph uicontrol">Application
+												Help</span>, open SAP Library and search for
+												<kbd class="ph userinput">Adapting the UI of an SAP Fiori App at
+												Runtime</kbd>.</p>
+
+										</li>
+
+										<li class="li">
+											<p class="p">For SAP Fiori launchpad admins, see SAP Library for
+												<a class="xref" href="http://help.sap.com/nw-uiaddon20" alt="http://help.sap.com/nw-uiaddon20" title="http://help.sap.com/nw-uiaddon20">User Interface
+												Add-On 2.0</a> for SAP NetWeaver on SAP Help
+												Portal. Under <span class="ph uicontrol">Application
+												Help</span>, open SAP Library and search for
+												<kbd class="ph userinput">Enabling Apps for UI Adaptation at
+												Runtime</kbd>.</p>
+
+										</li>
+
+										<li class="li">
+											<p class="p">For <span class="ph pname">SAPUI5</span> app developers,
+												see <a class="xref" href="f1430c0337534d469da3a56307ff76af.html" title="UI adaptation at runtime (RTA) allows key users to adapt the user interface of their apps at runtime. Here’s how you develop apps that can be used with RTA.">UI Adaptation at Runtime</a></p>
+
+										</li>
+
+									</ul>
+
+								</div>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="50%">
+								<p class="p">Layered repository</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="50%">
+								<p class="p"><a class="xref" href="9e6305746b8742f69faa55fae27ee220.html" title="Offers the separation of content between different layers.">Layered Repository</a></p>
+
+							</td>
+
+						</tr>
+
+					</tbody>
+
+				</table>
+</div>
+
+		</div>
+
+	</div>
+
+<div class="related-links"> <br/>
+<div class="childtopics"><strong>In this section:</strong></div><ul class="ullinks">
+<div><strong><a class="link" href="f1430c0337534d469da3a56307ff76af.html" title="UI adaptation at runtime (RTA) allows key users to adapt the user interface of their apps at runtime. Here’s how you develop apps that can be used with RTA.">UI Adaptation at Runtime</a></strong><br/>
+</div>
+<div><strong><a class="link" href="9e6305746b8742f69faa55fae27ee220.html" title="Offers the separation of content between different layers.">Layered Repository</a></strong><br/>
+</div>
+</ul>
+
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="SAPUI5 Flexibility Services";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

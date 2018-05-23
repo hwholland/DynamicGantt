@@ -1,0 +1,1 @@
+sap.ui.define(["sap/ui/base/Object"],function(B){"use strict";function g(t){function s(){for(var i in t.componentRegistry){var c=t.componentRegistry[i];c.oComponent.setIsRefreshRequired(true);}}return{setAllPagesDirty:s};}return B.extend("sap.suite.ui.generic.template.lib.ViewDependencyHelper",{constructor:function(t){jQuery.extend(this,g(t));}});});

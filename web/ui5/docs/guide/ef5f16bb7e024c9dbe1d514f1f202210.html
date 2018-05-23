@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="To improve loading time, you can define dependencies to SAPUI5 libraries required by your application."/>
+<meta name="description" content="To improve loading time, you can define dependencies to SAPUI5 libraries required by your application."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6837091233186914"/>
+<title>Configuring Dependencies to SAPUI5 Libraries</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioef5f16bb7e024c9dbe1d514f1f202210">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Configuring Dependencies to SAPUI5 Libraries</h1>
+
+	
+	<div class="body refbody"><p class="shortdesc">To improve loading time, you can define dependencies to SAPUI5 libraries required by
+		your application. </p>
+
+		<div class="section">
+			<p class="p">Overview page application instances are dependent on the <samp class="ph codeph">sap.ovp</samp> SAPUI5
+				library, and the dependencies are configured in the <samp class="ph codeph">"sap.ui5"</samp>
+				dependencies section.</p>
+
+			<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"sap.ui5": {
+    ...
+    "dependencies": {
+        "minUI5Version": "1.32.0",
+        "libs": {
+            "sap.ovp": {
+                "minVersion": "1.32.0"
+            }
+        }
+    },
+    ...
+}</pre></div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Configuring Dependencies to SAPUI5 Libraries";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

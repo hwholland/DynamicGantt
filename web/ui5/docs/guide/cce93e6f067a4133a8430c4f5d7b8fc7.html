@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7201109022409105"/>
+<title>Object Page Header</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loiocce93e6f067a4133a8430c4f5d7b8fc7">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Object Page Header</h1>
+
+	<div class="body conbody">
+		<div class="p">The object page header display is determined by the following vocabularies:<ul class="ul" id="loiocce93e6f067a4133a8430c4f5d7b8fc7__ul_qsb_blr_lt">
+				<li class="li">
+					<p class="p"><samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo/Title/Value</samp> determines
+						the object title.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo/Description/Value</samp>
+						determines the subtitle.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo/ImageUrl</samp> determines
+						the image; the image shape is fixed as a circle.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo/TypeName</samp> is taken as
+						the text for the link that navigates back to the list report.</p>
+
+				</li>
+
+			</ul>
+</div>
+
+		<div class="section"><div class="section_title">Main Elements</div><div type="Main Elements">
+			
+			<div class="p">The figure below shows how to set up the following basic elements for your object
+				page header in your annotations:
+<div class="table-wrapper tablenoborder"><table summary="" id="loiocce93e6f067a4133a8430c4f5d7b8fc7__table_z2x_nr4_rv" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="50%"/><col width="50%"/></colgroup>
+
+						
+						
+						<thead class="thead" align="left">
+							<tr class="row">
+								<th class="entry" valign="top" id="d11460153e69">
+									<p class="p">Label in Figure</p>
+
+								</th>
+
+								<th class="entry" valign="top" id="d11460153e75">
+									<p class="p">Element</p>
+
+								</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry" valign="top" headers="d11460153e69 "><span class="ph uicontrol">1</span></td>
+
+								<td class="entry" valign="top" headers="d11460153e75 ">
+									<p class="p">Title (Object Type)</p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" headers="d11460153e69 ">
+									<p class="p"><span class="ph uicontrol">2</span></p>
+
+								</td>
+
+								<td class="entry" valign="top" headers="d11460153e75 ">
+									<p class="p">Image of the object instance</p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" headers="d11460153e69 "><span class="ph uicontrol">3</span></td>
+
+								<td class="entry" valign="top" headers="d11460153e75 ">
+									<p class="p">Language-dependent product text in SAP back-end system</p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" headers="d11460153e69 "><span class="ph uicontrol">4</span></td>
+
+								<td class="entry" valign="top" headers="d11460153e75 ">
+									<p class="p">Product title in SAP back-end system</p>
+
+								</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+<div class="fig fignone" id="loiocce93e6f067a4133a8430c4f5d7b8fc7__fig_dfk_44j_55"><div class="figcontainer">
+					
+					<img class="image" id="loiocce93e6f067a4133a8430c4f5d7b8fc7__image_zrk_c54_1v" src="loio06779345b2da440a9c6c0de245829072_LowRes.png"/>
+				<div class="figcap">Object Page Header</div></div></div>
+</div>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Sample Code</div><div type="Sample Code">
+			
+			<p class="p">The following sample code is a selectable version of the code above for setting up
+				the main elements in the object page header.</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;Annotation Term="UI.HeaderInfo"&gt;
+	&lt;Record&gt;
+		&lt;PropertyValue Property="TypeName" String="Product"/&gt;
+		&lt;PropertyValue Property="TypeNamePlural" String="Products"/&gt;
+		&lt;PropertyValue Property="ImageUrl" Path="ProductPictureURL"/&gt;
+		&lt;PropertyValue Property="Title"
+			&lt;Record Type="UI.DataField"&gt;
+				&lt;PropertyValue Property="Value" Path="to_ProductTextInCurrentLang/Name"/&gt;
+			&lt;/Record&gt;
+		&lt;/PropertyValue&gt;
+		PropertyValue Property="Description"&gt;
+			&lt;Record Type="UI.DataField"&gt;
+				&lt;PropertyValue Property="Value" Path="Product"/&gt;
+			&lt;/Record&gt;
+		&lt;/PropertyValue&gt;
+	&lt;/Record&gt;
+&lt;/Annotation&gt;	
+</pre></div>
+
+		</div></div>
+
+	</div>
+
+<div class="related-links"> 
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Object Page Header";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
+						 xmlns="sap.m" xmlns:build="sap.build" xmlns:core="sap.ui.core"
+						 xmlns:sfi="sap.ui.comp.smartfield" xmlns:l="sap.ui.layout">
+
+	<VBox id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::DataPoint"
+		  displayInline="true" binding="{parts: [{path: 'headerFacet>Target'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getNavigationPathWithExpand'}"
+		  class="sapSmartTemplatesObjectPageDataPoint">
+		<Label id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::{path: 'dataPoint>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromDataPoint'}::Label"
+			   labelFor="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::{path: 'dataPoint>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromDataPoint'}::Value"
+			   text="{path: 'dataPoint>Title', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.formatWithExpandSimple'}:"
+			   class="sapSmartTemplatesObjectPageDataPointLabel"
+			   build:metadata="#pattern:Header>>KPI;staticProp:text:Title;condition:dataPoint>RecordType:com.sap.vocabularies.UI.v1.DataPoint"/>
+		<sfi:SmartField id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::{path: 'dataPoint>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromDataPoint'}::Value"
+						editable="false" uomEditable="false" enabled="true" clientSideMandatoryCheck="false"
+						class="{= ${dataPoint>Value/EdmType} === 'Edm.Byte' || ${dataPoint>Value/EdmType} === 'Edm.Decimal' || ${dataPoint>Value/EdmType} === 'Edm.Double' ||  ${dataPoint>Value/EdmType} === 'Edm.Float' ||  ${dataPoint>Value/EdmType} === 'Edm.Int16' ||  ${dataPoint>Value/EdmType} === 'Edm.Int32' || ${dataPoint>Value/EdmType} === 'Edm.Int64' ||  ${dataPoint>Value/EdmType} === 'Edm.SByte' ? 'sapSmartTemplatesObjectPageDataPointNumericValue' : 'sapSmartTemplatesObjectPageDataPointTextualValue'}"
+						value="{parts: [{path: 'dataPoint>Value'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.formatWithExpand'}"
+						build:metadata="#pattern:Header>>KPI;prop:value:Value;prop:currency:Currency:\{dataPoint>Value@@Org.OData.Measures.V1.ISOCurrency\}">
+			<sfi:configuration>
+				<sfi:Configuration displayBehaviour="{parts: [{path: 'dataPoint>Value'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getTextArrangementForSmartControl'}" />
+			</sfi:configuration>
+			<template:if test="{= ${dataPoint>Criticality} }">
+				<sfi:controlProposal>
+					<sfi:ControlProposal>
+						<sfi:objectStatus>
+							<sfi:ObjectStatus criticality="{path: 'dataPoint>Criticality', formatter: 'sap.ui.model.odata.AnnotationHelper.simplePath'}"
+											  criticalityRepresentationType="WithoutIcon"
+                                              build:metadata="#pattern:Header>>KPI;prop:criticality:Criticality;"/>
+						</sfi:objectStatus>
+					</sfi:ControlProposal>
+				</sfi:controlProposal>
+			</template:if>
+		</sfi:SmartField>
+	</VBox>
+
+</core:FragmentDefinition>

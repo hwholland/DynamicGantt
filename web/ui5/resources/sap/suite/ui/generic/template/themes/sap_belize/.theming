@@ -1,0 +1,6 @@
+{
+  "sEntity" : "Theme",
+  "sId" : "sap_belize",
+  "oExtends" : "UI5.sap/suite/ui/generic/template.base",
+  "sVendor" : "SAP"
+}

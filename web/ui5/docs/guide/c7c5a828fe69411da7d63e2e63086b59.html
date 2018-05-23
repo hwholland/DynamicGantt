@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Developers configure the measures and dimensions displayed in charts by setting the role property to the desired value per chart type. Additional definitions apply to all chart types."/>
+<meta name="description" content="Developers configure the measures and dimensions displayed in charts by setting the role property to the desired value per chart type. Additional definitions apply to all chart types."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14145592901301496"/>
+<title>Configuring Charts</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioc7c5a828fe69411da7d63e2e63086b59">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Configuring Charts</h1>
+
+	
+	<div class="body refbody"><p class="shortdesc">Developers configure the measures and dimensions displayed in charts by setting the role
+		property to the desired value per chart type. Additional definitions apply to all chart
+		types.</p>
+
+		<div class="section">
+			<p class="p">You can use the same annotation file with different qualifiers to present charts with
+				different chart views. You do this by specifying different qualifiers in the
+				annotation file for each card. The following sections of the annotation file apply
+				to all chart types:</p>
+
+			<div class="p">
+				<ul class="ul" id="loioc7c5a828fe69411da7d63e2e63086b59__ul_vtf_fyw_st">
+					<li class="li"><samp class="ph codeph">UI.Identification</samp>: Specify the navigation targets activated when the user
+						clicks the card and list the parameters to pass to the target application.
+						This definition is mandatory. For more information, see <a class="xref" href="530f9e6f66104d5888ade79b5cf417e0.html" title="All cards support navigation, both to a different SAP Fiori application using intent based navigation, and to external applications and websites via a direct URL which opens in a new browser tab. To trigger the navigation, users click or tap on a card header and in some cases, on an item within the card.">Configuring Card Navigation</a>.</li>
+
+					<li class="li">
+						<p class="p"><samp class="ph codeph">UI.SelectionVariant.SelectOptions</samp>: You can specify the
+							filter values that are applied to the card, which are applied when
+							retrieving the card data.</p>
+
+					</li>
+
+					<li class="li">
+						<p class="p"><samp class="ph codeph">UI.PresentationVariant.SortOrder</samp>: You can specify the
+							sort order to be used.</p>
+
+					</li>
+
+					<li class="li">
+						<div class="p"><samp class="ph codeph">UI.PresentationVariant.MaxItems</samp>: Using this property, you can limit the
+							maximum number of records to be fetched from the backend. If this
+							variant isn't used, then all records from the backend will be displayed
+							in the chart.<div class="note tip"><span class="tiptitle">Tip</span> Don't use this for charts that rely on
+								complete data sets; for example, the donut chart card, otherwise the
+								results won't be meaningful.</div>
+</div>
+
+					</li>
+
+					<li class="li"><samp class="ph codeph">UI.Chart</samp>: Specify the dimensions and measures that make up
+						the chart, the chart type, and the way that the measures/dimensions are used
+						for the chart. This definition is mandatory.<ul class="ul" id="loioc7c5a828fe69411da7d63e2e63086b59__ul_mxs_jp1_gv">
+							<li class="li">
+								<p class="p"><samp class="ph codeph">UI.Chart.MeasureAttributes.Measure</samp> annotation:
+									Defines the measures used in the chart.</p>
+
+							</li>
+
+							<li class="li">
+								<p class="p"><samp class="ph codeph">UI.Chart.MeasureAttributes.Role</samp> annotation: the
+									manner in which a measure is used within the chart. This is
+									configured differently for each chart type, as described
+									below.</p>
+
+							</li>
+
+							<li class="li">
+								<p class="p"><samp class="ph codeph">UI.Chart.DimensionAttributes.Dimension</samp>
+									annotation: the dimensions used in the chart.</p>
+
+							</li>
+
+							<li class="li">
+								<p class="p"><samp class="ph codeph">UI.Chart.DimensionAttributes.Role</samp> annotation:
+									the manner in which a dimension is used within the chart.This is
+									configured differently for each chart type, as described
+									below.</p>
+
+							</li>
+
+						</ul>
+</li>
+
+				</ul>
+
+			</div>
+
+		</div>
+
+		<div class="section"><div class="section_title">Chart Types</div><div type="Chart Types"><p class="p">This section describes line, donut, bubble, column, stacked
+				column, and vertical bullet charts.</p>
+<p class="p">The value assigned to the role property
+				for dimensions and measures in the annotation file determines the visualization of
+				the chart. For dimensions, you can set the role to <span class="ph emphasis emphasis">category</span> or
+					<span class="ph emphasis emphasis">series</span>. If no value is specified, it's defaulted to
+					<span class="ph emphasis emphasis">category</span>. </p>
+<p class="p">For measures, you can set the role to
+				values:: <span class="ph emphasis emphasis">axis1</span>, <span class="ph emphasis emphasis">axis2 </span>or
+					<span class="ph emphasis emphasis">axis3</span>. If no value is specified, it's defaulted to
+					<span class="ph emphasis emphasis">axis1</span>. The actual interpretation of the role value
+				specified in the annotation file varies according to the chart type used, as
+				detailed in the following section.</p>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Line Chart</span></p>
+
+				<div class="p">Line charts require at least one measure and one dimension. <ul class="ul" id="loioc7c5a828fe69411da7d63e2e63086b59__ul_mvn_nlr_2v">
+						<li class="li">Dimensions for which the role is set to <span class="ph emphasis emphasis">category</span>,
+							makes up the x-axis (category axis). If no dimension is specified with
+							this role, the first dimension is used as the x-axis. It's recommended
+							to use only time-based dimensions (for example, day, date, week, month,
+							quarter, or year) for the category axis of a line chart.</li>
+
+						<li class="li">Dimensions for which the role is set to <span class="ph emphasis emphasis">series</span> make
+							up the line segments of the chart, with different colors assigned to
+							each dimension value. If multiple dimensions are assigned this role, the
+							values of all such dimensions together are considered as one dimension
+							and a color is assigned.</li>
+
+						<li class="li">Measures make up the y- axis (value axis). If there are multiple
+							measures, then each measure is represented by a different colored line
+							inside the chart area.</li>
+
+					</ul>
+
+				</div>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">
+					<span class="ph emphasis emphasis">Donut Chart</span></p>
+
+				<p class="p">Donut charts require exactly one measure. You can provide more than one
+					dimension, in which case they are stacked so that the sections of the chart
+					represent the combination of both dimensions. For example, if you define "Sales"
+					as your measure, and provide two dimensions: "Year" and "Country", the chart
+					will display the sales data of each combination of year and country as a
+					separate colored section.</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Bubble Chart</span></p>
+
+				<div class="p">Bubble charts require three measures and at least one dimension, yet allow a
+					maximum of two.<ul class="ul" id="loioc7c5a828fe69411da7d63e2e63086b59__ul_dp5_5lr_2v">
+						<li class="li">The first measure for which the role is set to
+								<span class="ph emphasis emphasis">axis1</span>, or if none exists, the first measure for
+							which the role is set to <span class="ph emphasis emphasis">axis2</span>, or if none exists,
+							the first measure for which the role is set to
+								<span class="ph emphasis emphasis">axis3</span>, is assigned to the feed UID
+								<samp class="ph codeph">valueAxis</samp>. This makes up the X axis.</li>
+
+						<li class="li">The first measure for which the role is set to
+								<span class="ph emphasis emphasis">axis2</span>, or the second measure for which the role
+							is set to <span class="ph emphasis emphasis">axis1</span> (if role <span class="ph emphasis emphasis">axis2</span>
+							does not exist for the first measure), or the first measure for which
+							the role is set to <span class="ph emphasis emphasis">axis3</span> (if role
+								<span class="ph emphasis emphasis">axis1</span> does not exist for the second measure),
+							is assigned to the feed UID <samp class="ph codeph">valueAxis2</samp>. This makes up
+							the Y axis.</li>
+
+						<li class="li">The remaining measure is assigned to feed UID
+								<samp class="ph codeph">bubbleWidth</samp>. This determines the size of the
+							bubble.</li>
+
+						<li class="li">The dimensions for which the role is set to <span class="ph emphasis emphasis">series</span>
+							are assigned to the feed UID <span class="ph emphasis emphasis">color</span>. Different
+							values for this dimension in the data set result in different colored
+							data points in the chart. If multiples dimensions are set with the
+							category role, only the first dimension is considered. If both
+							dimensions have been assigned the role <span class="ph emphasis emphasis">series</span> then
+							each combination of the dimension member will get a unique color. <div class="p">For
+								example, if "Year" and "Country" are the dimensions and both have
+								been assigned the role <span class="ph emphasis emphasis">series</span> then
+								"India/2015", "India/2016", "Germany/2015", "Germany/2016" will be
+								represented as a different colored bubble. If a dimension is not
+								marked with any role, then the dimension members will get the same
+								color. In the above example, if year is not marked with any color,
+								then the bubbles will only have two colors - one for all records of
+								India and one for all records of Germany, irrespective of the year.
+									<div class="note note"><span class="notetitle">Note</span> Assigning the role of a dimension as category would lead
+									to different shaped data points for different values of the
+									dimension. However, this is not recommended for a bubble chart
+									card. Configuring the role of a bubble chart dimension as
+									category is discouraged</div>
+</div>
+</li>
+
+						<li class="li">The dimensions for which the role is set to
+								<span class="ph emphasis emphasis">category</span> are assigned to the feed UID
+								<span class="ph emphasis emphasis">shape</span>. Different values for this dimension in
+							the data set result in different shaped data points in the chart. If
+							multiples dimensions are set with the category role, only the first
+							dimension is considered.</li>
+
+					</ul>
+
+				</div>
+
+				<p class="p">Following is a code snippet which demonstrates defining a bubble chart card. Note
+					that there are three measures (under the <samp class="ph codeph">MeasureAttributes</samp>
+					property) and one dimension (under the <samp class="ph codeph">DimensionAttributes</samp>
+					property).</p>
+
+				<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">&lt;Annotation Term="UI.Chart" Qualifier="Qualifier_ID_1"&gt;
+&lt;Record Type="UI.ChartDefinitionType"&gt;
+                                &lt;PropertyValue Property="Title" String="View1" /&gt;
+                                &lt;PropertyValue Property="ChartType" EnumMember="UI.ChartType/Bubble"/&gt;
+                                &lt;PropertyValue Property="MeasureAttributes"&gt;
+                                                &lt;Collection&gt;
+                                                                &lt;Record Type="UI.ChartMeasureAttributeType"&gt;
+                                                                                &lt;PropertyValue Property="Measure" PropertyPath="SalesShare" /&gt;
+                                                                                &lt;PropertyValue Property="Role" EnumMember="UI.ChartMeasureRoleType/Axis1" /&gt;
+                                                                &lt;/Record&gt;
+                                                                &lt;Record Type="UI.ChartMeasureAttributeType"&gt;
+                                                                                &lt;PropertyValue Property="Measure" PropertyPath="TotalSales" /&gt;
+                                                                                &lt;PropertyValue Property="Role" EnumMember="UI.ChartMeasureRoleType/Axis2" /&gt;
+                                                                &lt;/Record&gt;
+                                                                &lt;Record Type="UI.ChartMeasureAttributeType"&gt;
+                                                                                &lt;PropertyValue Property="Measure" PropertyPath="Sales" /&gt;
+                                                                                &lt;PropertyValue Property="Role" EnumMember="UI.ChartMeasureRoleType/Axis3" /&gt;
+                                                                &lt;/Record&gt;
+                                                &lt;/Collection&gt;
+                                &lt;/PropertyValue&gt;
+                                &lt;PropertyValue Property="DimensionAttributes"&gt;
+                                                &lt;Collection&gt;
+                                                                &lt;Record Type="UI.ChartDimensionAttributeType"&gt;
+                                                                                &lt;PropertyValue Property="Dimension" PropertyPath="Product" /&gt;
+                                                                                &lt;PropertyValue Property="Role" EnumMember="UI.ChartDimensionRoleType/Series" /&gt;
+                                                                &lt;/Record&gt;
+                                                 &lt;/Collection&gt;
+                                &lt;/PropertyValue&gt;
+                &lt;/Record&gt;
+&lt;/Annotation&gt;
+</pre></div>
+
+				</div>
+
+			</div>
+			<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Column Chart</span></p>
+
+				<p class="p">Column charts require at least one measure and one dimension. Irrespective of the
+					role defined for the measure in the annotation file, every measure will be
+					represented as a separate column. Similarly, irrespective of the role defined in
+					the annotation file, every dimension will be added to the category
+						<span class="ph emphasis emphasis">axis</span> (x-axis). </p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Stacked Column Chart</span></p>
+
+				<p class="p">A stacked column chart is similar to the column chart; however, all measures
+					irrespective of role, get stacked on top of each other. There should be at least
+					one dimension with the assigned role <span class="ph emphasis emphasis">category</span> and all
+					dimensions with this role would be added to the category
+						<span class="ph emphasis emphasis">axis</span> (x-axis). All dimensions with role
+						<span class="ph emphasis emphasis">series</span> also get stacked. It's recommended to either
+					stack based on dimensions or measures, but not mix both in a single chart card.
+				</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Vertical Bullet Chart</span></p>
+
+				<p class="p">Vertical bullet charts accept at least one measure and one dimension. All
+					dimensions irrespective of their role will be assigned to the category
+						<span class="ph emphasis emphasis">axis</span>. All measures with role <span class="ph emphasis emphasis">axis1</span>
+					would be represented as solid colored columns, which represent actual values.
+					All measures with role <span class="ph emphasis emphasis">axis2</span> would be represented as a
+					solid black line, which represents the target value. </p>
+
+			</div></div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Configuring Charts";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

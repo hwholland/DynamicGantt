@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content=""/>
+<meta name="description" content=""/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=49843306298989254"/>
+<title>Hide a Facet on the UI</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio9fcea86d8ffd48459dd053eb5255a046">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Hide a Facet on the UI</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc"/>
+
+		<p class="p">You can hide or show reference facets on the UI using the <span class="ph uicontrol">See more</span> or
+				<span class="ph uicontrol">See less</span> links.</p>
+
+		<p class="p">The <span class="ph uicontrol">See more</span> link appears in the bottom right corner when there
+			are hidden facets available.</p>
+
+		<div class="p">
+			<div class="fig fignone"><div class="figcontainer">
+				
+				<img class="image" src="loioa360c974ade04f849b005d670c8e00ce_LowRes.png"/>
+			<div class="figcap">See Less</div></div></div>
+
+		</div>
+
+		<div class="p">To enable hiding facets from the UI, you set the <samp class="ph codeph">PartOfPreview</samp> annotation of
+			the relevant reference facet to <samp class="ph codeph">false</samp> as in the following example:<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">&lt;Record Type="UI.ReferenceFacet"&gt;			
+&lt;PropertyValue Property="Label" String="{@i18n&gt;@ProductDescription}"/&gt;
+&lt;PropertyValue Property="Target" AnnotationPath="to_ProductTextInCurrentLang/@UI.FieldGroup#PlainText"/&gt;
+		&lt;Annotation Term="UI.PartOfPreview" Value="false"/&gt;	
+	&lt;/Record&gt;	</pre></div>
+
+			</div>
+</div>
+
+		<div class="p">
+			<div class="note note"><span class="notetitle">Note</span> This feature is available for reference facets which are implemented under a
+				collection facet.</div>
+
+		</div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Hide a Facet on the UI";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

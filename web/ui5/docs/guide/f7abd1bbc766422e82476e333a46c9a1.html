@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content=""/>
+<meta name="description" content=""/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=35094592387194834"/>
+<title>Folder Structure and Project Artifacts</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loiof7abd1bbc766422e82476e333a46c9a1">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Folder Structure and Project Artifacts</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc"/>
+
+		<div class="p">Once you have applied the template, the generated application is ready to run. <div class="note note"><span class="notetitle">Note</span> 
+        <ul class="ul" id="loiof7abd1bbc766422e82476e333a46c9a1__ul_bhm_k5h_b5">
+          <li class="li">
+            <p class="p">The new app or component reuses the views and controllers from
+                <samp class="ph codeph">sap.suite.ui.generic.template</samp>.</p>
+
+          </li>
+
+          <li class="li">
+            <p class="p">You can find the destinations in the <span class="ph filepath">neo-app.json</span> file.</p>
+
+          </li>
+
+          <li class="li">
+            <p class="p">The resource links and route definitions for navigation are persisted in the app
+              descriptor file (<span class="ph filepath">manifest.json</span>).</p>
+
+          </li>
+
+        </ul>
+
+      </div>
+
+    </div>
+
+	  <div class="p">
+	    <div class="fig fignone"><div class="figcontainer">
+	      
+	      <img class="image" src="loioaeab6b570e98466aa35b6e392f1a684d_LowRes.png"/>
+	    <div class="figcap">Smart Templates: Folder Structure</div></div></div>
+
+	  </div>
+
+    <div class="section"><div class="section_title">Component.js</div><div type="Component.js">
+      
+      <p class="p">After you generate the application, the <span class="ph pname">SAPUI5</span> component
+          <span class="ph filepath">Component.js</span> which represents the application is executable. This
+        component links to the manifest where further information can be found at run-time, such as
+        the OData resource links or the reference to the smart template.</p>
+
+      <div class="p">
+        <div class="note caution"><span class="cautiontitle">Caution</span> 
+          Do not touch this file.
+        </div>
+
+      </div>
+
+      <div class="p">Component.js:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">
+jQuery.sap.declare("...your...Component");
+
+sap.ui.getCore().loadLibrary("sap.ui.generic.app");
+
+jQuery.sap.require("sap.ui.generic.app.AppComponent");
+
+sap.ui.generic.app.AppComponent.extend("...your...Component", {
+
+    metadata: {
+
+        "manifest": "json"
+
+    }
+
+});
+</pre></div>
+</div>
+
+      <p class="p">The generated app uses the re-use component controller by referencing a smart template,
+        which uses transactional processing including draft-save. Similarly, the generated app uses
+        the generic view in the smart template's folder, which is based on the <a class="xref" href="5ee619fc1370463ea674ee04b65ed83b.html" title="The XML templating concept enables you to use an XML view as a template. This template is transformed by an XML preprocessor on the source level, the XML DOM, at runtime just before an SAPUI5 control tree is created from the XML source.">XML templating</a> approach.</p>
+
+    </div></div>
+
+    <div class="section"><div class="section_title">Manifest.json</div><div type="Manifest.json">
+      
+      <div class="p">You can find the service and annotation resource links that you have entered in the
+        configuration wizard in the app descriptor (<span class="ph filepath">manifest.json</span> file).
+        <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"dataSources": {
+        "mainService": {
+        "uri": "/sap/opu/odata/sap/SEPMRA_PROD_MAN/",
+        "type": "OData",
+        "settings": {
+        "annotations": [
+               "mainAnnotations",
+               "localAnnotations"
+                       ],
+        "localUri": "localService/metadata.xml"
+                        }
+                        },
+        "mainAnnotations": {
+               "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='SEPMRA_PROD_MAN_ANNO_MDL',Version='0001')/$value/",
+               "type": "ODataAnnotation",
+               "settings": {
+         "localUri": "localService/annotations.xml"
+                        }
+                        },
+         "localAnnotations": {
+                "uri": "annotations/annotations.xml",
+                "type": "ODataAnnotation",
+                "settings": {
+         "localUri": "annotations/annotations.xml"
+                                                               }
+                                               }
+                               },
+</pre></div>
+</div>
+
+      <p class="p">Here, the annotations are read using the catalog service of <span class="ph pname">SAP Gateway</span>. This is the standard method
+        when using the auto-exposure feature of the application infrastructure.</p>
+
+      <p class="p">The local resources <samp class="ph codeph">localService/metadata.xml</samp> and
+          <samp class="ph codeph">localService/SMART_PROD_MAN_ANNO_MDL.xml</samp> are generated for local tests
+        that want to simulate back-end access.</p>
+
+      <p class="p">Besides the annotations that are retrieved from the back-end system, the local resource
+          <span class="ph filepath">annotations.xml</span> plays a role at run-time, as this file comprises the
+        facet descriptions for the object page. Here, you must maintain the labels for the different
+        facets. </p>
+
+      <p class="p">We recommend that you use i18n properties, for example, to maintain the texts in the
+        related <samp class="ph codeph">i18n</samp> resource file. For more information, see <a class="xref" href="efe406b2ab2443d6b23a503d833f2b21.html" title="You must use the i18n properties file to maintain the texts in the related i18n resource file.">Maintaining Facet Texts</a>.
+      </p>
+        
+          <div class="p">
+            <div class="note note"><span class="notetitle">Note</span> You can use the annotation modeler to maintain <samp class="ph codeph">UI.facets</samp>. For more
+            information, see <a class="xref" href="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html" alt="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html" title="https://help.hana.ondemand.com/webide/frameset.htm?fe8ba75588964d3bbfc5c1bf96b04d1e.html">Annotation Modeler</a>.
+        </div>
+
+        </div>
+
+    </div></div>
+
+    <div class="section"><div class="section_title">Neo-app.json</div><div type="Neo-app.json">
+      
+      <div class="p">You can find the routing information in the <span class="ph filepath">neoapp.json</span> file, based on
+        the destination you have chosen as
+        follows:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">{
+  "welcomeFile": "index.html",
+  "routes": [
+    {
+      "path": "/sap/opu/odata",
+      "target": {
+        "type": "destination",
+        "name": "QH3_815",
+        "entryPath": "/sap/opu/odata"
+      },
+      "description": "QH3_815 (Smart Templates)"
+    },
+    {
+      "path": "/sap/bc/lrep",
+      "target": {
+        "type": "destination",
+        "name": "QH3_815",
+        "entryPath": "/sap/bc/lrep"
+      },
+      "description": "QH3_815"
+    },
+</pre></div>
+</div>
+
+      <p class="p"> You can adapt the destinations in order to address a different back-end system. This
+        option is also available under <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">Run Configurations</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Advanced Settings</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>. </p>
+
+    </div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Folder Structure and Project Artifacts";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

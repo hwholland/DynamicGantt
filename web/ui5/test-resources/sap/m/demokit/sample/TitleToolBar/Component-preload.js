@@ -1,0 +1,4 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/m/demokit/sample/TitleToolBar/Component.js": "sap.ui.define([\"sap/ui/core/UIComponent\"],function(e){\"use strict\";return e.extend(\"sap.m.sample.TitleToolBar.Component\",{metadata:{rootView:\"sap.m.sample.TitleToolBar.Toolbar\",dependencies:{libs:[\"sap.m\"]},config:{sample:{stretch:!0,files:[\"Toolbar.view.xml\"]}}}})});",
+	"web/ui5/test-resources/sap/m/demokit/sample/TitleToolBar/Toolbar.view.xml": "<mvc:View\n\theight=\"100%\"\n\txmlns:mvc=\"sap.ui.core.mvc\"\n\txmlns=\"sap.m\"><OverflowToolbar design=\"Transparent\" height=\"3rem\"><Title text=\"Title Only\"/></OverflowToolbar><OverflowToolbar design=\"Transparent\" height=\"3rem\"><Title text=\"Title and Actions\"/><ToolbarSpacer/><Button icon=\"sap-icon://group-2\"/><Button icon=\"sap-icon://action-settings\"/></OverflowToolbar></mvc:View>"
+}, "web/ui5/test-resources/sap/m/demokit/sample/TitleToolBar/Component-preload");

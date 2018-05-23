@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Analytic cards show data in a variety of chart formats."/>
+<meta name="description" content="Analytic cards show data in a variety of chart formats."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=18179267077646544"/>
+<title>Analytic Cards</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Analytic Cards</h1>
+
+	
+	<div class="body refbody"><p class="shortdesc">Analytic cards show data in a variety of chart formats.</p>
+
+		<div class="section">
+			<p class="p">Analytic cards consist of two areas: a header area that displays the aggregated value of a key
+				measure (KPI), along with other information, and a chart area that displays a
+				representation of data, in graphic form. The measures and dimensions used in
+				analytic cards are defined in the annotation file. </p>
+
+			<div class="p">The type of chart chosen is determined by the value of <samp class="ph codeph">ChartType</samp> within the
+				annotation. Beginning with this release, the value of the template property within
+				the application descriptor file (manifest file) must point to the generic analytic
+				chart card component <samp class="ph codeph">sap.ovp.cards.charts.analytical</samp>. It would no
+				longer indicate the chart type. <div class="note note"><span class="notetitle">Note</span> 
+					<p class="p">SAP Web IDE  versions that use SAPUI5 1.38 or higher will automatically
+						ensure that the correct value is used for the template property when an
+						analytic card is configured. However, if the card is created with a lower
+						version of SAP Web IDE then this property must be manually set to
+							<samp class="ph codeph">sap.ovp.cards.charts.analytical</samp>.</p>
+
+				</div>
+</div>
+
+			<div class="p">The following chart cards are available: 
+<div class="table-wrapper tablenoborder"><table summary="" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__table_ekt_k2d_2w" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
+
+						
+						
+						
+						<thead class="thead" align="left">
+							<tr class="row">
+								<th class="entry" valign="top" width="33.33333333333333%" id="d11815370e54">
+									<p class="p">Chart Type</p>
+
+								</th>
+
+								<th class="entry" valign="top" width="33.33333333333333%" id="d11815370e60">
+									<p class="p">Description</p>
+
+								</th>
+
+								<th class="entry" valign="top" width="33.33333333333333%" id="d11815370e66">
+									<p class="p">Chart Type (Annotation File) </p>
+
+								</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Line</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">A line chart displays information as a series of data points
+										connected by straight line segments. They are often used to
+										visualize a trend in data over time.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/Line"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/Line"
+									/&gt;</samp></p>
+</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Bubble</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">Bubble charts display up to three measures and two dimensions
+										of data. The three measures are reflected in the X and Y
+										axes, and in the size of the bubbles. The dimensions can be
+										expressed in the colors and/or shapes of the bubbles. </p>
+
+									<p class="p">Bubble charts are often used to facilitate the understanding
+										of social, economical, medical, and scientific
+										relationships.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/Bubble"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/Bubble"
+									/&gt;</samp></p>
+</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Donut</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">A donut chart displays data as different colored sections of
+										a donut. The value of the measure determines the size of
+										each section. Donut charts help the viewer to quickly
+										determine the key area that needs attention.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/Donut"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/Donut"
+									/&gt;</samp></p>
+</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Column</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">A column chart displays data, such as total product sales
+										over a period of years. The number of columns is equal to
+										the number of measures in the annotation file.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/Column"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/Column"
+									/&gt;</samp></p>
+</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Stacked column</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">A stacked column chart is similar to the column chart;
+										however, it visualizes multiple measures or dimensions by
+										stacking the data on top of each other in a column.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/StackedColumn"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/StackedColumn"
+										/&gt;</samp></p>
+</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e54 ">
+									<p class="p">Vertical column</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e60 ">
+									<p class="p">With a vertical bullet chart, you can visualize a single
+										measure and compare it to a defined reference value, such as
+										a target unit of measure. This target is displayed a solid
+										black line.</p>
+
+								</td>
+
+								<td class="entry" valign="top" width="33.33333333333333%" headers="d11815370e66 "><samp class="ph codeph">"UI.ChartType/Vertical_Bullet"</samp><p class="p">Example:
+											<samp class="ph codeph">&lt;PropertyValue Property="ChartType"
+											EnumMember="UI.ChartType/Vertical_Bullet"
+										/&gt;</samp></p>
+</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+<div class="note note"><span class="notetitle">Note</span> 
+					<p class="p">There will be no further features or improvements for cards using the older value of
+							<samp class="ph codeph">template</samp> (for example,
+							<samp class="ph codeph">sap.ovp.cards.charts.line</samp>). This is still supported to
+						provide backward compatibility for such cards but it's strongly recommended
+						you reconfigure the card settings within the application descriptor file and
+						for <samp class="ph codeph">template</samp> use
+							<samp class="ph codeph">sap.ovp.cards.charts.analytical</samp>. </p>
+
+				</div>
+
+<div class="table-wrapper tablenoborder"><table summary="" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__table_fwr_5yx_st" class="table" frame="void" border="0" rules="none">
+<colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
+
+						
+						
+						
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_jtv_qdb_gv" src="loioaacfae28f7a74a3bba4a0d6d1ec0b743_LowRes.png"/></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_rvl_rdb_gv" src="loioe131bed6c38c4a5ea7a1d9a154be5831_LowRes.png"/></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_ejh_sdb_gv" src="loio075057585d9042ccb804d66f2ef26101_LowRes.png"/></p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Line Chart Card</span></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Bubble Chart Card</span></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Donut Chart Card</span></p>
+
+								</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+
+<div class="table-wrapper tablenoborder"><table summary="" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__table_dfn_1hd_2w" class="table" frame="void" border="0" rules="none">
+<colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
+
+						
+						
+						
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_tj2_yqj_2w" src="loiod3b0ca960bda4b3680f35711530a2784_HiRes.png"/></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_dt1_zqj_2w" src="loio751363aad02d4f63939f943fde85935c_HiRes.png"/></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><img class="image" id="loiod7b0b420eccf4d50bfd1b8a75e7a0fed__image_ajp_zqj_2w" src="loiof2d9418b09dc4bcb8e5ad091a19430e9_HiRes.png"/></p>
+
+								</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Column Chart Card</span></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Stacked Column Chart Card</span></p>
+
+								</td>
+
+								<td class="entry border_none" align="center" valign="top" width="33.33333333333333%">
+									<p class="p"><span class="ph emphasis emphasis">Vertical Bullet Chart Card</span></p>
+
+								</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+<div class="note note"><span class="notetitle">Note</span> Analytic cards don't have a fixed height. The height is adjusted
+					automatically to accomodate the data points and legends. Legends are created
+					automatically based on the defined measures and dimensions.</div>
+</div>
+
+		</div>
+
+		<div class="section"><div class="section_title">Example</div><div type="Example">
+			
+			<p class="p">The following is a snippet of a sample manifest file:</p>
+
+			<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"sap.app": {
+                                "_version": "1.1.0",
+                                "id": "sap.ovp.demo",
+                                "type": "application",
+                                "i18n": "i18n/i18n.properties",
+                                "applicationVersion": {
+                                                "version": "1.2.2"
+                                },
+                                "title": "{{app_title}}",
+                                "description": "{{app_description}}",
+                                "dataSources": {
+                                                "salesShare": {
+                                                                "uri": "https://abc.com/SalesShare.xsodata",
+                                                                "type": "OData",
+                                                                "settings": {
+                                                                                "odataVersion": "2.0",
+                                                                                "annotations": [
+                                                                                                "salesShareAnno"
+                                                                                                ]
+                                                                }
+                                                },
+                                                "salesShareAnno": {
+                                                                "uri": "data/salesshare/annotations.xml",
+                                                                "type": "ODataAnnotation",
+                                                                "settings": {
+                                                                }
+                                                }
+                                }
+                }
+
+"sap.ovp": {
+                                "globalFilterModel": "salesShare",
+                                "globalFilterEntityType": "GlobalFilters",
+                                "cards": {
+                                                "cardBubble": {
+                                                  "model": "salesShare",
+                                                  "template": "sap.ovp.cards.charts.bubble",
+                                                  "settings": {
+                                                                  "entitySet": "SalesShare",
+                                                                  "selectionAnnotationPath" : "com.sap.vocabularies.UI.v1.SelectionVariant#Eval_by_CtryCurr",
+                                                                  "chartAnnotationPath" : "com.sap.vocabularies.UI.v1.Chart#Eval_by_CtryCurr",
+                                                                  "presentationAnnotationPath" : "com.sap.vocabularies.UI.v1.PresentationVariant#Eval_by_CtryCurr",
+                                                                  "dataPointAnnotationPath" : "com.sap.vocabularies.UI.v1.DataPoint#Eval_by_CtryCurr",
+                                                                  "identificationAnnotationPath" : "com.sap.vocabularies.UI.v1.Identification#Eval_by_CtryCurr"
+                                                  }
+                                          },
+                                          "cardchartsline": {
+                                                  "model": "salesShare",
+                                                  "template": "sap.ovp.cards.charts.line",
+                                                  "settings": {
+                                                                  "entitySet": "SalesShare",
+                                                                  "selectionAnnotationPath" : "com.sap.vocabularies.UI.v1.SelectionVariant#Eval_by_Country",
+                                                                  "chartAnnotationPath" : "com.sap.vocabularies.UI.v1.Chart#Eval_by_Country",
+                                                                  "presentationAnnotationPath" : "com.sap.vocabularies.UI.v1.PresentationVariant#Eval_by_Country",
+                                                                  "dataPointAnnotationPath" : "com.sap.vocabularies.UI.v1.DataPoint#Eval_by_Country",
+                                                                                  "idenfiticationAnnotationPath" : "com.sap.vocabularies.UI.v1.Identification#Eval_by_Country"
+                                                  }
+                                          },
+                                          "cardchartsdonut": {
+                                                  "model": "salesShare",
+                                                  "template": "sap.ovp.cards.charts.donut",
+                                                  "settings": {
+                                                                  "entitySet": "SalesShare",
+                                                                  "selectionAnnotationPath" : "com.sap.vocabularies.UI.v1.SelectionVariant#Eval_by_Currency",
+                                                                  "chartAnnotationPath" : "com.sap.vocabularies.UI.v1.Chart#Eval_by_Currency",
+                                                                  "presentationAnnotationPath" : "com.sap.vocabularies.UI.v1.PresentationVariant#Eval_by_Currency",
+                                                                  "dataPointAnnotationPath" : "com.sap.vocabularies.UI.v1.DataPoint#Eval_by_Currency",
+                                                                                  "idenfiticationAnnotationPath" : "com.sap.vocabularies.UI.v1.Identification#Eval_by_Currency"
+                                                  }
+                                          }
+                                }
+                }
+
+
+
+</pre></div>
+
+			</div>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Chart Area</div><div type="Chart Area"><p class="p">Configuration for the chart area in analytic cards differs
+				per chart type. For more information, see <a class="xref" href="c7c5a828fe69411da7d63e2e63086b59.html" title="Developers configure the measures and dimensions displayed in charts by setting the role property to the desired value per chart type. Additional definitions apply to all chart types.">Configuring Charts</a>.</p>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Header Area</span></p>
+
+				<p class="p">The header area in analytic cards includes a key performance indicator (KPI), the
+					trend. and percentage of change. To learn how to configure the card header, see
+					the respective section in <a class="xref" href="8ed3f76b5f62419eb0408c0dba4b2e47.html" title="A card is a smart component that uses UI annotation to render its content. Overview pages may contain transactional cards, such as table and list, stack, and quick view cards, and analytic chart cards such as line, bubble, donut, column, and bullet chart cards.">Cards Used in Overview Pages</a>.</p>
+
+				<p class="p">The x- and y-axis of analytic chart cards won't be shown (except in the case of a
+					bubble chart) if you use a header for your card. If your header contains a good
+					description of the card, then the x- and y-axis descriptions are superfluous. Of
+					course, you'll see both the x- and y-axis if you choose to omit the header. For
+					example, the chart title <em class="ph i">Net Sales by Days Payable</em> already conveys that
+					the y-axis is <em class="ph i">Net Sales</em> and the x-axis represents <em class="ph i">Days Payable</em>, so
+					the axis labels are unnecessary. In case the card doesn't have a header, then
+					the axis titles are displayed</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Responsive Charts</span></p>
+
+				<p class="p"> Since there's no limit to the number of data points you can use in a chart card, this
+					eliminates the need for either horizontal or vertical scrollbars within an
+					analytic card. In case the system attempts to display too many data records, the
+					charts could become unresponsive and only some of the labels will be displayed
+					(although all data points are plotted). </p>
+
+				<p class="p">However, if you want to limit the number of records fetched from backend that are
+					rendered on the screen, use <samp class="ph codeph">UI.PresentationVariant.MaxItems</samp>.
+					For example:</p>
+
+				<div class="p">
+					<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+						<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">
+&lt;Annotation Term="UI.PresentationVariant" Qualifier="Column_Eval_by_Country_123"&gt;
+    &lt;Record&gt;      
+          &lt;PropertyValue Property="MaxItems" Int="5" /&gt;
+    &lt;/Record&gt;
+&lt;/Annotation&gt;
+
+</pre></div>
+
+					</div>
+
+				</div>
+
+				<div class="p">
+					<div class="note tip"><span class="tiptitle">Tip</span> If there are too many data records displayed on the chart, then
+						it could be difficult to accurately select a data point, especially if using
+						a mobile device. If you are only interested in checking the top records,
+						then use <samp class="ph codeph">UI.PresentationVariant.SortOrder</samp>.  For more
+						information, see <a class="xref" href="53b07912070f4e52babd516d7e4e8074.html" title="A card is a smart component that uses UI annotation to render its content. Each card is bound to a single entity set in a data source. The cards object contains the list of cards to display in the application.">Configuring Cards</a>.
+					</div>
+
+				</div>
+
+			</div>
+		</div></div>
+
+		<div class="section"><div class="section_title">Selected Data Context</div><div type="Selected Data Context">
+			
+			<p class="p">Now that the charts are interactive, the user can  choose a specific data point and this
+				selection will trigger the context being passed on to the target application. The
+				selected dimensions are passed as URL parameters to the target application. This is
+				in addition to the context that is passed on when navigating from the header. It's
+				up to the target application to read these URL parameters and use them as required
+				(typically to filter the data set that they display). It's no longer possible to
+				navigate to the target application by clicking outside the data point within the
+				chart area as in earlier versions. </p>
+
+			<div class="note note"><span class="notetitle">Note</span> 
+				<p class="p">The technical ID of the dimension name and value are passed on, not the display names. For
+					example, a chart displays total sales (y-axis) across regions (x-axis). The
+					dimension "RegionID" has a <samp class="ph codeph">sap:label</samp> specified as "Region"  and
+						<samp class="ph codeph">sap:text</samp> specified as "Region Name" in  the metadata. If
+					the annotation now maps "RegionID" to the category axis (x-axis) and total sales
+					to y-axis, then the chart would display each different region with its region
+					name and not technical ID (because <samp class="ph codeph">sap:text</samp> is "Region Name")
+					even though the mapping is done based on "RegionID". </p>
+
+				<p class="p">However, when the user selects a particular data point, the system passes along, for example,
+					"RegionID"="001" instead of "Region"="EMEA".</p>
+
+			</div>
+
+		</div></div>
+
+	</div>
+
+<div class="related-links"> 
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Analytic Cards";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

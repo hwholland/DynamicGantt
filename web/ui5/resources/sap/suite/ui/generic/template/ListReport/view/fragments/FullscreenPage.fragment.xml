@@ -1,0 +1,54 @@
+<core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
+						 xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:smartlink="sap.ui.comp.navpopover"
+						 xmlns:smarttable="sap.ui.comp.smarttable" xmlns:table="sap.ui.table"
+						 xmlns:st="sap.suite.ui.generic.template"
+						 xmlns:semantic="sap.m.semantic"
+						 xmlns:ushell="sap.ushell.ui"
+						 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+						 xmlns:build="sap.build">
+
+	<st:lib.FlexEnabler/>
+	<template:with path="entitySet>entityType" helper="sap.ui.model.odata.AnnotationHelper.gotoEntityType"
+				   var="entityType">
+		<semantic:FullscreenPage id="page"
+								 title="{= ${path: 'parameter>/settings/routeConfig/name'} === 'root' ? '{i18n>PAGEHEADER}' : ${path: 'entityType>sap:label'} }"
+								 showNavButton="true" navButtonPress="._templateEventHandlers.onBack"
+								 busyIndicatorDelay="0" enableScrolling="true"
+								 class="sapSmartTemplatesListReportPageOverflow"
+								 build:metadata="#pattern:ListReport;staticProp:title:Title">
+			<semantic:content>
+				<VBox fitContainer="true">
+					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartFilterBar"
+								   type="XML"/>
+					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartTable"
+								   type="XML"/>
+					<!-- Helper -->
+					<customData>
+						<core:CustomData id="idEntityTypeName" key="entityTypeName" writeToDom="false"
+										 value="{path: 'entityType>com.sap.vocabularies.UI.v1.HeaderInfo/TypeName', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/>
+					</customData>
+				</VBox>
+			</semantic:content>
+
+           <template:if test="{= ${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isComplexTable'} }">
+				<semantic:customFooterContent>
+					<Button text="{_templPriv>/complexTable/backToMain}" type="Emphasized" press="._templateEventHandlers.onBack" />
+				</semantic:customFooterContent>
+		   </template:if>		   
+
+			<semantic:sendEmailAction>
+				<semantic:SendEmailAction id="shareEmail" press="._templateEventHandlers.onShareEmailPress"/>
+			</semantic:sendEmailAction>
+			<semantic:shareInJamAction>
+				<semantic:ShareInJamAction id="shareInJam" visible="{_templPriv>/listReport/share/isShareInJamActive}"
+										   press="._templateEventHandlers.onShareInJamPress"/>
+			</semantic:shareInJamAction>
+			<semantic:saveAsTileAction>
+				<ushell:footerbar.AddBookmarkButton id="shareTile" title="{i18n>PAGEHEADER}"
+													tileIcon="{_templPriv>/listReport/share/bookmarkIcon}"
+													customUrl="{_templPriv>/listReport/share/bookmarkCustomUrl}"
+													serviceUrl="{_templPriv>/listReport/share/bookmarkServiceUrl}"/>
+			</semantic:saveAsTileAction>
+		</semantic:FullscreenPage>
+	</template:with>
+</core:FragmentDefinition>

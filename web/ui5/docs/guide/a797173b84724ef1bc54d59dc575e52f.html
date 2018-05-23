@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="You can add a read-only rating indicator in the list report or in a responsive table in the object page view."/>
+<meta name="description" content="You can add a read-only rating indicator in the list report or in a responsive table in the object page view."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=24073929567190533"/>
+<title>Rating Indicator in Tables</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioa797173b84724ef1bc54d59dc575e52f">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Rating Indicator in Tables</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">You can add a read-only rating indicator in the list report or in a responsive table in
+		the object page view.</p>
+
+		<p class="p"> The rating indicator allows you to visually represent the value of a field from the back-end
+			system with the corresponding number of stars (configurable). This field can indicate,
+			for example, a rating or classification for a specific object or item.</p>
+
+		<div class="p">Decimal values are rounded up or down accordingly. If a value falls between x.25 and x.74, a
+			half-star is displayed.<div class="fig fignone" id="loioa797173b84724ef1bc54d59dc575e52f__fig_ay5_nw3_yv"><div class="figcontainer">
+				
+				<img class="image" id="loioa797173b84724ef1bc54d59dc575e52f__image_yyb_lw3_yv" src="loiobe08887db21d4e628a73de0a54d4a5ce_LowRes.png"/>
+			<div class="figcap">Rating Indicator in Table</div></div></div>
+</div>
+
+		<div class="section"><div class="section_title">Code Samples</div><div type="Code Samples">
+			
+			<p class="p"><span class="ph emphasis emphasis">Enable Rating Indicator</span></p>
+
+			<div class="p">To add a rating indicator, add the type <samp class="ph codeph">#AS_DATAPOINT</samp> to the relevant
+					<samp class="ph codeph">lineItem</samp> annotation and the <samp class="ph codeph">@UI.dataPoint:
+					{visualization: #RATING }</samp> annotation for the relevant field as shown
+				below:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>@UI.lineItem: {position:30, type:#AS_DATAPOINT}
+
+@UI.dataPoint: {visualization:#RATING}
+
+Product.Rating,
+</pre></div>
+</div>
+
+			<p class="p"><span class="ph emphasis emphasis">Define Maximum Number of Stars</span></p>
+
+			<p class="p">By default, the rating indicator displays a maximum of five stars. If desired, you
+				can change this by defining a different value for the <samp class="ph codeph">targetValue</samp>
+				property. </p>
+
+			<p class="p">In the sample code below, the rating indicator is set up to display six stars: </p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>@UI.lineItem: {position:30, type:#AS_DATAPOINT}
+				
+@UI.dataPoint: {targetValue: 6, visualization:#RATING}
+
+Product.Rating,
+</pre></div>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Rating Indicator in Tables";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

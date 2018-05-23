@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Displays a ring chart representing a percentage value."/>
+<meta name="description" content="Displays a ring chart representing a percentage value."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7580860373856633"/>
+<title>Radial Micro Chart</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioaa93bdb245914ebba9583b24dad94938">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Radial Micro Chart</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">Displays a ring chart representing a percentage value.</p>
+<div class="section"><div class="section_title">Overview</div><div type="Overview">
+			
+			<p class="p">The <samp class="ph codeph">RadialMicroChart</samp> control provides the functions to show a ring chart with
+				the percentage value in the center. To indicate the significance of the displayed
+				percentage value you can define the status as <samp class="ph codeph">Good</samp>,
+					<samp class="ph codeph">Neutral</samp>, <samp class="ph codeph">Critical</samp>, or
+				<samp class="ph codeph">Error</samp>.</p>
+
+			<div class="fig fignone" id="loioaa93bdb245914ebba9583b24dad94938__fig_mp1_24k_2v"><div class="figcontainer">
+				<img class="image" id="loioaa93bdb245914ebba9583b24dad94938__image_rdc_qxm_2v" src="loio12befff74be64655b148ac2d140517fa_LowRes.png"/>
+			</div></div>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Details</div><div type="Details">
+			
+			<ul class="ul" id="loioaa93bdb245914ebba9583b24dad94938__ul_j22_vxm_2v">
+				<li class="li">
+					<p class="p">The percentage value represented by the <samp class="ph codeph">RadialMicroChart</samp> control can be
+						defined in the following ways:</p>
+
+					<ul class="ul" id="loioaa93bdb245914ebba9583b24dad94938__ul_s5p_fzm_2v">
+						<li class="li">
+							<p class="p">Insert the percentage property directly.</p>
+
+						</li>
+
+						<li class="li">
+							<p class="p">Set the total and the fraction property and the percentage value is calculated
+								automatically.</p>
+
+							<div class="note note"><span class="notetitle">Note</span>  If the total property is set to <kbd class="ph userinput">0</kbd>, only a blank circle gets
+								rendered as this does not return a valid value. The error is
+								described in the error log.</div>
+
+						</li>
+
+					</ul>
+
+				</li>
+
+				<li class="li">
+					<p class="p">The color of the circle is defined by setting the <samp class="ph codeph">valueColor</samp> property to
+						one of the following types:</p>
+
+					<ul class="ul" id="loioaa93bdb245914ebba9583b24dad94938__ul_mr5_z1n_2v">
+						<li class="li">
+							<p class="p"><samp class="ph codeph">sap.m.ValueColor</samp>: Enumeration of possible value
+								color settings representing the status <samp class="ph codeph">Good</samp>,
+									<samp class="ph codeph">Neutral</samp>, <samp class="ph codeph">Critical</samp>, and
+									<samp class="ph codeph">Error</samp>.</p>
+
+						</li>
+
+						<li class="li">
+							<p class="p"><samp class="ph codeph">sap.ui.core.CSSColor</samp>: All CSS color values are
+								allowed.</p>
+
+						</li>
+
+					</ul>
+
+				</li>
+
+				<li class="li">
+					<p class="p">The <samp class="ph codeph">RadialMicroChart</samp> control does not have a defined width or height but
+						uses the available space provided by the parent control. If the height and
+						width of the control are between 46px and 54px, a different text color is
+						used for the percentage value for accessibility reasons. If the height and
+						width are below 46px, the percentage value is not displayed inside the
+						circle.</p>
+
+				</li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">API Reference/Explored Samples</div><div type="API Reference/Explored Samples">
+			
+			<p class="p"><span class="ph">For more information about the
+						<span class="keyword apiname">RadialMicroChart</span> control, see the <a class="xref" href="../../docs/api/symbols/sap.suite.ui.microchart.RadialMicroChart.html" alt="../../docs/api/symbols/sap.suite.ui.microchart.RadialMicroChart.html" title="../../docs/api/symbols/sap.suite.ui.microchart.RadialMicroChart.html">API Reference</a> in the Demo Kit and the <a class="xref" target="_blank" href="../../explored.html#/entity/sap.suite.ui.microchart.RadialMicroChart/samples" alt="../../explored.html#/entity/sap.suite.ui.microchart.RadialMicroChart/samples" title="../../explored.html#/entity/sap.suite.ui.microchart.RadialMicroChart/samples">sample</a> in the
+						<span class="ph uicontrol">Explored</span> app in the Demo Kit.</span></p>
+</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Radial Micro Chart";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

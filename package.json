@@ -1,0 +1,39 @@
+{
+    "name": "@hwholland/project",
+    "version": "0.1.0",
+    "description": "To be determined",
+    "main": "index.js",
+    "dependencies": {
+        "body-parser": "~1.18.2",
+        "compression": "~1.7.1",
+        "express": "~4.16.2",
+        "open": "~0.0.5",
+        "path": "^0.12.7",
+        "request": "^2.83.0",
+        "serve-index": "~1.9.1",
+        "redis": "2.8.0"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
+        "start": "node server.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/hwholland/project.git"
+    },
+    "author": {
+        "name": "Harrison Holland",
+        "email": "harrisonholland@gmail.com"
+    },
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/hwholland/project.git"
+    },
+    "homepage": "https://github.com/hwholland/project.git#readme",
+    "devDependencies": {
+        "grunt": "^0.4.5",
+        "grunt-contrib-uglify": "^3.3.0",
+        "grunt-openui5": "^0.14.0"
+    }
+}

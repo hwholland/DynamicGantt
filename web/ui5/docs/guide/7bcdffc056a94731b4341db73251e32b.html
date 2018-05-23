@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="The sap.ui.comp.smartfilterbar.SmartFilterBar control analyzes the $metadata document of an OData service and renders a FilterBar that can be used to filter a table."/>
+<meta name="description" content="The sap.ui.comp.smartfilterbar.SmartFilterBar control analyzes the $metadata document of an OData service and renders a FilterBar that can be used to filter a table."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9234143736712679"/>
+<title>Smart Filter Bar</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio7bcdffc056a94731b4341db73251e32b">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Smart Filter Bar</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">The <samp class="ph codeph">sap.ui.comp.smartfilterbar.SmartFilterBar</samp> control analyzes the
+			<samp class="ph codeph">$metadata</samp> document of an OData service and renders a
+			<samp class="ph codeph">FilterBar</samp> that can be used to filter a table.</p>
+
+		<p class="p">The frequently asked questions section aims to answer the basic questions that may occur when
+			using the <samp class="ph codeph">SmartFilterBar</samp> control.</p>
+
+		<p class="p">For more information about
+			this control, see the <a class="xref" href="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html" alt="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html" title="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html">API Reference</a> in the Demo Kit and the <a class="xref" target="_blank" href="../../explored.html#/entity/sap.ui.comp.smartfilterbar.SmartFilterBar/samples" alt="../../explored.html#/entity/sap.ui.comp.smartfilterbar.SmartFilterBar/samples" title="../../explored.html#/entity/sap.ui.comp.smartfilterbar.SmartFilterBar/samples">sample</a> in the <span class="ph uicontrol">Explored</span>
+			app in the Demo Kit. </p>
+
+		<p class="p">For more information about
+			annotations for this control, see the <a class="xref" href="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html#annotations" alt="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html#annotations" title="../../docs/api/symbols/sap.ui.comp.smartfilterbar.SmartFilterBar.html#annotations">API Reference</a> in the Demo Kit. </p>
+
+		<div class="section"><div class="section_title">Overview</div><div type="Overview">
+			
+			<p class="p">The <samp class="ph codeph">SmartFilterBar</samp> control is a wrapper control that analyzes the
+					<samp class="ph codeph">$metadata</samp> document of an OData service. It renders a
+					<samp class="ph codeph">FilterBar</samp> control and provides  integration with the
+					<samp class="ph codeph">VariantManagement</samp> control that is easy to configure.</p>
+
+			<p class="p"><samp class="ph codeph">$metadata</samp> is an XML-based document containing several annotations. These
+				annotations are used to:</p>
+
+			<ul class="ul" id="loio7bcdffc056a94731b4341db73251e32b__ul_jdq_kpg_1w">
+				<li class="li"> Determine the type of control (for example, whether a field is shown as
+						<samp class="ph codeph">MultiInput</samp> control or as <samp class="ph codeph">DatePicker</samp>)</li>
+
+				<li class="li"> Enable the <samp class="ph codeph">Suggest</samp> feature</li>
+
+				<li class="li"> Enable <samp class="ph codeph">ValueHelpDialog</samp></li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Details</div><div type="Details">
+			
+			<p class="p">In addition to the <samp class="ph codeph">$metadata</samp> document, you can also have an
+				additional configuration in the XML view. This additional configuration can be
+				either <samp class="ph codeph">sap.ui.comp.smartfilterbar.ControlConfiguration</samp> or
+					<samp class="ph codeph">sap.ui.comp.smartfilterbar.GroupConfiguration</samp>. Using this
+				additional configuration, you can override certain settings from the OData metadata,
+				such as labels, indexes, or the type of control. You can also add custom fields or
+				custom groups to the filter bar that are not part of the OData
+					<samp class="ph codeph">$metadata</samp> document at all.</p>
+
+			<p class="p">The <samp class="ph codeph">FieldGroup</samp> annotation is used by the
+					<samp class="ph codeph">SmartFilterBar</samp> control to create a grouping of the fields. The
+				grouping is shown in the filter dialog. Any label specified in this dialog is used
+				to override the default label of the property. Only <samp class="ph codeph">sap:filterable</samp>
+				fields are enabled in the <samp class="ph codeph">SmartFilterBar</samp> control by default
+				(default is <samp class="ph codeph">true</samp> when <samp class="ph codeph">null</samp>). </p>
+
+			<p class="p">Multi-value and unrestricted <samp class="ph codeph">Date</samp> fields are supported if the
+				annotation <samp class="ph codeph">sap:filter-restriction="multi-value"</samp> is set for date
+				properties. </p>
+
+			<p class="p">For <samp class="ph codeph">MultiInput</samp> filter fields, the <samp class="ph codeph">MultiLine</samp> mode is
+				active.</p>
+
+			<p class="p">The <samp class="ph codeph">SmartFilterBar</samp> control supports the <samp class="ph codeph">Edm.Time</samp>
+				OData type. The fields bound to OData properties of this type are represented by the
+					<samp class="ph codeph">sap.m.TimePicker</samp> control. The filter panel of the
+					<samp class="ph codeph">SmartFilterBar</samp> control containing the conditions allows
+				filtering for time types using the <samp class="ph codeph">TimePicker</samp> control.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">FAQ</div><div type="FAQ"><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p"><samp class="ph codeph">TypeAhead</samp> is not working. When I start typing, no http requests
+					are sent.</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">Take a look at the <samp class="ph codeph">$metadata</samp> document and make sure there are
+						<samp class="ph codeph">ValueHelp</samp> annotations for this field. The
+						<samp class="ph codeph">Target</samp> attribute must look like this:
+						{<samp class="ph codeph">Namespace</samp>}.{<samp class="ph codeph">EntityName</samp>}/{<samp class="ph codeph">FieldName</samp>}.</p>
+
+				<p class="p">Make sure that the namespace in the <samp class="ph codeph">Target</samp> attribute is
+					correct.</p>
+
+				<p class="p">Example of a <samp class="ph codeph">ValueHelp</samp> annotation:</p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+&lt;Annotations Target="FAP_VENDOR_LINE_ITEMS_SRV.Item/Creditor" xmlns="http://docs.oasis-open.org/odata/ns/edm"&gt;
+	&lt;Annotation Term="com.sap.vocabularies.Common.v1.ValueList"&gt;
+		&lt;Record&gt;
+			&lt;PropertyValue Property="CollectionPath" String="Vendors"/&gt;
+			&lt;PropertyValue Property="SearchSupported" Bool="true"/&gt;
+			&lt;PropertyValue Property="Parameters"&gt;
+				&lt;Collection&gt;
+					&lt;Record Type="com.sap.vocabularies.Common.v1.ValueListParameterInOut"&gt;
+						&lt;PropertyValue Property="LocalDataProperty" PropertyPath="Creditor"/&gt;
+						&lt;PropertyValue Property="ValueListProperty" String="VendorID"/&gt;
+					&lt;/Record&gt;
+				&lt;/Collection&gt;
+			&lt;/PropertyValue&gt;
+		&lt;/Record&gt;
+	&lt;/Annotation&gt;
+	&lt;/Annotations&gt;</pre></div>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">I have a field <span class="ph uicontrol">Entered on</span> that’s an <samp class="ph codeph">Input</samp>
+					field. It should be a <samp class="ph codeph">DatePicker</samp>.</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">Take a look at the <samp class="ph codeph">$metadata</samp> document and make sure that the
+					property is of type <samp class="ph codeph">Edm.DateTime</samp> and the property is annotated
+					with <samp class="ph codeph">sap:display-format="Date"</samp>.</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">I tried to set default values for a filter field in the control configuration in
+					JavaScript. These default values don’t have any effect.</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">The <samp class="ph codeph">ControlConfiguration</samp> and <samp class="ph codeph">GroupConfiguration</samp>
+					are intended to be used to add static configuration in an XML view.</p>
+
+				<div class="p">There are three properties that can be set dynamically: <ul class="ul" id="loio7bcdffc056a94731b4341db73251e32b__ul_c14_z4l_1w">
+						<li class="li">
+							<p class="p"><samp class="ph codeph">visible</samp></p>
+
+						</li>
+
+						<li class="li">
+							<p class="p"><samp class="ph codeph">label</samp></p>
+
+						</li>
+
+						<li class="li"><samp class="ph codeph">visibleInAdvancedArea</samp></li>
+
+					</ul>
+</div>
+
+				<p class="p">All other properties and aggregations are not dynamic. This means they have to be
+					set statically in the XML view, and not dynamically by JavaScript. Any changes
+					made in the <samp class="ph codeph">ControlConfiguration</samp> or
+						<samp class="ph codeph">GroupConfiguration</samp> after the <samp class="ph codeph">initialise</samp>
+					event has been fired do not have any effect.</p>
+
+				<p class="p">If you have to set values of a filter field dynamically in JavaScript, you can
+					use the <samp class="ph codeph">setFilterData</samp> API.</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">The value help dialog for a filter field contains a table with multiple columns.
+					How can I change the order of these columns?</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">The order of the columns is specified in the OData <samp class="ph codeph">$metadata</samp>
+					document in the <samp class="ph codeph">ValueHelp</samp> annotation.</p>
+
+				<p class="p">There is one column for each <samp class="ph codeph">ValueListParameterInOut</samp> or
+						<samp class="ph codeph">ValueListParameterOut</samp> in the related annotation.</p>
+
+				<p class="p">The order of the columns is the same as the order of the
+						<samp class="ph codeph">InOut</samp>/<samp class="ph codeph">Out</samp> parameters in the
+						<samp class="ph codeph">$metadata </samp> document. You can’t use configuration in the XML
+					view to change this order. If you want to change the order, you can do it in the
+					OData <samp class="ph codeph">$metadata</samp> document.</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">I have added custom controls to the <samp class="ph codeph">SmartFilterBar</samp>. If I save a
+					variant and load it again the custom fields are initial. What do I have to do to
+					enable custom fields for variant management?</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">In general, custom fields cannot be handled automatically by the
+						<samp class="ph codeph">SmartFilterBar</samp> control. You have to implement this in the
+					view’s controller. The <samp class="ph codeph">SmartFilterBar</samp> offers two events that
+					can be used to enable custom fields for variant management:</p>
+
+				<ul class="ul" id="loio7bcdffc056a94731b4341db73251e32b__ul_rzl_pcg_34">
+					<li class="li"><samp class="ph codeph">beforeVariantSave</samp></li>
+
+					<li class="li"><samp class="ph codeph">afterVariantLoad</samp></li>
+
+				</ul>
+
+				<p class="p">You can use the <samp class="ph codeph">beforeVariantSave</samp> event to update the model of
+					the <samp class="ph codeph">SmartFilterBar</samp> with the values from the custom fields.
+					Every value within the model is stored as a variant. The values of custom fields
+					should be stored under the property <samp class="ph codeph">_CUSTOM</samp>, for example,
+						<samp class="ph codeph">oSmartFilter.setFilterData({_ CUSTOM :{field1:"abc",
+						field2:"123"}});</samp>
+				</p>
+
+				<p class="p">You can use the event <samp class="ph codeph">afterVariantLoad</samp> to get the values from
+					the model and use them to update the custom filter fields, for example: </p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+oData = oSmartFilter.getFilterData();
+var oCustomFieldData = oData["_CUSTOM"];
+oCustomField1.setValue(oCustomFieldData.field1);</pre></div>
+
+				<p class="p">If both events are handled this way, custom fields are enabled for variant
+					management.</p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">How can I set initial or default data in the <samp class="ph codeph">SmartFilterBar</samp>
+					control?</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">Static data can be set in the control using <samp class="ph codeph">ControlConfiguration</samp>
+					in the <samp class="ph codeph">view.xml</samp>:</p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+&lt;smartFilterBar:SmartFilterBar id="smartFilterBar" ...&gt;
+… 
+&lt;smartFilterBar:controlConfiguration&gt;
+              &lt;smartFilterBar:ControlConfiguration key="CompanyCode" visible="true" index="3"…&gt;
+                     &lt;smartFilterBar:defaultFilterValues&gt;
+                            &lt;smartFilterBar:SelectOption low="0001"&gt;
+                            &lt;/smartFilterBar:SelectOption&gt;
+                     &lt;/smartFilterBar:defaultFilterValues&gt;
+              &lt;/smartFilterBar:ControlConfiguration&gt;</pre></div>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">How can I set dynamic data as initial or default data in the
+						<samp class="ph codeph">SmartFilterBar</samp> control, for example, for navigation
+					parameters?</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">Dynamic data can be set as initial or default data in the control by registering
+					to the <samp class="ph codeph">initialise</samp> event and setting JSON/JSONstring using the
+						<samp class="ph codeph">setFilterData</samp> API in your
+					<samp class="ph codeph">controller.js</samp>.</p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+…
+onInitSmartFilter: function(oEvent) { //Assuming that this is the eventhandler registered for the "initialise" event of the SmartFilterBar control in your view.xml
+              var    oSmartFilter = oView.byId("smartFilterBar");
+              var oTodaysDate = new Date();
+              //Sample Data
+              var oJSONData = {
+                           Company: {
+                                  items: [ //MultiInput fields with filter-restriction="multi-value" (Ex: shown as Tokens based on control type)
+                                         {
+                                            key:"0001",
+                                            text:"SAP SE" //Display text on the token --&gt; not used for filtering!
+                                   },
+                                   {
+                                      key:"0002",
+                                      text:"SAP XYZ"
+                                  }
+                                   ]
+                           },                         
+                           SomeDate: { //DateRange field with filter-restriction="interval"
+                                  low: oTodaysDate, //Date fields require JavaScript Date objects!
+                                  high: oTodaysDate
+                           }, 
+                           YearInterval: {
+                                  low: "2000-2014" //simple input field with filter-restriction="interval" --&gt; text separated by a single "-"
+                           },
+                           Ledger:"0L" //Single-value field --&gt; Plain input
+              };
+              
+              oSmartFilter.setFilterData(oJSONData); //Data will be updated with existing data in the SmartFilter
+       },
+…
+
+</pre></div>
+
+				<div class="note note"><span class="notetitle">Note</span> You can use the <samp class="ph codeph">setFilterData</samp> API to set data in the
+						<samp class="ph codeph">SmartFilterBar</samp> control.</div>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Question</p>
+
+				<p class="p">How does the <samp class="ph codeph">SmartFilterBar</samp> determine if a filter has a value
+					assigned to it?</p>
+
+			</div><div class="sectiondiv subsection collapsible">
+				<p class="p subsectiontitle">Answer</p>
+
+				<p class="p">The <samp class="ph codeph">SmartFilterBar</samp> control handles the checks whether values are
+					set for the OData-service-based filters, but has only a limited capability to do
+					the same for custom fields. For checks like this, the custom field provider has
+					to provide a Boolean value <samp class="ph codeph">(true/false</samp>) as an indicator whether
+					a value for the custom field exists via the custom data extension
+						<samp class="ph codeph">hasValue</samp>. If the custom data does not exist, the
+						<samp class="ph codeph">SmartFilterBar</samp> control analyzes if the custom control has
+					either the method <samp class="ph codeph">getValue</samp> or <samp class="ph codeph">getSelectedKey</samp>
+					and by using those tries to determine whether the value exists.</p>
+
+				<div class="note note"><span class="notetitle">Note</span> The method-based check is not very reliable, since, for example,
+						<samp class="ph codeph">MultiComboBox</samp> provides both methods mentioned, but the
+					actual value is accessed via <samp class="ph codeph">getSelectedKeys</samp>. It is strongly
+					recommended to use the custom data extension for such scenarios. The
+						<samp class="ph codeph">SmartFilterBar</samp> control can only react to an
+						<samp class="ph codeph">onChange</samp> event. Therefore, the application has to set the
+						<samp class="ph codeph">hasValue</samp> custom data while handling the
+						<samp class="ph codeph">onChange</samp> event.</div>
+
+			</div></div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Smart Filter Bar";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

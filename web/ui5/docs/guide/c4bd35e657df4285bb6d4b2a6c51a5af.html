@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Quick view cards display detailed information about a single record, in greater depth than would be displayed in a table or list."/>
+<meta name="description" content="Quick view cards display detailed information about a single record, in greater depth than would be displayed in a table or list."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6020439430778658"/>
+<title>Quick View Cards</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioc4bd35e657df4285bb6d4b2a6c51a5af">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Quick View Cards</h1>
+
+	
+	<div class="body refbody"><p class="shortdesc">Quick view cards display detailed information about a single record, in greater depth
+		than would be displayed in a table or list. </p>
+
+		<div class="section">
+			<p class="p">The information displayed in quick view cards configured in the
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo</samp> and
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp> terms. The
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.HeaderInfo</samp> term is used to present
+				the entity header information, and the
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp> term is used to present
+				detailed information about the record. It supports the following properties:</p>
+
+			<ul class="ul" id="loioc4bd35e657df4285bb6d4b2a6c51a5af__ul_rfc_12x_s5">
+				<li class="li">
+					<p class="p"><samp class="ph codeph">TypeNamePlural</samp></p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">ImageUrl</samp>
+					</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">Title</samp>
+					</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p"><samp class="ph codeph">Description</samp></p>
+
+				</li>
+
+			</ul>
+
+		</div>
+
+		<div class="section"><p class="p">The content area shows <samp class="ph codeph">FieldGroup</samp> records from
+					<samp class="ph codeph">referenceFacet</samp> items that have been tagged using the
+					<samp class="ph codeph">IsSummary</samp> annotation in the
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp> annotation.</p>
+<p class="p">The
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp> term can be configured in the
+				application manifest file by setting the <samp class="ph codeph">annotationPath</samp> property
+				with a qualifier, as shown in the example below. If the
+					<samp class="ph codeph">annotationPath</samp> property is not configured, the
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp> term, without a qualifier, is
+				used.</p>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Card Footer</span></p>
+
+				<p class="p">You can assign actions to quick view cards that open in the object stream of the stack card.
+					The actions are displayed as buttons in the card footer. For more information
+					about configuring the actions, see the section on Card Footer in <a class="xref" href="8ed3f76b5f62419eb0408c0dba4b2e47.html" title="A card is a smart component that uses UI annotation to render its content. Overview pages may contain transactional cards, such as table and list, stack, and quick view cards, and analytic chart cards such as line, bubble, donut, column, and bullet chart cards.">Cards Used in Overview Pages</a>.</p>
+
+				<p class="p">Interaction buttons in the footer area are now part of
+						<samp class="ph codeph">sap.m.OverflowToolbar</samp>. With this, the quick view cards can
+					now display action buttons based on the width of the card and if more actions
+					are necessary, the remaining actions are shown on the Overflow Toolbar. </p>
+
+				<div class="note note"><span class="notetitle">Note</span> 
+					<p class="p">Since the height of each quick view card is aligned with the content of the
+						card, this means cards can have different sizes. If there is more content
+						than can be shown in the card then you'll be able to scroll vertically, but
+						only within the content area itself. The header and footers stay fixed.</p>
+
+				</div>
+
+			</div><div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"sap.ovp": {
+    ...
+    "cards": {
+        "card00": {
+            "model": "ZCD204_EPM_DEMO_SRV",
+            "template": "sap.ovp.cards.stack",
+            "settings": {
+                "category": "{{card01_category}}",
+                "entitySet": "BusinessPartners",
+                "objectStreamCardsSettings": {
+                    "annotationPath": "com.sap.vocabularies.UI.v1.Facets#Qualifier2"
+                }
+            }
+        },
+        ...
+    }
+}</pre></div>
+
+			</div>
+</div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Quick View Cards";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

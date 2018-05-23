@@ -1,0 +1,33 @@
+{
+  "resources": [
+    {
+      "name": "Component-dbg.js",
+      "isDebug": true
+    },
+    {
+      "name": "Component.js"
+    },
+    {
+      "name": "css/custom.css"
+    },
+    {
+      "name": "i18n/i18n.properties"
+    },
+    {
+      "name": "manifest.json"
+    },
+    {
+      "name": "resources.json"
+    },
+    {
+      "name": "view/QuickCreate-dbg.controller.js",
+      "isDebug": true
+    },
+    {
+      "name": "view/QuickCreate.controller.js"
+    },
+    {
+      "name": "view/QuickCreate.view.xml"
+    }
+  ]
+}

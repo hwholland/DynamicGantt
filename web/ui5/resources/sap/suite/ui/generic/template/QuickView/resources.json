@@ -1,0 +1,30 @@
+{
+  "resources": [
+    {
+      "name": "Component-dbg.js",
+      "isDebug": true
+    },
+    {
+      "name": "Component.js"
+    },
+    {
+      "name": "i18n/i18n.properties"
+    },
+    {
+      "name": "manifest.json"
+    },
+    {
+      "name": "resources.json"
+    },
+    {
+      "name": "view/QuickView-dbg.controller.js",
+      "isDebug": true
+    },
+    {
+      "name": "view/QuickView.controller.js"
+    },
+    {
+      "name": "view/QuickView.view.xml"
+    }
+  ]
+}

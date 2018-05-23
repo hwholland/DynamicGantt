@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="This chapter is only relevant if you're using the SAPUI5 ABAP repository and the ABAP back-end infrastructure. The SAPUI5 repository bases on the BSP repository."/>
+<meta name="description" content="This chapter is only relevant if you're using the SAPUI5 ABAP repository and the ABAP back-end infrastructure. The SAPUI5 repository bases on the BSP repository."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6324852716407069"/>
+<title>Securing the SAPUI5 Repository</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio91f3ecc06f4d1014b6dd926db0e91070">
+<div id="wrapper"><div id="container">
+<h1 class="title topictitle1">Securing the <span class="ph"><span class="ph pname">SAPUI5</span></span>
+		Repository</h1>
+
+	<div class="body"><p class="shortdesc">This chapter is only relevant if you're using the <span class="ph pname">SAPUI5</span> ABAP repository and the ABAP
+		back-end infrastructure. The <span class="ph"><span class="ph pname">SAPUI5</span></span> repository bases on the
+		BSP repository.</p>
+<div class="section" id="loio91f3ecc06f4d1014b6dd926db0e91070__section_FF322F8337114FF09D995A2965C673BA"><div class="section_title">Using the SAPUI5 Repository Team Provider or the SAPUI5 Upload Report</div><div type="Using the SAPUI5 Repository Team Provider or the SAPUI5 Upload Report"> 
+		 
+		<p class="p">The <span class="ph"><span class="ph pname">SAPUI5</span></span> repository team provider connected against a <span class="ph pname">SAP NetWeaver 7.3 EHP1</span> ABAP system with UI add-on
+			or a <span class="ph pname">SAP NetWeaver 7.4</span> SPS01 or higher can be used to synchronize the <span class="ph"><span class="ph pname">SAPUI5</span></span>
+			application resources between Eclipse and the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository on the ABAP system. </p>
+ 
+		<p class="p">For more information on the use of <span class="ph"><span class="ph pname">SAPUI5</span></span> repository team provider, see the Security Guide for
+				ABAP development tools, which is part of the ABAP Development User Guide and the <span class="ph pname">SAP NetWeaver</span> Security Guide.</p>
+
+			<p class="p">As an alternative for the SAP Business Suite system 7.00 and higher - especially from
+				version 7.31 - you may use the interactive ABAP report
+					<samp class="ph codeph">/UI5/UI5_REPOSITORY_LOAD</samp> or
+					<samp class="ph codeph">/UI5/UI5_REPOSITORY_LOAD_HTTP</samp>, which offer a similar
+				functionality. Compared to the <span class="ph"><span class="ph pname">SAPUI5</span></span> Repository Team Provider it does not offer a
+				built-in code merge. Here, a separate source code repository such as git or
+				Subversion (SVN) may be used.</p>
+ 
+		<p class="p"><strong class="ph b">Authorization Objects
+			for <span class="ph"><span class="ph pname">SAPUI5</span></span> Repository Team Provider</strong> 
+		</p>
+ 
+		<div class="table-wrapper"><table summary="" border="1" class="simpletable"><tr class="sthead"><th valign="bottom" align="left" id="d8527492e93" class="stentry">Authorization object</th>
+<th valign="bottom" align="left" id="d8527492e95" class="stentry">Description</th>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_DEVELOP</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object<samp class="ph codeph"> S_DEVELOP</samp> is needed to create, update and delete
+			<span class="ph pname">SAPUI5</span> applications in the SAPUI5 Repository. </td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_ICF_ADM</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_ICF_ADM</samp> is needed to create the <span class="ph pname">SAPUI5</span>
+						application-specific ICF node under
+				<samp class="ph codeph">/sap/bc/ui5_ui5/</samp></td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_TRANSPORT</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_TRANSPRT</samp> is used to create new transport
+							request or new task. </td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_CTS_ADMI</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_CTS_ADMI</samp> is needed to transport <span class="ph pname">SAPUI5</span>
+								applications. </td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_CTS_SADM</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_CTS_SADM</samp> is needed to transport <span class="ph pname">SAPUI5</span>
+						applications. </td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_ADT_RES</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_ADT_RES</samp> is used for the communication between
+							Eclipse and the ABAP backend via the <span class="ph pname">SAPUI5</span> Repository Team Provider. </td>
+</tr>
+<tr class="strow"><td valign="top" headers="d8527492e93" class="stentry"><samp class="ph codeph">S_RFC</samp></td>
+<td valign="top" headers="d8527492e95" class="stentry">The authorization object <samp class="ph codeph">S_RFC</samp>, Activity 16 (Execute) with
+						RFC_NAME=SADT_REST_RFC_ENDPOINT and RFC_TYPE=FUNC, is used for the
+						communication between Eclipse and the ABAP backend via the <span class="ph pname">SAPUI5</span> Repository
+						Team Provider.</td>
+</tr>
+</table></div>
+ 
+		<p class="p">For more information about authority checks and
+		  working with authorization objects, see <span class="ph pname">SAP NetWeaver 7.0x</span> Security Guides
+		  (Complete) on the SAP Help Portal at 
+		  <a class="xref" href="http://help.sap.com/netweaver" alt="http://help.sap.com/netweaver" title="http://help.sap.com/netweaver">http://help.sap.com/netweaver</a>.
+		  
+		</p>
+
+		<p class="p"><strong class="ph b">Delivered Virus Scan Profiles</strong>
+		</p>
+ 
+		<p class="p">When uploading files to the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository, you can perform a virus
+		  scan.
+		</p>
+
+		<p class="p">As of <span class="ph pname">SAP NetWeaver 7.0</span> with UI add-on, SAP delivers the following
+		  virus scan profile for ABAP within the UI add-on: 
+		  <samp class="ph codeph">/UI/UI5_INFRA_APP/REP_DT_PUT</samp>. This profile is used by
+			the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository API to store files in the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository based on BSP
+			repository. For example: The upload of a local file using <span class="ph"><span class="ph pname">SAPUI5</span></span> repository API
+		  
+		  <samp class="ph codeph">/UI5/CL_UI5_REP_DT</samp>, method 
+		  <samp class="ph codeph">/UI5/IF_UI5_REP_DT~PUT_FILE</samp> from 7.00 on, or the
+			<span class="ph"><span class="ph pname">SAPUI5</span></span> repository team provider in 7.31.
+		</p>
+
+		<p class="p">The profile is deactivated when delivered. To activate it, first
+		  create at least one basis profile and save it as the default profile. You can
+		  then activate one of the delivered profiles. By default, it links to a
+		  reference profile, which is the default profile. For more information, see 
+		  <a class="xref" href="http://help.sap.com/saphelp_nw70/helpdata/en/b8/e6e540c1848131e10000000a1550b0/frameset.htm" alt="http://help.sap.com/saphelp_nw70/helpdata/en/b8/e6e540c1848131e10000000a1550b0/frameset.htm" title="http://help.sap.com/saphelp_nw70/helpdata/en/b8/e6e540c1848131e10000000a1550b0/frameset.htm">ABAB-specific Configuration</a> of the Virus
+		  Scan Interface (7.00) and 
+		  <a class="xref" href="http://help.sap.com/saphelp_nw73/helpdata/en/4d/f581e1472d41c4e10000000a42189c/frameset.htm " alt="http://help.sap.com/saphelp_nw73/helpdata/en/4d/f581e1472d41c4e10000000a42189c/frameset.htm " title="http://help.sap.com/saphelp_nw73/helpdata/en/4d/f581e1472d41c4e10000000a42189c/frameset.htm ">ABAP-specific Configuration</a> of the Virus
+		  Scan Profile (7.31)
+		</p>
+
+	 </div></div>
+<div class="section" id="loio91f3ecc06f4d1014b6dd926db0e91070__section_CDDA32FF380C43F9ABD63B501EF3649D"><div class="section_title">Executing SAPUI5 Applications from the SAPUI5 Repository</div><div type="Executing SAPUI5 Applications from the SAPUI5 Repository"> 
+	 	 
+	 	<p class="p">The <span class="ph"><span class="ph pname">SAPUI5</span></span> application can be executed from the NW
+	 		7.X ABAP System by retrieving the <span class="ph"><span class="ph pname">SAPUI5</span></span> application resources from the <span class="ph"><span class="ph pname">SAPUI5</span></span>
+		  repository based on BSP repository with the help of an ICF handler. 
+		</p>
+ 
+		<p class="p"><strong class="ph b">Delivered ICF
+			 Nodes</strong> 
+		</p>
+ 
+	 	<p class="p">For the execution of <span class="ph"><span class="ph pname">SAPUI5</span></span> applications from the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository, SAP delivers the ICF node
+	 		<samp class="ph codeph">/sap/bc/ui5_ui5/</samp>. This node contains subnodes for each <span class="ph"><span class="ph pname">SAPUI5</span></span>
+				application. </p>
+ 
+		<div class="note note"><span class="notetitle">Note</span> All services delivered by SAP (such as the <samp class="ph codeph">/sap/bc/ui5_ui5/</samp> service for
+			executing <span class="ph"><span class="ph pname">SAPUI5</span></span> applications) are initially inactive. Make sure that you activate
+				all required services. </div>
+ 
+		<p class="p">For more information, see also <em class="ph i">Activating and Deactivating ICF Services (7.00 EhP3)</em> in
+				the SAP Library for <span class="ph pname">SAP NetWeaver</span> on SAP Help Portal at <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">SAP NetWeaver </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol"> SAP NetWeaver Library</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP NetWeaver by Key Capability </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Application Platform by Key Capability </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Connectivity </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Components of SAP Communication Technology </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Communication between ABAP and Non-ABAP Technologies </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Internet Communication Framework </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Development </span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>. </p>
+ 
+		<p class="p">For more information about ICF security, see <span class="ph pname">SAP NetWeaver</span> Security Guide on SAP Service Marketplace under 
+		  <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">SAP NetWeaver 7.0x Security Guides
+				(Complete) 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP
+				NetWeaver 7.0x Security Guides (Online Version) 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Security
+				Guides for Connectivity and Interoperability Technologies</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">RFC/ICF Security Guide 
+			 </span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>. 
+		</p>
+ 
+		<p class="p"><strong class="ph b">Authorization
+			 Objects</strong> 
+		</p>
+ 
+		<p class="p">No specific authorization objects are needed to
+			execute <span class="ph"><span class="ph pname">SAPUI5</span></span> applications from the <span class="ph"><span class="ph pname">SAPUI5</span></span> repository. 
+		</p>
+ 
+		<p class="p">As for ICF service nodes in general, authorization
+		  for specific ICF service nodes can be restricted, see 
+		  <em class="ph i">Defining Service Data</em> in the SAP
+		  Library for <span class="ph pname">SAP NetWeaver</span> on SAP Help Portal under 
+		  <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">SAP NetWeaver</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP NetWeaver Library</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP NetWeaver by Key Capability 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Connectivity 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Components
+				of SAP Communication Technology</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Communication between ABAP and Non-ABAP
+				Technologies 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Internet
+				Communication Framework 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Development
+				
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Server-Side
+				Development 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Creating
+				and Configuring ICF Services 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Create
+				Service 
+			 </span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span> and 
+		  <a class="xref" href="http://help.sap.com/saphelp_nw70ehp3/helpdata/en/48/9671360eec3987e10000000a421937/frameset.htm" alt="http://help.sap.com/saphelp_nw70ehp3/helpdata/en/48/9671360eec3987e10000000a421937/frameset.htm" title="http://help.sap.com/saphelp_nw70ehp3/helpdata/en/48/9671360eec3987e10000000a421937/frameset.htm">Authorization Object S_ICF
+			 (7.00 EHP3)</a> or SAP Library for <span class="ph pname">SAP NetWeaver</span> on SAP Help Portal under 
+		  <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">SAP NetWeaver 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol"> SAP
+				NetWeaver Library</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP
+				NetWeaver by Key Capability 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Application
+				Platform by Key Capability 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Connectivity 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Components
+				of SAP Communication Technology 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Communication between ABAP and Non-ABAP
+				Technologies 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Internet
+				Communication Framework 
+			 </span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Development
+				
+			 </span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>. 
+		</p>
+ 
+	 </div></div>
+<div class="section" id="loio91f3ecc06f4d1014b6dd926db0e91070__section_8ADD8616B4634A2089BC52C58C6CCD11"><div class="section_title">Tracking Coding Changes and Text Changes in the SAPUI5 Repository</div><div type="Tracking Coding Changes and Text Changes in the SAPUI5 Repository"> 
+		 
+		<p class="p">Code changes can be tracked by using the usual ABAP
+		  version control of the corresponding resource file. A new version is created
+		  when a new transport is written. 
+		</p>
+ 
+		<p class="p">Text changes can be tracked by using the "Table
+			History" transaction (SCU3), the relevant tables for <span class="ph"><span class="ph pname">SAPUI5</span></span> texts are 
+		  <samp class="ph codeph">/UI5/TREP_TEXT</samp> and 
+		  <samp class="ph codeph">/UI5/TREP_TEXT_T</samp> for
+		  the translated text. Table logging has to be activated in the system for this
+		  functionality. 
+		</p>
+ 
+	 </div></div>
+
+		<div class="section"><div class="section_title">Using the SAPUI5 Application Index REST API</div><div type="Using the SAPUI5 Application Index REST API">
+			
+			<p class="p">From SAP NetWeaver 7.31, the <span class="ph pname">SAPUI5</span>
+				application index REST API can be executed from ABAP systems with an ICF handler to
+				get the transitive dependencies of an app.</p>
+
+			<div class="note note"><span class="notetitle">Note</span> 
+				<p class="p">This API is not for public use. It's only used when packaging SAP Fiori apps with SAP Mobile
+					Platform Hybrid SDK plugins.</p>
+
+			</div>
+
+			<p class="p"><strong class="ph b">Delivered ICF Nodes</strong></p>
+
+			<p class="p">For the execution of the <span class="ph pname">SAPUI5</span>
+				application index REST API, SAP delivers the ICF node
+					<samp class="ph codeph">/sap/bc/ui2/app_index</samp>.</p>
+
+			<div class="note note"><span class="notetitle">Note</span> 
+				<p class="p">All services delivered by SAP (such as the <samp class="ph codeph">/sap/bc/ui2/app_index</samp> service)
+					are initially inactive. Make sure that you activate all required services.</p>
+
+			</div>
+
+			<p class="p">For more information about ICF services, see SAP Library for SAP NetWeaver 7.0 on SAP
+				Help Portal at <a class="xref" href="http://help.sap.com/nw703" alt="http://help.sap.com/nw703" title="http://help.sap.com/nw703">http://help.sap.com/nw703</a>. Under Application Help, open SAP Library and
+				search for <kbd class="ph userinput">Activating and Deactivating ICF Services</kbd>.</p>
+
+			<p class="p">For more information about ICF security, see SAP Library for SAP NetWeaver 7.0 on SAP
+				Help Portal at <a class="xref" href="http://help.sap.com/nw703" alt="http://help.sap.com/nw703" title="http://help.sap.com/nw703">http://help.sap.com/nw703</a> under <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">Security Information</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Security Guides for Connectivity and Interoperability
+						Technologies</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">RFC/ICF Security Guide </span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>.</p>
+
+			<p class="p">For more information about the <span class="ph pname">SAPUI5</span> application index, see <a class="xref" href="c5e7098474274d3eb7379047ab792f1f.html" title="The SAPUI5 application index (the index in the following) provides an indexing and caching mechanism for information related to apps, components, and libraries in the SAPUI5 ABAP repository and related to components and libraries in the SAPUI5 distribution layer.">SAPUI5 Application Index</a>.</p>
+
+		</div></div>
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Securing the SAPUI5 Repository";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

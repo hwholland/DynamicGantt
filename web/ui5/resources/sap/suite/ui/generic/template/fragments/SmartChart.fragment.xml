@@ -1,0 +1,25 @@
+<core:FragmentDefinition 
+    xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
+    xmlns="sap.m"  
+    xmlns:build="sap.build" 
+    xmlns:core="sap.ui.core" 
+    xmlns:smartChart="sap.ui.comp.smartchart">
+
+    <template:with path="facet>Target" helper="sap.ui.model.odata.AnnotationHelper.gotoEntitySet"
+                   var="entitySet">
+	        <smartChart:SmartChart
+	            id="{path: 'facet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::Chart" 
+	            persistencyKey="{path: 'facet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::Chart"
+	            useChartPersonalisation="false"
+	            useVariantManagement="false"
+	            enableAutoBinding="true"
+                showDetailsButton="true"
+                showDrillBreadcrumbs="true"
+                showSemanticNavigationButton="false"
+	            chartBindingPath="{= ${path: 'facet>Target/AnnotationPath'}.slice(0, ${path: 'facet>Target/AnnotationPath'}.indexOf('/')) }"
+	            beforeRebindChart="._templateEventHandlers.onBeforeRebindChart"
+	            entitySet="{entitySet>name}">
+	        </smartChart:SmartChart>
+    </template:with>
+        
+</core:FragmentDefinition>

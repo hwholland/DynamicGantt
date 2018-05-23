@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="In the manifest.json file, you can control the table type that is rendered."/>
+<meta name="description" content="In the manifest.json file, you can control the table type that is rendered."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=16555509566203064"/>
+<title>Table Type</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio7f844f1021cd4791b8f7408eac7c1cec">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Table Type</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">In the <span class="ph filepath">manifest.json</span> file, you can control the table type that is
+		rendered.</p>
+
+		<div class="p">For the list report, the table that is rendered is controlled by the following parameters that
+			can be set in the <span class="ph filepath">manifest.json</span> file:<ul class="ul" id="loio7f844f1021cd4791b8f7408eac7c1cec__ul_xnf_fzr_jt">
+				<li class="li">
+					<p class="p">If <samp class="ph codeph">gridTable</samp> is set to <samp class="ph codeph">false</samp> in the
+						application settings, the <samp class="ph codeph">sap.m.Table</samp> (responsive table
+						design) is chosen. </p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">If <samp class="ph codeph">gridTable</samp> is <samp class="ph codeph">true</samp>,
+							<samp class="ph codeph">sap.ui.table.Table</samp> is rendered. </p>
+
+					<div class="note note"><span class="notetitle">Note</span> 
+						<samp class="ph codeph">sap.ui.table.Table</samp> is only recommended for desktops and
+						tablets, but not for mobile devices. </div>
+
+				</li>
+
+			</ul>
+</div>
+
+		<div class="p">Example from the app descriptor (<samp class="ph codeph">manifest.json</samp>
+			file):<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>"sap.ui.generic.app": {
+			"pages": [{
+				"entitySet": "Zfarvd_Bs_Hd_Bo",
+				"component": {
+					"name": "sap.suite.ui.generic.template.ListReport",
+					"list": true,
+					"settings": {
+						"gridTable": false,  //==&gt; sap.m table
+						"hideTableVariantManagement": false
+					}
+				},	</pre></div>
+</div>
+
+		<div class="section"><div class="section_title">More Information</div><div type="More Information">
+			
+			<p class="p">For a description of the available table types, see <a class="xref" href="c0f6592a592e47f9bb6d09900de47412.html" title="The smart template contains a smart table control that displays the list report items and uses page mechanisms when loading data.">Smart Tables</a>.</p>
+
+			<p class="p">For information about setting up tables in the list report through annotations, see
+					<a class="xref" href="f4eb70f4808b48adb6ea03a4017aba24.html">Tables</a> and <a class="xref" href="4c2d17aec55b4162b19f1b573b5a4f99.html">List Report Table</a>.</p>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Table Type";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

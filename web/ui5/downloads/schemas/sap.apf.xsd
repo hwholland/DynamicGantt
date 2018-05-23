@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="sap.apf" xmlns:n6="sap.apf" xmlns:n4="sap.ushell" xmlns:n3="sap.ui.layout" xmlns:n2="sap.ca.ui" xmlns:n0="sap.ui.core" xmlns:n5="sap.viz" xmlns:n1="sap.m">
+<xsd:import namespace="sap.ushell"/>
+<xsd:import namespace="sap.ui.layout"/>
+<xsd:import namespace="sap.ca.ui"/>
+<xsd:import namespace="sap.ui.core"/>
+<xsd:import namespace="sap.viz"/>
+<xsd:import namespace="sap.m"/>
+</xsd:schema>

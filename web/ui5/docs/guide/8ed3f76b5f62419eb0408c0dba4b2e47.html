@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="A card is a smart component that uses UI annotation to render its content. Overview pages may contain transactional cards, such as table and list, stack, and quick view cards, and analytic chart cards such as line, bubble, donut, column, and bullet chart cards."/>
+<meta name="description" content="A card is a smart component that uses UI annotation to render its content. Overview pages may contain transactional cards, such as table and list, stack, and quick view cards, and analytic chart cards such as line, bubble, donut, column, and bullet chart cards."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3598567930550878"/>
+<title>Cards Used in Overview Pages</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio8ed3f76b5f62419eb0408c0dba4b2e47">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Cards Used in Overview Pages</h1>
+
+	
+	<div class="body refbody"><p class="shortdesc">A card is a smart component that uses UI annotation to render its content. Overview
+		pages may contain transactional cards, such as table and list, stack, and quick view cards,
+		and analytic chart cards such as line, bubble, donut, column, and bullet chart cards. </p>
+
+		<div class="section"><div class="section_title">Card Header</div><div type="Card Header"><p class="p">Overview page cards contain header and footer information, such as KPIs and
+				triggerable actions, respectively. All cards contain a header and
+				footer.</p>
+<p class="p">All cards have a static header section that
+				can be configured in the application manifest. The card header includes three
+				optional properties: <samp class="ph codeph">category</samp>, <samp class="ph codeph">title</samp>, and
+					<samp class="ph codeph">subTitle</samp></p>
+<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"sap.ovp": {
+    "_version": "1.1.0",
+    "globalFilterModel": "ZCD204_EPM_DEMO_SRV",
+    "globalFilterEntityType": "SalesOrder",
+    "cards": {
+        "card00": {
+            "model": "ZCD204_EPM_DEMO_SRV",
+            "template": "sap.ovp.cards.stack",
+            "settings": {
+                ...
+                "category": "{{card00_category}}",
+                "title": "{{card00_title}}",
+                "subTitle ": "{{card00_subTitle}}",
+                ...
+            }
+        },
+        "card01": {
+            "model": "ZCD204_EPM_DEMO_SRV",
+            "template": "sap.ovp.cards.table",
+            "settings": {
+                "title": "{{card01_category}}",
+                ...
+            }
+        },
+        ...
+    }
+}</pre></div>
+
+			</div>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">KPI Headers</span></p>
+
+				<div class="p">The generic card provides a dynamic section that can display in the header a key performance
+					indicator (KPI), and related information. The KPI is an aggregated value, as
+					defined in the annotation file. To display a KPI header in a card, make sure
+					that your OData service supports aggregation of values. The KPI can display the
+					following: <ul class="ul" id="loio8ed3f76b5f62419eb0408c0dba4b2e47__ul_ibv_kg2_cv">
+						<li class="li">Title</li>
+
+						<li class="li">KPI value, including its unit of measure, its trend and percentage of
+							change</li>
+
+						<li class="li">A list of the fields used to generate the aggregated value</li>
+
+						<li class="li">The filters that were applied to the KPI</li>
+
+					</ul>
+The KPI extension uses the following annotation terms: <ul class="ul" id="loio8ed3f76b5f62419eb0408c0dba4b2e47__ul_ct1_dh2_cv">
+						<li class="li"><samp class="ph codeph">com.sap.vocabularies.UI.v1.DataPoint</samp>: Is used to
+							retrieve information about the title and the value of the KPI.</li>
+
+						<li class="li"><samp class="ph codeph">com.sap.vocabularies.UI.v1.PresentationVariant</samp>: Is used
+							to retrieve information about the fields by which to group, and sorting
+							information.</li>
+
+						<li class="li"><samp class="ph codeph">com.sap.vocabularies.UI.v1.SelectionVariant</samp>: Is used to
+							retrieve information about the filters.</li>
+
+					</ul>
+<div class="note note"><span class="notetitle">Note</span> For more information about these annotations, see <a class="xref" href="65731e6b823240398e33133908efdaa1.html" title="This topic provides a list of the annotations used in overview pages.">Annotations Used in Overview Pages</a>. </div>
+</div>
+
+				<div class="p"> These annotation terms can be configured in the application manifest file, as
+					shown in the following example: <div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+						<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">
+"sap.ovp": {
+    ...
+    "cards": {
+        ...
+        "card02": {
+            "model": "ZCD204_EPM_DEMO_SRV",
+            "template": "sap.ovp.cards.charts.bubble",
+            "settings": {
+                "entitySet": "SalesOrders",
+                "identificationAnnotationPath": "com.sap.vocabularies.UI.v1.Identification#bubble",
+                "selectionAnnotationPath": "com.sap.vocabularies.UI.v1.SelectionVariant#bubble",
+                "chartAnnotationPath": "com.sap.vocabularies.UI.v1.Chart#bubble",
+                "presentationAnnotationPath": "com.sap.vocabularies.UI.v1.PresentationVariant#bubble",
+                "dataPointAnnotationPath": "com.sap.vocabularies.UI.v1.DataPoint#bubble"
+            }
+        },
+        ...
+    }
+}
+</pre></div>
+
+					</div>
+</div>
+
+			</div></div></div>
+
+		<div class="section"><div class="section_title">Card Footer</div><div type="Card Footer"><p class="p">Cards can have two kinds of footers:  a count footer or an
+				action footer.</p>
+<div class="p">
+				<ul class="ul" id="loio8ed3f76b5f62419eb0408c0dba4b2e47__ul_es3_ybh_55">
+					<li class="li">Count footer: Displays how many records are being presented in the card out
+						of the total existing records, according to the current filter. The count
+						footer is used in table and list cards. </li>
+
+					<li class="li">Action footer: Displays all of the defined actions that can be performed on
+						a single record. The actions are retrieved from the
+							<samp class="ph codeph">com.sap.vocabularies.UI.v1.Identification</samp> term, which
+						can be configured in the manifest file by setting the
+							<samp class="ph codeph">identificationAnnotationPath</samp> property with a qualifier,
+						as shown in the example below. If the
+							<samp class="ph codeph">identificationAnnotationPath</samp> property is not
+						configured, the <samp class="ph codeph">com.sap.vocabularies.UI.v1.Identification</samp>
+						term, without a qualifier, is used.<div class="note note"><span class="notetitle">Note</span> The action footer is only used in
+							quick view cards. For more information, see <a class="xref" href="c4bd35e657df4285bb6d4b2a6c51a5af.html" title="Quick view cards display detailed information about a single record, in greater depth than would be displayed in a table or list.">Quick View Cards</a>.</div>
+</li>
+
+				</ul>
+
+			</div>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle"><span class="ph emphasis emphasis">Card Actions </span></p>
+
+				<p class="p">There are two kinds of actions that you can display in the card footer:
+						<samp class="ph codeph">com.sap.vocabularies.UI.v1.DataFieldForIntentBasedNavigation</samp>
+					or <samp class="ph codeph">com.sap.vocabularies.UI.v1.DataFieldForAction</samp> from
+						<samp class="ph codeph">com.sap.vocabularies.UI.v1.Identification</samp>.</p>
+
+				<div class="p">Depending on the number of assigned actions, they are displayed in the footer as
+						follows:<ul class="ul" id="loio8ed3f76b5f62419eb0408c0dba4b2e47__ul_kpv_ycj_st">
+						<li class="li">If there is only one action, the button is aligned to the right of the
+							footer area. </li>
+
+						<li class="li">If there are two actions, such as <span class="ph uicontrol">OK</span> and
+								<span class="ph uicontrol">Cancel</span>, they are presented according to their
+							importance and order of entry. We recommend to provide the annotation in
+							a such a way that the positive action is on the left and the negative
+							action is on the right.</li>
+
+						<li class="li">If there are more than two actions, an <span class="ph uicontrol">Actions</span>
+							button is displayed. Clicking the <span class="ph uicontrol">Actions</span> button
+							opens an <samp class="ph codeph">ActionSheet</samp> control with all of the defined
+							actions in the order that they appear in the metadata.</li>
+
+						<li class="li">If no actions are assigned to the card, the footer area is not
+							displayed. </li>
+
+					</ul>
+
+				</div>
+
+				<div class="p">Each OData action is translated into a request according to the annotation.
+					Clicking an action invokes the OData service request. Complex actions open a
+					dialog box with the action parameters or a confirmation message.<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+						<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">"sap.ovp": {
+    ...
+    "cards": {
+        ...
+        "card01": {
+            "model": "ZCD204_EPM_DEMO_SRV",
+            "template": "sap.ovp.cards.table",
+            "settings": {
+                ...
+                "identificationAnnotationPath": "com.sap.vocabularies.UI.v1.Identification#Qualifier1",
+                ...
+            }
+        },
+        ...
+    }
+}</pre></div>
+
+					</div>
+</div>
+
+			</div></div></div>
+
+	</div>
+
+<div class="related-links"> 
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Cards Used in Overview Pages";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

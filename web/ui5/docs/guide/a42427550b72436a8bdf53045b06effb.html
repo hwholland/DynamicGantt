@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content=""/>
+<meta name="description" content=""/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=11243177656166903"/>
+<title>Navigation</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loioa42427550b72436a8bdf53045b06effb">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Navigation</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc"/>
+
+		<p class="p">The smart templates control the navigation to and from the list report and the object page. The
+			various navigation aspects are listed in the <a class="xref" href="https://experience.sap.com/fiori-design/concept/navigation/" alt="https://experience.sap.com/fiori-design/concept/navigation/" title="https://experience.sap.com/fiori-design/concept/navigation/">Navigation</a> section of the Fiori Design Guidelines.</p>
+
+		<div class="section"><div class="section_title">Navigation from the App</div><div type="Navigation from the App"><p class="p">You can either specify a URL for external
+				navigation targets or by associating a semantic object (= intent-based navigation).
+				In the case of URL-based navigation, there are two annotation options that you can
+				use - you can either specify the absolute URL explicitly or you can use a path
+				reference to a property using the annotation <samp class="ph codeph">DataFieldWithUrl</samp> as
+				follows:</p>
+<div class="p">Example
+				<samp class="ph codeph">DataFieldWithURL</samp>:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">
+&lt;Record Type="UI.DataFieldWithUrl"&gt;
+
+    &lt;PropertyValue Property="Value" Path="URL"/&gt;
+
+    &lt;PropertyValue Property="Url" Path=""/&gt;
+
+&lt;/Record&gt;
+</pre></div>
+</div>
+<p class="p">In
+				the case of URL-based navigation, an <samp class="ph codeph">m.Link</samp> control is rendered for
+				the property on the list report or object page (if in <span class="ph uicontrol">Display</span>
+				mode).</p>
+<p class="p">If you associate a semantic object annotation to any property, this
+				establishes <a class="xref" href="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm" alt="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm" title="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm">Intent-Based Navigation</a>.</p>
+<div class="p"> An intent is a mechanism
+				that allows users to perform actions on semantic objects (such as navigating to a
+				sales order or displaying a fact sheet), without being concerned with the UI
+				technology or technical implementation of the navigation target. Intent-based
+				navigation is necessary in the following cases:<ul class="ul" id="loioa42427550b72436a8bdf53045b06effb__ul_lrl_mpz_4t">
+					<li class="li">Depending on the user’s role, a different application or view of an
+						application must be displayed.</li>
+
+					<li class="li">
+						<p class="p">You want to define an ambiguous navigation target. This means that, at
+							run-time, a list of potential targets is offered to the user.</p>
+
+					</li>
+
+				</ul>
+</div>
+<div class="p">The following is an example of a cost center as semantic
+				object:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">
+&lt;Annotations xmlns="http://docs.oasis-open.org/odata/ns/edm" Target="ZFAR_CUSTOMER_LINE_ITEMS2_SRV.Item/CostCenter"&gt;
+
+    &lt;Annotation Term="com.sap.vocabularies.Common.v1.SemanticObject" String="CostCenter"/&gt;
+
+&lt;/Annotations&gt;
+</pre></div>
+</div>
+In
+			the case of intent-based navigation, a smart link control will be rendered on the list
+			report or object page (if in <span class="ph uicontrol">Display</span> mode).<div class="p"><div class="note note"><span class="notetitle">Note</span> The list
+					report uses the <samp class="ph codeph">&lt;smarttable:semanticObjectController&gt;</samp>
+					feature of the smart table.</div>
+A semantic object represents a business entity
+				and enables you to refer to such entities in an abstract implementation-independent
+				way. The semantic object and its navigation targets are reflected in the
+					<span class="ph uicontrol">Related Apps</span> button on the object page. Here, a service
+				of the unified shell is to return all possible targets that are linked to the given
+				semantic object. <div class="note note"><span class="notetitle">Note</span> This <span class="ph uicontrol">Related Apps</span> button is only
+					visible if you set a parameter <samp class="ph codeph">showRelatedApps</samp> in the
+					configuration (<span class="ph filepath">manifest.json</span>) after generating your app.
+				</div>
+</div>
+One feature of the list report is the interpretation of annotation
+				<samp class="ph codeph">com.sap.vocabularies.UI.v1.DataFieldForIntentBasedNavigation</samp>: If a
+			property is tagged with this, it will not be presented as a table column, but as a
+			button on top of the table that triggers intent-based navigation.</div></div>
+
+		<div class="section"><div class="section_title">Navigation after Executing a Function</div><div type="Navigation after Executing a Function">
+			
+			<p class="p">Navigation may also be required after the execution of a regular
+					<samp class="ph codeph">FunctionImport</samp> which is not tagged as
+					<samp class="ph codeph">DataFieldForIntentBasedNavigation</samp>. The behavior after the
+				execution of the function is controlled by the application as follows: If the
+					<samp class="ph codeph">FunctionImport</samp> returns <samp class="ph codeph">multiplicity 1</samp> and
+					<samp class="ph codeph">ReturnType=EntityType + EntitySet</samp>, the smart template navigates
+				to the instance that is returned by the function import.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Navigation to the App</div><div type="Navigation to the App">
+			
+			<p class="p">Navigation to the app uses deep linking. For more information, see <a class="xref" href="https://experience.sap.com/fiori-design/concept/navigation/" alt="https://experience.sap.com/fiori-design/concept/navigation/" title="https://experience.sap.com/fiori-design/concept/navigation/">Navigation</a> in the Fiori Design Guidelines
+				and go to the Deep Links section.</p>
+
+			<div class="note note"><span class="notetitle">Note</span> 
+				<p class="p">This type of navigation requires the SAP Fiori launchpad. For a stand-alone app, you must
+					change the links in the annotations as required.</p>
+
+			</div>
+
+			<p class="p">For the SAP Fiori launchpad, the configuration steps for <a class="xref" href="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm" alt="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm" title="http://help.sap.com/saphelp_nw75/helpdata/en/bd/8ae3d327ab4541bcce8e7353c046fc/content.htm">Intent-Based Navigation</a> are also relevant, as it is the
+				same mechanism.</p>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Navigation";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

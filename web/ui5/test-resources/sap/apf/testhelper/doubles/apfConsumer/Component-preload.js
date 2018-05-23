@@ -1,0 +1,3 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/apf/testhelper/doubles/apfConsumer/Component.js": "jQuery.sap.declare(\"sap.apf.testhelper.doubles.apfConsumer.Component\"),jQuery.sap.require(\"sap.apf.Component\"),sap.apf.Component.extend(\"sap.apf.testhelper.doubles.apfConsumer.Component\",{oApi:null,metadata:{name:\"Component\",version:\"0.0.0\"},init:function(){sap.apf.Component.prototype.init.apply(this,arguments)},createContent:function(){this.oApi=this.getApi(),this.oApi.loadApplicationConfig(\"/pathOfNoInterest/applicationConfiguration.json\"),sap.apf.Component.prototype.createContent.apply(this,arguments)},getApi:function(){return this.oApi}});"
+}, "web/ui5/test-resources/sap/apf/testhelper/doubles/apfConsumer/Component-preload");

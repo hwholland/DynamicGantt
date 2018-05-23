@@ -1,0 +1,14 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+	<HBox id="DraftInfoBox">
+		<core:Icon id="draftIcon"
+			src="{= ${parts: [{path: 'DraftAdministrativeData'}, {path: 'IsActiveEntity'}, {path: 'HasDraftEntity'}], formatter: '._templateFormatters.formatDraftIcon'}}"
+			visible="{= ${IsActiveEntity} &amp;&amp; ${HasDraftEntity} }"
+			useIconTooltip="false"
+			class="sapUiTinyMarginTop sapSmartTemplatesListReportDraftInfoIcon" />
+		<Link id="draftLink" 
+			visible="{= !${IsActiveEntity}|| ${HasDraftEntity} }"		
+			text="{parts: [{path: 'DraftAdministrativeData'}, {path: 'IsActiveEntity'}, {path: 'HasDraftEntity'}], formatter: '._templateFormatters.formatDraftLink'}"
+			press="._templateEventHandlers.onDraftLinkPressed"	
+			class="sapUiTinyMarginTop" />
+	</HBox>	
+</core:FragmentDefinition>

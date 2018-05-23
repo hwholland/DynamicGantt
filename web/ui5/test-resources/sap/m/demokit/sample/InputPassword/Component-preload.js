@@ -1,0 +1,4 @@
+sap.ui.require.preload({
+	"web/ui5/test-resources/sap/m/demokit/sample/InputPassword/Component.js": "sap.ui.define([\"sap/ui/core/UIComponent\"],function(e){\"use strict\";return e.extend(\"sap.m.sample.InputPassword.Component\",{metadata:{rootView:\"sap.m.sample.InputPassword.V\",dependencies:{libs:[\"sap.m\",\"sap.ui.layout\"]},config:{sample:{files:[\"V.view.xml\"]}}}})});",
+	"web/ui5/test-resources/sap/m/demokit/sample/InputPassword/V.view.xml": "<mvc:View\n\txmlns:l=\"sap.ui.layout\"\n\txmlns:mvc=\"sap.ui.core.mvc\"\n\txmlns=\"sap.m\"><l:VerticalLayout\n\t\tclass=\"sapUiContentPadding\"\n\t\twidth=\"100%\"><l:content><Label text=\"Password\" /><Input\n\t\t\t\ttype=\"Password\"\n\t\t\t\tplaceholder=\"Enter password ...\" /></l:content></l:VerticalLayout></mvc:View>"
+}, "web/ui5/test-resources/sap/m/demokit/sample/InputPassword/Component-preload");

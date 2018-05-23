@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="The sap.ui.comp.smartchart.SmartChart control can be used to create complex diagrams."/>
+<meta name="description" content="The sap.ui.comp.smartchart.SmartChart control can be used to create complex diagrams."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5829547885120054"/>
+<title>Smart Chart</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio7a32157697474864b041fa739fcc51ba">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Smart Chart</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">The <samp class="ph codeph">sap.ui.comp.smartchart.SmartChart</samp> control can be used to create
+		complex diagrams.</p>
+
+		<p class="p">For more information about this control, see the <a class="xref" href="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html" alt="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html" title="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html">API Reference</a> and the <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.comp.sample.personalization.example9/preview" alt="../../explored.html#/sample/sap.ui.comp.sample.personalization.example9/preview" title="../../explored.html#/sample/sap.ui.comp.sample.personalization.example9/preview">sample</a> in the <span class="ph uicontrol">Explored</span> 			app in the Demo Kit.</p>
+
+		<p class="p">For more information about
+			annotations for this control, see the <a class="xref" href="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html#annotations" alt="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html#annotations" title="../../docs/api/symbols/sap.ui.comp.smartchart.SmartChart.html#annotations">API Reference</a> in the Demo Kit. </p>
+
+		<div class="section"><div class="section_title">Overview</div><div type="Overview">
+			
+			<p class="p">You can select a chart type, such as a pie chart, column chart or a chart with an x and a
+				y-axis or two y-axes, and define the dimensions and measures for the chart and how
+				you want to display them. A drilldown enables you to display even more information
+				about a dimension.</p>
+
+			<p class="p">On the UI, the <samp class="ph codeph">SmartChart</samp> control consists of a toolbar and a chart area. The
+				control uses the <samp class="ph codeph">sap.chart.Chart</samp> control, which is shown in the
+				chart area. The toolbar offers you various functions, such as the selection of
+				various types of charts, the drilldown/drillup and maximize/minimize functions as
+				well as zooming in and out of a chart. In addition, the control allows you to
+				navigate to the related semantic object for the chart by clicking <samp class="ph codeph">Jump
+					To</samp> after selecting the relevant part of the chart, such as a column
+				(or, alternatively, you can also use a similar feature by clicking the
+					<samp class="ph codeph">Details</samp> button if this feature is enabled).</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Details</div><div type="Details">
+			
+			<p class="p">The <samp class="ph codeph">SmartChart</samp> control offers further functions by integrating other
+				smart controls: You can save a chart as a variant using the
+					<samp class="ph codeph">SmartVariantManagement</samp> control or make chart-specific
+				personalization settings using the <samp class="ph codeph">sap.m.P13nDialog</samp> control.</p>
+
+			<p class="p">In the personalization dialog, you can select a number of chart-specific features in
+				the <span class="ph uicontrol">Chart</span> panel, such as selecting various dimensions and
+				measures. You can also sort the data in the chart or filter it based on the
+				conditions you define here. The <span class="ph uicontrol">Filter</span> panel also shows all
+				the filter criteria that have been used in a drilldown. Defining filters manually
+				achieves the same result. For more information about the various other smart
+				controls, see <a class="xref" href="0cbbeba6fa6c45e4a339bc75d56299a2.html" title="This library contains composite controls.">sap.ui.comp</a> and <a class="xref" href="a3c3c5eb54bc4cc38e6cfbd8e90c6a01.html" title="The sap.m.P13nDialog control provides a dialog to personalize tables, such as adapting the order of columns or filtering table content.">Personalization Dialog</a>.</p>
+
+			<p class="p"> If a chart is changed several times, the final outcome of the changes can be
+				persisted as a variant once the chart looks as required by the user. When the
+				variant is loaded the next time, the final outcome of the changes will be shown, but
+				not each single step of the changes.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Annotations</div><div type="Annotations">
+			
+			<p class="p">The following table shows a selection of the annotations used by the
+					<samp class="ph codeph">SmartChart</samp> control:</p>
+
+			
+<div class="table-wrapper tablenoborder"><table summary="" id="loio7a32157697474864b041fa739fcc51ba__table_ctq_vyn_1v" class="table" frame="border" border="1" rules="all"><caption><span class="tablecap">Annotations</span></caption>
+<colgroup><col width="20%"/><col width="20%"/><col width="20%"/><col width="20%"/><col width="20%"/></colgroup>
+
+					
+					
+					
+					
+					
+					<thead class="thead" align="left">
+						<tr class="row">
+							<th class="entry" valign="top" width="20%" id="d6524161e144">
+								<p class="p">Element</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="20%" id="d6524161e150">
+								<p class="p">Annotation</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="20%" id="d6524161e156">
+								<p class="p">Value</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="20%" id="d6524161e162">
+								<p class="p">Mandatory</p>
+
+							</th>
+
+							<th class="entry" valign="top" width="20%" id="d6524161e168">
+								<p class="p">Description</p>
+
+							</th>
+
+						</tr>
+
+					</thead>
+
+					<tbody class="tbody">
+						<tr class="row">
+							<td class="entry" valign="top" width="20%" headers="d6524161e144 ">
+								<p class="p">Entity type </p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e150 ">
+								<p class="p"><samp class="ph codeph">sap:semantics</samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e156 ">
+								<p class="p">aggregate</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e162 ">
+								<p class="p">Yes</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e168 ">
+								<p class="p">Enables the aggregation of dimensions and measures.</p>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="20%" headers="d6524161e144 ">
+								<p class="p">Dimensions</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e150 ">
+								<p class="p"><samp class="ph codeph">sap:aggregation-role</samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e156 ">
+								<p class="p">dimension</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e162 ">
+								<p class="p">Yes</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e168 ">
+								<p class="p">Defines the dimensions.</p>
+
+							</td>
+
+						</tr>
+
+						<tr class="row">
+							<td class="entry" valign="top" width="20%" headers="d6524161e144 ">
+								<p class="p">Measures</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e150 ">
+								<p class="p"><samp class="ph codeph">sap:aggregation-role </samp></p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e156 ">
+								<p class="p">measure</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e162 ">
+								<p class="p">Yes</p>
+
+							</td>
+
+							<td class="entry" valign="top" width="20%" headers="d6524161e168 ">
+								<p class="p">Defines the measures.</p>
+
+							</td>
+
+						</tr>
+
+					</tbody>
+
+				</table>
+</div>
+
+			<p class="p">A property can be annotated with attribute <samp class="ph codeph">sap:aggregation-role</samp> if
+				it has an aggregation role. The attribute can have the value
+					<samp class="ph codeph">"dimension"</samp> if the property represents the key of a dimension
+				or  <samp class="ph codeph">"measure"</samp> if the property represents a measure whose values are
+				aggregated according to the aggregation behavior of the entity type that contains
+				the control. Both values are only valid for properties of an entity type that is
+				annotated with <samp class="ph codeph">sap:semantics="aggregate"</samp>.</p>
+
+			<div class="p">
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+&lt;EntityType Name="Product" sap:service-schema-version="1" sap:service-version="1" sap:semantics="aggregate" sap:content-version="1"&gt; 
+	&lt;Property Name="Category" Type="Edm.String" Nullable="false" MaxLength="40" sap:aggregation-role="dimension" sap:label="Product Category" sap:creatable="false" sap:updatable="false" sap:sortable="true" sap:filterable="true" /&gt;
+	&lt;Property Name="Quantity" Type="Edm.Decimal" Nullable="false" MaxLength="3" sap:aggregation-role="measure" sap:label="Quantity"
+ 	sap:creatable="false" sap:updatable="false" sap:sortable="true" sap:filterable="true" /&gt;
+ 	...
+&lt;/EntityType&gt;
+
+</pre></div>
+
+			</div>
+
+			<p class="p"> The <samp class="ph codeph">com.sap.vocabularies.UI.v1.Chart</samp> annotation is used to specify
+				the chart type and the visible measures and dimensions of the chart.</p>
+
+			<div class="p">
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+&lt;Annotations Target="EPM_DEVELOPER_SCENARIO_SRV.Product"
+      xmlns="http://docs.oasis-open.org/odata/ns/edm"&gt;
+      &lt;Annotation Term="com.sap.vocabularies.UI.v1.Chart"&gt;
+            &lt;Record&gt;
+                  &lt;PropertyValue Property="ChartType"
+                        EnumMember="com.sap.vocabularies.UI.v1.ChartType/Column" /&gt;
+                  &lt;PropertyValue Property="Dimensions"&gt;
+                        &lt;Collection&gt;
+                              &lt;PropertyPath&gt;Name&lt;/PropertyPath&gt;
+                              &lt;PropertyPath&gt;Category&lt;/PropertyPath&gt;
+                        &lt;/Collection&gt;
+                  &lt;/PropertyValue&gt;
+                  &lt;PropertyValue Property="Measures"&gt;
+                        &lt;Collection&gt;
+                              &lt;PropertyPath&gt;Price&lt;/PropertyPath&gt;
+                              &lt;PropertyPath&gt;Quantity&lt;/PropertyPath&gt;
+                        &lt;/Collection&gt;
+                  &lt;/PropertyValue&gt;
+            &lt;/Record&gt;
+      &lt;/Annotation&gt;
+&lt;/Annotations&gt;
+
+</pre></div>
+
+			</div>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Smart Chart";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

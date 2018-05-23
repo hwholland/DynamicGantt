@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=26116763499839435"/>
+<title>Actions in List Report View</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio8ba009d7b8434dc1a4948c9211e30c40">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Actions in List Report View</h1>
+
+	<div class="body conbody">
+		<p class="p">If desired, you can enable certain common actions specific to your use case for list
+			report items. You can choose to display the actions in either the toolbar or within a
+			specific column for line items.</p>
+
+		<div class="section"><div class="section_title">Actions in the Toolbar</div><div type="Actions in the Toolbar"><p class="p">You may wish to display actions in the
+				toolbar to allow users to perform an action for one or more lines in the table. </p>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Common Functions in Toolbar</p>
+
+				<div class="p">The table below describes how to set up your annotations so that certain common
+					functions will be rendered in the toolbar:
+<div class="table-wrapper tablenoborder"><table summary="" id="loio8ba009d7b8434dc1a4948c9211e30c40__table_phr_43x_rv" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
+
+							
+							
+							
+							<thead class="thead" align="left">
+								<tr class="row">
+									<th class="entry" valign="top" width="1" id="d7129341e42">
+										<p class="p">Action</p>
+
+									</th>
+
+									<th class="entry" valign="top" width="1" id="d7129341e48">
+										<p class="p">Setting</p>
+
+									</th>
+
+									<th class="entry" valign="top" width="33.33333333333333%" id="d7129341e54">Comments</th>
+
+								</tr>
+
+							</thead>
+
+							<tbody class="tbody">
+								<tr class="row">
+									<td class="entry" valign="top" width="1" headers="d7129341e42 ">
+										<p class="p">Create (+)</p>
+
+									</td>
+
+									<td class="entry" valign="top" width="1" headers="d7129341e48 ">
+										<p class="p"><samp class="ph codeph">sap:creatable="true" </samp> for the root entity set</p>
+
+									</td>
+
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d7129341e54 "> </td>
+
+								</tr>
+
+								<tr class="row">
+									<td class="entry" valign="top" width="1" headers="d7129341e42 ">
+										<p class="p">Delete</p>
+
+									</td>
+
+									<td class="entry" valign="top" width="1" headers="d7129341e48 ">
+										<p class="p"><samp class="ph codeph">sap:deletable="true"</samp> for the root entity set</p>
+
+									</td>
+
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d7129341e54 ">The Delete feature is enabled by default, as the entity
+										set is already deletable (default value is
+											<samp class="ph codeph">true</samp>).</td>
+
+								</tr>
+
+							</tbody>
+
+						</table>
+</div>
+</div>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Custom Actions in Toolbar (Specify Text)</p>
+
+				<p class="p">To specify a text for your action, use the
+						<samp class="ph codeph">com.sap.vocabularies.UI.v1.DataFieldForAction</samp> property and
+					specify the text to display. The example below shows how to display an action to
+					create a copy of the list item in the toolbar:</p>
+
+				<div class="p">
+					<div class="fig fignone" id="loio8ba009d7b8434dc1a4948c9211e30c40__fig_uxk_2jx_rv"><div class="figcontainer">
+						
+						<img class="image" id="loio8ba009d7b8434dc1a4948c9211e30c40__image_vxk_2jx_rv" src="loioafb58e28e26e43d6938668503fef41c3_LowRes.png"/>
+					<div class="figcap">List Report: Annotation DataFieldForAction for Defining Custom Actions</div></div></div>
+
+				</div>
+
+				<div class="p"><span class="ph emphasis emphasis">Sample
+					Code</span><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;Annotation Term="UI.LineItem"&gt;
+	&lt;Collection&gt;
+		&lt;Record Type="UI.DataFieldForAction"&gt;
+			&lt;PropertyValue Property="Label" String="Copy"/&gt;
+			&lt;PropertyValue Property="Action" String="SEPMRA_PROD_MAN.SEPMRA_PROD_MAN_Entities/SEPMRA_C_PD_ProductCopy"/&gt;
+		&lt;/Record&gt;
+	&lt;Collection&gt;
+		&lt;Record Type="UI.DataField"&gt;
+		...
+	&lt;/Collection&gt;
+&lt;/Annotation&gt;</pre></div>
+</div>
+
+			</div></div></div>
+
+		<div class="section"><div class="section_title">Actions for Line Items</div><div type="Actions for Line Items">
+			
+			<p class="p">For information about setting up annotations for actions within a line item of the list
+				report, see <a class="xref" href="b623e0bbbb2b4147b2d0516c463921a0.html" title="You can add a line item action button as a column within the SmartTable control in both the list report and the object page.">Line Item Actions in Tables</a>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Confirmation Popover</div><div type="Confirmation Popover">
+			
+			<p class="p">If you wish to display a popover when the user triggers the action, add the
+					<samp class="ph codeph">IfActionCritical</samp> annotation as shown below:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;Annotations Target="GWSAMPLE_BASIC.GWSAMPLE_BASIC_Entities/RegenerateAllData"&gt;
+        &lt;Annotation Term="com.sap.vocabularies.Common.v1.IsActionCritical" Bool="true"/&gt;
+&lt;/Annotations&gt;</pre></div>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Actions in List Report View";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

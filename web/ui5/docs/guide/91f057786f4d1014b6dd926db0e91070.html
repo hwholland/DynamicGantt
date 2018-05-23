@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Aggregation binding is used to automatically create child controls according to model data."/>
+<meta name="description" content="Aggregation binding is used to automatically create child controls according to model data."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9227679093967668"/>
+<title>Aggregation Binding</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio91f057786f4d1014b6dd926db0e91070">
+<div id="wrapper"><div id="container">
+<h1 class="title topictitle1">Aggregation Binding</h1>
+
+	<div class="body"><p class="shortdesc">Aggregation binding is used to automatically create child controls according to model
+		data.</p>
+
+		<p class="p">Let’s say we would like to display the following JSON model data in a
+				<samp class="ph codeph">sap.m.List</samp>:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
+	companies : [
+		{
+			name : "Acme Inc.",
+			city: "Belmont",
+			state: "NH",
+			county: "Belknap",
+			revenue : "123214125.34"  
+		},{
+			name : "Beam Hdg.",
+			city: "Hancock",
+			state: "NH",
+			county: "Belknap"
+			revenue : "3235235235.23"  
+		},{
+			name : "Carot Ltd.",
+			city: "Cheshire",
+			state: "NH",
+			county: "Sullivan",
+			revenue : "Not Disclosed"  
+		}]
+}</pre></div>
+
+		<p class="p">Here’s how to display the company list in an XML view:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+	controllerName="sap.ui.sample.App"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"&gt;
+	&lt;List id=”companyList” items="{/companies}"&gt;
+		&lt;items&gt;
+			&lt;StandardListItem
+				title="{name}"
+				description="{city}"
+			/&gt;
+		&lt;/items&gt;
+	&lt;/List&gt;
+&lt;/mvc:View&gt;</pre></div>
+
+		<p class="p">The <samp class="ph codeph">List</samp> element has both an <samp class="ph codeph">items</samp> attribute and a
+			nested <samp class="ph codeph">items</samp> element:</p>
+
+		<ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_wrw_bpf_tt">
+			<li class="li">
+				<p class="p">The attribute <samp class="ph codeph">items="{/companies}"</samp> binds the children of our
+					json model’s <samp class="ph codeph">companies</samp> array to the list. This by itself is not
+					enough to display the companies, instead it sets the parent path for the binding
+					of all contained list items and their descendants. In addition you need to
+					declare a nested element.</p>
+
+			</li>
+
+			<li class="li">
+				<p class="p">The nested <samp class="ph codeph">items</samp> element in our case contains a
+						<samp class="ph codeph">StandardListItem</samp>. This serves as a template for creating
+					the individual list rows.</p>
+
+			</li>
+
+		</ul>
+
+		<div class="note note"><span class="notetitle">Note</span> 
+			<p class="p">The binding paths of <samp class="ph codeph">StandardListItem</samp> for properties <samp class="ph codeph">title</samp> and <samp class="ph codeph">description</samp> are relative to
+					<samp class="ph codeph">companies</samp>. This means that instead of having to write the whole binding path <samp class="ph codeph">title={/companies/name}</samp>, you
+				can simply write <samp class="ph codeph">title={name}</samp>. By omitting the slash ‘/’ at the beginning, <samp class="ph codeph">{name}</samp> is marked as a relative
+				binding path.</p>
+
+		</div>
+
+		<div class="note note" id="loio91f057786f4d1014b6dd926db0e91070__note_aggregation_binding"><span class="notetitle">Note</span> 
+			<p class="p">The model has a default size limit to avoid too much data being rendered on the UI. This size limit determines the number of entries used for the
+				aggregation bindings. The default size limit is 100 entries.</p>
+
+			<p class="p">This means that controls that don't support paging or don't request data in chunks (e.g. <samp class="ph codeph">sap.m.ComboBox</samp>) only show 100 entries even
+				though the model contains more items.</p>
+
+			<p class="p">To change this behavior, you can set a size limit in the model by using <samp class="ph codeph">oModel.setSizeLimit</samp>. </p>
+
+		</div>
+
+		<p class="p">Instead of using a <samp class="ph codeph">StandardListItem</samp> as a list row template, you can also
+			use any other <samp class="ph codeph">sap.m.</samp> list item, such as:</p>
+
+		<ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_smn_gpf_tt">
+			<li class="li">
+				<p class="p">ActionListItem</p>
+
+			</li>
+
+			<li class="li">
+				<p class="p">DisplayListItem</p>
+
+			</li>
+
+			<li class="li">
+				<p class="p">CustomListItem</p>
+
+			</li>
+
+			<li class="li">
+				<p class="p">ObjectListItem</p>
+
+			</li>
+
+		</ul>
+
+		<p class="p">For more examples and details on when to use which list item control, see the various list
+			items in the <a class="xref" href="https://sapui5.hana.ondemand.com/explored.html" alt="https://sapui5.hana.ondemand.com/explored.html" title="https://sapui5.hana.ondemand.com/explored.html">Explored</a> app in the Demo Kit.</p>
+
+		<p class="p">If you declare your list <span class="ph emphasis emphasis">directly in JavaScript</span>, you can define
+			aggregation binding either in the <samp class="ph codeph">settings</samp> object in the constructor or
+			by calling the <samp class="ph codeph">bindAggregation</samp> method. Aggregation binding requires the
+			definition of a template, which is cloned for each bound entry of the list. For each
+			clone that is created, the binding context is set to the respective list entry, so that
+			all bindings of the template are resolved relative to the entry. The aggregated elements
+			are destroyed and recreated whenever the bound list in the data model is changed.</p>
+
+		<p class="p">To bind an aggregation, you create a template or provide a factory function, which is
+			then passed when defining the aggregation binding itself. In the
+				<samp class="ph codeph">settings</samp> object, this looks as follows:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oItemTemplate = new sap.ui.core.ListItem({text:"{name}"});
+oComboBox = new sap.m.ComboBox({
+	items: {
+		path: "/companies",      //no curly brackets here!
+		template: oItemTemplate
+	}
+});</pre></div>
+
+		<p class="p">A template is not necessarily a single control as shown in the example above, but can
+			also be a tree of controls. For each list entry, a deep clone of the template is created
+			and added to the bound aggregation.</p>
+
+		<p class="p">You can also define the aggregation binding by using the <samp class="ph codeph">bindAggregation</samp>
+			method of a control:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oItemTemplate = new sap.ui.core.ListItem({text:"{name}"});
+var oComboBox.bindAggregation("items", "/companies", oItemTemplate)</pre></div>
+
+		<p class="p">In addition, some controls have a typed binding method for aggregations that are likely
+			to be bound by the application:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oComboBox.bindItems("/companies", oItemTemplate);</pre></div>
+
+		<p class="p">To remove an aggregation binding, you can use the <samp class="ph codeph">unbindAggregation</samp>
+			method:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oComboBox.unbindAggregation("items");</pre></div>
+
+		<p class="p">Controls with typed binding methods also provide a typed unbind:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oComboBox.unbindItems();</pre></div>
+
+		<p class="p">When an aggregation is unbound, its aggregated controls are removed and destroyed by
+			default. If you would like to keep the items in your <samp class="ph codeph">ComboBox</samp>, for
+			example, you can do so by using:</p>
+
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oComboBox.unbindAggregation("items", true);</pre></div>
+
+		<div class="section" id="loio91f057786f4d1014b6dd926db0e91070__section_7E603DAFFE804F73835ADA437A6C2F0B"><div class="section_title">Using Factory Functions</div><div type="Using Factory Functions">
+			
+			<p class="p">The factory function is a more powerful approach for creating controls from model
+				data. The factory function is called for each entry of a control’s aggregation, and
+				the developer can decide whether each entry shall be represented by the same control
+				with different properties or even by a completely different control for each
+				entry.</p>
+
+			<p class="p">The factory function comes with the parameters <samp class="ph codeph">sId</samp>, which should be
+				used as an ID for the new control, and <samp class="ph codeph">oContext</samp>, which is for
+				accessing the model data of the entry. The returned object must be of type
+					<samp class="ph codeph">sap.ui.core.Element</samp>. Here’s how this scenario can be realized
+				in an XML view and a controller using our JSON model data:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+	controllerName="sap.ui.sample.App"
+	xmlns="sap.m"
+	xmlns:l="sap.ui.layout"
+	xmlns:mvc="sap.ui.core.mvc"&gt;
+	&lt;l:VerticalLayout
+		content="{ path: '/companies', factory: '.createContent'}"
+		class="sapUiContentPadding"
+		width="100%"/&gt;
+&lt;/mvc:View&gt;</pre></div>
+
+			<p class="p">Please note the <samp class="ph codeph">'.'</samp> in <samp class="ph codeph">factory: '.createContent'</samp>.
+				The class <samp class="ph codeph">App.controller.js</samp> contains the implementation of our
+				factory method:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/model/type/String",
+	"sap/ui/model/type/Float",
+	"sap/m/Input",
+	"sap/m/Text",
+	"sap/m/CheckBox"
+], function (Controller, JSONModel, StringType, Float, Input, Text, CheckBox ) {
+	"use strict";
+	return Controller.extend("sap.ui.sample.App", {
+		onInit : function () {
+		…
+		},
+		createContent: function (sId, oContext) {
+		var oRevenue = oContext.getProperty("revenue");
+			switch(typeof oRevenue) {
+				case "string":
+					return new Text(sId, {
+						text: {
+							path: "revenue",
+							type: new StringType()
+						}
+					});
+  
+				case "number":
+					return new Input(sId, {
+						value: {
+							path: "revenue",
+							type: new Float()
+						}
+					});
+				
+				case "boolean":
+					return new Checkbox(sId, {
+						checked: {
+							path: "revenue"
+						}
+					});
+			}
+		},
+	});
+});</pre></div>
+
+			<p class="p">If you would like to avoid using the XML view, you would proceed as follows:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oVerticalLayout.bindAggregation("content", "/companies", function (sId, oContext) {
+	var oRevenue = oContext.getProperty("revenue");
+	switch(typeof oRevenue) {
+			case "string":
+				return new sap.m.Text(sId, {
+					text: {
+						path: "revenue",
+						type: new sap.ui.model.type.String()
+					}
+				});
+  
+			case "number":
+				return new sap.m.Input(sId, {
+					value: {
+						path: "revenue",
+						type: new sap.ui.model.type.Float()
+					}
+				});
+				
+			case "boolean":
+				return new sap.m.Checkbox(sId, {
+					checked: {
+						path: "revenue"
+					}
+				});
+			}
+		}
+});</pre></div>
+
+		</div></div>
+
+		<div class="section" id="loio91f057786f4d1014b6dd926db0e91070__section_606348F7CECC432C9E18DACEFB3127CF"><div class="section_title">Initial Sorting, Grouping and Filtering for Aggregation Binding</div><div type="Initial Sorting, Grouping and Filtering for Aggregation Binding">
+			
+			<p class="p">To provide initial <span class="ph emphasis emphasis">sorting and grouping</span> in an XML view, proceed
+				as follows:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+	controllerName="sap.ui.sample.App"
+	xmlns="sap.m"
+	xmlns:l="sap.ui.layout"
+	xmlns:mvc="sap.ui.core.mvc"&gt;		
+	&lt;List items="{ path: '/companies', 
+		sorter: { path: 'county', descending: false, group: '.getCounty'}, 
+		groupHeaderFactory: '.getGroupHeader'}"&gt;
+		&lt;items&gt;
+			&lt;StandardListItem
+				title="{name}"
+				description="{city}"
+			/&gt;
+		&lt;/items&gt;
+	&lt;/List&gt;
+	
+&lt;/mvc:View&gt;</pre></div>
+
+			<p class="p">The <samp class="ph codeph">this</samp> context of a group header factory function is generally set to the control (or managed object) that owns the binding.
+				However, in XML views, the reference to the group header factory is done in the view controller by putting a dot (<samp class="ph codeph">.</samp>) in front
+				of the name of the group header factory function (<samp class="ph codeph">{ groupHeaderFactory:'.myGroupHeader' }</samp>). In this case, the group header
+				factory's this context is bound to the controller.</p>
+
+			<p class="p">The list uses a sorter which sorts the list of companies in ascending order by the
+					<samp class="ph codeph">county</samp> column. It also groups its rows using the
+				App.controller’s <samp class="ph codeph">getCounty</samp> method to provide the captions and the
+					<samp class="ph codeph">getGroupHeader</samp> function to provide non-standard group header
+				controls, as shown here:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/model/json/JSONModel",
+	"sap/m/GroupHeaderListItem "
+], function (Controller, JSONModel, GroupHeaderListItem) {
+	"use strict";
+	return Controller.extend("sap.ui.sample.App", {
+		onInit : function () {
+			…
+		},	
+
+		getCounty: function(oContext) {
+			return oContext.getProperty('county');
+		},
+		
+		getGroupHeader: function(oGroup) {
+			return new GroupHeaderListItem({
+				title : oGroup.key,
+				upperCase : false
+			}
+		);
+	},   
+});</pre></div>
+
+			<p class="p">As you can see, <samp class="ph codeph">getCounty</samp> generates the group caption, which in this
+				case is the county of the current companies. <samp class="ph codeph">getGroupHeader</samp> serves
+				as a group header factory function: use this if you would like to use non-standard
+				group headers. In our example, we would like the group header caption not to be
+				upper case (which is the default). After sorting and grouping, the company list
+				looks like this:</p>
+
+			<div class="fig fignone" id="loio91f057786f4d1014b6dd926db0e91070__fig_nzl_xvf_tt"><div class="figcontainer">
+				<img class="image" id="loio91f057786f4d1014b6dd926db0e91070__image_cnr_zvf_tt" src="cdd09735362d4227809f3028201a1bba.image"/>
+			</div></div>
+
+			<p class="p">The following XML snippet provides initial filtering:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+	controllerName="sap.ui.sample.App"
+	xmlns="sap.m"
+	xmlns:l="sap.ui.layout"
+	xmlns:mvc="sap.ui.core.mvc"&gt;		
+	&lt;List items="{ path: '/companies', 
+		filters: [{path: 'city', operator: 'StartsWith', value1: 'B'},
+			{path: 'revenue', operator: 'LT', value1: 150000000}]}"&gt;		
+		&lt;items&gt;
+			&lt;StandardListItem
+				title="{name}"
+				description="{city}"
+			/&gt;
+		&lt;/items&gt;
+	&lt;/List&gt;	  
+&lt;/mvc:View&gt;</pre></div>
+
+			<p class="p">The example shown here will only display companies whose city name begins with a ‘b’
+				and whose revenue is less than 150 million. As you can see, you can provide more
+				than one filter, each of which may refer to different columns using different filter
+				operators. For a complete list of permitted filter operators, <span class="ph">see <a class="xref" href="../../docs/api/symbols/sap.ui.model.FilterOperator.html" alt="../../docs/api/symbols/sap.ui.model.FilterOperator.html" title="../../docs/api/symbols/sap.ui.model.FilterOperator.html">sap.ui.model.FilterOperator</a> in the <span class="ph uicontrol">API
+						Reference</span> part of the Demo Kit</span>.</p>
+
+			<p class="p">As shown below, initial sorting, grouping and filtering can of course also be
+				provided using JavaScript.</p>
+
+			<p class="p">You can define a sorter and/or filters:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>//returns group header captions
+var fnGetCounty = function(oContext) {
+	return oContext.getProperty('county');
+}
+
+var oSorter = new Sorter({
+	path: 'county', 
+	descending: false, 
+	group: fnGetCounty});
+  
+var oFilterCity = new sap.ui.model.Filter("city",
+	sap.ui.model.FilterOperator.StartsWith, "B"),
+	oFilterRevenue = new sap.ui.model.Filter("revenue",
+		sap.ui.model.FilterOperator.LT, 150000000);</pre></div>
+
+			<p class="p">You can pass sorters and filters to the aggregation binding:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+var oList = new sap.m.List({
+	items: {path: "/companies", template: oItemTemplate, 
+		sorter: oSorter, filters:[oFilterCity, oFilterRevenue]  
+	}
+});</pre></div>
+
+			<p class="p">You can also use the other aggregation binding possibilities (for example
+					<samp class="ph codeph">bindAggregation</samp> or <samp class="ph codeph">bindItems</samp>) and provide the
+				sorter and filters as parameters.</p>
+
+		</div></div>
+
+		<div class="section" id="loio91f057786f4d1014b6dd926db0e91070__section_N100CF_N10013_N10001"><div class="section_title">Manual Sorting and Filtering for Aggregation Binding</div><div type="Manual Sorting and Filtering for Aggregation Binding">
+			
+			<p class="p">You can sort or filter data manually after the aggregation binding is complete by
+				getting the corresponding binding and calling the sort/filter function:</p>
+
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// manual sorting
+oList.getBinding("items").sort(oSorter);
+
+// manual filtering
+oList.getBinding("items").filter([oFilterCity, oFilterRevenue]);</pre></div>
+
+			<div class="note note"><span class="notetitle">Note</span> 
+				<p class="p"><samp class="ph codeph">getBinding</samp> requires the name of the bound aggregation. In this example, we are looking at the <samp class="ph codeph">items</samp> of the
+						<samp class="ph codeph">sap.m.List</samp> control.</p>
+
+			</div>
+
+			<p class="p">For more information about the various sorting and filter methods and operators, <span class="ph">see the
+					documentation for Filter, Sorter, and Filter operations under <a class="xref" href="../../docs/api/symbols/sap.ui.model.html" alt="../../docs/api/symbols/sap.ui.model.html" title="../../docs/api/symbols/sap.ui.model.html">sap.ui.model</a> in the
+						<span class="ph uicontrol">API Reference</span> part of the Demo Kit</span>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Lifecycle of Binding Templates</div><div type="Lifecycle of Binding Templates">
+			
+			<div class="p">The lifecycle of the binding templates differs from the lifecycle of controls that are contained in an aggregation. Whenever a control object is
+				destroyed, any aggregating object is destroyed as well. For list binding templates, you specify the behavior by using the additional parameter
+					<samp class="ph codeph">templateShareable</samp> for the <samp class="ph codeph">bindAggregation</samp> method of class <samp class="ph codeph">sap.ui.base.ManagedObject</samp>. <ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_lmr_f4s_4v">
+					<li class="li">
+						<p class="p"><samp class="ph codeph">templateShareable = "false"</samp> (preferred setting)</p>
+
+						<p class="p">If you set the parameter to <samp class="ph codeph">false</samp> the lifecycle is controlled by the framework. It will destroy the template when
+							the binding is removed (<samp class="ph codeph">unbindAggregation</samp>, <samp class="ph codeph">unbindItems</samp>) </p>
+
+					</li>
+
+					<li class="li">
+						<p class="p"><samp class="ph codeph">templateShareable = "true"</samp></p>
+
+						<div class="p">If you set the parameter to <samp class="ph codeph">true</samp> the template is <span class="ph emphasis emphasis">not</span> destroyed when (the binding of) the
+							aggregated object is destroyed. Use this option in the following cases only:<ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_i5t_frs_4v">
+								<li class="li">
+									<p class="p">The template is reused in your app to define an additional list binding. </p>
+
+									<p class="p">Since the template is not destroyed, this could also affect some other aggregation that uses the same template at a later
+										point in time.</p>
+
+								</li>
+
+								<li class="li">
+									<p class="p">The template is cloned.</p>
+
+								</li>
+
+							</ul>
+In these cases, the app has to make sure that the templates are properly cleaned up at some point in time - at the latest when
+							the corresponding controller or component is destroyed. An error message is logged to make sure that this is not forgotten.</div>
+
+					</li>
+
+					<li class="li">
+						<div class="p">If the parameter is undefined, (neither <samp class="ph codeph">true</samp> nor <samp class="ph codeph">false</samp>), the framework checks at several points in
+							time whether all list bindings are removed. If there are no bindings, the templates is marked as <samp class="ph codeph">candidate for
+								destroy()</samp>, but it is not immediately destroyed. The candidate is destroyed in the following cases:<ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_c43_v5m_rv">
+								<li class="li">
+									<p class="p">A <span class="ph emphasis emphasis">new object with the same ID</span> is created.</p>
+
+								</li>
+
+								<li class="li">
+									<p class="p">The component that owns the objects is destroyed.</p>
+
+								</li>
+
+							</ul>
+</div>
+
+						<div class="p">If the framework determines that a "candidate for destroy" is still in use in another binding or in a clone operation, the framework
+							makes sure that the candidate is not destroyed by implicitly setting <samp class="ph codeph">templateShareable</samp> to <samp class="ph codeph">true</samp> (as
+							this best reflects how the app deals with the template). But now the template is not destroyed at all (an error messages is issued),
+							and the app implementation needs to make sure that the binding template is destroyed as soon as it is no longer needed.<div class="note note"><span class="notetitle">Note</span> 
+								<div class="p">The error messages are:<ul class="ul" id="loio91f057786f4d1014b6dd926db0e91070__ul_zss_hcm_vv">
+										<li class="li">
+											<p class="p">A binding template that is marked as 'candidate for destroy' is reused in a binding.</p>
+
+										</li>
+
+										<li class="li">
+											<p class="p">During a clone operation, a template was found that neither was marked with 'templateShareable:true' nor
+												'templateShareable:false'. </p>
+
+										</li>
+
+									</ul>
+</div>
+
+							</div>
+</div>
+
+						<div class="note caution"><span class="cautiontitle">Caution</span> 
+							<p class="p"> To leave the parameter undefined is<span class="ph emphasis emphasis"> very error-prone</span>, therefore we don't recommend this! Always set the
+								parameter explicitly to <samp class="ph codeph">true</samp> or <samp class="ph codeph">false</samp>.</p>
+
+						</div>
+
+					</li>
+
+				</ul>
+</div>
+
+		</div></div>
+
+	</div>
+
+	<div class="related-links"> 
+<div class="relinfo"><div class="relinfotitle ">Related Information</div>
+<div><a class="link" href="284a036c8ff943238fb65bf5a2676fb7.html" title="Instead of hard-coding a single template control, we will use a factory function to generate different controls based on the data received at runtime. This approach is much more flexible and allows complex or heterogeneous data to be displayed.">Tutorial Step 15: Aggregation Binding Using a Factory Function</a></div>
+</div>
+</div></div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Aggregation Binding";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

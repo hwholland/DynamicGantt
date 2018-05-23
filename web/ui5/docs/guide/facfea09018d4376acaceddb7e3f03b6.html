@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Different facets have been defined to display important information in the sections of the content area."/>
+<meta name="description" content="Different facets have been defined to display important information in the sections of the content area."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7650154433154542"/>
+<title>Sections</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loiofacfea09018d4376acaceddb7e3f03b6">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Sections</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">Different facets have been defined to display important information in the sections of
+		the content area.</p>
+
+		<div class="section">
+			<div class="p">Sections are built using the <samp class="ph codeph">com.sap.vocabularies.UI.v1.Facets</samp>
+					annotations.<div class="note note"><span class="notetitle">Note</span> All facets are displayed on the same page. The link from the
+					facet only navigates to the related section on the same page. The label of the
+					facet annotation is used twice; once for the facet in the header area and once
+					for the title of the section.</div>
+</div>
+
+			<p class="p">A facet comprises collection facets (<samp class="ph codeph">UI.CollectionFacet</samp>) as well as
+				reference facets (<samp class="ph codeph">UI.ReferenceFacet</samp>). Collection facets are made up
+				of a list of records that each represent a reference facet to a field group
+				annotation. Reference facets represent a reference to a line item annotation (list
+				on the object page). </p>
+
+			<p class="p">A hierarchy level is also supported; instead of a reference facet, you can add a collection
+				facet that consists of several reference facets. The contents of these reference
+				facets will then be arranged underneath. </p>
+
+			<p class="p">In the figure below, the collection facet for <span class="ph uicontrol">Product
+					Information</span> combines three reference facets. Each reference facet
+				refers to a field group, or to an identification annotation.</p>
+
+			<div class="p">
+				<div class="fig fignone" id="loiofacfea09018d4376acaceddb7e3f03b6__fig_v14_vzv_35"><div class="figcontainer">
+					
+					<img class="image" id="loiofacfea09018d4376acaceddb7e3f03b6__image_avn_1fv_1v" src="loio2bcb89d4d512428a91f7eab9994d3715_LowRes.png"/>
+				<div class="figcap">Object Page: CollectionFacet</div></div></div>
+
+			</div>
+
+			<p class="p">Further reference facets refer to identification sections, field group, contact or
+				line items' annotations. For line items, a list is rendered.</p>
+
+			<div class="p">
+				<div class="fig fignone" id="loiofacfea09018d4376acaceddb7e3f03b6__fig_wzg_wzv_35"><div class="figcontainer">
+					
+					<img class="image" id="loiofacfea09018d4376acaceddb7e3f03b6__image_bv3_gtv_1v" src="loio2740bd6525d94685a170d868be542332_LowRes.png"/>
+				<div class="figcap">Object Page: ReferenceFacets</div></div></div>
+
+			</div>
+
+		</div>
+
+		<div class="section"><div class="section_title">Enabling Special Features Within Sections</div><div type="Enabling Special Features Within Sections">
+			
+			<p class="p">To render a smart table, the section must comprise a list (indicated by
+					<samp class="ph codeph">com.sap.vocabularies.UI.v1.LineItem</samp>).</p>
+
+			<p class="p">To render a toolbar for the table, <samp class="ph codeph">com.sap.smartapp.UI.Action</samp> must
+				be defined as the entity type. In this case, the
+					<samp class="ph codeph">com.sap.smartapp.UI.Action</samp> list is processed and a button is
+				generated based on the label and function import information.</p>
+
+			<p class="p">An <span class="ph uicontrol">Add Entry</span> button is rendered if
+					<samp class="ph codeph">Org.OData.Capabilities.V1.InsertRestrictions/Insertable/Bool</samp> is
+				set to <samp class="ph codeph">true</samp> for the entity set.</p>
+
+			<p class="p">The fields are rendered using the smart field control so the associated annotations
+				are also used.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">IDs for Collection Facets</div><div type="IDs for Collection Facets">
+			
+			<p class="p">To enable, for example, extensions, personalization, automated testing, you need to have
+				stable IDs for views and controls. In most cases, you can derive them automatically
+				from existing annotations. In case of collection facets, a new annotation was
+				introduced with which you can set a stable ID. The ID should be meaningful and must
+				be unique within the entity type. You should only use characters in camel case
+				without spaces. </p>
+
+			<div class="p">If you define your facets in an annotation file in your project, you can add the ID there
+				directly, as in the following example:<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">&lt;Annotation Term="UI.Facets"&gt;
+	&lt;Collection&gt;
+		&lt;Record Type="UI.CollectionFacet"&gt;
+			&lt;PropertyValue Property="ID" String="GeneralInformation"/&gt;</pre></div>
+
+				</div>
+</div>
+
+			<div class="p">If you define the UI annotations in the <samp class="ph codeph">MPC_EXT</samp>, you can add the ID by
+				searching for <samp class="ph codeph">create_record( iv_record_type = 'UI.CollectionFacet')</samp>
+				and then, as in the following example, add the lines 3 and 4 with a meaningful ID in
+				the data provider class of the back end system:<div class="note sap-samplecodeblock samplecode"><span class="samplecodetitle">Sample Code</span> 
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">lo_collection1 = lo_annotation-&gt;create_collection( ).
+lo_record2 = lo_collection1-&gt;create_record( iv_record_type = 'UI.CollectionFacet')   ##NO_TEXT.
+lo_property_value3 = lo_record2-&gt;create_property( 'ID' )    ##NO_TEXT.
+lo_property_value3-&gt;create_simple_value( )-&gt;set_string( 'GeneralInformation' )   ##NO_TEXT.</pre></div>
+
+					<p class="p">The annotation generator of the fact sheets automatically adds an ID to the
+							<samp class="ph codeph">GeneralInformation</samp> collection facet. </p>
+
+				</div>
+</div>
+	
+		</div></div>
+
+		<div class="section"><div class="section_title">Subsections</div><div type="Subsections">
+			
+			<div class="p">Each section can also have several subsections. If a collection facet
+					(<samp class="ph codeph">UI.CollectionFacet</samp>) contains several collection facets, each
+				of these becomes a subsection, as in the following
+				example:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;Annotation Term="UI.Facets"&gt;
+
+   &lt;Collection&gt;
+
+      &lt;!-- This facet is displayed as before in a section --&gt;
+
+      &lt;Record Type="UI.ReferenceFacet"&gt;
+
+         &lt;PropertyValue Property="Label" String="{@i18n&gt;@GeneralInfoFacetLabel}"/&gt;
+
+         &lt;PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#GeneralInformation" /&gt;
+
+      &lt;/Record&gt;
+
+      &lt;Record Type="UI.CollectionFacet"&gt;
+
+         &lt;PropertyValue Property="ID" String="FurtherData"/&gt;
+
+         &lt;PropertyValue Property="Label" String="{@i18n&gt;@FurtherData}"/&gt;
+
+         &lt;PropertyValue Property="Facets"&gt;
+
+            &lt;Collection&gt;
+
+               &lt;!-- This CollectionFacet becomes a subsection with a form with groups --&gt;
+
+               &lt;Record Type="UI.CollectionFacet"&gt;</pre></div>
+</div>
+
+		</div></div>
+
+		
+	</div>
+
+<div class="related-links"> 
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Sections";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

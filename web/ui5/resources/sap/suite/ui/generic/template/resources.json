@@ -1,0 +1,2387 @@
+{
+  "_version": "1.1.0",
+  "resources": [
+    {
+      "name": ".library"
+    },
+    {
+      "name": ".theming"
+    },
+    {
+      "name": "ListReport/Component-dbg.js",
+      "module": "sap/suite/ui/generic/template/ListReport/Component.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "ListReport/Component.js",
+      "module": "sap/suite/ui/generic/template/ListReport/Component.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "ListReport/controller/ControllerImplementation-dbg.js",
+      "module": "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/m/ObjectIdentifier.js",
+        "sap/m/Table.js",
+        "sap/m/Text.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/generic/app/navigation/service/SelectionVariant.js",
+        "sap/suite/ui/generic/template/ListReport/extensionAPI/ExtensionAPI.js"
+      ]
+    },
+    {
+      "name": "ListReport/controller/ControllerImplementation.js",
+      "module": "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/m/ObjectIdentifier.js",
+        "sap/m/Table.js",
+        "sap/m/Text.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/generic/app/navigation/service/SelectionVariant.js",
+        "sap/suite/ui/generic/template/ListReport/extensionAPI/ExtensionAPI.js"
+      ]
+    },
+    {
+      "name": "ListReport/extensionAPI/ExtensionAPI-dbg.js",
+      "module": "sap/suite/ui/generic/template/ListReport/extensionAPI/ExtensionAPI.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/ListReport/extensionAPI/NonDraftTransactionController.js"
+      ]
+    },
+    {
+      "name": "ListReport/extensionAPI/ExtensionAPI.js",
+      "module": "sap/suite/ui/generic/template/ListReport/extensionAPI/ExtensionAPI.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/ListReport/extensionAPI/NonDraftTransactionController.js"
+      ]
+    },
+    {
+      "name": "ListReport/extensionAPI/NonDraftTransactionController-dbg.js",
+      "module": "sap/suite/ui/generic/template/ListReport/extensionAPI/NonDraftTransactionController.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ListReport/extensionAPI/NonDraftTransactionController.js",
+      "module": "sap/suite/ui/generic/template/ListReport/extensionAPI/NonDraftTransactionController.js",
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ListReport/i18n/i18n.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n.properties",
+      "locale": "",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ar.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ar.properties",
+      "locale": "ar",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_bg.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_bg.properties",
+      "locale": "bg",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ca.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ca.properties",
+      "locale": "ca",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_cs.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_cs.properties",
+      "locale": "cs",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_da.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_da.properties",
+      "locale": "da",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_de.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_de.properties",
+      "locale": "de",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_el.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_el.properties",
+      "locale": "el",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_en.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_en.properties",
+      "locale": "en",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_es.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_es.properties",
+      "locale": "es",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_et.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_et.properties",
+      "locale": "et",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_fi.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_fi.properties",
+      "locale": "fi",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_fr.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_fr.properties",
+      "locale": "fr",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_hi.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_hi.properties",
+      "locale": "hi",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_hr.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_hr.properties",
+      "locale": "hr",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_hu.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_hu.properties",
+      "locale": "hu",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_it.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_it.properties",
+      "locale": "it",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_iw.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_iw.properties",
+      "locale": "iw",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ja.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ja.properties",
+      "locale": "ja",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_kk.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_kk.properties",
+      "locale": "kk",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ko.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ko.properties",
+      "locale": "ko",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_lt.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_lt.properties",
+      "locale": "lt",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_lv.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_lv.properties",
+      "locale": "lv",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_nl.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_nl.properties",
+      "locale": "nl",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_no.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_no.properties",
+      "locale": "no",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_pl.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_pl.properties",
+      "locale": "pl",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_pt.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_pt.properties",
+      "locale": "pt",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ro.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ro.properties",
+      "locale": "ro",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_ru.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_ru.properties",
+      "locale": "ru",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_sh.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_sh.properties",
+      "locale": "sh",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_sk.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_sk.properties",
+      "locale": "sk",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_sl.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_sl.properties",
+      "locale": "sl",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_sv.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_sv.properties",
+      "locale": "sv",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_th.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_th.properties",
+      "locale": "th",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_tr.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_tr.properties",
+      "locale": "tr",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_uk.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_uk.properties",
+      "locale": "uk",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_vi.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_vi.properties",
+      "locale": "vi",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_zh_CN.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_zh_CN.properties",
+      "locale": "zh_CN",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/i18n/i18n_zh_TW.properties",
+      "module": "sap/suite/ui/generic/template/ListReport/i18n/i18n_zh_TW.properties",
+      "locale": "zh_TW",
+      "raw": "ListReport/i18n/i18n.properties"
+    },
+    {
+      "name": "ListReport/manifest.json",
+      "module": "sap/suite/ui/generic/template/ListReport/manifest.json"
+    },
+    {
+      "name": "ListReport/view/ComplexTable-dbg.controller.js",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ComplexTable.controller.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/ComplexTable.controller.js",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ComplexTable.controller.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/ComplexTable.view.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ComplexTable.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js",
+        "sap/suite/ui/generic/template/ListReport/view/ComplexTable.controller.js",
+        "sap/ui/core/Fragment.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/FullscreenPage.fragment.xml"
+      ]
+    },
+    {
+      "name": "ListReport/view/ListReport-dbg.controller.js",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ListReport.controller.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/ListReport.controller.js",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ListReport.controller.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/ListReport.view.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/ListReport.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js",
+        "sap/suite/ui/generic/template/ListReport/view/ListReport.controller.js",
+        "sap/ui/core/Fragment.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/FullscreenPage.fragment.xml"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/BreakoutActions.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/BreakoutActions.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/m/OverflowToolbarLayoutData.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/DeleteConfirmation.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/DeleteConfirmation.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Dialog.js",
+        "sap/m/VBox.js",
+        "sap/m/Text.js",
+        "sap/m/CheckBox.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/DraftInfoBox.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/DraftInfoBox.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/HBox.js",
+        "sap/ui/core/Icon.js",
+        "sap/m/Link.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/FullscreenPage.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/FullscreenPage.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/suite/ui/generic/template/lib/FlexEnabler.js",
+        "sap/m/semantic/FullscreenPage.js",
+        "sap/m/VBox.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/SmartFilterBar.fragment.xml",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/SmartTable.fragment.xml",
+        "sap/ui/core/CustomData.js",
+        "sap/m/semantic/SendEmailAction.js",
+        "sap/m/semantic/ShareInJamAction.js",
+        "sap/ushell/ui/footerbar/AddBookmarkButton.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/InlineButton.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/InlineButton.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/SmartFilterBar.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/SmartFilterBar.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/ui/comp/smartfilterbar/SmartFilterBar.js",
+        "sap/ui/core/ExtensionPoint.js",
+        "sap/m/FlexItemData.js"
+      ],
+      "condRequired": [
+        "sap/ui/comp/smartfilterbar/ControlConfiguration.js",
+        "sap/m/ComboBox.js",
+        "sap/ui/core/Item.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/SmartTable.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/SmartTable.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/ui/comp/smarttable/SmartTable.js",
+        "sap/ui/core/CustomData.js",
+        "sap/m/FlexItemData.js",
+        "sap/ui/comp/navpopover/SemanticObjectController.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/SmartTableToolbar.fragment.xml"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/ListReport/view/fragments/DraftInfoBox.fragment.xml",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/ui/core/ExtensionPoint.js",
+        "sap/suite/ui/generic/template/fragments/AnalyticalTableColumns.fragment.xml",
+        "sap/ui/table/Table.js",
+        "sap/suite/ui/generic/template/fragments/GridTableColumns.fragment.xml",
+        "sap/m/Table.js",
+        "sap/suite/ui/generic/template/fragments/TableColumns.fragment.xml",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/TableColumns.fragment.xml"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/SmartTableToolbar.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/SmartTableToolbar.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/OverflowToolbar.js",
+        "sap/m/ToolbarSpacer.js",
+        "sap/suite/ui/generic/template/fragments/DatafieldActionButtons.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/AnalyticalActionButtons.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/CRUDActionButtons.fragment.xml"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/ListReport/view/fragments/BreakoutActions.fragment.xml"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/TableColumns.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/TableColumns.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/ColumnListItem.js"
+      ],
+      "condRequired": [
+        "sap/m/Column.js",
+        "sap/ui/core/CustomData.js",
+        "sap/m/Text.js",
+        "sap/ui/core/ExtensionPoint.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/InlineButton.fragment.xml",
+        "sap/m/RatingIndicator.js",
+        "sap/m/ProgressIndicator.js"
+      ]
+    },
+    {
+      "name": "ListReport/view/fragments/ToolbarButton.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ListReport/view/fragments/ToolbarButton.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/m/OverflowToolbarLayoutData.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/Component-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/Component.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/Component.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/Component.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/controller/ControllerImplementation-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/controller/ControllerImplementation.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/format/DateFormat.js",
+        "sap/ui/core/routing/HashChanger.js",
+        "sap/m/ActionSheet.js",
+        "sap/m/Button.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessageToast.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ushell/ui/footerbar/AddBookmarkButton.js",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/ui/generic/app/navigation/service/SelectionVariant.js",
+        "sap/suite/ui/generic/template/lib/MessageButtonHelper.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/controller/ControllerImplementation.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/controller/ControllerImplementation.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/format/DateFormat.js",
+        "sap/ui/core/routing/HashChanger.js",
+        "sap/m/ActionSheet.js",
+        "sap/m/Button.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessageToast.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ushell/ui/footerbar/AddBookmarkButton.js",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/ui/generic/app/navigation/service/SelectionVariant.js",
+        "sap/suite/ui/generic/template/lib/MessageButtonHelper.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/DraftTransactionController-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/DraftTransactionController.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/DraftTransactionController.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/DraftTransactionController.js",
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/ExtensionAPI-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/DraftTransactionController.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/NonDraftTransactionController.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/ExtensionAPI.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/DraftTransactionController.js",
+        "sap/suite/ui/generic/template/ObjectPage/extensionAPI/NonDraftTransactionController.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/NonDraftTransactionController-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/NonDraftTransactionController.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/extensionAPI/NonDraftTransactionController.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/extensionAPI/NonDraftTransactionController.js",
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/i18n/i18n.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n.properties",
+      "locale": "",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ar.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ar.properties",
+      "locale": "ar",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_bg.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_bg.properties",
+      "locale": "bg",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ca.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ca.properties",
+      "locale": "ca",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_cs.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_cs.properties",
+      "locale": "cs",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_da.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_da.properties",
+      "locale": "da",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_de.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_de.properties",
+      "locale": "de",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_el.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_el.properties",
+      "locale": "el",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_en.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_en.properties",
+      "locale": "en",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_es.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_es.properties",
+      "locale": "es",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_et.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_et.properties",
+      "locale": "et",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_fi.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_fi.properties",
+      "locale": "fi",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_fr.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_fr.properties",
+      "locale": "fr",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_hi.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_hi.properties",
+      "locale": "hi",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_hr.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_hr.properties",
+      "locale": "hr",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_hu.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_hu.properties",
+      "locale": "hu",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_it.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_it.properties",
+      "locale": "it",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_iw.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_iw.properties",
+      "locale": "iw",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ja.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ja.properties",
+      "locale": "ja",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_kk.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_kk.properties",
+      "locale": "kk",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ko.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ko.properties",
+      "locale": "ko",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_lt.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_lt.properties",
+      "locale": "lt",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_lv.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_lv.properties",
+      "locale": "lv",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_nl.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_nl.properties",
+      "locale": "nl",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_no.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_no.properties",
+      "locale": "no",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_pl.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_pl.properties",
+      "locale": "pl",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_pt.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_pt.properties",
+      "locale": "pt",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ro.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ro.properties",
+      "locale": "ro",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_ru.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_ru.properties",
+      "locale": "ru",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_sh.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_sh.properties",
+      "locale": "sh",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_sk.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_sk.properties",
+      "locale": "sk",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_sl.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_sl.properties",
+      "locale": "sl",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_sv.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_sv.properties",
+      "locale": "sv",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_th.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_th.properties",
+      "locale": "th",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_tr.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_tr.properties",
+      "locale": "tr",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_uk.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_uk.properties",
+      "locale": "uk",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_vi.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_vi.properties",
+      "locale": "vi",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_zh_CN.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_zh_CN.properties",
+      "locale": "zh_CN",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/i18n/i18n_zh_TW.properties",
+      "module": "sap/suite/ui/generic/template/ObjectPage/i18n/i18n_zh_TW.properties",
+      "locale": "zh_TW",
+      "raw": "ObjectPage/i18n/i18n.properties"
+    },
+    {
+      "name": "ObjectPage/manifest.json",
+      "module": "sap/suite/ui/generic/template/ObjectPage/manifest.json"
+    },
+    {
+      "name": "ObjectPage/view/Details-dbg.controller.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/Details.controller.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ObjectPage/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/Details.controller.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/Details.controller.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/ObjectPage/controller/ControllerImplementation.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/Details.view.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/Details.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js",
+        "sap/suite/ui/generic/template/ObjectPage/view/Details.controller.js",
+        "sap/m/Page.js",
+        "sap/uxap/ObjectPageLayout.js",
+        "sap/uxap/ObjectPageHeader.js",
+        "sap/ui/core/Fragment.js",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/NavigationBar.fragment.xml",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/Actions.fragment.xml",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/HeaderContent.fragment.xml",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/Sections.fragment.xml",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/Footer.fragment.xml"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/Breadcrumbs.fragment.xml"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/Actions.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/Actions.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/uxap/ObjectPageHeaderActionButton.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/Breadcrumbs.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/Breadcrumbs.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Link.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/ComponentSections.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/ComponentSections.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/uxap/ObjectPageSection.js",
+        "sap/uxap/ObjectPageSubSection.js",
+        "sap/uxap/ObjectPageLazyLoader.js",
+        "sap/ui/core/ComponentContainer.js",
+        "{component\u003ecomponentName}/Component.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/DraftResumeDialog.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/DraftResumeDialog.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Dialog.js",
+        "sap/m/Text.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/DummyBlock-dbg.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/DummyBlock.js",
+      "isDebug": true,
+      "required": [
+        "sap/uxap/BlockBase.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/DummyBlock.js",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/DummyBlock.js",
+      "required": [
+        "sap/uxap/BlockBase.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/DummyBlock.view.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/DummyBlock.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/Footer.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/Footer.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/OverflowToolbar.js",
+        "sap/m/Button.js",
+        "sap/ui/core/InvisibleText.js",
+        "sap/m/ToolbarSpacer.js"
+      ],
+      "condRequired": [
+        "sap/m/DraftIndicator.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/HeaderContent.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/HeaderContent.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Image.js",
+        "sap/suite/ui/generic/template/fragments/HeaderFacet.fragment.xml",
+        "sap/m/VBox.js",
+        "sap/ui/layout/VerticalLayout.js",
+        "sap/m/Label.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/comp/smartfield/ControlProposal.js",
+        "sap/ui/comp/smartfield/ObjectStatus.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/ImageDialog.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/ImageDialog.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Dialog.js",
+        "sap/m/Image.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/NavigationBar.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/NavigationBar.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Bar.js",
+        "sap/m/Button.js",
+        "sap/m/Title.js",
+        "sap/ui/core/CustomData.js",
+        "sap/m/HBox.js",
+        "sap/uxap/ObjectPageHeaderActionButton.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/RelatedAppsSheet.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/RelatedAppsSheet.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/ActionSheet.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/Sections.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/Sections.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/uxap/ObjectPageSection.js",
+        "sap/uxap/ObjectPageSubSection.js",
+        "sap/ui/layout/Grid.js",
+        "sap/ui/comp/smartform/SmartForm.js",
+        "sap/ui/core/CustomData.js",
+        "sap/ui/comp/smartform/Layout.js",
+        "sap/ui/comp/smartform/Group.js",
+        "sap/ui/comp/smartform/GroupElement.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/suite/ui/generic/template/fragments/Facet.fragment.xml",
+        "sap/uxap/ObjectPageLazyLoader.js",
+        "sap/ui/core/ExtensionPoint.js",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/DummyBlock.js",
+        "sap/suite/ui/generic/template/ObjectPage/view/fragments/ComponentSections.fragment.xml"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/ShareSheet.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/ShareSheet.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/ActionSheet.js",
+        "sap/m/Button.js",
+        "sap/ushell/ui/footerbar/AddBookmarkButton.js"
+      ]
+    },
+    {
+      "name": "ObjectPage/view/fragments/UnsavedChangesDialog.fragment.xml",
+      "module": "sap/suite/ui/generic/template/ObjectPage/view/fragments/UnsavedChangesDialog.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Dialog.js",
+        "sap/m/Text.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "QuickCreate/Component-dbg.js",
+      "module": "sap/suite/ui/generic/template/QuickCreate/Component.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ca/ui/utils/Lessifier.js"
+      ]
+    },
+    {
+      "name": "QuickCreate/Component.js",
+      "module": "sap/suite/ui/generic/template/QuickCreate/Component.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ca/ui/utils/Lessifier.js"
+      ]
+    },
+    {
+      "name": "QuickCreate/css/custom.css"
+    },
+    {
+      "name": "QuickCreate/i18n/i18n.properties",
+      "module": "sap/suite/ui/generic/template/QuickCreate/i18n/i18n.properties"
+    },
+    {
+      "name": "QuickCreate/manifest.json",
+      "module": "sap/suite/ui/generic/template/QuickCreate/manifest.json"
+    },
+    {
+      "name": "QuickCreate/resources.json"
+    },
+    {
+      "name": "QuickCreate/view/QuickCreate-dbg.controller.js",
+      "module": "sap/suite/ui/generic/template/QuickCreate/view/QuickCreate.controller.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickCreateAPI.js",
+        "sap/m/MessageToast.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ui/model/odata/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/ODataModelHelper.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/model/Context.js"
+      ]
+    },
+    {
+      "name": "QuickCreate/view/QuickCreate.controller.js",
+      "module": "sap/suite/ui/generic/template/QuickCreate/view/QuickCreate.controller.js",
+      "required": [
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickCreateAPI.js",
+        "sap/m/MessageToast.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ui/model/odata/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/ODataModelHelper.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/model/Context.js"
+      ]
+    },
+    {
+      "name": "QuickCreate/view/QuickCreate.view.xml",
+      "module": "sap/suite/ui/generic/template/QuickCreate/view/QuickCreate.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js",
+        "sap/suite/ui/generic/template/QuickCreate/view/QuickCreate.controller.js",
+        "sap/m/BusyIndicator.js",
+        "sap/m/FlexBox.js",
+        "sap/m/Text.js",
+        "sap/m/VBox.js"
+      ],
+      "condRequired": [
+        "sap/m/HBox.js",
+        "sap/m/Label.js",
+        "sap/ui/comp/smartfield/SmartLabel.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/m/Table.js",
+        "sap/m/Toolbar.js",
+        "sap/m/Title.js",
+        "sap/m/ToolbarSpacer.js",
+        "sap/m/Button.js",
+        "sap/m/Column.js",
+        "sap/m/ColumnListItem.js",
+        "sap/ui/core/Icon.js"
+      ]
+    },
+    {
+      "name": "QuickView/Component-dbg.js",
+      "module": "sap/suite/ui/generic/template/QuickView/Component.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "QuickView/Component.js",
+      "module": "sap/suite/ui/generic/template/QuickView/Component.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "QuickView/i18n/i18n.properties",
+      "module": "sap/suite/ui/generic/template/QuickView/i18n/i18n.properties"
+    },
+    {
+      "name": "QuickView/manifest.json",
+      "module": "sap/suite/ui/generic/template/QuickView/manifest.json"
+    },
+    {
+      "name": "QuickView/resources.json"
+    },
+    {
+      "name": "QuickView/view/QuickView-dbg.controller.js",
+      "module": "sap/suite/ui/generic/template/QuickView/view/QuickView.controller.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/model/Context.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js"
+      ]
+    },
+    {
+      "name": "QuickView/view/QuickView.controller.js",
+      "module": "sap/suite/ui/generic/template/QuickView/view/QuickView.controller.js",
+      "required": [
+        "sap/ui/model/Context.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js"
+      ]
+    },
+    {
+      "name": "QuickView/view/QuickView.view.xml",
+      "module": "sap/suite/ui/generic/template/QuickView/view/QuickView.view.xml",
+      "required": [
+        "sap/ui/core/mvc/XMLView.js",
+        "sap/suite/ui/generic/template/QuickView/view/QuickView.controller.js",
+        "sap/m/semantic/FullscreenPage.js",
+        "sap/m/VBox.js"
+      ],
+      "condRequired": [
+        "sap/m/HBox.js",
+        "sap/ui/comp/smartfield/SmartLabel.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/m/Table.js",
+        "sap/m/Toolbar.js",
+        "sap/m/Title.js",
+        "sap/m/Column.js",
+        "sap/m/Text.js",
+        "sap/m/ColumnListItem.js"
+      ]
+    },
+    {
+      "name": "extensionAPI/ReuseComponentSupport-dbg.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/ReuseComponentSupport.js",
+      "isDebug": true,
+      "required": [
+        "jquery.sap.global.js",
+        "sap/ui/core/UIComponent.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/suite/ui/generic/template/extensionAPI/extensionAPI.js"
+      ]
+    },
+    {
+      "name": "extensionAPI/ReuseComponentSupport.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/ReuseComponentSupport.js",
+      "required": [
+        "jquery.sap.global.js",
+        "sap/ui/core/UIComponent.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/suite/ui/generic/template/extensionAPI/extensionAPI.js"
+      ]
+    },
+    {
+      "name": "extensionAPI/UIMode-dbg.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/UIMode.js",
+      "isDebug": true
+    },
+    {
+      "name": "extensionAPI/UIMode.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/UIMode.js"
+    },
+    {
+      "name": "extensionAPI/extensionAPI-dbg.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/extensionAPI.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "extensionAPI/extensionAPI.js",
+      "module": "sap/suite/ui/generic/template/extensionAPI/extensionAPI.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js"
+      ]
+    },
+    {
+      "name": "fragments/AnalyticalActionButtons.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/AnalyticalActionButtons.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "fragments/AnalyticalTableColumns.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/AnalyticalTableColumns.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/ui/table/AnalyticalColumn.js",
+        "sap/m/Text.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/InlineButton.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/InlineButton.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/CRUDActionButtons.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/CRUDActionButtons.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/m/OverflowToolbarButton.js"
+      ]
+    },
+    {
+      "name": "fragments/ContactDetails.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/ContactDetails.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/QuickView.js",
+        "sap/m/QuickViewPage.js",
+        "sap/m/QuickViewGroup.js",
+        "sap/m/QuickViewGroupElement.js"
+      ]
+    },
+    {
+      "name": "fragments/Contacts.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/Contacts.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js",
+        "sap/ui/layout/GridData.js",
+        "sap/m/List.js",
+        "sap/m/CustomListItem.js",
+        "sap/m/HBox.js",
+        "sap/m/Link.js",
+        "sap/m/Text.js",
+        "sap/suite/ui/generic/template/fragments/ContactDetails.fragment.xml"
+      ],
+      "condRequired": [
+        "sap/m/Image.js",
+        "sap/ui/core/Icon.js"
+      ]
+    },
+    {
+      "name": "fragments/DataLossPopup.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/DataLossPopup.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Dialog.js",
+        "sap/m/Text.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "fragments/DatafieldActionButtons.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/DatafieldActionButtons.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/ListReport/view/fragments/ToolbarButton.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/ToolbarButton.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/DiscardDraftPopover.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/DiscardDraftPopover.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Popover.js",
+        "sap/m/VBox.js",
+        "sap/m/Text.js",
+        "sap/m/Button.js"
+      ]
+    },
+    {
+      "name": "fragments/DraftAdminDataPopover.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/DraftAdminDataPopover.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/Popover.js",
+        "sap/m/Button.js",
+        "sap/m/VBox.js",
+        "sap/m/Text.js"
+      ]
+    },
+    {
+      "name": "fragments/Facet.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/Facet.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/fragments/SmartTable.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/Contacts.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/SmartChart.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/SmartForm.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/GridTableColumns.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/GridTableColumns.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/ui/table/Column.js",
+        "sap/m/Text.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/InlineButton.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/InlineButton.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/HeaderAddress.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderAddress.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js",
+        "sap/m/Text.js"
+      ],
+      "condRequired": [
+        "sap/m/Label.js"
+      ]
+    },
+    {
+      "name": "fragments/HeaderContactWithDetailsPopover.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderContactWithDetailsPopover.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js",
+        "sap/m/HBox.js",
+        "sap/suite/ui/generic/template/fragments/ContactDetails.fragment.xml",
+        "sap/ui/core/Icon.js",
+        "sap/m/Link.js",
+        "sap/ui/core/CustomData.js",
+        "sap/m/Text.js"
+      ],
+      "condRequired": [
+        "sap/m/Label.js"
+      ]
+    },
+    {
+      "name": "fragments/HeaderDataPoint.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderDataPoint.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js",
+        "sap/m/Label.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/comp/smartfield/Configuration.js"
+      ],
+      "condRequired": [
+        "sap/ui/comp/smartfield/ControlProposal.js",
+        "sap/ui/comp/smartfield/ObjectStatus.js"
+      ]
+    },
+    {
+      "name": "fragments/HeaderFacet.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderFacet.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/suite/ui/generic/template/fragments/HeaderDataPoint.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/HeaderPlainText.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/HeaderForm.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/HeaderContactWithDetailsPopover.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/HeaderAddress.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/HeaderForm.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderForm.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js"
+      ],
+      "condRequired": [
+        "sap/m/Text.js",
+        "sap/suite/ui/generic/template/fragments/HeaderFormDataField.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/HeaderFormDataField.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderFormDataField.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/HBox.js",
+        "sap/suite/ui/generic/template/fragments/ContactDetails.fragment.xml",
+        "sap/m/Label.js",
+        "sap/m/Link.js",
+        "sap/ui/core/CustomData.js",
+        "sap/ui/comp/smartfield/SmartLabel.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/comp/smartfield/Configuration.js",
+        "sap/ui/comp/smartfield/ControlProposal.js",
+        "sap/ui/comp/smartfield/ObjectStatus.js"
+      ]
+    },
+    {
+      "name": "fragments/HeaderPlainText.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/HeaderPlainText.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/VBox.js"
+      ],
+      "condRequired": [
+        "sap/m/Text.js"
+      ]
+    },
+    {
+      "name": "fragments/InlineButton.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/InlineButton.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "fragments/MessagePopover.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/MessagePopover.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/MessagePopover.js",
+        "sap/m/MessagePopoverItem.js"
+      ]
+    },
+    {
+      "name": "fragments/SmartChart.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/SmartChart.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/ui/comp/smartchart/SmartChart.js"
+      ]
+    },
+    {
+      "name": "fragments/SmartForm.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/SmartForm.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/ui/comp/smartform/SmartForm.js",
+        "sap/ui/core/CustomData.js",
+        "sap/ui/comp/smartform/Layout.js",
+        "sap/ui/layout/GridData.js"
+      ],
+      "condRequired": [
+        "sap/ui/comp/smartform/Group.js",
+        "sap/suite/ui/generic/template/fragments/SmartFormDataField.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/SmartFormDataField.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/SmartFormDataField.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/ui/comp/smartform/GroupElement.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/comp/smartfield/ControlProposal.js",
+        "sap/ui/comp/smartfield/ObjectStatus.js"
+      ]
+    },
+    {
+      "name": "fragments/SmartTable.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/SmartTable.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/ui/comp/smarttable/SmartTable.js",
+        "sap/ui/core/CustomData.js",
+        "sap/ui/comp/navpopover/SemanticObjectController.js",
+        "sap/ui/layout/GridData.js",
+        "sap/m/OverflowToolbar.js",
+        "sap/m/ToolbarSpacer.js",
+        "sap/suite/ui/generic/template/fragments/AnalyticalActionButtons.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/CRUDActionButtons.fragment.xml"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/m/OverflowToolbarLayoutData.js",
+        "sap/suite/ui/generic/template/fragments/DatafieldActionButtons.fragment.xml",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/suite/ui/generic/template/fragments/AnalyticalTableColumns.fragment.xml",
+        "sap/ui/table/Table.js",
+        "sap/suite/ui/generic/template/fragments/GridTableColumns.fragment.xml",
+        "sap/m/Table.js",
+        "sap/suite/ui/generic/template/fragments/TableColumns.fragment.xml",
+        "sap/m/List.js",
+        "sap/m/CustomListItem.js",
+        "sap/m/VBox.js",
+        "sap/m/Text.js",
+        "sap/m/Label.js"
+      ]
+    },
+    {
+      "name": "fragments/TableColumns.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/TableColumns.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js",
+        "sap/m/ColumnListItem.js"
+      ],
+      "condRequired": [
+        "sap/m/Column.js",
+        "sap/m/Text.js",
+        "sap/ui/core/ExtensionPoint.js",
+        "sap/ui/core/CustomData.js",
+        "sap/m/VBox.js",
+        "sap/m/RatingIndicator.js",
+        "sap/m/ProgressIndicator.js",
+        "sap/m/Image.js",
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/ui/comp/smartfield/ControlProposal.js",
+        "sap/ui/comp/smartfield/ObjectStatus.js",
+        "sap/suite/ui/generic/template/ListReport/view/fragments/InlineButton.fragment.xml",
+        "sap/suite/ui/generic/template/fragments/InlineButton.fragment.xml"
+      ]
+    },
+    {
+      "name": "fragments/ToolbarButton.fragment.xml",
+      "module": "sap/suite/ui/generic/template/fragments/ToolbarButton.fragment.xml",
+      "required": [
+        "sap/ui/core/Fragment.js"
+      ],
+      "condRequired": [
+        "sap/m/Button.js",
+        "sap/m/OverflowToolbarLayoutData.js",
+        "sap/ui/core/CustomData.js"
+      ]
+    },
+    {
+      "name": "js/AnnotationHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/suite/ui/generic/template/extensionAPI/UIMode.js"
+      ]
+    },
+    {
+      "name": "js/AnnotationHelper.js",
+      "module": "sap/suite/ui/generic/template/js/AnnotationHelper.js",
+      "required": [
+        "sap/ui/comp/smartfield/SmartField.js",
+        "sap/suite/ui/generic/template/extensionAPI/UIMode.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/AnnotationHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/model/Context.js",
+        "sap/ui/model/odata/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/AnnotationHelper.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/model/Context.js",
+        "sap/ui/model/odata/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/ODataModelHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/ODataModelHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ui/model/odata/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/ODataModelHelper.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/ODataModelHelper.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js",
+        "sap/ui/model/odata/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/QuickActionBaseController-dbg.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js",
+      "isDebug": true,
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/m/MessageBox.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/QuickActionBaseController.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/QuickActionBaseController.js",
+      "required": [
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/m/MessageBox.js",
+        "sap/suite/ui/generic/template/js/QuickTemplates/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/QuickCreateAPI-dbg.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/QuickCreateAPI.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/ManagedObject.js",
+        "sap/ui/generic/app/transaction/DraftContext.js",
+        "sap/m/MessageToast.js"
+      ]
+    },
+    {
+      "name": "js/QuickTemplates/QuickCreateAPI.js",
+      "module": "sap/suite/ui/generic/template/js/QuickTemplates/QuickCreateAPI.js",
+      "required": [
+        "sap/ui/base/ManagedObject.js",
+        "sap/ui/generic/app/transaction/DraftContext.js",
+        "sap/m/MessageToast.js"
+      ]
+    },
+    {
+      "name": "lib/AppComponent-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/AppComponent.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/core/UIComponent.js",
+        "sap/m/NavContainer.js",
+        "sap/ui/generic/app/ApplicationController.js",
+        "sap/suite/ui/generic/template/lib/BusyHelper.js",
+        "sap/suite/ui/generic/template/lib/NavigationController.js",
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/library.js"
+      ]
+    },
+    {
+      "name": "lib/AppComponent.js",
+      "module": "sap/suite/ui/generic/template/lib/AppComponent.js",
+      "required": [
+        "sap/ui/core/UIComponent.js",
+        "sap/m/NavContainer.js",
+        "sap/ui/generic/app/ApplicationController.js",
+        "sap/suite/ui/generic/template/lib/BusyHelper.js",
+        "sap/suite/ui/generic/template/lib/NavigationController.js",
+        "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+        "sap/suite/ui/generic/template/library.js"
+      ]
+    },
+    {
+      "name": "lib/Application-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/Application.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/routing/History.js",
+        "sap/ui/core/routing/HistoryDirection.js"
+      ]
+    },
+    {
+      "name": "lib/Application.js",
+      "module": "sap/suite/ui/generic/template/lib/Application.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/routing/History.js",
+        "sap/ui/core/routing/HistoryDirection.js"
+      ]
+    },
+    {
+      "name": "lib/BusyHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/BusyHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/BusyHelper.js",
+      "module": "sap/suite/ui/generic/template/lib/BusyHelper.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/CRUDManager-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/CRUDManager.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/m/MessageToast.js",
+        "sap/ui/generic/app/util/ModelUtil.js",
+        "sap/ui/generic/app/util/ActionUtil.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/CRUDManager.js",
+      "module": "sap/suite/ui/generic/template/lib/CRUDManager.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/m/MessageToast.js",
+        "sap/ui/generic/app/util/ModelUtil.js",
+        "sap/ui/generic/app/util/ActionUtil.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/CommonEventHandlers-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/CommonEventHandlers.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/format/DateFormat.js",
+        "sap/m/ComboBox.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessageToast.js",
+        "sap/m/Table.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/Sorter.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/ui/comp/smartfilterbar/SmartFilterBar.js",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/ui/table/Table.js"
+      ]
+    },
+    {
+      "name": "lib/CommonEventHandlers.js",
+      "module": "sap/suite/ui/generic/template/lib/CommonEventHandlers.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/format/DateFormat.js",
+        "sap/m/ComboBox.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessageToast.js",
+        "sap/m/Table.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/Sorter.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/ui/comp/smartfilterbar/SmartFilterBar.js",
+        "sap/ui/table/AnalyticalTable.js",
+        "sap/ui/table/Table.js"
+      ]
+    },
+    {
+      "name": "lib/CommonUtils-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/CommonUtils.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/Device.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/comp/smarttable/SmartTable.js",
+        "sap/ui/table/Table.js",
+        "sap/m/Table.js",
+        "sap/m/ListBase.js",
+        "sap/ui/generic/app/navigation/service/NavigationHandler.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/CommonUtils.js",
+      "module": "sap/suite/ui/generic/template/lib/CommonUtils.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/Device.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/comp/smarttable/SmartTable.js",
+        "sap/ui/table/Table.js",
+        "sap/m/Table.js",
+        "sap/m/ListBase.js",
+        "sap/ui/generic/app/navigation/service/NavigationHandler.js",
+        "sap/suite/ui/generic/template/lib/MessageUtils.js"
+      ]
+    },
+    {
+      "name": "lib/ComponentUtils-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/ComponentUtils.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "lib/ComponentUtils.js",
+      "module": "sap/suite/ui/generic/template/lib/ComponentUtils.js",
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "lib/FlexEnabler-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/FlexEnabler.js",
+      "isDebug": true
+    },
+    {
+      "name": "lib/FlexEnabler.js",
+      "module": "sap/suite/ui/generic/template/lib/FlexEnabler.js"
+    },
+    {
+      "name": "lib/MessageButtonHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/MessageButtonHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/m/MessagePopover.js",
+        "sap/m/MessagePopoverItem.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js"
+      ]
+    },
+    {
+      "name": "lib/MessageButtonHelper.js",
+      "module": "sap/suite/ui/generic/template/lib/MessageButtonHelper.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/m/MessagePopover.js",
+        "sap/m/MessagePopoverItem.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js"
+      ]
+    },
+    {
+      "name": "lib/MessageUtils-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/MessageUtils.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/core/ValueState.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js",
+        "sap/m/MessageToast.js",
+        "sap/m/MessageBox.js",
+        "sap/ui/generic/app/util/ModelUtil.js",
+        "sap/ui/generic/app/util/MessageUtil.js"
+      ]
+    },
+    {
+      "name": "lib/MessageUtils.js",
+      "module": "sap/suite/ui/generic/template/lib/MessageUtils.js",
+      "required": [
+        "sap/ui/core/ValueState.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js",
+        "sap/m/MessageToast.js",
+        "sap/m/MessageBox.js",
+        "sap/ui/generic/app/util/ModelUtil.js",
+        "sap/ui/generic/app/util/MessageUtil.js"
+      ]
+    },
+    {
+      "name": "lib/NavigationController-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/NavigationController.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/ComponentContainer.js",
+        "sap/ui/core/routing/HashChanger.js",
+        "sap/ui/core/routing/History.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessagePage.js",
+        "sap/m/Link.js"
+      ]
+    },
+    {
+      "name": "lib/NavigationController.js",
+      "module": "sap/suite/ui/generic/template/lib/NavigationController.js",
+      "required": [
+        "sap/ui/base/Object.js",
+        "sap/ui/core/ComponentContainer.js",
+        "sap/ui/core/routing/HashChanger.js",
+        "sap/ui/core/routing/History.js",
+        "sap/ui/model/Filter.js",
+        "sap/ui/model/FilterOperator.js",
+        "sap/m/MessageBox.js",
+        "sap/m/MessagePage.js",
+        "sap/m/Link.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateAssembler-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/core/mvc/View.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/suite/ui/generic/template/lib/TemplateViewController.js",
+        "sap/suite/ui/generic/template/lib/TemplateComponent.js",
+        "sap/suite/ui/generic/template/lib/Application.js",
+        "sap/suite/ui/generic/template/lib/CRUDManager.js",
+        "sap/suite/ui/generic/template/lib/CommonUtils.js",
+        "sap/suite/ui/generic/template/lib/ComponentUtils.js",
+        "sap/suite/ui/generic/template/lib/CommonEventHandlers.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateAssembler.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateAssembler.js",
+      "required": [
+        "sap/ui/core/mvc/View.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/suite/ui/generic/template/lib/TemplateViewController.js",
+        "sap/suite/ui/generic/template/lib/TemplateComponent.js",
+        "sap/suite/ui/generic/template/lib/Application.js",
+        "sap/suite/ui/generic/template/lib/CRUDManager.js",
+        "sap/suite/ui/generic/template/lib/CommonUtils.js",
+        "sap/suite/ui/generic/template/lib/ComponentUtils.js",
+        "sap/suite/ui/generic/template/lib/CommonEventHandlers.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateComponent-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateComponent.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/core/CustomizingConfiguration.js",
+        "sap/ui/core/mvc/ViewType.js",
+        "sap/ui/core/UIComponent.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/ui/Device.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateComponent.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateComponent.js",
+      "required": [
+        "sap/ui/core/CustomizingConfiguration.js",
+        "sap/ui/core/mvc/ViewType.js",
+        "sap/ui/core/UIComponent.js",
+        "sap/ui/model/json/JSONModel.js",
+        "sap/ui/model/resource/ResourceModel.js",
+        "sap/ui/Device.js",
+        "sap/suite/ui/generic/template/js/AnnotationHelper.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateViewController-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateViewController.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/core/mvc/Controller.js"
+      ]
+    },
+    {
+      "name": "lib/TemplateViewController.js",
+      "module": "sap/suite/ui/generic/template/lib/TemplateViewController.js",
+      "required": [
+        "sap/ui/core/mvc/Controller.js"
+      ]
+    },
+    {
+      "name": "lib/ViewDependencyHelper-dbg.js",
+      "module": "sap/suite/ui/generic/template/lib/ViewDependencyHelper.js",
+      "isDebug": true,
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "lib/ViewDependencyHelper.js",
+      "module": "sap/suite/ui/generic/template/lib/ViewDependencyHelper.js",
+      "required": [
+        "sap/ui/base/Object.js"
+      ]
+    },
+    {
+      "name": "lib/i18n/i18n.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n.properties",
+      "locale": "",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_bg.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_bg.properties",
+      "locale": "bg",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_en.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_en.properties",
+      "locale": "en",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_hr.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_hr.properties",
+      "locale": "hr",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_kk.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_kk.properties",
+      "locale": "kk",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_lt.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_lt.properties",
+      "locale": "lt",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_vi.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_vi.properties",
+      "locale": "vi",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "lib/i18n/i18n_zh_TW.properties",
+      "module": "sap/suite/ui/generic/template/lib/i18n/i18n_zh_TW.properties",
+      "locale": "zh_TW",
+      "raw": "lib/i18n/i18n.properties"
+    },
+    {
+      "name": "library-all-dbg.js",
+      "isDebug": true,
+      "merged": true
+    },
+    {
+      "name": "library-all.js",
+      "merged": true
+    },
+    {
+      "name": "library-dbg.js",
+      "module": "sap/suite/ui/generic/template/library.js",
+      "isDebug": true,
+      "required": [
+        "jquery.sap.global.js",
+        "sap/ui/core/library.js"
+      ]
+    },
+    {
+      "name": "library-preload.js",
+      "merged": true
+    },
+    {
+      "name": "library-preload.json",
+      "merged": true
+    },
+    {
+      "name": "library.dependencies.json"
+    },
+    {
+      "name": "library.dependencies.xml"
+    },
+    {
+      "name": "library.js",
+      "module": "sap/suite/ui/generic/template/library.js",
+      "required": [
+        "jquery.sap.global.js",
+        "sap/ui/core/library.js"
+      ]
+    },
+    {
+      "name": "manifest.json",
+      "module": "sap/suite/ui/generic/template/manifest.json"
+    },
+    {
+      "name": "resources.json"
+    },
+    {
+      "name": "themes/base/.theming",
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/ListReport.less",
+      "designtime": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/ObjectPage.less",
+      "designtime": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library-RTL-dbg.css",
+      "isDebug": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library-RTL.css",
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library-dbg.css",
+      "isDebug": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library-parameters.json",
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library.css",
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library.less",
+      "designtime": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/base/library.source.less",
+      "designtime": true,
+      "theme": "base"
+    },
+    {
+      "name": "themes/sap_belize/.theming",
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/ListReport.less",
+      "designtime": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/ObjectPage.less",
+      "designtime": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library-RTL-dbg.css",
+      "isDebug": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library-RTL.css",
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library-dbg.css",
+      "isDebug": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library-parameters.json",
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library.css",
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library.less",
+      "designtime": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize/library.source.less",
+      "designtime": true,
+      "theme": "sap_belize"
+    },
+    {
+      "name": "themes/sap_belize_plus/ObjectPage.less",
+      "designtime": true
+    },
+    {
+      "name": "themes/sap_belize_plus/library-RTL-dbg.css",
+      "isDebug": true
+    },
+    {
+      "name": "themes/sap_belize_plus/library-RTL.css"
+    },
+    {
+      "name": "themes/sap_belize_plus/library-dbg.css",
+      "isDebug": true
+    },
+    {
+      "name": "themes/sap_belize_plus/library-parameters.json"
+    },
+    {
+      "name": "themes/sap_belize_plus/library.css"
+    },
+    {
+      "name": "themes/sap_belize_plus/library.less",
+      "designtime": true
+    },
+    {
+      "name": "themes/sap_belize_plus/library.source.less",
+      "designtime": true
+    },
+    {
+      "name": "themes/sap_bluecrystal/.theming",
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/ListReport.less",
+      "designtime": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/ObjectPage.less",
+      "designtime": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library-RTL-dbg.css",
+      "isDebug": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library-RTL.css",
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library-dbg.css",
+      "isDebug": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library-parameters.json",
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library.css",
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library.less",
+      "designtime": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_bluecrystal/library.source.less",
+      "designtime": true,
+      "theme": "sap_bluecrystal"
+    },
+    {
+      "name": "themes/sap_hcb/.theming",
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/ListReport.less",
+      "designtime": true,
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/ObjectPage.less",
+      "designtime": true,
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library-RTL-dbg.css",
+      "isDebug": true,
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library-RTL.css",
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library-dbg.css",
+      "isDebug": true,
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library-parameters.json",
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library.css",
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library.less",
+      "designtime": true,
+      "theme": "sap_hcb"
+    },
+    {
+      "name": "themes/sap_hcb/library.source.less",
+      "designtime": true,
+      "theme": "sap_hcb"
+    }
+  ]
+}

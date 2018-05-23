@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Browser and platform support for the SAPUI5 libraries on iOS, Android, macOS, and Windows platforms."/>
+<meta name="description" content="Browser and platform support for the SAPUI5 libraries on iOS, Android, macOS, and Windows platforms."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4031104881701152"/>
+<title>Browser and Platform Support</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio74b59efa0eef48988d3b716bd0ecc933">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Browser and Platform Support</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">Browser and platform support for the <span class="ph"><span class="ph pname">SAPUI5</span></span> libraries on iOS,
+		Android, macOS, and Windows platforms.</p>
+
+		<div class="note note" id="loio74b59efa0eef48988d3b716bd0ecc933__note_N1001E_N1000E_N10001"><span class="notetitle">Note</span> 
+			<p class="p">The single source of truth about supported browsers and platforms is the Product
+				Availability Matrix (PAM) that you can find at <a class="xref" href="https://support.sap.com/pam" alt="https://support.sap.com/pam" title="https://support.sap.com/pam">https://support.sap.com/pam</a>. <span class="ph pname">SAPUI5</span> is not a product of
+				its own, so please check the PAM for the product you're using <span class="ph pname">SAPUI5</span> with. For more
+				information, see SAP Note <a href="http://help.sap.com/disclaimer?site=https://launchpad.support.sap.com/#/notes/1716423">1716423 <img src="images/sap_link.png" class="link-sap" alt="Information published on SAP site" title="Information published on SAP site" border="0"/></a>.</p>
+
+			<p class="p">The following sections only contain additional information on restrictions and
+				platform support information for specific <span class="ph pname">SAPUI5</span> libraries in a
+				summarized form.</p>
+
+		</div>
+
+		<p class="p">As <span class="ph"><span class="ph pname">SAPUI5</span></span> is based on CSS3, HTML5,
+			and the ECMAScript 5 (ES5) JavaScript API, only browsers with HTML5 capabilities are
+			supported. In general, only major versions that are also supported by the respective
+			platform are supported.</p>
+
+		<div class="note restriction"><span class="restrictiontitle">Restriction</span> 
+			<p class="p">We currently do not guarantee that newer ECMAScript standards, such as ES6/ES2015,
+				work with <span class="ph"><span class="ph pname">SAPUI5</span></span>.</p>
+
+		</div>
+
+		<p class="p">Depending on the platform your <span class="ph"><span class="ph pname">SAPUI5</span></span> apps run on,
+			different browsers in different versions are supported. If you know which platform and
+			which browsers are used by your users, you can decide on which libraries to use for your
+			app.</p>
+
+		<div class="section"><div class="section_title">Overview of Supported Browsers, Platforms, and Reference Devices</div><div type="Overview of Supported Browsers, Platforms, and Reference Devices"><p class="p">The following tables give a general overview of the browsers,
+				platforms, and reference devices supported by the main <span class="ph"><span class="ph pname">SAPUI5</span></span> libraries.</p>
+<div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Browser and Platform Support Matrix</p>
+
+				
+<div class="table-wrapper tablenoborder"><table summary="" id="loio74b59efa0eef48988d3b716bd0ecc933__table_zjl_4fd_p1b" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/><col width="10%"/></colgroup>
+
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						
+						<thead class="thead" align="left">
+							<tr class="row">
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e113">Platform</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e116">Device Category</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e119">Platform Version</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e122">Safari</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e125">Web View</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e129">Internet Explorer</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e132">Microsoft Edge</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e135">Google Chrome</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e138">Mozilla Firefox</th>
+
+								<th class="entry align_center" align="center" valign="middle" id="d6084587e141">SAP Fiori Client</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry" rowspan="4" align="left" valign="top" headers="d6084587e113 ">Windows</td>
+
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e116 ">Desktop</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Windows 7, 8.1</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e125 ">-</td>
+
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e129 ">Version
+									11<sup class="ph sup">2</sup></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e132 ">-</td>
+
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e135 ">Latest version<sup class="ph sup">9</sup></td>
+
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e138 ">Latest version and Extended Support Release
+											(ESR)<sup class="ph sup">1<span class="ph">, 5, 6, 10</span></sup></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e141 ">-</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Windows 10</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e125 ">Latest version</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e132 ">Latest Current Branch for
+									Business</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Latest version</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e116 ">Touch<sup class="ph sup">3<span class="ph">, 4</span></sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Windows 8.1</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e125 ">-</td>
+
+								<td class="entry" rowspan="2" align="left" valign="top" headers="d6084587e129 ">Version 11<sup class="ph sup">2</sup></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e132 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e135 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e138 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Up to version 1.5.3<sup class="ph sup">7</sup></td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Windows 10<sup class="ph sup">7</sup></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e125 ">Latest version</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e132 ">Latest Current Branch for
+										Business<sup class="ph sup">6</sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e135 ">Latest version<sup class="ph sup">6</sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e138 ">Latest version and Extended Support Release (ESR)<sup class="ph sup">1<span class="ph">, 5, 6</span></sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Latest version</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e113 ">Windows Phone</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e116 ">Phone<sup class="ph sup">3<span class="ph">, 4, 6, 7</span></sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Windows 10 Mobile</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e125 ">Latest version</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e129 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e132 ">Latest version</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e135 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e138 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Latest version</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e113 ">macOS</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e116 ">Desktop</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">Latest 2 versions<sup class="ph sup">8</sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e122 ">Latest 2 versions</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e125 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e129 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e132 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e135 ">Latest version<sup class="ph sup"> 3</sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e138 "><span class="ph">Not supported<sup class="ph sup">11</sup></span></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e141 ">-</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e113 ">iOS</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e116 ">Phone and Tablet<sup class="ph sup">3<span class="ph">, 4</span></sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">As of version 9</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e122 ">Latest 2 versions</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e125 ">Latest version<sup class="ph sup">6</sup></td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e129 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e132 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e135 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e138 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Latest version<sup class="ph sup">7</sup></td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="top" headers="d6084587e113 ">Android</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e116 ">Phone and Tablet<sup class="ph sup">3<span class="ph">, 4, 7</span></sup></td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e119 ">As of version 4.4</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e122 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e125 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e129 ">-</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e132 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e135 ">Latest version</td>
+
+								<td class="entry align_center" align="center" valign="top" headers="d6084587e138 ">-</td>
+
+								<td class="entry" align="left" valign="top" headers="d6084587e141 ">Latest version</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+
+				<p class="lines">1) In regards to handling touch events, there are some issues with Windows 8. For more information, see <a class="xref" href="8168059f21bb41bda96901eaf9c4302e.html" title="Information regarding known issues with regard to Windows 8 support.">Windows 8 Support - Known Issues</a>.<br/>
+2) Internet Explorer 11 requires add-ons <span class="ph uicontrol">XML DOM Document</span> and <span class="ph uicontrol">XML DOM Document 3.0</span> to be activated for XML parsing support.<br/>
+3) Not supported for <samp class="ph codeph">sap.ui.commons</samp> and <samp class="ph codeph">sap.ui.ux3</samp>.<br/>
+<span class="ph">4) Not supported for <samp class="ph codeph">sap.gantt</samp>.<br/>
+5) Not supported for <samp class="ph codeph">sap.viz</samp> - the library relies on the open source component D3, which in turn relies on the availability of Scalable Vector Graphics (SVG). Since the SVG file format is not fully supported by Mozilla Firefox ESR, the library is also not supported on this browser.<br/>
+6) Not supported for <samp class="ph codeph">sap.ui.vbm</samp>.<br/>
+7) Not supported for <samp class="ph codeph">sap.ui.vk</samp>.<br/>
+8) <samp class="ph codeph">sap.ui.vk</samp> supports OS X 10.09 only.<br/>
+9) <samp class="ph codeph">sap.ui.vk</samp> supports Google Chrome version 43 or higher.<br/>
+10) <samp class="ph codeph">sap.ui.vk</samp> supports Mozilla Firefox version 39 or higher.<br/>
+11) <samp class="ph codeph">sap.suite.ui.commons</samp> and <samp class="ph codeph">sap.suite.ui.microcharts</samp> support the latest version of Mozilla Firefox.</span></p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">Supported Reference Devices</p>
+
+				<p class="p">For mobile operating systems, support is restricted to specific reference
+					devices.</p>
+
+				<p class="p">When creating support incidents, make sure that the device you refer to belongs to the listed
+					ones:</p>
+
+				<div class="note note"><span class="notetitle">Note</span> 
+					<p class="p">Touch-enabled
+						devices are not supported by the <samp class="ph codeph">sap.ui.commons</samp>,
+							<samp class="ph codeph">sap.ui.ux3</samp> and <samp class="ph codeph">sap.gantt</samp>
+						libraries.</p>
+
+					
+				</div>
+
+				
+<div class="table-wrapper tablenoborder"><table summary="" id="loio74b59efa0eef48988d3b716bd0ecc933__table_hvl_wml_lx" class="table" frame="border" border="1" rules="all">
+<colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
+
+						
+						
+						
+						<thead class="thead" align="left">
+							<tr class="row">
+								<th class="entry align_center" align="center" valign="middle" width="33.33333333333333%" id="d6084587e539">Platform</th>
+
+								<th class="entry align_center" align="center" valign="middle" width="33.33333333333333%" id="d6084587e542">Device</th>
+
+								<th class="entry align_center" align="center" valign="middle" width="33.33333333333333%" id="d6084587e545">End of Support Date</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody class="tbody">
+							<tr class="row">
+								<td class="entry" rowspan="7" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e539 ">
+									<p class="p">iOS</p>
+
+									<p class="p">Apple always supports the 2 latest releases of the iOS
+										operating system. <span class="ph"><span class="ph pname">SAPUI5</span></span> supports Apple mobile devices 3 years from the vendor
+										device release date, except defined otherwise.</p>
+
+								</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPhone 5 SE</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">31 March 2019</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPhone 6</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">19 September 2017</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPhone 6s</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">25 September 2018</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPhone 7</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">7 September 2019</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPad Air 2</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">22 October 2017</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPad Mini 3</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">24 October 2017</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Apple iPad Pro<sup class="ph sup">1</sup></td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">9 September 2018</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" rowspan="5" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e539 ">
+									<p class="p">Android</p>
+
+									<p class="p">Android OS based devices are very fragmented in matters of
+										operating system variants and hardware diversity. <span class="ph"><span class="ph pname">SAPUI5</span></span> supports the following Android reference devices until 3
+										years from vendor device release date.</p>
+
+								</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Samsung S6</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">10 April 2018</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Samsung S7</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">10 March 2019</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Samsung S8<sup class="ph sup">1</sup></td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">21 April 2020</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Samsung Galaxy Tab S2
+									(8.0)</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">3 September 2018</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Samsung Galaxy Tab S3
+									(9.7)</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">26 February 2020</td>
+
+							</tr>
+
+							<tr class="row">
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e539 ">
+									<p class="p">Windows Phone</p>
+
+									<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> supports the following Windows Phone reference devices
+										until 3 years from vendor device release date.</p>
+
+								</td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e542 ">Microsoft Lumia 950<sup class="ph sup">2, 3</sup></td>
+
+								<td class="entry" align="left" valign="middle" width="33.33333333333333%" headers="d6084587e545 ">20 November 2018</td>
+
+							</tr>
+
+						</tbody>
+
+					</table>
+</div>
+
+				<p class="lines">1) Not supported for <samp class="ph codeph">sap.suite.ui.commons</samp> and <samp class="ph codeph">sap.suite.ui.microcharts</samp>.<br/>
+2) Not supported for <samp class="ph codeph">sap.ui.vbm</samp>.<br/>
+3) Not supported for <samp class="ph codeph">sap.ui.vk</samp>.</p>
+
+			</div></div></div>
+
+		<div class="section"><div class="section_title">Additional Information</div><div type="Additional Information">
+			
+			<ul class="ul" id="loio74b59efa0eef48988d3b716bd0ecc933__ul_f5b_krb_p1b">
+				<li class="li">
+					<p class="p"><span class="ph emphasis emphasis">General</span></p>
+
+					<ul class="ul" id="loio74b59efa0eef48988d3b716bd0ecc933__ul_ajz_bxb_p1b">
+						<li class="li">
+							<p class="p">Internet Explorer 11 (IE11) provides specific document and enterprise
+								modes for compatibility reasons. <span class="ph"><span class="ph pname">SAPUI5</span></span>
+								supports only the IE11 and IE10 document modes. For backward
+								compatibility, IE11 allows to enable a special enterprise mode that
+								can simulate either an IE8 or IE7 within an IE11, which is NOT
+								supported for <span class="ph"><span class="ph pname">SAPUI5</span></span>
+								apps. This functionality should be used only for critical apps that
+								require an older browser version to run. For more information, see
+									"<a class="extlink" href="http://help.sap.com/disclaimer?site=https://technet.microsoft.com/itpro/internet-explorer/ie11-deploy-guide/fix-compat-issues-with-doc-modes-and-enterprise-mode-site-list" alt="https://technet.microsoft.com/itpro/internet-explorer/ie11-deploy-guide/fix-compat-issues-with-doc-modes-and-enterprise-mode-site-list" title="https://technet.microsoft.com/itpro/internet-explorer/ie11-deploy-guide/fix-compat-issues-with-doc-modes-and-enterprise-mode-site-list">Fix web compatibility issues using document
+									modes and the Enterprise Mode site list<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>" in the Microsoft
+								Windows IT Center.</p>
+
+						</li>
+
+						<li class="li">
+							<p class="p">The PhantomJS browser is not supported. If you are using it for
+								testing purposes, make sure that you use version 2.x or higher.
+								Otherwise you may get an error message, such as <samp class="ph msgph">"TypeError:
+									'undefined' is not a function (evaluating
+									'f.bind(null,undefined)')(line 146)"</samp>.</p>
+
+						</li>
+
+						<li class="li">
+							<p class="p"><samp class="ph codeph">sap.ui.core</samp>, <samp class="ph codeph">sap.ui.layout</samp>,
+									<samp class="ph codeph">sap.ui.unified</samp> are basic libraries, supporting
+								all platforms or browsers that are supported by any of the other
+								libraries.</p>
+
+						</li>
+
+					</ul>
+
+				</li>
+
+				<li class="li"><span class="ph emphasis emphasis"><samp class="ph codeph">sap.m</samp></span><ul class="ul" id="loio74b59efa0eef48988d3b716bd0ecc933__ul_tcn_dxb_p1b">
+						<li class="li">For the <span class="keyword apiname">maxLines</span> property of the
+								<samp class="ph codeph">sap.m.Text</samp> control, multiline ellipsis handling is
+							not supported for all browsers and devices and is not supported at all
+							for right-to-left text direction. For more information, see <a class="xref" href="f08f29636be1472dac8f35fe7918ee08.html" title="Depending on the combination of device and browser, visual degradations may occur in the sap.m library.">Visual
+								Degradations</a>.</li>
+
+						<li class="li">Certain new or more complex controls that do not yet offer mobile device
+							support also do not support Windows Phone at this time, such as:
+								<samp class="ph codeph">sap.m.FacetFilter</samp> and
+								<samp class="ph codeph">sap.m.MultiComboBox</samp>.</li>
+
+						<li class="li">When using the <span class="keyword apiname">redirect</span> method of the
+								<samp class="ph codeph">sap.m.URLHelper</samp> control, note that some browsers
+							fail to open a new window or tab. This is the case for Windows Phone,
+							for instance. As the <span class="keyword apiname">redirect</span> method is simply a
+							wrapper of <span class="keyword apiname">window.open</span> native JavaScript, the problem
+							is that Internet Explorer 10 for Windows Phone is unable to return a
+							valid window object for <span class="keyword apiname">window.open</span>. In addition,
+							popup blockers can also prevent this function from working
+							properly.</li>
+
+					</ul>
+</li>
+
+				<li class="li"><span class="ph emphasis emphasis"><samp class="ph codeph">sap.ui.vk</samp></span> - the supported
+					browsers are all WebGL-compatible.</li>
+
+			</ul>
+
+		</div></div>
+
+	</div>
+
+<div class="related-links"> <br/>
+<div class="childtopics"><strong>In this section:</strong></div><ul class="ullinks">
+<div><strong><a class="link" href="f08f29636be1472dac8f35fe7918ee08.html" title="Depending on the combination of device and browser, visual degradations may occur in the sap.m library.">Visual Degradations</a></strong><br/>
+</div>
+</ul>
+
+</div>
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Browser and Platform Support";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

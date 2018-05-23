@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+
+
+
+
+<meta name="abstract" content="Offers the separation of content between different layers."/>
+<meta name="description" content="Offers the separation of content between different layers."/>
+
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=05629052906266463"/>
+<title>Layered Repository</title>
+<!--[if lte IE 7]><style>
+      .codeblock{
+          overflow:visible;
+      }</style><![endif]-->
+
+  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
+    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+  </head>
+<body class="" id="loio9e6305746b8742f69faa55fae27ee220">
+<div id="wrapper"><div id="container">
+
+	<h1 class="title topictitle1">Layered Repository</h1>
+
+	
+	<div class="body conbody"><p class="shortdesc">Offers the separation of content between different layers. </p>
+
+		<p class="p">The separation of content allows a customer to, for example, apply changes to an existing
+			entity and to store these changes in the <samp class="ph codeph">CUSTOMER</samp> layer without
+			modifying the underlying entity that is not owned by the customer. This concept ensures
+			the lifecycle stability over release cycles: Vendor, customers, and users, store changes
+			for an entity in their respective layer and the changes are applied to the original
+			entity only at runtime and the original file remains unchanged. The layered repository
+			stores the logical information for the changes that shall be applied to the original
+			entity in a JSON-based file.</p>
+
+		<p class="p">The layered repository calls the client API to create, update, and delete these variants
+			and calls the REST services to update the back end system.</p>
+
+		<div class="p">The following layers are available in the repository:<div class="table-wrapper"><table summary="" id="loio9e6305746b8742f69faa55fae27ee220__simpletable_u4r_ky5_dw" border="1" class="simpletable"><tr class="sthead">
+					<th valign="bottom" align="left" id="d9005788e31" class="stentry">
+						<p class="p">Layer name</p>
+
+					</th>
+
+					<th valign="bottom" align="left" id="d9005788e37" class="stentry">
+						<p class="p">Description</p>
+
+					</th>
+
+					<th valign="bottom" align="left" id="d9005788e43" class="stentry">
+						<p class="p">Rate</p>
+
+					</th>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d9005788e31" class="stentry">
+						<p class="p"><samp class="ph codeph">USER</samp></p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e37" class="stentry">
+						<p class="p">Stores customer-specific adaptation settings and variants. The content is
+							stored separately for each user.</p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e43" class="stentry">
+						<p class="p">3</p>
+
+					</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d9005788e31" class="stentry">
+						<p class="p"><samp class="ph codeph">CUSTOMER</samp></p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e37" class="stentry">
+						<p class="p">Stores customer-specific adaptation settings and variants. The content is
+							stored separately for each client.</p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e43" class="stentry">
+						<p class="p">2</p>
+
+					</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d9005788e31" class="stentry">
+						<p class="p"><samp class="ph codeph">VENDOR</samp></p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e37" class="stentry">
+						<p class="p">Stores SAP content, for example, SAP-delivered variants</p>
+
+					</td>
+
+					<td valign="top" headers="d9005788e43" class="stentry">
+						<p class="p">0</p>
+
+					</td>
+
+				</tr>
+</table></div>
+</div>
+
+		
+		<p class="p">The layered repository can, for example, be used to manage changes for smart controls
+			where users can modify a control and store these modification as a variant. Examples for
+			such changes are filter values, the visibility of a field, or the order of columns in a
+			table. By saving these changes in the variant control management, a user creates a new
+			variant and the information is stored in a json file in the <samp class="ph codeph">USER</samp>
+			layer.</p>
+
+		
+		<div class="section"><div class="section_title">System Requirements and Authorizations for Using the Layered Repository</div><div type="System Requirements and Authorizations for Using the Layered Repository">
+			
+			<p class="p">The layered repository has the following system requirements:</p>
+
+			<ul class="ul" id="loio9e6305746b8742f69faa55fae27ee220__ul_k3j_rrp_dw">
+				<li class="li">
+					<p class="p">Browsers and platforms: See <samp class="ph codeph">sap.ui.comp</samp> library</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">Services: ABAP front-end server and SAP NetWeaver 7.31 SP 11 or higher</p>
+
+				</li>
+
+			</ul>
+
+			<p class="p">To use the layered repository, the following authorizations are required:</p>
+
+			<ul class="ul" id="loio9e6305746b8742f69faa55fae27ee220__ul_tbd_y5p_dw">
+				<li class="li">
+					<p class="p">To load variants and other content changes to the client via the
+							<samp class="ph codeph">//SAP/BC/UI5_UI5/**/COMPONENT-CHANGES.JSON</samp> file, the
+							<span class="ph pname">SAPUI5</span>
+						component name for which data is requested is provided with the request. The
+						system checks in the SAP Fiori launchpad target mapping for the current user
+						and whether the component has been assigned to the user.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">To create, change, and delete content in the <samp class="ph codeph">USER</samp> layer or
+						variants in the <samp class="ph codeph">CUSTOMER</samp> layer, no specific authorization
+						is required.</p>
+
+				</li>
+
+				<li class="li">
+					<p class="p">To adapt the <samp class="ph codeph">SmartForm</samp> and <samp class="ph codeph">ObjectPage</samp>
+						controls in the <samp class="ph codeph">CUSTOMER</samp> layer, ABAP authorization object
+							<samp class="ph codeph">/UIF/FLEX</samp> with authorization field
+							<samp class="ph codeph">/UIF/KEYU</samp> = 'X' is required. This authorization is
+						needed for a key user who can make changes for all users in a specific
+						client. Role <samp class="ph codeph">SAP_UI_FLEX_KEY_USER</samp> in transaction
+							<span class="ph uicontrol">PFCG</span> already contains the authorization required
+						and is delivered by default.</p>
+
+				</li>
+
+			</ul>
+
+			<p class="p"> If you want to define your own roles, make sure you copy
+					<samp class="ph codeph">SAP_UI_FLEX_KEY_USER</samp> and always create them based on this
+				role.</p>
+
+			<div class="note note"><span class="notetitle">Note</span> Make sure the user has the required authorizations for transports.</div>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Enabling Remote Access to the Layered Repository</div><div type="Enabling Remote Access to the Layered Repository">
+			
+			<p class="p">To enable remote access to the layered repository, activate the following ICF nodes
+				in transaction <span class="ph uicontrol">SICF</span> in the target system:</p>
+
+			<ul class="ul" id="loio9e6305746b8742f69faa55fae27ee220__ul_qyj_zsp_dw">
+				<li class="li"><samp class="ph codeph">/default_host/sap/bc/ui5_ui5</samp><p class="p">This
+						node is required to load the <samp class="ph codeph">*/COMPONENT-CHANGES.JSON</samp> file
+						and the <span class="ph pname">SAPUI5</span>
+						libraries from the <samp class="ph codeph">MIME</samp> repository as well as the SAP Fiori
+						applications from the <span class="ph pname">SAPUI5</span> ABAP
+						repository.</p>
+</li>
+
+				<li class="li"><samp class="ph codeph">/default_host/sap/bc/ui5_ui5/ui2/ushell_rta</samp></li>
+
+				<li class="li"><samp class="ph codeph">/default_host/sap/bc/lrep</samp><p class="p">This node
+						is required to create, change, and delete variants and other
+					content.</p>
+</li>
+
+			</ul>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Securing the Layered Repository</div><div type="Securing the Layered Repository">
+			
+			<p class="p">To use the layered repository and the <samp class="ph codeph">SmartVariantManagement</samp> control
+				for the handling of variants, the <samp class="ph codeph">/UI5/UI5_INFRA_APP/REP_DT_PUT</samp>
+				virus scan profile must be active.</p>
+
+			<p class="p">For more information about virus scans, refer to the application help on the SAP Help
+				Portal at <a class="xref" href="http://help.sap.com/nw-uiaddon" alt="http://help.sap.com/nw-uiaddon" title="http://help.sap.com/nw-uiaddon">http://help.sap.com/nw-uiaddon</a>
+				<span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">Security Information</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Transporting the Changes to the Productive System</div><div type="Transporting the Changes to the Productive System">
+			
+			<p class="p">We recommend that you work with two systems, a test and a productive system, make
+				your flexibility changes in the test system, and transport them from the test system
+				to the productive system. For this, choose <span class="ph uicontrol">Transport</span> in the
+				relevant user interface and select the relevant transport in the popup. The
+				transport function is inactive in the productive system.</p>
+
+			<div class="note note"><span class="notetitle">Note</span> If a key user makes changes in the productive system, overlaps between these
+				changes and the changes that have been made in the test system may occur. To avoid
+				this, do <span class="ph emphasis emphasis">not</span> assign any key user authorizations in your
+				productive system.</div>
+
+			<p class="p">To transport content from the layered repository, a valid ABAP transport with a task
+				for the user must exist in transaction <span class="ph uicontrol">SE09</span>. The file is then
+				added to the transport request by the layered repository.</p>
+
+			<p class="p">If ATO (Adaptation Transport Organizer) is enabled in a cloud-based environment, you do not
+				need a transport request in the back end. Instead, the transport is generated
+				automatically in the background. For more information, refer to the application help
+				on the SAP Help Portal at <a class="xref" href="http://help.sap.com/nw75" alt="http://help.sap.com/nw75" title="http://help.sap.com/nw75">http://help.sap.com/nw75</a>
+				<span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">SAP NetWeaver Library: Function-Oriented View</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">SAP Fiori Apps for SAP NetWeaver 7.50</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Implementing SAP Fiori Apps for SAP NetWeaver 7.50</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">App-specific Implementation Information</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Setting Up Adaptation Transport Organizer</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Change Logging</div><div type="Change Logging">
+			
+			<p class="p">All actions that create, update, or delete content or fetch changes for an external
+				reference are logged to the standard ABAP application log in transaction
+					<samp class="ph codeph">SLG1</samp> (log object <samp class="ph codeph">/UIF/LREP</samp>). For deleting the
+				log, use transaction <samp class="ph codeph">SLG2</samp>.</p>
+
+		</div></div>
+
+		<div class="section"><div class="section_title">Master Language</div><div type="Master Language">
+			
+			<p class="p">Each file in the layered repository has a master language. The master language is the
+				same as the logon language of the user who has created the file (for example, a
+				variant). If the file is changed later on, you can only change the file in that
+				specific language.</p>
+
+			<p class="p">The logon language of a user and thus master language of new files in the repository
+				depend on the following:</p>
+
+			<ul class="ul" id="loio9e6305746b8742f69faa55fae27ee220__ul_bzn_bz3_5v">
+				<li class="li">The URL parameter <samp class="ph codeph">sap-language</samp></li>
+
+				<li class="li">The browser language settings</li>
+
+			</ul>
+
+			<p class="p">The URL parameter overrides the browser language settings.</p>
+
+			<div class="p">
+				<div class="note caution"><span class="cautiontitle">Caution</span> If you do not change the file in the master language, and the
+					file contains translatable texts, these changes cannot be saved to the
+					translation tables of the layered repository. If you still want to save those
+					changes, you need to override the logon language using the URL parameter
+						<samp class="ph codeph">sap-language</samp>.</div>
+
+			</div>
+
+			<p class="p">Additional languages that you require need to be added using the ABAP translation
+				tools.</p>
+
+		</div></div>
+
+	</div>
+
+</div></div>
+
+<SCRIPT LANGUAGE="JavaScript"><!--
+ var page_title="Layered Repository";
+
+        if (page_title !='' &&
+        parent.document.title != null) {
+ parent.document.title =
+          page_title;
+ } 
+ var
+        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
+        !='undefined' && anchor !=null){
+        var top = anchor.getBoundingClientRect().top; } 
+//-->
+</SCRIPT>
+</body>
+</html>

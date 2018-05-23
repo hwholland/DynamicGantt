@@ -1,0 +1,88 @@
+<core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
+						 xmlns="sap.m" xmlns:core="sap.ui.core">
+
+	<OverflowToolbar>
+
+		<Button id="showMessages"
+				text="{_templPriv>/generic/messageCount}"
+				tooltip="{_templPriv>/objectPage/messageButtonTooltip}" 
+				ariaLabelledBy="showMessagesButtonInvisibleText"
+				press="._templateEventHandlers.onShowMessages" type="Emphasized" icon="sap-icon://message-popup"
+				visible="{= ${_templPriv>/generic/messageCount} > 0 }"/>
+		<core:InvisibleText id="showMessagesButtonInvisibleText" text="{i18n>MESSAGE_BUTTON_TYPE}"/>
+		<template:if test="{= ${parameter>/isDraftEnabled} }">
+			<DraftIndicator id="draftStatus" state="{_templPriv>/generic/draftIndicatorState}"/>
+		</template:if>
+		<ToolbarSpacer/>
+
+		<!-- Custom Action Breakout -->
+		<template:repeat list="{parameter>/manifest/sap.ui5/extends/extensions/sap.ui.controllerExtensions/sap.suite.ui.generic.template.ObjectPage.view.Details/sap.ui.generic.app}" var="tmpEntitySet">
+			<template:if test="{= ${tmpEntitySet>EntitySet} === ${parameter>/entitySet} }">
+				<template:repeat list="{tmpEntitySet>Header/Actions}" var="customAction">
+					<Button id="footerAction::{customAction>id}"
+							text="{customAction>text}"
+							press="{customAction>press}"/>
+				</template:repeat>
+			</template:if>
+		</template:repeat>
+
+		<template:repeat list="{entityType>com.sap.vocabularies.UI.v1.Identification}"
+						 var="dataField">
+			<template:if test="{= ${dataField>RecordType} === 'com.sap.vocabularies.UI.v1.DataFieldForAction'}">
+				<template:with path="dataField>Action"
+							   helper="sap.ui.model.odata.AnnotationHelper.gotoFunctionImport"
+							   var="action">
+					<Button id="footerAction::{path: 'dataField>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromDataField'}"
+							text="{path: 'dataField>Label', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"
+							press="._templateEventHandlers.onCallAction" enabled="{ui>/enabled}"
+							visible="{parts: [{path: 'action>sap:applicable-path'}, {path: 'entitySet>entityType'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.actionControlFooter'}">
+						<customData>
+							<core:CustomData key="Type" value="{dataField>RecordType}"/>
+							<template:if test="{= ${dataField>SemanticObject}}">
+								<core:CustomData key="SemanticObject"
+												 value="{path: 'dataField>SemanticObject', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/>
+							</template:if>
+							<core:CustomData key="Action"
+											 value="{path: 'dataField>Action', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/>
+							<core:CustomData key="Label"
+											 value="{path: 'dataField>Label', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/>
+						</customData>
+					</Button>
+				</template:with>
+			</template:if>
+		</template:repeat>
+		<template:if test="{= ${parameter>/isDraftEnabled} &amp;&amp; ${entitySet>com.sap.vocabularies.Common.v1.DraftRoot} }">
+			<Button id="activate" text="{i18n>SAVE}" type="Emphasized"
+					enabled="{ui>/enabled}" press="._templateEventHandlers.onActivate" visible="{ui>/editable}" />
+		<!-- <Button text="{i18n>CONTINUE_LATER}" press="onContinueLater" enabled="{ui>/enabled}"
+				visible="{ui>/editable}"/> -->
+			<Button id="discard" text="{i18n>CANCEL}" press="._templateEventHandlers.onDiscardDraft"
+					enabled="{ui>/enabled}" visible="{ui>/editable}" />
+		</template:if>
+		<template:if test="{= !${parameter>/isDraftEnabled} }">
+			<Button id="save" text="{i18n>SAVE}" type="Emphasized" press="._templateEventHandlers.onSave"
+					visible="{ui>/editable}" />
+			<Button id="cancel" text="{i18n>CANCEL}" press="._templateEventHandlers.onCancel"
+					visible="{ui>/editable}" />
+		</template:if>
+		
+		<template:if test="{= !${parameter>/isDraftEnabled} &amp;&amp; ${parameter>/settings/routeConfig/parentEntitySet} }">
+			<Button id="footerDelete" text="{i18n>DELETE}" enabled="{ui>/enabled}"
+					press="._templateEventHandlers.onDelete"
+					visible="{= !(${entitySet>Org.OData.Capabilities.V1.DeleteRestrictions/Deletable/Bool} === 'false') ? '{= ${ui>/createMode} ? false : true }' : false }" />
+		</template:if>
+		<template:if test="{= ${parameter>/isDraftEnabled} &amp;&amp; ${parameter>/settings/routeConfig/parentEntitySet} }">
+			<Button id="footerDelete" text="{i18n>DELETE}" enabled="{ui>/enabled}"
+					press="._templateEventHandlers.onDelete"
+					visible="{= !(${entitySet>Org.OData.Capabilities.V1.DeleteRestrictions/Deletable/Bool} === 'false')}" />
+		</template:if>
+
+		<Button id="template::FooterShare"
+				icon="sap-icon://action" enabled="{ui>/enabled}" 
+				press="._templateEventHandlers.onShareObjectPageActionButtonPress"
+				importance="High" class="sapSmartTemplatesShareMenuButton"
+				tooltip="{i18n>SHARE}"
+				visible="{ui>/editable}"/>
+	</OverflowToolbar>
+
+</core:FragmentDefinition>
