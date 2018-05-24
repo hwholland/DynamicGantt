@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="XML views use event handlers as attributes: The attribute name is the event name, such as &#34;press&#34; for a button, and the attribute value is the event handler name."/>
 <meta name="description" content="XML views use event handlers as attributes: The attribute name is the event name, such as &#34;press&#34; for a button, and the attribute value is the event handler name."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6340740184024645"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=27906178826872485"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=27906178826872485"/>
 <title>Handling Events in XML Views</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiob0fb4de7364f4bcbb053a99aa645affe">
 <div id="wrapper"><div id="container">
@@ -44,9 +30,9 @@
 				<p class="p">Names starting with a dot ('.') are always assumed to represent a method in the
 					controller. They are resolved by removing the leading dot and reading the
 					property with the resulting name from the controller instance. These names are
-					'relative' to the view/controller. Example:</p>
-
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">press: ".myLocalHandler" --&gt; attachPress(oController["myLocalHandler"], oController);</pre></div>
+					'relative' to the view/controller. For example, <samp class="ph codeph">press:
+						".myLocalHandler"</samp> is resolved by <samp class="ph codeph">
+						attachPress(oController["myLocalHandler"], oController);</samp></p>
 
 				<div class="note note"><span class="notetitle">Note</span> This syntax is by intention consistent to the complex binding syntax for
 					formatter functions.</div>
@@ -56,9 +42,10 @@
 			<li class="li">
 				<p class="p">Names containing a dot at a later position are assumed to represent global
 					functions and are resolved by calling <samp class="ph codeph">jQuery.sap.getObject</samp> with
-					the full name. Example:</p>
-
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">press: "some.global.handler" --&gt; attachPress(jQuery.sap.getObject("some.global.handler"), oController);</pre></div>
+					the full name. For example, name <samp class="ph codeph">press: "some.global.handler"</samp>
+					is resolved by calling
+						<samp class="ph codeph">attachPress(jQuery.sap.getObject("some.global.handler"),
+						oController);</samp></p>
 
 			</li>
 
@@ -67,7 +54,7 @@
 					are interpreted as an absolute name. This variant is only supported for backward
 					compatibility. Example:</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">press: "myHandler" --&gt; if ( oController[myHandler"] ) {
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">press: "myHandler" --&gt; if ( oController["myHandler"] ) {
   attachPress(oController["myHandler"], oController);
 } else {
   attachPress(jQuery.sap.getObject("myHandler"), oController);
@@ -88,7 +75,7 @@
 		<p class="p">Therefore, the following declaration is equivalent to a call of
 				<samp class="ph codeph">controller.doSomething()</samp> when the button is pressed:</p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 ...
           &lt;Button text="Press Me" press=".doSomething"/&gt;
 ... </pre></div>
@@ -97,19 +84,5 @@
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Handling Events in XML Views";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

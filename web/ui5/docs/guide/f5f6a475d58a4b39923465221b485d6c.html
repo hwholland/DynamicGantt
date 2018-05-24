@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="OpenUI5 embeds the open source library iScroll4 that takes care of scrolling in the application."/>
+<meta name="description" content="OpenUI5 embeds the open source library iScroll4 that takes care of scrolling in the application."/>
 
-
-
-
-
-<meta name="abstract" content="SAPUI5 embeds the open source library iScroll4 that takes care of scrolling in the application."/>
-<meta name="description" content="SAPUI5 embeds the open source library iScroll4 that takes care of scrolling in the application."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9062804722163261"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=16650275786225577"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=16650275786225577"/>
 <title>Scrolling: Implementation Details</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiof5f6a475d58a4b39923465221b485d6c">
 <div id="wrapper"><div id="container">
@@ -33,15 +19,15 @@
 	<h1 class="title topictitle1">Scrolling: Implementation Details</h1>
 
 	
-	<div class="body"><p class="shortdesc"><span class="ph"><span class="ph pname">SAPUI5</span></span> embeds the open source library iScroll4 that takes care of scrolling in the
+	<div class="body"><p class="shortdesc"><span class="ph"><span class="ph pname">OpenUI5</span></span> embeds the open source library iScroll4 that takes care of scrolling in the
 		application.</p>
 
 		<p class="p">Scrolling support in mobile browsers is weak and inconsistent. Only the latest platforms and
 			browsers start to support partially usable scrolling functionality. To avoid this,
-			<span class="ph"><span class="ph pname">SAPUI5</span></span> supports iScroll4. Though the library is globally available in a <span class="ph"><span class="ph pname">SAPUI5</span></span>
+			<span class="ph"><span class="ph pname">OpenUI5</span></span> supports iScroll4. Though the library is globally available in a <span class="ph"><span class="ph pname">OpenUI5</span></span>
 			application, programmers should not call it directly. The
 				<samp class="ph codeph">sap.ui.core.delegate.ScrollEnablement</samp> delegate provides all
-			functionality and smooth integration of iScroll4 into the <span class="ph"><span class="ph pname">SAPUI5</span></span> library. </p>
+			functionality and smooth integration of iScroll4 into the <span class="ph"><span class="ph pname">OpenUI5</span></span> library. </p>
 
 		<p class="p"><span class="ph">For more information, see <a class="xref" href="../../docs/api/symbols/sap.ui.core.delegate.ScrollEnablement.html" alt="../../docs/api/symbols/sap.ui.core.delegate.ScrollEnablement.html" title="../../docs/api/symbols/sap.ui.core.delegate.ScrollEnablement.html">sap.ui.core.delegate.ScrollEnablement</a></span>
 		</p>
@@ -73,7 +59,7 @@
 
 			<p class="p">Example: </p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 myCustomScroller.prototype.onAfterRendering = function() {
   if(!this._oScroller){
     jQuery.sap.require("sap.ui.core.delegate.ScrollEnablement");
@@ -98,7 +84,7 @@ myCustomScroller.prototype.exit = function() {
 
 			<div class="p">
 				<div class="note note" id="loiof5f6a475d58a4b39923465221b485d6c__note_N1006E_N1006B_N10035_N10011_N10001"><span class="notetitle">Note</span> The Zynga scroller that is included in the
-					<span class="ph"><span class="ph pname">SAPUI5</span></span> library is deprecated. The configuration parameter
+					<span class="ph"><span class="ph pname">OpenUI5</span></span> library is deprecated. The configuration parameter
 						<samp class="ph codeph">oConfig.zynga=true</samp> of the scrolling delegate should not be
 					used. </div>
 
@@ -134,19 +120,5 @@ myCustomScroller.prototype.exit = function() {
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Scrolling: Implementation Details";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

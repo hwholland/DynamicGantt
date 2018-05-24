@@ -5,24 +5,24 @@
 	<title>Test Page for sap.m.MaskInputRule</title>
 	<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 
+	<script src="../shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-language="en-US"
 			data-sap-ui-libs="sap.m" src="../../../../resources/sap-ui-core.js">
 	</script>
 
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 	<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
 	<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 	<script>
 		sinon.config.useFakeTimers = true;
 
-		module("API", {
+		QUnit.module("API", {
 			beforeEach: function () {
 				this.oMaskInputRule = new sap.m.MaskInputRule();
 				this.oMaskInput = new sap.m.MaskInput({rules: [this.oMaskInputRule]});
@@ -36,18 +36,18 @@
 			}
 		});
 
-		test("Mask Format Symbol setter", function () {
+		QUnit.test("Mask Format Symbol setter", function (assert) {
 			var oRule = this.oMaskInputRule,
 					maskFormatSymbol1 = 'a',
 					maskFormatSymbol2 = '9';
 			oRule.setMaskFormatSymbol(maskFormatSymbol1);
-			strictEqual(oRule.getMaskFormatSymbol(), maskFormatSymbol1, "The mask format symbol has the same value as the last set one");
+			assert.strictEqual(oRule.getMaskFormatSymbol(), maskFormatSymbol1, "The mask format symbol has the same value as the last set one");
 
 			oRule.setMaskFormatSymbol(maskFormatSymbol2);
-			strictEqual(oRule.getMaskFormatSymbol(), maskFormatSymbol2, "The mask format symbol has the same value as the last set one");
+			assert.strictEqual(oRule.getMaskFormatSymbol(), maskFormatSymbol2, "The mask format symbol has the same value as the last set one");
 		});
 
-		test("Setting an invalid Mask Format Symbol is not accepted", function () {
+		QUnit.test("Setting an invalid Mask Format Symbol is not accepted", function (assert) {
 
 			var oRule = this.oMaskInputRule,
 					oErrorSpy = this.sandbox.spy(jQuery.sap.log, 'error'),
@@ -64,33 +64,33 @@
 				oSetterSpy.restore();
 				oSetterSpy = this.sandbox.spy(oRule, 'setProperty');
 				oRule.setMaskFormatSymbol(sSymbol);
-				ok(oSetterSpy.notCalled, "Invalid maskFormatSymbol [" + sSymbol + "] is not accepted");
-				ok(oErrorSpy.calledOnce, "When called with invalid parameter [" + sSymbol + "] setMaskFormatSymbol logs error.");
-				equal(oErrorSpy.getCall(0).args[0], sExpectedError,
+				assert.ok(oSetterSpy.notCalled, "Invalid maskFormatSymbol [" + sSymbol + "] is not accepted");
+				assert.ok(oErrorSpy.calledOnce, "When called with invalid parameter [" + sSymbol + "] setMaskFormatSymbol logs error.");
+				assert.equal(oErrorSpy.getCall(0).args[0], sExpectedError,
 						"Verify the exact error when setMaskFormatSymbol is called with invalid parameter [" + sSymbol + "]");
 			}
 		});
 
-		test("Mask Format Symbol default value", function () {
-			equal(this.oMaskInputRule.getMaskFormatSymbol(), "*", "Default value");
+		QUnit.test("Mask Format Symbol default value", function (assert) {
+			assert.equal(this.oMaskInputRule.getMaskFormatSymbol(), "*", "Default value");
 		});
 
-		test("Regex setter", function () {
+		QUnit.test("Regex setter", function (assert) {
 			var oRule = this.oMaskInputRule,
 					regex1 = 'a-z',
 					regex2 = '0-9';
 			oRule.setRegex(regex1);
-			strictEqual(oRule.getRegex(), regex1, "The regex has the same value as the last set one");
+			assert.strictEqual(oRule.getRegex(), regex1, "The regex has the same value as the last set one");
 
 			oRule.setRegex(regex2);
-			strictEqual(oRule.getRegex(), regex2, "The regex has the same value as the last set one");
+			assert.strictEqual(oRule.getRegex(), regex2, "The regex has the same value as the last set one");
 		});
 
-		test("Regex default value", function () {
-			equal(this.oMaskInputRule.getRegex(), "[a-zA-Z0-9]", "Default value");
+		QUnit.test("Regex default value", function (assert) {
+			assert.equal(this.oMaskInputRule.getRegex(), "[a-zA-Z0-9]", "Default value");
 		});
 
-		test("Setting an invalid regex is not accepted", function () {
+		QUnit.test("Setting an invalid regex is not accepted", function (assert) {
 			var oRule = this.oMaskInputRule,
 					oErrorSpy = this.sandbox.spy(jQuery.sap.log, 'error'),
 					oSetterSpy = this.sandbox.spy(oRule, 'setProperty');
@@ -105,9 +105,9 @@
 				oSetterSpy.restore();
 				oSetterSpy = this.sandbox.spy(oRule, 'setProperty');
 				oRule.setRegex(sRegex);
-				ok(oSetterSpy.notCalled, "Invalid regex [" + sRegex + "] is not accepted");
-				ok(oErrorSpy.calledOnce, "When called with invalid parameter [" + sRegex + "] setRegex logs error.");
-				equal(oErrorSpy.getCall(0).args[0], sExpectedError,
+				assert.ok(oSetterSpy.notCalled, "Invalid regex [" + sRegex + "] is not accepted");
+				assert.ok(oErrorSpy.calledOnce, "When called with invalid parameter [" + sRegex + "] setRegex logs error.");
+				assert.equal(oErrorSpy.getCall(0).args[0], sExpectedError,
 						"Verify the exact error when setRegex is called with invalid parameter [" + sRegex + "]");
 			}
 		});

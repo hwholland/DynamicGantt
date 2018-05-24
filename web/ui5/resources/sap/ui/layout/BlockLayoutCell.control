@@ -32,6 +32,16 @@ cell will have a width of 25%, the second - 75%.
 According to the visual guidelines, it is suggested that you only use 25%, 50%, 75% or 100% cells in
 you applications. For example, 12,5% width is not desirable (1 cell with width 1, and another with width 7)</documentation>
         </property>
+        <property name="backgroundColorSet" type="sap.ui.layout/BlockLayoutCellColorSet" group="Appearance" since="1.48">
+            <documentation>The Background color set from which the background color will be selected.
+By using background colors from the predefined sets your colors could later be customized from the Theme Designer.
+&lt;b&gt;Note:&lt;/b&gt; backgroundColorSet should be used only in combination with backgroundColorShade.</documentation>
+        </property>
+        <property name="backgroundColorShade" type="sap.ui.layout/BlockLayoutCellColorShade" group="Appearance" since="1.48">
+            <documentation>The index of the background color in the color set from which the color will be selected.
+By using background colors from the predefined sets your colors could later be customized from the Theme Designer.
+&lt;b&gt;Note:&lt;/b&gt; backgroundColorShade should be used only in combination with backgroundColorSet.</documentation>
+        </property>
     </properties>
     <aggregations default="content">
         <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">

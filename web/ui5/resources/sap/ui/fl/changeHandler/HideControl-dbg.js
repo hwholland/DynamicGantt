@@ -1,32 +1,66 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	'jquery.sap.global', './Base'
-], function(jQuery, Base) {
+	"jquery.sap.global"
+], function(
+	jQuery
+) {
 	"use strict";
 
 	/**
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @experimental Since 1.27.0
 	 */
-	var HideControl = { };
+	var HideControl = {};
 
 	/**
 	 * Hides a control.
 	 *
-	 * @param {object} mPropertyBag
+	 * @param {sap.ui.fl.Change} oChange change object with instructions to be applied on the control map
+	 * @param {sap.ui.core.Control} oControl control that matches the change selector for applying the change
+	 * @param {object} mPropertyBag - map of properties
 	 * @param {object} mPropertyBag.modifier - modifier for the controls
+	 * @return {boolean} true - if change could be applied
 	 * @public
 	 */
 	HideControl.applyChange = function(oChange, oControl, mPropertyBag) {
+		oChange.setRevertData({
+			originalValue: mPropertyBag.modifier.getVisible(oControl)
+		});
+
 		mPropertyBag.modifier.setVisible(oControl, false);
+		return true;
+	};
+
+
+	/**
+	 * Reverts previously applied change
+	 *
+	 * @param {sap.ui.fl.Change} oChange change object with instructions to be applied on the control map
+	 * @param {sap.ui.core.Control} oControl control that matches the change selector for applying the change
+	 * @param {object} mPropertyBag	- map of properties
+	 * @param {object} mPropertyBag.modifier - modifier for the controls
+	 * @return {boolean} true - if change has been reverted
+	 * @public
+	 */
+	HideControl.revertChange = function(oChange, oControl, mPropertyBag) {
+		var mRevertData = oChange.getRevertData();
+
+		if (mRevertData) {
+			mPropertyBag.modifier.setVisible(oControl, mRevertData.originalValue);
+			oChange.resetRevertData();
+		} else {
+			jQuery.sap.log.error("Attempt to revert an unapplied change.");
+			return false;
+		}
+
 		return true;
 	};
 
@@ -38,13 +72,6 @@ sap.ui.define([
 	 * @public
 	 */
 	HideControl.completeChangeContent = function(oChange, oSpecificChangeInfo) {
-
-		var oChangeJson = oChange.getDefinition();
-
-		if (!oChangeJson.content) {
-			oChangeJson.content = {};
-		}
-
 	};
 
 	return HideControl;

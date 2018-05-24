@@ -5,12 +5,12 @@
 
 <title>Object List Item - sap.m</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript"
-	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m"
-	data-sap-ui-theme="sap_bluecrystal">
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js"
+	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m">
 </script>
 
-<script type="text/javascript">
+<script>
 
 	jQuery.sap.require("sap.ui.core.IconPool");
 	jQuery.sap.require("sap.m.ObjectAttribute");
@@ -19,6 +19,24 @@
 	var list = new sap.m.List("test_list", {
 		headerText: "Object List Items"
 	});
+
+    var newMarkers = new sap.m.ObjectListItem({
+        title: "New markers aggregation",
+        number: "802",
+        numberUnit: "Euro",
+        numberState : sap.ui.core.ValueState.Success,
+        attributes: [
+            new sap.m.ObjectAttribute({text: "First Attribute."}),
+            new sap.m.ObjectAttribute({text: "Second Attribute"})
+        ],
+        firstStatus: new sap.m.ObjectStatus({text: "Critical Status", state: "Error"}),
+        markers: [
+                     new sap.m.ObjectMarker({type: sap.m.ObjectMarkerType.Favorite}),
+                     new sap.m.ObjectMarker({type: sap.m.ObjectMarkerType.Flagged}),
+                     new sap.m.ObjectMarker({type: sap.m.ObjectMarkerType.Draft})
+                 ]
+    });
+    list.addItem(newMarkers);
 
     var lockedItem = new sap.m.ObjectListItem({
         intro: "Optional Intro Text",

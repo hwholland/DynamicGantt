@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -151,6 +151,25 @@ sap.ui.define(['jquery.sap.global'],
 			return methods;
 		}
 
+		function pushNestedParameters(oNestedParameters, aParameters, sParameterName) {
+			for (var key in oNestedParameters) {
+				if (oNestedParameters.hasOwnProperty(key)) {
+					var sNestedParameterFullName = sParameterName + "." + oNestedParameters[key].name;
+					aParameters.push({
+						kind: 8,
+						name : removeHungarianNotation(sNestedParameterFullName),
+						type : oNestedParameters[key].type,
+						doc : oNestedParameters[key].description,
+						since : oNestedParameters[key].since,
+						deprecation : oNestedParameters[key].deprecated && oNestedParameters[key].deprecated.text
+					});
+					if (oNestedParameters[key].parameterProperties) {
+						pushNestedParameters(oNestedParameters[key].parameterProperties, aParameters, sNestedParameterFullName);
+					}
+				}
+			}
+		}
+
 		if ( ui5 ) {
 			if ( ui5.specialSettings ) {
 				ui5.specialSettings.forEach(function(oSpecialSetting) {
@@ -171,6 +190,7 @@ sap.ui.define(['jquery.sap.global'],
 						defaultValue : oProperty.defaultValue,
 						doc : oProperty.description,
 						deprecation : oProperty.deprecated && oProperty.deprecated.text,
+						deprecationSince : oProperty.deprecated && oProperty.deprecated.since,
 						experimental : oProperty.experimental && oProperty.experimental.text,
 						since : oProperty.since,
 						bindable: oProperty.bindable || false,
@@ -286,6 +306,9 @@ sap.ui.define(['jquery.sap.global'],
 							since : oParameter.since,
 							deprecation : oParameter.deprecated && oParameter.deprecated.text
 						});
+						if (oParameter.parameterProperties) {
+							pushNestedParameters(oParameter.parameterProperties, oEntityDoc.methods[oMethod.name].parameters, oParameter.name);
+						}
 					});
 				}
 			});

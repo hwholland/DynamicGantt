@@ -1,7 +1,7 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/Context"], function(LrepConnector, Utils, Context) {
@@ -14,7 +14,7 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 	 * @alias sap.ui.fl.context.ContextManager
 	 * @since 1.38.0
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 */
 	var ContextManager;
 
@@ -22,7 +22,8 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 
 		_oContext: new Context({
 			configuration : {
-				"device" : "sap/ui/fl/context/DeviceContextProvider"
+				"device" : "sap/ui/fl/context/DeviceContextProvider",
+				"switches" : "sap/ui/fl/context/SwitchContextProvider"
 			}
 		}),
 		_oLrepConnector: new LrepConnector(),
@@ -61,7 +62,7 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 					.then(this._getActiveContextsByAPIParameters.bind(this, aContextObjects));
 			} else {
 				// [designtime] use url parameters to determine the current active context(s)
-				return this._getActiveContextsByUrlParameters(aContextObjects, aDesignTimeContextIdsByUrl);
+				return Promise.resolve(this._getActiveContextsByUrlParameters(aContextObjects, aDesignTimeContextIdsByUrl));
 			}
 		},
 
@@ -172,7 +173,7 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 		/**
 		 * Checks a single condition of a context object. Returns true if the condition matches the current runtime context.
 		 *
-		 * @param {Object} oParameter - context within a sap.ui.fl.Change
+		 * @param {Object} oParameter - context within an sap.ui.fl.Change
 		 * @param {string} oParameter.selector - key of a runtime context
 		 * @param {string} oParameter.operator - determine which comparison has to be executed
 		 * @param {string} oParameter.value - value which has to be matched within the key
@@ -188,6 +189,8 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 			switch (sOperator) {
 				case "EQ":
 					return this._checkEquals(sSelector, oValue, aRuntimeContext);
+				case "NE":
+					return !this._checkEquals(sSelector, oValue, aRuntimeContext);
 				default:
 					jQuery.sap.log.info("A context within a flexibility change with the operator '" + sOperator + "' could not be verified");
 					return false;
@@ -210,49 +213,55 @@ sap.ui.define(["sap/ui/fl/LrepConnector", "sap/ui/fl/Utils", "sap/ui/fl/context/
 		/**
 		 *
 		 * @param {string} oPropertyBag.id - contextID if not present it will be generated
-		 * @param {string} oPropertyBag.appVariantId - appVariantId or componentName in which the context is present
+		 * @param {string} oPropertyBag.reference - reference (app variant id or componentName.Component" in which the context is present
 		 * @param {string} oPropertyBag.title - human readable title of the context
 		 * @param {string} oPropertyBag.description - human readable description of the context
-		 * @param {Object[]} oPropertyBag.parameters - runtime context parameters required to match for the context beeing active
+		 * @param {Object[]} oPropertyBag.parameters - Runtime context parameters required to match the active context
 		 * @param {string} oPropertyBag.parameters.selector - runtime context name
-		 * @param {string} oPropertyBag.parameters.operator - comparision method
-		 * @param {Object} oPropertyBag.parameters.value - value passed to the comparision
+		 * @param {string} oPropertyBag.parameters.operator - Comparison method
+		 * @param {Object} oPropertyBag.parameters.value - Value passed to the comparison
+		 * @param {Object} oPropertyBag.validAppVersions - Application versions (format: major.minor.patch) where the context is active
+		 * @param {String} oPropertyBag.validAppVersions.creation - Original application version
+		 * @param {String} oPropertyBag.validAppVersions.from - Minimum application version
+		 * @param {String} oPropertyBag.validAppVersions.to - Maximum application version
+		 * @param {String} [oPropertyBag.generator] - Tool which is used to generate the context file
 		 */
 		createOrUpdateContextObject: function (oPropertyBag) {
-			if (!oPropertyBag.appVariantId) {
-				throw new Error("no app variant id passed for the context object");
+			if (!oPropertyBag.reference) {
+				throw new Error("no reference passed for the context object");
 			}
 
-			var oNamespaceBag = {
-				"componentName": oPropertyBag.componentName || oPropertyBag.appVariantId.replace('.Component',''),
-				"reference": oPropertyBag.appVariantId
-			};
+			if (!oPropertyBag.namespace) {
+				throw new Error("no namespace passed for the context object");
+			}
 
 			var sId = oPropertyBag.id || Utils.createDefaultFileName();
 
 			oPropertyBag = {
 				id: sId,
 				fileName: sId,
-				componentName: oPropertyBag.componentName,
+				title: oPropertyBag.title || "",
+				description: oPropertyBag.description || "",
+				parameters: oPropertyBag.parameters || [],
 				fileType: "context",
-				appVariantId: oPropertyBag.appVariantId,
 				reference: oPropertyBag.reference || "",
 				packageName: oPropertyBag.packageName || "",
 				layer: oPropertyBag.layer || Utils.getCurrentLayer(false),
-				namespace: oPropertyBag.namespace || Utils.createNamespace(oNamespaceBag, "contexts"),
+				namespace: oPropertyBag.namespace,
 				creation: oPropertyBag.creation || "",
 				originalLanguage: oPropertyBag.originalLanguage || Utils.getCurrentLanguage(),
 				support: oPropertyBag.support || {
-					generator: "",
+					generator: oPropertyBag.generator || "",
 					service: "",
 					user: ""
-				}
+				},
+				validAppVersions: oPropertyBag.validAppVersions || {}
 			};
 
 			var sUri = "/sap/bc/lrep/content/" + oPropertyBag.namespace + oPropertyBag.fileName + ".context";
 			sUri += "?layer=" + oPropertyBag.layer;
 			var sMethod = "PUT";
-			this._oLrepConnector.send(sUri, sMethod, oPropertyBag, {});
+			return this._oLrepConnector.send(sUri, sMethod, oPropertyBag, {});
 		}
 	};
 

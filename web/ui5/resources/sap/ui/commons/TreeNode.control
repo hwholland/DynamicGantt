@@ -3,7 +3,7 @@
     <name>TreeNode</name>
     <derived/>
     <documentation>Tree node element</documentation>
-    <deprecation since="1.38"></deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Tree}</deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" group="Misc">
@@ -83,9 +83,6 @@ This association holds the references of the selected children.</documentation>
             <documentation>Select the node, and if any, deselects the previously selected node</documentation>
             <parameters>
                 <parameter name="suppressEvent" type="sap.ui.core/boolean">
-                    <documentation></documentation>
-                </parameter>
-                <parameter name="deselectOtherNodes" type="sap.ui.core/boolean">
                     <documentation></documentation>
                 </parameter>
             </parameters>

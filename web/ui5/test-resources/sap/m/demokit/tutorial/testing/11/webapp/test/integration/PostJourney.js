@@ -1,3 +1,5 @@
+/*global QUnit*/
+
 sap.ui.require(
 	["sap/ui/test/opaQunit"],
 	function (opaTest) {
@@ -29,16 +31,8 @@ sap.ui.require(
 			When.onTheBrowser.iPressOnTheForwardButton();
 
 			// Assertions
-			Then.onThePostPage.theTitleShouldDisplayTheName("Jeans");
-		});
-
-		opaTest("Should select the statistics tab", function (Given, When, Then) {
-			// Actions
-			When.onThePostPage.iPressOnTheTabWithTheKey("statistics");
-
-			// Assertions
-			Then.onThePostPage.iShouldSeeTheViewCounter()
-				.and.iTeardownMyAppFrame();
+			Then.onThePostPage.theTitleShouldDisplayTheName("Jeans").
+				and.iTeardownMyAppFrame();
 		});
 	}
 );

@@ -1,12 +1,20 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sap/ui/core/date/UniversalDate'],
-	function(jQuery, CalendarUtils, UniversalDate) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sap/ui/unified/calendar/CalendarDate', 'sap/ui/unified/CalendarLegend',
+	'sap/ui/unified/CalendarLegendRenderer', 'sap/ui/core/library', 'sap/ui/unified/library'],
+	function(jQuery, CalendarUtils, CalendarDate, CalendarLegend, CalendarLegendRenderer, coreLibrary, library) {
 	"use strict";
+
+
+	// shortcut for sap.ui.unified.CalendarDayType
+	var CalendarDayType = library.CalendarDayType;
+
+	// shortcut for sap.ui.core.CalendarType
+	var CalendarType = coreLibrary.CalendarType;
 
 
 	/**
@@ -33,7 +41,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 		oRm.write("<div");
 		oRm.writeControlData(oMonth);
-		oRm.addClass(this.getClass(oMonth));
+		oRm.addClass(this.getClass(oRm, oMonth));
 		if (oMonth._getSecondaryCalendarType()) {
 			oRm.addClass("sapUiCalMonthSecType");
 		}
@@ -74,18 +82,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 	};
 
+	/**
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month which start date will be returned
+	 * @returns {sap.ui.unified.calendar.CalendarDate|*} The start date of the month
+	 */
 	MonthRenderer.getStartDate = function(oMonth){
 
 		return oMonth._getDate();
 
 	};
 
-	MonthRenderer.getClass = function(oMonth){
+	MonthRenderer.getClass = function(oRm, oMonth){
 
-		var sClasses = "sapUiCalMonthView";
-		var sCalendarType = oMonth.getPrimaryCalendarType();
+		var sClasses = "sapUiCalMonthView",
+			sCalendarType = oMonth.getPrimaryCalendarType(),
+			bShowWeekNumbers = oMonth.getShowWeekNumbers();
 
-		if (sCalendarType == sap.ui.core.CalendarType.Islamic) {
+		if (sCalendarType == CalendarType.Islamic || !bShowWeekNumbers) {
 			// on Islamic calendar week numbers are not used
 			sClasses = sClasses + " sapUiCalNoWeekNum";
 		}
@@ -94,6 +107,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 	};
 
+	/**
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month to be rendered
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate The date which month and year will be set to the header
+	 */
 	MonthRenderer.renderMonth = function(oRm, oMonth, oDate){
 
 		var sId = oMonth.getId();
@@ -108,6 +126,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 	};
 
+	/**
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month to be rendered
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate The date which month and year will be set to the header
+	 */
 	MonthRenderer.renderHeader = function(oRm, oMonth, oDate){
 
 		var oLocaleData = oMonth._getLocaleData();
@@ -129,6 +152,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 		oRm.write("<div");
 		oRm.writeAccessibilityState(null, {role: "row"});
+		oRm.addStyle("overflow", "hidden");
+		oRm.writeStyles();
 		oRm.write(">"); // div
 
 		this.renderDayNames(oRm, oMonth, oLocaleData, iFirstDayOfWeek, 7, true, undefined);
@@ -137,14 +162,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 	};
 
+	/**
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month to e rendered
+	 * @param {sap.ui.core.LocaleData} oLocaleData The local date which month and year will be set to the header
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate The date which month and year will be set to the header
+	 */
 	MonthRenderer.renderHeaderLine = function(oRm, oMonth, oLocaleData, oDate){
+		CalendarUtils._checkCalendarDate(oDate);
 
 		if (oMonth._getShowHeader()) {
 			var sId = oMonth.getId();
 			var sCalendarType = oMonth.getPrimaryCalendarType();
 			var aMonthNames = oLocaleData.getMonthsStandAlone("wide", sCalendarType);
 			oRm.write("<div id=\"" + sId + "-Head\"class=\"sapUiCalHeadText\" >");
-			oRm.write(aMonthNames[oDate.getUTCMonth()]);
+			oRm.write(aMonthNames[oDate.getMonth()]);
 			oRm.write("</div>");
 		}
 
@@ -192,117 +224,130 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 
 	};
 
+	/**
+	 *
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month to be rendered
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate The date which month and year will be set to the header
+	 */
 	MonthRenderer.renderDays = function(oRm, oMonth, oDate){
+		var bWeekNum,
+			aDays,
+			iLength,
+			oHelper,
+			i, iTimestamp,
+			bShowWeekNumbers;
+
+		CalendarUtils._checkCalendarDate(oDate);
 
 		if (!oDate) {
 			oDate = oMonth._getFocusedDate();
 		}
 
-		if (!oDate.getTime() && oDate.getTime() !== 0) {
+		iTimestamp = oDate.toUTCJSDate().getTime();
+		if (!iTimestamp && iTimestamp !== 0) {
 			// invalid date
 			throw new Error("Date is invalid " + oMonth);
 		}
 
-		var iMonth = oDate.getUTCMonth();
-		var oHelper = this.getDayHelper(oMonth, oDate);
-		var sCalendarType = oMonth.getPrimaryCalendarType();
-		var bWeekNum = sCalendarType != sap.ui.core.CalendarType.Islamic; // on Islamic calendar week numbers are not used
+		oHelper = this.getDayHelper(oMonth, oDate);
 
-		// determine weekday of first day in month
-		var oFirstDay = oMonth._newUniversalDate(oDate);
-		oFirstDay.setUTCDate(1);
-		var iWeekDay = oFirstDay.getUTCDay();
-		var iDaysOldMonth = iWeekDay - oHelper.iFirstDayOfWeek;
-		if (iDaysOldMonth < 0) {
-			iDaysOldMonth = 7 + iDaysOldMonth;
+		aDays = oMonth._getVisibleDays(oDate, true);
+
+		bShowWeekNumbers = oMonth.getShowWeekNumbers();
+
+		bWeekNum = oMonth.getPrimaryCalendarType() !== CalendarType.Islamic && bShowWeekNumbers; // on Islamic calendar week numbers are not used
+
+		iLength = aDays.length;
+		for (i = 0; i < iLength; i++) {
+			this.renderDay(oRm, oMonth, aDays[i], oHelper, true, bWeekNum, -1);
 		}
-
-		if (iDaysOldMonth > 0) {
-			// determine first day for display
-			oFirstDay.setUTCDate(1 - iDaysOldMonth);
-		}
-
-		var oDay = oMonth._newUniversalDate(oFirstDay);
-		var iNextMonth = (iMonth + 1) % 12;
-
-		do {
-			iWeekDay = oDay.getUTCDay();
-
-			if (iWeekDay == oHelper.iFirstDayOfWeek) {
-				// begin of row
-				oRm.write("<div");
-				oRm.writeAccessibilityState(null, {role: "row"});
-				oRm.write(">"); // div
-			}
-
-			this.renderDay(oRm, oMonth, oDay, oHelper, true, bWeekNum, -1, undefined, false);
-
-			if (iWeekDay == (oHelper.iFirstDayOfWeek + 6) % 7) {
-				// end of row
-				oRm.write("</div>");
-			}
-
-			oDay.setUTCDate(oDay.getUTCDate() + 1);
-		} while (oDay.getUTCMonth() != iNextMonth || oDay.getUTCDay() != oHelper.iFirstDayOfWeek);
-
 	};
 
+	/**
+	 * Generates helper object from passed date
+	 * @param {sap.ui.unified.calendar.Month} oMonth the month instance
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate JavaScript date object
+	 * @returns {object} helper object
+	 * @private
+	 */
 	MonthRenderer.getDayHelper = function(oMonth, oDate){
+		var oLegend,
+			sLegendId,
+			oLocaleData = oMonth._getLocaleData(),
+			oHelper = {
+				sLocale: oMonth._getLocale(),
+				oLocaleData: oLocaleData,
+				iMonth: oDate.getMonth(),
+				iYear: oDate.getYear(),
+				iFirstDayOfWeek: oMonth._getFirstDayOfWeek(),
+				iWeekendStart: oLocaleData.getWeekendStart(),
+				iWeekendEnd: oLocaleData.getWeekendEnd(),
+				aNonWorkingDays: oMonth._getNonWorkingDays(),
+				sToday: oLocaleData.getRelativeDay(0),
+				oToday: CalendarDate.fromLocalJSDate(new Date(), oMonth.getPrimaryCalendarType()),
+				sId: oMonth.getId(),
+				oFormatLong: oMonth._getFormatLong(),
+				sSecondaryCalendarType: oMonth._getSecondaryCalendarType(),
+				oLegend: undefined
+			};
 
-		var oHelper = {};
-
-		oHelper.sLocale = oMonth._getLocale();
-		oHelper.oLocaleData = oMonth._getLocaleData();
-		oHelper.iMonth = oDate.getUTCMonth();
-		oHelper.iYear = oDate.getUTCFullYear();
-		oHelper.iFirstDayOfWeek = oMonth._getFirstDayOfWeek();
-		oHelper.iWeekendStart = oHelper.oLocaleData.getWeekendStart();
-		oHelper.iWeekendEnd = oHelper.oLocaleData.getWeekendEnd();
-		oHelper.aNonWorkingDays = oMonth._getNonWorkingDays();
-		oHelper.sToday = oHelper.oLocaleData.getRelativeDay(0);
-		oHelper.oToday = CalendarUtils._createUniversalUTCDate(new Date(), oMonth.getPrimaryCalendarType());
-		oHelper.sId = oMonth.getId();
-		oHelper.oFormatLong = oMonth._getFormatLong();
-		oHelper.sSecondaryCalendarType = oMonth._getSecondaryCalendarType();
-
-		var sLegendId = oMonth.getLegend();
-		if (sLegendId) {
-			var oLegend = sap.ui.getCore().byId(sLegendId);
+		sLegendId = oMonth.getLegend();
+		// getLegend may return string or array we should proceed only if the result is a string
+		if (sLegendId && typeof sLegendId === "string") {
+			oLegend = sap.ui.getCore().byId(sLegendId);
 			if (oLegend) {
-				if (!(oLegend instanceof sap.ui.unified.CalendarLegend)) {
-					throw new Error(oLegend + " is not a sap.ui.unified.CalendarLegend. " + oMonth);
+				if (!(oLegend instanceof CalendarLegend)) {
+					throw new Error(oLegend + " is not an sap.ui.unified.CalendarLegend. " + oMonth);
 				}
-				oHelper.aTypes = oLegend.getItems();
+				oHelper.oLegend = oLegend;
 			} else {
 				jQuery.sap.log.warning("CalendarLegend " + sLegendId + " does not exist!", oMonth);
 			}
-		} else {
-			oHelper.aTypes = [];
 		}
 
 		return oHelper;
-
 	};
 
+	/**
+	 *
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.unified.calendar.Month} oMonth The month to be rendered
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDay The date which month and year will be set to the header
+	 * @param {Object} oHelper A helper instance
+	 * @param {boolean} bOtherMonth Whether there is other month
+	 * @param {boolean} bWeekNum Whether the week numbers must be rendered
+	 * @param {int} iNumber The day numbers
+	 * @param {string} sWidth The width to be set to the month
+	 * @param {boolean} bDayName Whether the day names must be rendered
+	 */
 	MonthRenderer.renderDay = function(oRm, oMonth, oDay, oHelper, bOtherMonth, bWeekNum, iNumber, sWidth, bDayName){
-		var oSecondaryDay = UniversalDate.getInstance(oDay.getJSDate(), oHelper.sSecondaryCalendarType),
+		CalendarUtils._checkCalendarDate(oDay);
+		var oSecondaryDay = new CalendarDate(oDay, oHelper.sSecondaryCalendarType),
 			mAccProps = {
 				role: "gridcell",
 				selected: false,
 				label: "",
 				describedby: ""
-			};
+			},
+			bBeforeFirstYear = oDay._bBeforeFirstYear,
+			sAriaType = "";
 
-		var sYyyymmdd = oMonth._oFormatYyyymmdd.format(oDay.getJSDate(), true);
-		var iWeekDay = oDay.getUTCDay();
+		var sYyyymmdd = oMonth._oFormatYyyymmdd.format(oDay.toUTCJSDate(), true);
+		var iWeekDay = oDay.getDay();
 		var iSelected = oMonth._checkDateSelected(oDay);
-		var oType = oMonth._getDateType(oDay);
+		var aDayTypes = oMonth._getDateTypes(oDay);
 		var bEnabled = oMonth._checkDateEnabled(oDay);
 		var i = 0;
 
+		// Days before 0001.01.01 should be disabled.
+		if (bBeforeFirstYear) {
+			bEnabled = false;
+		}
+
 		var iWeekNumber = 0;
 		if (bWeekNum) {
-			iWeekNumber = CalendarUtils.calculateWeekNumber(oDay, oHelper.iYear, oHelper.sLocale, oHelper.oLocaleData);
+			iWeekNumber = CalendarUtils.calculateWeekNumber(oDay.toUTCJSDate(), oHelper.iYear, oHelper.sLocale, oHelper.oLocaleData);
 			mAccProps["describedby"] = oHelper.sId + "-CW" + " " + oHelper.sId + "-WNum-" +  iWeekNumber;
 		}
 
@@ -326,11 +371,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 		if (iWeekDay == oHelper.iFirstDayOfWeek) {
 			oRm.addClass("sapUiCalFirstWDay");
 		}
-		if (bOtherMonth && oHelper.iMonth != oDay.getUTCMonth()) {
+		if (bOtherMonth && oHelper.iMonth != oDay.getMonth()) {
 			oRm.addClass("sapUiCalItemOtherMonth");
 			mAccProps["disabled"] = true;
 		}
-		if (oDay.getUTCMonth() == oHelper.oToday.getUTCMonth() && oDay.getUTCFullYear() == oHelper.oToday.getUTCFullYear() && oDay.getUTCDate() == oHelper.oToday.getUTCDate()) {
+		if (oDay.isSame(oHelper.oToday)) {
 			oRm.addClass("sapUiCalItemNow");
 			mAccProps["label"] = oHelper.sToday + " ";
 		}
@@ -356,11 +401,24 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 			mAccProps["describedby"] = mAccProps["describedby"] + " " + oHelper.sId + "-End";
 		}
 
-		if (oType && oType.type != sap.ui.unified.CalendarDayType.None) {
-			oRm.addClass("sapUiCalItem" + oType.type);
-			if (oType.tooltip) {
-				oRm.writeAttributeEscaped('title', oType.tooltip);
+		aDayTypes.forEach(function(oDayType) {
+			if (oDayType.type != CalendarDayType.None) {
+				if (oDayType.type === CalendarDayType.NonWorking) {
+					oRm.addClass("sapUiCalItemWeekEnd");
+					return;
+				}
+				oRm.addClass("sapUiCalItem" + oDayType.type);
+				sAriaType = oDayType.type;
+				if (oDayType.tooltip) {
+					oRm.writeAttributeEscaped('title', oDayType.tooltip);
+				}
 			}
+		});
+
+
+		//oMonth.getDate() is a public date object, so it is always considered local timezones.
+		if (oMonth.getParent() && oMonth.getParent().getMetadata().getName() === "sap.ui.unified.CalendarOneMonthInterval" && oDay.getMonth() !== oMonth.getStartDate().getMonth()){
+			oRm.addClass("sapUiCalItemOtherMonth");
 		}
 
 		if (!bEnabled) {
@@ -375,7 +433,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 					break;
 				}
 			}
-		}else	if ((iWeekDay >= oHelper.iWeekendStart && iWeekDay <= oHelper.iWeekendEnd) ||
+		} else if ((iWeekDay >= oHelper.iWeekendStart && iWeekDay <= oHelper.iWeekendEnd) ||
 				( oHelper.iWeekendEnd < oHelper.iWeekendStart && ( iWeekDay >= oHelper.iWeekendStart || iWeekDay <= oHelper.iWeekendEnd))) {
 			oRm.addClass("sapUiCalItemWeekEnd");
 		}
@@ -385,20 +443,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 		if (bDayName) {
 			mAccProps["label"] = mAccProps["label"] + oHelper.aWeekDaysWide[iWeekDay] + " ";
 		}
-		mAccProps["label"] = mAccProps["label"] + oHelper.oFormatLong.format(oDay, true);
+		mAccProps["label"] = mAccProps["label"] + oHelper.oFormatLong.format(oDay.toUTCJSDate(), true);
 
-		if (oType && oType.type != sap.ui.unified.CalendarDayType.None) {
-			// as legend must not be rendered add text of type
-			for (i = 0; i < oHelper.aTypes.length; i++) {
-				var oLegendType = oHelper.aTypes[i];
-				if (oLegendType.getType() == oType.type) {
-					mAccProps["label"] = mAccProps["label"] + "; " + oLegendType.getText();
-					break;
-				}
-			}
+		if (sAriaType !== "") {
+			CalendarLegendRenderer.addCalendarTypeAccInfo(mAccProps, sAriaType, oHelper.oLegend);
 		}
+
 		if (oHelper.sSecondaryCalendarType) {
-			mAccProps["label"] = mAccProps["label"] + " " + oMonth._oFormatSecondaryLong.format(oSecondaryDay, true);
+			mAccProps["label"] = mAccProps["label"] + " " + oMonth._oFormatSecondaryLong.format(oSecondaryDay.toUTCJSDate(), true);
 		}
 
 		oRm.writeAccessibilityState(null, mAccProps);
@@ -410,7 +462,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 		oRm.addClass("sapUiCalItemText");
 		oRm.writeClasses();
 		oRm.write(">"); // span
-		oRm.write(oDay.getUTCDate());
+
+		// Date text for days before 0001.01.01 should not be visible.
+		if (!bBeforeFirstYear) {
+			oRm.write(oDay.getDate());
+		}
 		oRm.write("</span>");
 
 		if (bWeekNum && iWeekDay == oHelper.iFirstDayOfWeek) {
@@ -439,7 +495,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/unified/calendar/CalendarUtils', 'sa
 			oRm.addClass("sapUiCalItemSecText");
 			oRm.writeClasses();
 			oRm.write(">"); // span
-			oRm.write(oSecondaryDay.getUTCDate());
+			oRm.write(oSecondaryDay.getDate());
 			oRm.write("</span>");
 		}
 

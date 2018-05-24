@@ -1,13 +1,38 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.RadioButton.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator', './RadioButtonGroup'],
-	function(jQuery, library, Control, EnabledPropagator, RadioButtonGroup) {
+sap.ui.define([
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/EnabledPropagator',
+	'./RadioButtonGroup',
+	'sap/ui/core/library',
+	'./RadioButtonRenderer'
+],
+function(
+	library,
+	Control,
+	EnabledPropagator,
+	RadioButtonGroup,
+	coreLibrary,
+	RadioButtonRenderer
+	) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.core.TextAlign
+	var TextAlign = coreLibrary.TextAlign;
+
+	// shortcut for sap.ui.core.ValueState
+	var ValueState = coreLibrary.ValueState;
+
+	// shortcut for sap.ui.core.TextDirection
+	var TextDirection = coreLibrary.TextDirection;
 
 
 
@@ -16,16 +41,44 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 *
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
-	 *
+	 * Enables users to select a single option from a set of options.
 	 * @class
-	 * RadioButton is a control similar to CheckBox, but it allows the user to choose only one of the predefined set of options.
+	 * RadioButton is a control similar to a {@link sap.m.CheckBox checkbox}, but it allows you to choose only one of the predefined set of options.
+	 * Multiple radio buttons have to belong to the same group (have the same value for <code>groupName</code>) in order to be mutually exclusive.
+	 * A wrapper control {@link sap.m.RadioButtonGroup RadioButtonGroup} can be used instead of individual radio buttons.
+	 * <h3>Structure</h3>
+	 * <ul>
+	 * <li>Radio buttons can have a value state like Error or Warning.</li>
+	 * <li>Radio buttons can be arranged vertically by setting the <code>column</code> to a number higher than 1.</li>
+	 * <li>Radio button options need to have a {@link sap.m.Label label}.</li>
+	 * </ul>
+	 * <h3>Usage</h3>
+	 * <h4>When to use:</h4>
+	 * <ul>
+	 * <li>You quickly need to choose between at least two alternatives.</li>
+	 * <li>You need to place other controls between the radio button options.</li>
+	 * </ul>
+	 * <h4>When not to use:</h4>
+	 * <ul>
+	 * <li>You want to select multiple values for the same option. Use {@link sap.m.CheckBox checkboxes} instead.</li>
+	 * <li>When the default value is recommended for most users in most situations. Use a {@link sap.m.Select drop-down} instead as is saves space by not showing all the alternatives.</li>
+	 * <li>You want have more than 8 options. Use a {@link sap.m.Select drop-down} instead.</li>
+	 * <li>When the options are mutually exclusive e.g. ON/OFF. Use a {@link sap.m.Switch switch} instead.</li>
+	 * <li>Avoid using horizontally aligned radio buttons as they will be cut off on phones.</li>
+	 * </ul>
 	 *
-	 * Usually, RadioButton is used in a group with other RadioButtons (with the groupName property or by using sap.m.RadioButtonGroup), thus providing a limited choice for the user.
-	 * An event is triggered when the user makes a change of the selection.
+	 * <b>Note:</b> The order in which the RadioButtons will be selected one after another is determined upon instantiation of the control.
+	 * This order is consistent with the ARIA attributes for position, which the same button will receive when added to specific group.
+	 *
+	 * <b>Example:</b> If three buttons are created (<code>button1, button2, button3</code>) in consecutive order, initially they will have the same positions
+	 * and TAB order. However if after that <code>button1</code> and <code>button3</code> are moved to a new group and then <code>button2</code> is added to the
+	 * same group, their TAB order and position in this group will be <code>button1, button3, button2</code>.
+	 *
 	 * @extends sap.ui.core.Control
+	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -34,6 +87,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	var RadioButton = Control.extend("sap.m.RadioButton", /** @lends sap.m.RadioButton.prototype */ { metadata : {
 
+		interfaces : ["sap.ui.core.IFormContent"],
 		library : "sap.m",
 		properties : {
 
@@ -61,12 +115,21 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			/**
 			 * Options for the text direction are RTL and LTR. Alternatively, the control can inherit the text direction from its parent container.
 			 */
-			textDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit},
+			textDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit},
 
 			/**
-			 * Width of the Label
+			 * Width of the RadioButton or it's label depending on the useEntireWidth property.
+			 * By Default width is set only for the label.
+			 * @see {sap.m.RadioButton#useEntireWidth}
 			 */
 			width : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : ''},
+
+			/**
+			 * Indicates if the given width will be applied for the whole RadioButton or only it's label.
+			 * By Default width is set only for the label.
+			 * @since 1.42
+			 */
+			useEntireWidth : {type : "boolean", group: "Appearance", defaultValue : false },
 
 			/**
 			 * This is a flag to switch on activeHandling. When it is switched off,
@@ -85,13 +148,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			 * Enumeration sap.ui.core.ValueState provides state values Error, Success, Warning, None
 			 * @since 1.25
 			 */
-			valueState : {type : "sap.ui.core.ValueState", group : "Data", defaultValue : sap.ui.core.ValueState.None},
+			valueState : {type : "sap.ui.core.ValueState", group : "Data", defaultValue : ValueState.None},
 
 			/**
 			 * Specifies the alignment of the radio button. Available alignment settings are "Begin", "Center", "End", "Left", and "Right".
 			 * @since 1.28
 			 */
-			textAlign : {type : "sap.ui.core.TextAlign", group : "Appearance", defaultValue : sap.ui.core.TextAlign.Begin}
+			textAlign : {type : "sap.ui.core.TextAlign", group : "Appearance", defaultValue : TextAlign.Begin}
 		},
 		events : {
 
@@ -119,7 +182,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			 * Association to controls / IDs which label this control (see WAI-ARIA attribute aria-labelledby).
 			 */
 			ariaLabelledBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"}
-		}
+		},
+		designtime: "sap/m/designtime/RadioButton.designtime"
 	}});
 
 
@@ -142,9 +206,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 	RadioButton.prototype._groupNames = {};
 
+	// Keyboard navigation variants
+	var KH_NAVIGATION = {
+		HOME: "first",
+		END: "last",
+		NEXT: "next",
+		PREV: "prev"
+	};
+
 	/**
-	 * Function is called when radiobutton is tapped.
-	 *
+	 * Function is called when the radio button is tapped.
+	 * @param {jQuery.Event} oEvent The event object
 	 * @private
 	 */
 	RadioButton.prototype.ontap = function(oEvent) {
@@ -178,7 +250,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 	/**
 	 * Function is called when radiobutton is being touched. Only necessary for Android/Blackberry.
-	 *
+	 * @param {jQuery.Event} oEvent The event object
 	 * @private
 	 */
 	RadioButton.prototype.ontouchstart = function(oEvent) {
@@ -195,7 +267,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	RadioButton.prototype.onsapnext = function(oEvent) {
-		this._arrowsHandler("next");
+		this._keyboardHandler(KH_NAVIGATION.NEXT, true);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsapnextmodifiers = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.NEXT, !oEvent.ctrlKey);
 
 		// mark the event that it is handled by the control
 		oEvent.setMarked();
@@ -204,7 +285,52 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	RadioButton.prototype.onsapprevious = function(oEvent) {
-		this._arrowsHandler();
+		this._keyboardHandler(KH_NAVIGATION.PREV, true);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsappreviousmodifiers = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.PREV, !oEvent.ctrlKey);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsaphome = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.HOME, true);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsaphomemodifiers = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.HOME, !oEvent.ctrlKey);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsapend = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.END, true);
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsapendmodifiers = function(oEvent) {
+		this._keyboardHandler(KH_NAVIGATION.END, !oEvent.ctrlKey);
 
 		// mark the event that it is handled by the control
 		oEvent.setMarked();
@@ -214,28 +340,74 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 	/**
 	 * Determines which button becomes focused after an arrow key is pressed.
-	 * @param {string} sPosition Button to be focused (next/previous)
+	 * @param {string} sPosition Button to be focused
+	 * @param {boolean} bSelect Determines if the button should be selected
 	 * @private
 	 */
-	RadioButton.prototype._arrowsHandler = function(sPosition) {
-		if (this.getParent() instanceof sap.m.RadioButtonGroup) {
+	RadioButton.prototype._keyboardHandler = function(sPosition, bSelect) {
+		if (this.getParent() instanceof RadioButtonGroup) {
 			return;
 		}
 
-		var aVisibleBtnsGroup = this._groupNames[this.getGroupName()].filter(function(oRB) {
+		var oNextItem = this._getNextFocusItem(sPosition);
+		oNextItem.focus();
+		if (bSelect && !oNextItem.getSelected() && oNextItem.getEditable() && oNextItem.getEnabled()) {
+			oNextItem.setSelected(true);
+
+			setTimeout(function() {
+				oNextItem.fireSelect({selected: true});
+			}, 0);
+		}
+	};
+
+	/**
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @protected
+	 * @returns {Object} The <code>sap.m.RadioButton</code> accessibility information
+	 */
+	RadioButton.prototype.getAccessibilityInfo = function() {
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		return {
+			role: "radio",
+			type: oBundle.getText("ACC_CTR_TYPE_RADIO"),
+			description: (this.getText() || "") + (this.getSelected() ? (" " + oBundle.getText("ACC_CTR_STATE_CHECKED")) : ""),
+			enabled: this.getEnabled(),
+			editable: this.getEditable()
+		};
+	};
+
+	/**
+	 * Determines next focusable item
+	 *
+	 * @param {enum} sNavigation any item from KH_NAVIGATION
+	 * @returns {RadioButton} Control instance for method chaining
+	 * @private
+	 */
+	RadioButton.prototype._getNextFocusItem = function(sNavigation) {
+		var aVisibleBtnsGroup = this._groupNames[this.getGroupName()].filter(function (oRB) {
 			return (oRB.getDomRef() && oRB.getEnabled());
 		});
 
-		var iButtonIndex = aVisibleBtnsGroup.indexOf(this);
+		var iButtonIndex = aVisibleBtnsGroup.indexOf(this),
+			iIndex = iButtonIndex,
+			iVisibleBtnsLength = aVisibleBtnsGroup.length;
 
-		if (sPosition === "next") {
-			var iNextPosition = (iButtonIndex + 1) % aVisibleBtnsGroup.length;
-			aVisibleBtnsGroup[iNextPosition].focus();
-		} else {
-			iButtonIndex = iButtonIndex - 1;
-			var iPreviousPosition = iButtonIndex < 0 ? aVisibleBtnsGroup.length - 1 : iButtonIndex;
-			aVisibleBtnsGroup[iPreviousPosition].focus();
+		switch (sNavigation) {
+			case KH_NAVIGATION.NEXT:
+				iIndex = iButtonIndex === iVisibleBtnsLength - 1 ? iButtonIndex : iButtonIndex + 1;
+				break;
+			case KH_NAVIGATION.PREV:
+				iIndex = iButtonIndex === 0 ? 0 : iIndex - 1;
+				break;
+			case KH_NAVIGATION.HOME:
+				iIndex = 0;
+				break;
+			case KH_NAVIGATION.END:
+				iIndex = iVisibleBtnsLength - 1;
+				break;
 		}
+
+		return aVisibleBtnsGroup[iIndex] || this;
 	};
 
 	// #############################################################################
@@ -315,32 +487,45 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @public
 	 */
 	RadioButton.prototype.setText = function(sText) {
-
 		this.setProperty("text", sText, true);
+
 		if (this._oLabel) {
 			this._oLabel.setText(this.getText());
 		} else {
 			this._createLabel("text", this.getText());
 		}
-		this.addStyleClass("sapMRbHasLabel");
+
+		this.toggleStyleClass("sapMRbHasLabel", !!sText);
+
 		return this;
 	};
 
 	/**
-	 * Sets the width for the RadioButton's label.
-	 * @param {string} sWidth - CSS size to be set as width of the label
-	 * @returns {sap.m.RadioButton} Reference to the control instance for chaining
-	 * @public
+	 * Depeding on useEntireWidth sets the width to the RadioButton's label or the whole RadioButton
+	 * @param {boolean} bUserEntireWidth - Determines if the width will be set to the label only or to the whole RadioButton
+	 * @private
 	 */
-	RadioButton.prototype.setWidth = function(sWidth) {
-
-		this.setProperty("width", sWidth, true);
-		if (this._oLabel) {
-			this._oLabel.setWidth(this.getWidth());
+	RadioButton.prototype._setWidth = function(bUserEntireWidth) {
+		if (!bUserEntireWidth) {
+			this._setLableWidth();
 		} else {
-			this._createLabel("width", this.getWidth());
+			this._setLableWidth("auto");
 		}
-		return this;
+	};
+
+	/**
+	 * Sets the width for the RadioButton's label.
+	 * @param {string} sWidth - CSS size to be set as width
+	 * @private
+	 */
+	RadioButton.prototype._setLableWidth = function(sWidth) {
+		sWidth = sWidth || this.getWidth();
+
+		if (this._oLabel) {
+			this._oLabel.setWidth(sWidth);
+		} else {
+			this._createLabel("width", sWidth);
+		}
 	};
 
 	/**
@@ -372,7 +557,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	RadioButton.prototype.onBeforeRendering = function() {
+		// Set the width before rendering as both width and useEntireWidth are dependent
+		this._setWidth(this.getUseEntireWidth());
 		return this._changeGroupName(this.getGroupName());
+	};
+
+	RadioButton.prototype.onAfterRendering = function() {
+		var sGroupName = this.getGroupName();
+		this._setAriaPositionAttributes(sGroupName);
 	};
 
 	/**
@@ -389,7 +581,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this._oLabel.destroy();
 		}
 
-		if (iGroupNameIndex && iGroupNameIndex !== -1) {
+		if (iGroupNameIndex >= -1) {
 			aControlsInGroup.splice(iGroupNameIndex, 1);
 		}
 	};
@@ -453,6 +645,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		if (aOldGroup && aOldGroup.indexOf(this) !== -1) {
 			aOldGroup.splice(aOldGroup.indexOf(this), 1);
+			this._setAriaPositionAttributes(sOldGroupName);
 		}
 
 		if (!aNewGroup) {
@@ -461,10 +654,42 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		if (aNewGroup.indexOf(this) === -1) {
 			aNewGroup.push(this);
+			this._setAriaPositionAttributes(sNewGroupName);
 		}
 
 	};
 
+	/**
+	 * Recalculates and sets the correct aria-posinset and aria-setsize attribute values
+	 * This is done based on the rendered in the DOM radio buttons which are in the provided group.
+	 *
+	 * @param {string} [sGroupName] The name of the group for which the ARIA attributes should be recalculated
+	 * @private
+	 */
+	RadioButton.prototype._setAriaPositionAttributes = function (sGroupName) {
+		var aGroup = this._groupNames[sGroupName],
+			iRenderedIndex = 0,
+			iRenderedInGroupCount;
+
+		if (!aGroup.length || !this.getDomRef()) {
+			return;
+		}
+
+		// Find how many buttons are rendered in the group
+		iRenderedInGroupCount = aGroup.reduce(function (iRenderedInGroupCount, oRadioButton) {
+			return oRadioButton.getDomRef() ? ++iRenderedInGroupCount : iRenderedInGroupCount;
+		}, 0);
+
+		// For every radio button in the group - recalculate its index and set its properties
+		aGroup.forEach(function(oRadioButton) {
+			var oRadioDom = oRadioButton.getDomRef();
+			if (oRadioDom) {
+				oRadioDom.setAttribute("aria-posinset", ++iRenderedIndex);
+				oRadioDom.setAttribute("aria-setsize", iRenderedInGroupCount);
+			}
+		});
+	};
+
 	return RadioButton;
 
-}, /* bExport= */ true);
+});

@@ -1,23 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.require([
+	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/opaQunit",
-	"sap/ui/test/matchers/Properties",
-	"sap/ui/Device"
-], function (Opa5, opaTest, Properties, Device) {
+	"sap/ui/test/TestUtils"
+], function (Properties, Opa5, opaTest, TestUtils) {
 	/*global QUnit */
 	"use strict";
 
 	QUnit.module("sap.ui.core.sample.ViewTemplate.scenario");
-
-	if (Device.browser.msie && Device.browser.version === 9) {
-		// Bug Fix: IE9 >>> http://bugs.jquery.com/ticket/13378
-		return;
-	}
 
 	opaTest("Find view elements", function (Given, When, Then) {
 		function onLoad() {
@@ -35,7 +30,7 @@ sap.ui.require([
 			[
 				{controlType : "sap.ui.core.Title", text : "HeaderInfo"},
 				{controlType : "sap.m.Text", text : "[Type Name] Business Partner"},
-				{controlType : "sap.m.Text", text : "[Name] SAPAG"},
+				{controlType : "sap.m.Text", text : "[Name] SAPSE"},
 				{controlType : "sap.ui.core.Title", text : "Identification"},
 				{controlType : "sap.m.Label", text : "ID"},
 				{controlType : "sap.m.Text", text : "0100000000"},
@@ -65,8 +60,6 @@ sap.ui.require([
 			Then.waitFor({
 				id : /selectInstance/,
 				success : function () {
-					var jQuery = Opa5.getWindow().jQuery;
-
 					// check no warnings and errors
 					jQuery.sap.log.getLogEntries().forEach(function (oLog) {
 						var sComponent = oLog.component || "";
@@ -84,10 +77,14 @@ sap.ui.require([
 				errorMessage : "Instance selector not found"
 			});
 
-			Then.iTeardownMyAppFrame();
+			Then.iTeardownMyUIComponent();
 		}
 
-		Given.iStartMyAppInAFrame("../../common/index.html?component=ViewTemplate.scenario");
+		Given.iStartMyUIComponent({
+			componentConfig : {
+				name : "sap.ui.core.sample.ViewTemplate.scenario"
+			}
+		});
 
 		// wait for application to load before any interaction
 		Then.waitFor({

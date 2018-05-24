@@ -1,129 +1,91 @@
-/*
- * ! SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+/*!
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['jquery.sap.global', 'sap/ui/rta/command/FlexCommand',
-		'sap/ui/rta/controlAnalyzer/ControlAnalyzerFactory', "sap/ui/fl/changeHandler/MoveElements"],
-		function(jQuery, FlexCommand, ControlAnalyzerFactory, MoveElementsChangeHandler) {
-			"use strict";
+sap.ui.define(['jquery.sap.global', 'sap/ui/rta/command/FlexCommand'], function(jQuery, FlexCommand) {
+	"use strict";
 
-			/**
-			 * Move Element from one place to another
-			 *
-			 * @class
-			 * @extends sap.ui.rta.command.FlexCommand
-			 * @author SAP SE
-			 * @version 1.38.33
-			 * @constructor
-			 * @private
-			 * @since 1.34
-			 * @alias sap.ui.rta.command.Move
-			 * @experimental Since 1.34. This class is experimental and provides only limited functionality. Also the API
-			 *               might be changed in future.
-			 */
-			var Move = FlexCommand.extend("sap.ui.rta.command.Move", {
-				metadata : {
-					library : "sap.ui.rta",
-					properties : {
-						movedElements : {
-							type : "array"
-						},
-						target : {
-							type : "object"
-						},
-						source : {
-							type : "object"
-						},
-						changeType : {
-							type : "string",
-							defaultValue : "moveElements"
-						}
-					},
-					associations : {},
-					events : {}
+	/**
+	 * Move Element from one place to another
+	 *
+	 * @class
+	 * @extends sap.ui.rta.command.FlexCommand
+	 * @author SAP SE
+	 * @version 1.54.5
+	 * @constructor
+	 * @private
+	 * @since 1.34
+	 * @alias sap.ui.rta.command.Move
+	 * @experimental Since 1.34. This class is experimental and provides only limited functionality. Also the API might be
+	 *               changed in future.
+	 */
+	var Move = FlexCommand.extend("sap.ui.rta.command.Move", {
+		metadata : {
+			library : "sap.ui.rta",
+			properties : {
+				movedElements : {
+					type : "any[]"
+				},
+				target : {
+					type : "any"
+				},
+				source : {
+					type : "any"
 				}
+			},
+			associations : {},
+			events : {}
+		}
+	});
+
+	/**
+	 * @param  {boolean} bIsUndo If is true, then it switches source and target
+	 * @override
+	 */
+	Move.prototype._getChangeSpecificData = function(bIsUndo) {
+		var mSource = bIsUndo ? this.getTarget() : this.getSource();
+		var mTarget = bIsUndo ? this.getSource() : this.getTarget();
+
+		// replace elements by their id, unify format and help with serialization
+		if (mSource.parent) {
+			mSource.id = mSource.parent.getId();
+			delete mSource.parent;
+		}
+		if (mTarget.parent) {
+			mTarget.id = mTarget.parent.getId();
+			delete mTarget.parent;
+		}
+		var mSpecificInfo = {
+			changeType : this.getChangeType(),
+			source : mSource,
+			target : mTarget,
+			movedElements : []
+		};
+
+		this.getMovedElements().forEach(function(mMovedElement) {
+			mSpecificInfo.movedElements.push({
+				id : mMovedElement.id || (mMovedElement.element && mMovedElement.element.getId()),
+				sourceIndex : bIsUndo ? mMovedElement.targetIndex : mMovedElement.sourceIndex,
+				targetIndex : bIsUndo ? mMovedElement.sourceIndex : mMovedElement.targetIndex
 			});
+		});
+		return mSpecificInfo;
+	};
 
-			Move.prototype.init = function() {
-				this.setChangeHandler(MoveElementsChangeHandler);
-			};
+	Move.prototype.prepare = function(sLayer, bDeveloperMode) {
+		var bSuccessful = FlexCommand.prototype.prepare.apply(this, arguments);
 
-			Move.FORWARD = true;
-			Move.BACKWARD = false;
+		if (bSuccessful) {
+			this._oPreparedUndoChange = this._createChangeFromData(this._getChangeSpecificData(true), sLayer, bDeveloperMode);
+		}
+		return bSuccessful;
+	};
 
-			Move.prototype._getSpecificChangeInfo = function(bForward) {
-				var mSource = bForward ? this.getSource() : this.getTarget();
-				var mTarget = bForward ? this.getTarget() : this.getSource();
-				var oSourceParent = mSource.parent || sap.ui.getCore().byId(mSource.id);
+	Move.prototype.undo = function() {
+		return this._applyChange(this._oPreparedUndoChange, true);
+	};
 
-				// replace elements by their id, unify format and help with serialization
-				if (mSource.parent) {
-					mSource.id = mSource.parent.getId();
-					delete mSource.parent;
-				}
-				if (mTarget.parent) {
-					mTarget.id = mTarget.parent.getId();
-					delete mTarget.parent;
-				}
-				var mSpecificInfo = {
-					changeType : this.getChangeType(),
-					source : mSource,
-					target : mTarget,
-					movedElements : []
-				};
+	return Move;
 
-				this.getMovedElements().forEach(function(mMovedElement) {
-					mSpecificInfo.movedElements.push({
-						id : mMovedElement.id || mMovedElement.element.getId(),
-						sourceIndex : bForward ? mMovedElement.sourceIndex : mMovedElement.targetIndex,
-						targetIndex : bForward ? mMovedElement.targetIndex : mMovedElement.sourceIndex
-					});
-				});
-
-				var oControlAnalyzer = ControlAnalyzerFactory.getControlAnalyzerFor(oSourceParent);
-				if (oControlAnalyzer) {
-					mSpecificInfo = oControlAnalyzer.mapSpecificChangeData("Move", mSpecificInfo);
-				}
-
-				return {
-					data : mSpecificInfo,
-					sourceParent : oSourceParent
-				};
-			};
-
-			Move.prototype._getFlexChange = function(bForward) {
-				var mSpecificChangeInfo = this._getSpecificChangeInfo(bForward);
-
-				var oChange = this._completeChangeContent(mSpecificChangeInfo.data);
-
-				return {
-					change : oChange,
-					selectorElement : mSpecificChangeInfo.sourceParent
-				};
-			};
-
-			/**
-			 * @override
-			 */
-			Move.prototype._getForwardFlexChange = function(oElement) {
-				return this._getFlexChange(Move.FORWARD);
-			};
-
-			/**
-			 * @override
-			 */
-			Move.prototype._getBackwardFlexChange = function(oElement) {
-				return this._getFlexChange(Move.BACKWARD);
-			};
-
-			/**
-			 * @override
-			 */
-			Move.prototype.serialize = function() {
-				return this._getSpecificChangeInfo(Move.FORWARD).data;
-			};
-
-			return Move;
-
-		}, /* bExport= */true);
+}, /* bExport= */true);

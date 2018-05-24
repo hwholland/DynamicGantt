@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -18,10 +18,9 @@ sap.ui.define(['jquery.sap.global', './ClientContextBinding', './ClientListBindi
 	 * @extends sap.ui.model.Model
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
-	 * @param {object} oData URL where to load the data from
-	 * @constructor
+	 * @param {string} [oData] URL where to load the data from
 	 * @public
 	 * @alias sap.ui.model.ClientModel
 	 */
@@ -32,6 +31,7 @@ sap.ui.define(['jquery.sap.global', './ClientContextBinding', './ClientListBindi
 
 			this.bCache = true;
 			this.aPendingRequestHandles = [];
+			this.mUnsupportedFilterOperators = {"Any": true, "All": true};
 
 			if (typeof oData == "string") {
 				this.loadData(oData);

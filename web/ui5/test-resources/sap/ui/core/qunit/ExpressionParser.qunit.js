@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.require([
@@ -28,7 +28,15 @@ sap.ui.require([
 				//TODO "You can use ISO 8859-1 or Unicode letters such as å and ü in identifiers.
 				// You can also use the Unicode escape sequences as characters in identifiers."
 			}
-		});
+		}),
+		oScope = {
+			join : function () {
+				return Array.prototype.join.call(arguments);
+			},
+			myFormatter: function (vValue) {
+				return "~" + vValue + "~";
+			}
+		};
 
 	/**
 	 * Checks the string result of an expression binding when bound to a control property of type
@@ -63,7 +71,7 @@ sap.ui.require([
 			QUnit.test(sTitle + " : " + oFixture.expression + " --> " + oFixture.result,
 				function (assert) {
 					if (fnInit) {
-						fnInit(this); //call initializer with sandbox
+						fnInit.call(this);
 					}
 					check(assert, oFixture.expression, oFixture.result);
 				}
@@ -73,6 +81,11 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.module("sap.ui.base.ExpressionParser", {
+		beforeEach : function () {
+			this.oLogMock = this.mock(jQuery.sap.log);
+			this.oLogMock.expects("warning").never();
+			this.oLogMock.expects("error").never();
+		},
 		/**
 		 * Checks that the code throws an expected error.
 		 *
@@ -85,9 +98,7 @@ sap.ui.require([
 		 *   the expected error position
 		 */
 		checkError : function (assert, sExpression, sMessage, iAt) {
-			var oLogMock = this.mock(jQuery.sap.log);
-
-			oLogMock.expects("error").withExactArgs(
+			this.oLogMock.expects("error").withExactArgs(
 				sMessage + (iAt !== undefined ? " at position " + iAt : ""),
 				sExpression,
 				"sap.ui.base.ExpressionParser"
@@ -129,10 +140,20 @@ sap.ui.require([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("Parsing a full string", function (assert) {
+		var oExpression = ExpressionParser.parse(null, "42");
+
+		assert.strictEqual(oExpression.result, undefined, "no formatter for constant expression");
+		assert.strictEqual(oExpression.constant, 42);
+		assert.strictEqual(oExpression.at, 2);
+	});
+
+	//*********************************************************************************************
 	[
 		{ binding: "{=${target>sap:semantics}}" },
 		{ binding: "{=${ b}   }" },
-		{ binding: "{=     ${ b} }" }
+		{ binding: "{=     ${ b} }" },
+		{ binding: "{= %{b} }" }
 	].forEach(function (oFixture) {
 		QUnit.test("Valid embedded binding " + oFixture.binding, function (assert) {
 			var oBinding = {
@@ -242,7 +263,7 @@ sap.ui.require([
 				"odata.fillUriTemplate('http://foo/{t},{m}', {t: ${/mail}, 'm': ${/tel}})",
 				result: "http://foo/mail,tel" }
 		],
-		function (oSandbox) {
+		function () {
 			var mGlobals = {
 					odata: {
 						fillUriTemplate: function (sTemplate, mParameters) {
@@ -268,7 +289,7 @@ sap.ui.require([
 				fnOriginalParse = ExpressionParser.parse;
 
 			//use test globals in expression parser
-			oSandbox.stub(ExpressionParser, "parse",
+			this.mock(ExpressionParser).expects("parse").callsFake(
 				function (fnResolveBinding, sInput, iStart) {
 					return fnOriginalParse.call(null, fnResolveBinding, sInput, iStart, mGlobals);
 				}
@@ -300,7 +321,10 @@ sap.ui.require([
 		{ binding: "{=[1}", message: "Expected , but instead saw }", token: "}"},
 		{ binding: "{=[1 2]}", message: "Expected , but instead saw 2", token: "2"},
 		{ binding: "{=[1+]}", message: "Unexpected ]", token: "]"},
-		{ binding: "{=[1,]}", message: "Unexpected ]", token: "]"}
+		{ binding: "{=[1,]}", message: "Unexpected ]", token: "]"},
+		// Note: jQuery.sap._createJSTokenizer()#string fails with at: length + 2
+		{ binding: "{= '}", message: "Bad string", at: 6}, // nud
+		{ binding: "{= 0 '}", message: "Bad string", at: 8} // led
 	].forEach(function (oFixture) {
 		QUnit.test("Error handling " + oFixture.binding + " --> " + oFixture.message,
 			function (assert) {
@@ -407,12 +431,6 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("Embedded bindings with formatter", function (assert) {
-		var oScope = {
-			myFormatter: function (vValue) {
-				return "~" + String(vValue) + "~";
-			}
-		};
-
 		//two embedded bindings: ManagedObject._bindProperty uses CompositeBinding by default then
 		check(assert, "${/mail} + ${path:'/tel', formatter:'.myFormatter'}", "mail~tel~", oScope);
 		//one embedded binding only: need to set flag
@@ -444,15 +462,13 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("Warning for undefined global identifier", function (assert) {
-		var oLogMock = this.mock(jQuery.sap.log);
-
-		oLogMock.expects("warning").withExactArgs(
+		this.oLogMock.expects("warning").withExactArgs(
 			"Unsupported global identifier 'foo' in expression parser input '{=42 === foo}'",
 			undefined, "sap.ui.base.ExpressionParser");
 
 		check(assert, "{=42 === foo}", "false");
 
-		oLogMock.expects("warning").withExactArgs(
+		this.oLogMock.expects("warning").withExactArgs(
 			"Unsupported global identifier 'typeof42' in expression parser input '{=typeof42}'",
 			undefined, "sap.ui.base.ExpressionParser");
 
@@ -479,13 +495,12 @@ sap.ui.require([
 		{expression: "{=Array.isArray([])}", result: "true"},
 		{expression: "{=Array.isArray({})}", result: "false"},
 		{expression: "{=JSON.stringify({a:1})}", result: '{"a":1}'}
-	], function (oSandbox) {
-		oSandbox.mock(jQuery.sap.log).expects("warning").never();
-	});
+	]);
 
 	//*********************************************************************************************
 	QUnit.test("odata.compare", function (assert) {
-		this.mock(jQuery.sap).expects("require").withExactArgs("sap.ui.model.odata.ODataUtils");
+		this.mock(sap.ui).expects("requireSync")
+			.withExactArgs("sap/ui/model/odata/v4/ODataUtils").returns(ODataUtils);
 		this.mock(ODataUtils).expects("compare")
 			.withExactArgs(2, 3).returns("-1");
 
@@ -494,7 +509,8 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("odata.uriEncode", function (assert) {
-		this.mock(jQuery.sap).expects("require").withExactArgs("sap.ui.model.odata.ODataUtils");
+		this.mock(sap.ui).expects("requireSync")
+			.withExactArgs("sap/ui/model/odata/ODataUtils").returns(ODataUtils);
 		this.mock(ODataUtils).expects("formatValue")
 			.withExactArgs("foo", "Edm.String").returns("'foo'");
 
@@ -519,7 +535,7 @@ sap.ui.require([
 
 		// Note: no need to log the stacktrace, it does not really matter to most people here
 		// Note: the exact error message is browser-dependent
-		this.mock(jQuery.sap.log).expects("warning").withExactArgs(
+		this.oLogMock.expects("warning").withExactArgs(
 			sinon.match(/TypeError:.*null/i),
 			sExpression,
 			"sap.ui.base.ExpressionParser");
@@ -556,20 +572,12 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("multiple references to the same binding", function (assert) {
-		var oScope = {
-				myFormatter: function (vValue) {
-					return "~" + String(vValue) + "~";
-				}
-			};
-
 		function checkParts(sExpression, sExpectedResult, iExpectedParts) {
 			var sBinding = "{=" + sExpression + "}",
 				oBindingInfo = BindingParser.complexParser(sBinding, oScope, true);
 			assert.strictEqual(oBindingInfo.parts.length, iExpectedParts, sExpression);
 			check(assert, sBinding, sExpectedResult, oScope);
 		}
-
-		this.mock(jQuery.sap.log).expects("warning").never();
 
 		checkParts("${/five} ? ${/five} : '7'", "5", 1);
 		checkParts("${/five} ? ${path: '/five', type: 'sap.ui.model.type.String'} : '7'", "5", 2);
@@ -585,6 +593,26 @@ sap.ui.require([
 		// is null, the expression runs into an exception (" Cannot read property 'indexOf' of
 		// null") and raises a warning.
 		check(assert, "${mail} && ${mail}.indexOf('mail')", "0");
+	});
+
+	//*********************************************************************************************
+	// Note: it's not worth to treat null the same way
+	[false, 42, "bar", undefined].forEach(function (vPrimitiveValue) {
+		QUnit.test("saveBindingAsPart: primitive value " + vPrimitiveValue, function (assert) {
+			var sBinding = "{:= ${foo : '~primitive~'} }";
+
+			this.mock(jQuery.sap).expects("parseJS")
+				.once() // this would be violated by bad code
+				.withExactArgs(sBinding, 5)
+				.returns({
+					at : sBinding.indexOf("}"),
+					result : {
+						foo : vPrimitiveValue // must not cause saveBindingAsPart() to re-parse!
+					}
+				});
+
+			BindingParser.complexParser(sBinding);
+		});
 	});
 
 	//*********************************************************************************************
@@ -604,4 +632,132 @@ sap.ui.require([
 		assert.strictEqual(oEndSpy.callCount, 1, "parse end measurement - end not reached");
 	});
 
+	//*********************************************************************************************
+	QUnit.test("${} does not set targetType : 'any'", function (assert) {
+		var sBinding = "{:= ${/five} === 5 }",
+			oBindingInfo = BindingParser.complexParser(sBinding);
+
+		assert.notOk("targetType" in oBindingInfo.parts[0]);
+		check(assert, sBinding, true);
+
+		check(assert, "{:= ${path : '/five', type : 'sap.ui.model.type.Integer'} === 5 }",
+			// Note: wrong result because targetType : "string" is applied by ManagedObject!
+			// (the FormatException is stifled somewhere)
+			false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("${} does not set targetType : 'any' recursively", function (assert) {
+		var sBinding = "{:= ${formatter:'.join', parts:[{path:'/five'},{path:'/thirteen'}]} }",
+			oBindingInfo = BindingParser.complexParser(sBinding, oScope);
+
+		// Note: "parts" of embedded binding are lifted to top-level
+		assert.notOk("targetType" in oBindingInfo.parts[0]);
+		assert.notOk("targetType" in oBindingInfo.parts[1]);
+		check(assert, sBinding, "5,13", oScope);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("%{} sets targetType : 'any'", function (assert) {
+		var sBinding = "{:= %{path:'/five', type:'sap.ui.model.type.Integer'} === 5 }",
+			oBindingInfo = BindingParser.complexParser(sBinding);
+
+		assert.strictEqual(oBindingInfo.parts[0].targetType, "any");
+		check(assert, sBinding, true);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("%{} sets targetType : 'any' recursively", function (assert) {
+		var sBinding = "{:= %{formatter:'.join', parts:["
+				+ "{path:'/five', type:'sap.ui.model.type.Integer'},"
+				+ "{path:'/thirteen', type:'sap.ui.model.type.Integer'}]} }",
+			oBindingInfo = BindingParser.complexParser(sBinding, oScope);
+
+		assert.strictEqual(oBindingInfo.parts[0].targetType, "any");
+		assert.strictEqual(oBindingInfo.parts[1].targetType, "any");
+		check(assert, sBinding, "5,13", oScope);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("%{} does not override targetType", function (assert) {
+		var sBinding
+				= "{:= %{path:'/five', targetType:'int', type:'sap.ui.model.type.Integer'} === 5 }",
+			oBindingInfo = BindingParser.complexParser(sBinding);
+
+		assert.strictEqual(oBindingInfo.parts[0].targetType, "int");
+		check(assert, sBinding, true);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("%{} does not override targetType recursively", function (assert) {
+		var sBinding = "{:= %{formatter:'.join', parts:["
+				+ "{path:'/five', targetType:'int', type:'sap.ui.model.type.Integer'},"
+				+ "{path:'/thirteen', targetType:'float', type:'sap.ui.model.type.Integer'}]} }",
+			oBindingInfo = BindingParser.complexParser(sBinding, oScope);
+
+		assert.strictEqual(oBindingInfo.parts[0].targetType, "int");
+		assert.strictEqual(oBindingInfo.parts[1].targetType, "float");
+		check(assert, sBinding, "5,13", oScope);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("%{} vs. ${}", function (assert) {
+		var sBinding = "{:= %{path:'/five', type:'sap.ui.model.type.Integer'}"
+				+ " !== ${path:'/five', type:'sap.ui.model.type.Integer'} }",
+			oBindingInfo = BindingParser.complexParser(sBinding);
+
+		assert.strictEqual(oBindingInfo.parts.length, 2);
+		check(assert, sBinding, true);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("JSTokenizer throws SyntaxError object", function (assert) {
+		var iAt = 42,
+			sInput = "{= 'foo' }",
+			sMessage = "message",
+			oError = {
+				name: 'SyntaxError',
+				message: sMessage,
+				at: iAt,
+				text: sInput
+			},
+			oTokenizer = jQuery.sap._createJSTokenizer();
+
+		this.mock(jQuery.sap).expects("_createJSTokenizer").withExactArgs()
+			.returns(oTokenizer);
+		this.mock(oTokenizer).expects("white").withExactArgs()
+			.throws(oError);
+
+		this.checkError(assert, sInput, sMessage, iAt);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("JSTokenizer throws Error", function (assert) {
+		var sExpression = "{= 'foo' }",
+			oError = new Error("Must not set index 0 before previous index 1"),
+			oTokenizer = jQuery.sap._createJSTokenizer();
+
+		this.mock(jQuery.sap).expects("_createJSTokenizer").withExactArgs()
+			.returns(oTokenizer);
+		this.mock(oTokenizer).expects("setIndex")
+			.throws(oError);
+
+		assert.throws(function () {
+			BindingParser.complexParser(sExpression);
+		}, oError);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Internal incident 1680322832", function (assert) {
+		var oIcon,
+			oModel = new JSONModel({ID : "T 1000"});
+
+		// code under test (used to fail with "Bad string")
+		oIcon = new Icon({
+			color : "'{= encodeURIComponent(${/ID}) }'",
+			models : oModel
+		});
+
+		assert.strictEqual(oIcon.getColor(), oIcon.validateProperty("color", "'T%201000'"));
+	});
 });

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications."/>
+<meta name="description" content="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications."/>
 
-
-
-
-
-<meta name="abstract" content="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications."/>
-<meta name="description" content="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6172149553771208"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6382292753485166"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6382292753485166"/>
 <title>Navigation and Routing</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio1b6dcd39a6a74f528b27ddb22f15af0d">
 <div id="wrapper"><div id="container">
@@ -33,9 +19,9 @@
 	<h1 class="title topictitle1">Navigation and Routing</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">SAPUI5</span></span> comes with a powerful routing API that helps you control the state of your
-		application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in <span class="ph"><span class="ph pname">SAPUI5</span></span> apps by creating a simple and easy to understand mobile app. It represents a set of
-		best practices for applying the navigation and routing features of <span class="ph"><span class="ph pname">SAPUI5</span></span> to your
+	<div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">OpenUI5</span></span> comes with a powerful routing API that helps you control the state of your
+		application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in <span class="ph"><span class="ph pname">OpenUI5</span></span> apps by creating a simple and easy to understand mobile app. It represents a set of
+		best practices for applying the navigation and routing features of <span class="ph"><span class="ph pname">OpenUI5</span></span> to your
 		applications.</p>
 
 		<p class="p">In classical Web applications, the server determines which resource is requested based on the URL pattern of the request and serves it accordingly. The
@@ -57,8 +43,8 @@
 		<p class="p">The information in the hash, namely everything that is following the <samp class="ph codeph">#</samp> character, is interpreted by the router. </p>
 
 		<div class="note note"><span class="notetitle">Note</span> 
-			<p class="p">This tutorial does not handle cross-app navigation with the SAP Fiori launchpad. However, the concepts described in this tutorial are also fundamental for
-				navigation and routing between apps in the SAP Fiori launchpad.</p>
+			<p class="p">This tutorial does not handle cross-app navigation with the <span class="ph pname">SAP Fiori launchpad</span>. However, the concepts described in this tutorial are also fundamental for
+				navigation and routing between apps in the <span class="ph pname">SAP Fiori launchpad</span>.</p>
 
 		</div>
 
@@ -98,7 +84,7 @@
 			search, table sorting via filters, and dialogs.</p>
 
 		<div class="note note"><span class="notetitle">Note</span> 
-			<p class="p">This tutorial is based on <span class="ph"><span class="ph pname">SAPUI5</span></span>
+			<p class="p">This tutorial is based on <span class="ph"><span class="ph pname">OpenUI5</span></span>
 				version 1.30 or higher. The navigation features shown in this tutorial are available
 				since version 1.28. However, the configuration via the descriptor  file
 					<samp class="ph codeph">manifest.json</samp> is only available since 1.30.</p>
@@ -109,23 +95,12 @@
 			<p class="p">You don't have to do all tutorial steps sequentially, you can also jump directly to any step
 				you want. Just download the code from the previous step, and start there.</p>
 
-			<p class="p">You can view and download the files for all steps in the <span class="ph uicontrol">Explored</span> app
-				in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples" alt="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples" title="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples">Navigation and Routing</a></span>. Copy the code to your workspace and make sure that
+			<p class="p">You can view and download the files for all steps in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples" alt="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples" title="../../explored.html#/entity/sap.ui.core.tutorial.navigation/samples">Navigation and Routing</a></span>. Copy the code to your workspace and make sure that
 				the application runs by calling the <samp class="ph codeph">webapp/index.html</samp> file.
 				Depending on your development environment you might have to adjust resource paths
 				and configuration entries.</p>
 
-			<div class="p">For more information check the following sections of the tutorials overview page (see <a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html" title="The SAPUI5 tutorials introduce you to all major development paradigms of SAPUI5 using practical examples in an interactive format.">Tutorials</a>):<ul class="ul" id="loio1b6dcd39a6a74f528b27ddb22f15af0d__ul_uxg_vmr_xs">
-					<li class="li">
-						<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_prerequisites">Prerequisites</a></p>
-
-					</li>
-
-					<li class="li">
-						<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_outline">Outline of the Steps of Each Tutorial</a></p>
-
-					</li>
-
+			<div class="p">For more information check the following sections of the tutorials overview page (see <a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html" title="Set up your development environment and go through our tutorials. They introduce you to all major development paradigms of OpenUI5 using practical examples in an interactive format.">Get Started: Setup and Tutorials</a>):<ul class="ul" id="loio1b6dcd39a6a74f528b27ddb22f15af0d__ul_uxg_vmr_xs">
 					<li class="li">
 						<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_download">Downloading Code for a Tutorial Step</a></p>
 
@@ -133,11 +108,6 @@
 
 					<li class="li">
 						<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_adaptation">Adapting Code to Your Development Environment</a></p>
-
-					</li>
-
-					<li class="li">
-						<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_troubleshooting">Troubleshooting</a></p>
 
 					</li>
 
@@ -185,25 +155,9 @@
 </li>
 <li><strong><a class="link" href="4a063b8250f24d0cbf7c689821df7199.html" title="In the previous step, we have listened for bypassed events to detect possible technical issues with our app. In this step, we want to improve the analysis use case even more by listening to any matched event of the route. We could use this information to measure how the app is used and how frequently the pages are called. Many Web analytic tools track page hits this way. The collected information can be used, for example to improve our app and its usability.">Step 17: Listen to Matched Events of Any Route</a></strong><br/>
 </li>
-<li><strong><a class="link" href="0d475a8859f64c67a2b7d0cb3c687a6f.html" title="You have now completed the tutorial &#34;Navigation and Routing&#34; for SAPUI5.">Summary</a></strong><br/>
-</li>
 </ol>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Navigation and Routing";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

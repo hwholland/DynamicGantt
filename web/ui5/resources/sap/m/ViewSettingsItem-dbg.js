@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ViewSettingsItem.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Item'],
-	function(jQuery, library, Item) {
+sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/base/ManagedObject'],
+	function(library, Item, ManagedObject) {
 	"use strict";
 
 
@@ -23,7 +23,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Item'],
 	 * @extends sap.ui.core.Item
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -59,23 +59,28 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Item'],
 					/**
 					 * Value of the changed property.
 					 */
-					propertyValue:  {type: "mixed"}
+					propertyValue:  {type: "any"}
 				}
 			}
 		}
 	}});
 
+	ViewSettingsItem.prototype.setSelected = function(bValue) {
+		ViewSettingsItem.prototype.setProperty.call(this, "selected", bValue, true);
+		return this;
+	};
 
 	/**
 	 * Overriding of the setProperty method in order to fire an event.
 	 *
 	 * @override
 	 * @param {string} sName The name of the property
-	 * @param {string} sValue The value of the property
-	 * @param {boolean} bSupressInvalidation
+	 * @param {string} vValue The value of the property
+	 * @param {boolean} bSupressInvalidation Whether there mus be supress invalidation
+	 * @param {boolean} bFireEvent Whether the event must be fired
 	 */
 	ViewSettingsItem.prototype.setProperty = function (sName, vValue, bSupressInvalidation, bFireEvent) {
-		sap.ui.base.ManagedObject.prototype.setProperty.apply(this, arguments);
+		ManagedObject.prototype.setProperty.apply(this, arguments);
 
 		bFireEvent = bFireEvent === undefined ? true : bFireEvent;
 
@@ -90,4 +95,4 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Item'],
 
 	return ViewSettingsItem;
 
-}, /* bExport= */ true);
+});

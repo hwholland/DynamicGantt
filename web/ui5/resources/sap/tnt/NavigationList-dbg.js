@@ -1,12 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.tnt.NavigationList
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/Popover', 'sap/ui/core/delegate/ItemNavigation'],
-	function(jQuery, library, Control, Popover, ItemNavigation) {
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/m/Popover',
+    'sap/ui/core/delegate/ItemNavigation',
+    'sap/ui/core/InvisibleText',
+    "./NavigationListRenderer"
+],
+	function(
+	    jQuery,
+		library,
+		Control,
+		Popover,
+		ItemNavigation,
+		InvisibleText,
+		NavigationListRenderer
+	) {
 		"use strict";
 
 		/**
@@ -21,7 +37,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/P
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @public
@@ -59,7 +75,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/P
 					/**
 					 * Association to controls / IDs, which label this control (see WAI-ARIA attribute aria-labelledby).
 					 */
-					ariaLabelledBy : { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
+					ariaLabelledBy : { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" },
+
+					/**
+					 * The currently selected <code>NavigationListItem</code>.
+					 *
+					 * @since 1.52.0
+					 */
+					selectedItem : { type: "sap.tnt.NavigationListItem", multiple: false }
 				},
 				events: {
 					/**
@@ -88,24 +111,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/P
 			this.addEventDelegate(this._itemNavigation);
 
 			this._itemNavigation.setPageSize(10);
+			this._itemNavigation.setDisabledModifiers({
+				sapnext : ["alt", "meta"],
+				sapprevious : ["alt", "meta"]
+			});
 
 			this._resourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core");
-		};
 
-		/**
-		 * Sets a listbox accessibility role to the control.
-		 * @private
-		 */
-		NavigationList.prototype.setHasListBoxRole = function (hasListBoxRole) {
-			this._hasListBoxRole = hasListBoxRole;
-		};
-
-		/**
-		 * Gets if the control has listbox accessibility role.
-		 * @private
-		 */
-		NavigationList.prototype.getHasListBoxRole = function () {
-			return this._hasListBoxRole;
+			if (sap.ui.getCore().getConfiguration().getAccessibility() && !NavigationList._sAriaPopupLabelId) {
+				NavigationList._sAriaPopupLabelId = new InvisibleText({
+					text: '' // add empty string in order to prevent the redundant speech output
+				}).toStatic().getId();
+			}
 		};
 
 		/**
@@ -195,29 +212,63 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/P
 			item._select();
 
 			this._selectedItem = item;
+			this.setAssociation('selectedItem', item, true);
 		};
 
 		/**
-		 * Gets the currently selected item.
+		 * Gets the currently selected <code>NavigationListItem</code>.
+		 * @public
+		 * @return {sap.tnt.NavigationListItem|null} The selected item or null if nothing is selected
 		 */
 		NavigationList.prototype.getSelectedItem = function() {
-			return this._selectedItem;
+			var selectedItem = this.getAssociation('selectedItem');
+
+			if (!selectedItem) {
+				return null;
+			}
+
+			return sap.ui.getCore().byId(selectedItem);
 		};
 
 		/**
-		 * Sets the currently selected item. Set <code>null</code> to deselect.
+		 * Sets the association for selectedItem. Set <code>null</code> to deselect.
+		 * @public
+		 * @param {string|sap.tnt.NavigationListItem} selectedItem The control to be set as selected
+		 * @param {boolean} suppressInvalidate If true, the managed object's invalidate method is not called
+		 * @return {sap.tnt.NavigationList|null} The <code>selectedItem</code> association
 		 */
-		NavigationList.prototype.setSelectedItem = function(item) {
+		NavigationList.prototype.setSelectedItem = function(selectedItem, suppressInvalidate) {
+			jQuery.sap.require('sap.tnt.NavigationListItem');
+			var navigationListItem;
 
 			if (this._selectedItem) {
 				this._selectedItem._unselect();
 			}
 
-			if (item) {
-				item._select();
+			if (!selectedItem) {
+				this._selectedItem = null;
+				return sap.ui.core.Control.prototype.setAssociation.call(this, 'selectedItem', selectedItem, suppressInvalidate);
 			}
 
-			this._selectedItem = item;
+			if (typeof selectedItem !== 'string' && !(selectedItem instanceof sap.tnt.NavigationListItem)) {
+				jQuery.sap.log.warning('Type of selectedItem association should be string or instance of sap.tnt.NavigationListItem. New value was not set.');
+				return this;
+			}
+
+			if (typeof selectedItem === 'string') {
+				navigationListItem = sap.ui.getCore().byId(selectedItem);
+			} else {
+				navigationListItem = selectedItem;
+			}
+
+			if (navigationListItem instanceof sap.tnt.NavigationListItem) {
+				navigationListItem._select();
+				this._selectedItem = navigationListItem;
+				return sap.ui.core.Control.prototype.setAssociation.call(this, 'selectedItem', selectedItem, suppressInvalidate);
+			} else {
+				jQuery.sap.log.warning('Type of selectedItem association should be a valid NavigationListItem object or ID. New value was not set.');
+				return this;
+			}
 		};
 
 		/**
@@ -238,10 +289,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/P
 				verticalScrolling: true,
 				initialFocus: selectedItem,
 				afterClose: function () {
-					that._popover = null;
+					if (that._popover) {
+						that._popover.destroy();
+						that._popover = null;
+					}
 				},
-				content: list
-			});
+				content: list,
+				ariaLabelledBy: [NavigationList._sAriaPopupLabelId]
+			}).addStyleClass('sapContrast sapContrastPlus');
 
 			popover._adaptPositionParams = this._adaptPopoverPositionParams;
 

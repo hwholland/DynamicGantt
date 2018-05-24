@@ -2,11 +2,11 @@
 <html>
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>qUnit Page for sap.m.SelectDialog</title>
+		<title>QUnit Page for sap.m.SelectDialog</title>
 
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
 			src="../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.m">
 		</script>
@@ -104,7 +104,7 @@
 				}
 
 				QUnit.module("API", {
-					setup: function() {
+					beforeEach: function() {
 						this.oSelectDialog = new sap.m.SelectDialog("selectDialog", {
 							title: "my SelectDialog",
 							noDataText: "Sorry, no data is available",
@@ -112,7 +112,7 @@
 							multiSelect: true
 						});
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 					}
@@ -148,11 +148,11 @@
 				});
 
 				QUnit.module("Rendering", {
-					setup: function() {
+					beforeEach: function() {
 						this.oSelectDialog = new sap.m.SelectDialog("selectDialog");
 						this.mockupData = generateData();
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 						delete this.mockupData;
@@ -207,11 +207,11 @@
 				});
 
 				QUnit.module("XML Rendering", {
-					setup: function() {
+					beforeEach: function() {
 						this.oSelectDialog = null;
 
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 						this.oXmlViewOrFragment.destroy();
@@ -259,7 +259,7 @@
 				});
 
 				QUnit.module("Multiselection", {
-					setup: function() {
+					beforeEach: function() {
 						// arrange
 						this.oSelectDialog = new sap.m.SelectDialog('selectDialog', {
 							multiSelect: true,
@@ -269,7 +269,7 @@
 						});
 						this.mockupData = generateData();
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 						delete this.mockupData;
@@ -296,12 +296,13 @@
 					}, this);
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.test("Remember Selections false mode", function (assert) {
 					// arrange
 					this.oSelectDialog.setRememberSelections(false);
+					var fnListGetSelectedContexts = sinon.spy(this.oSelectDialog._oList, "getSelectedContexts");
 
 					bindItems(this.oSelectDialog, {oData: this.mockupData, path: "/items", template: createTemplateListItem()});
 					sap.ui.getCore().applyChanges();
@@ -310,6 +311,7 @@
 
 					assert.strictEqual(this.oSelectDialog._oList.getSelectedItems().length, 4, '4 items are selected initially');
 					this.oSelectDialog._fireConfirmAndUpdateSelection();
+					assert.ok(!fnListGetSelectedContexts.called, "getSelectedContexts() is no longer called by _fireConfirmAndUpdateSelection()");
 					this.oSelectDialog._oDialog.close();
 
 					this.oSelectDialog.open();
@@ -317,6 +319,7 @@
 					assert.strictEqual(this.oSelectDialog._oList.getSelectedItems().length, 0, '0 items are selected after opening the dialog the second time');
 					this.oSelectDialog._oDialog.close();
 					this.oSelectDialog._fireConfirmAndUpdateSelection();
+					assert.ok(!fnListGetSelectedContexts.called, "getSelectedContexts() is no longer called by _fireConfirmAndUpdateSelection()");
 
 					this.oSelectDialog.open();
 
@@ -328,6 +331,7 @@
 				QUnit.test("Remember Selections true mode", function (assert) {
 					// arrange
 					this.oSelectDialog.setRememberSelections(true);
+					var fnListGetSelectedContexts = sinon.spy(this.oSelectDialog._oList, "getSelectedContexts");
 
 					bindItems(this.oSelectDialog, {oData: this.mockupData, path: "/items", template: createTemplateListItem()});
 					sap.ui.getCore().applyChanges();
@@ -336,6 +340,7 @@
 
 					assert.strictEqual(this.oSelectDialog._oList.getSelectedItems().length, 4, '4 items are selected initially');
 					this.oSelectDialog._fireConfirmAndUpdateSelection();
+					assert.ok(!fnListGetSelectedContexts.called, "getSelectedContexts() is no longer called by _fireConfirmAndUpdateSelection()");
 					this.oSelectDialog._oDialog.close();
 
 					this.oSelectDialog.open();
@@ -343,6 +348,7 @@
 					assert.strictEqual(this.oSelectDialog._oList.getSelectedItems().length, 4, '4 items are selected after opening the dialog the second time');
 					this.oSelectDialog._oDialog.close();
 					this.oSelectDialog._fireConfirmAndUpdateSelection();
+					assert.ok(!fnListGetSelectedContexts.called, "getSelectedContexts() is no longer called by _fireConfirmAndUpdateSelection()");
 
 					this.oSelectDialog.open();
 
@@ -351,7 +357,7 @@
 				});
 
 				QUnit.module("Open and Close", {
-					setup: function() {
+					beforeEach: function() {
 						// arrange
 						this.oSelectDialog = new sap.m.SelectDialog('selectDialog', {
 							title: "my SelectDialog",
@@ -359,7 +365,7 @@
 						});
 						this.mockupData = generateData();
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 						delete this.mockupData;
@@ -398,14 +404,14 @@
 				});
 
 				QUnit.module("Event testing", {
-					setup: function() {
+					beforeEach: function() {
 						// arrange
 						this.oSelectDialog = new sap.m.SelectDialog('selectDialog', {
 							title: "my SelectDialog"
 						});
 						this.mockupData = generateData();
 					},
-					teardown: function() {
+					afterEach: function() {
 						// cleanup
 						this.oSelectDialog.destroy();
 						delete this.mockupData;
@@ -476,7 +482,7 @@
 
 					jQuery.when(this.oSelectDialog.open()).then(function () {
 						that.oSelectDialog._getOkButton().firePress();
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 				});
 
@@ -503,11 +509,11 @@
 						that.oSelectDialog._oList.getItems()[3].setSelected(false);
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedContextPaths().length, 2, 'Before cancelling there should be 2 items selected');
 						that.oSelectDialog._getCancelButton().firePress();
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.test("Cancel Event with pre-filtered selection", function (assert) {
@@ -539,11 +545,11 @@
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedContextPaths().length, 0, 'Before cancelling there should be 0 visible items selected');
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedContexts(true).length, 0, 'Before cancelling there should be 0 invisible contexts selected (prefiltered items are not added to the contexts initially)');
 						that.oSelectDialog._getCancelButton().firePress();
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.test("Cancel Event with user-filtered selection", function (assert) {
@@ -565,7 +571,7 @@
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedItems().length, 0, 'Before cancelling there should be 0 visible items selected');
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedContexts(true).length, 2, 'Before cancelling there should be 2 invisible items selected');
 						that.oSelectDialog._getCancelButton().firePress();
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 
 					this.oSelectDialog.attachCancel(function (oEvent) {
@@ -575,7 +581,7 @@
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.test("Cancel on key ESCAPE event", function (assert) {
@@ -605,20 +611,20 @@
 						assert.strictEqual(that.oSelectDialog._oList.getSelectedItems().length, 2, 'Before cancelling there should be 2 items selected');
 
 						qutils.triggerKeydown(that.oSelectDialog._oDialog.getDomRef(), jQuery.sap.KeyCodes.ESCAPE);
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.module("Destroy", {
-					setup: function() {
+					beforeEach: function() {
 
 						// arrange
 						this.oSelectDialog = new sap.m.SelectDialog('selectDialog');
 						this.mockupData = generateData();
-					}, teardown: function() {
+					}, afterEach: function() {
 
 						// cleanup
 						this.oSelectDialog.destroy();
@@ -687,11 +693,11 @@
 					// simulate open and close
 					this.oSelectDialog._oDialog.attachAfterOpen(function(oEvent) {
 						that.oSelectDialog._oDialog.close();
-						that.clock.tick(270);
+						that.clock.tick(350);
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.test("Check add/remove/toggle/hasStyleClass methods", function (assert) {
@@ -746,16 +752,16 @@
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 				QUnit.module("Keyboard and focus Handling", {
-					setup: function() {
+					beforeEach: function() {
 
 						// arrange
 						this.oSelectDialog = new sap.m.SelectDialog('selectDialog');
 						this.mockupData = generateData();
-					}, teardown: function() {
+					}, afterEach: function() {
 
 						// cleanup
 						this.oSelectDialog.destroy();
@@ -830,7 +836,7 @@
 					});
 
 					this.oSelectDialog.open();
-					this.clock.tick(270);
+					this.clock.tick(350);
 				});
 
 			})();

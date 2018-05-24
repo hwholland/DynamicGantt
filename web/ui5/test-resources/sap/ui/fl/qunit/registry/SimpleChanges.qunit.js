@@ -1,16 +1,13 @@
 /*global QUnit*/
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
 jQuery.sap.require("sap.ui.fl.registry.SimpleChanges");
 
 (function(SimpleChanges) {
 	'use strict';
 
 	QUnit.module("sap.ui.fl.registry.SimpleChanges", {
-		setup: function() {
+		beforeEach: function() {
 		},
-		teardown: function() {
+		afterEach: function() {
 		}
 	});
 

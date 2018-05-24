@@ -21,8 +21,8 @@ sap.ui.define([
 		},
 
 		onExit : function () {
-			for(var sPropertyName in this._formFragments) {
-				if(!this._formFragments.hasOwnProperty(sPropertyName)) {
+			for (var sPropertyName in this._formFragments) {
+				if (!this._formFragments.hasOwnProperty(sPropertyName)) {
 					return;
 				}
 
@@ -81,11 +81,12 @@ sap.ui.define([
 
 			oFormFragment = sap.ui.xmlfragment(this.getView().getId(), "sap.ui.layout.sample.SimpleForm480_12120." + sFragmentName);
 
-			return this._formFragments[sFragmentName] = oFormFragment;
+			this._formFragments[sFragmentName] = oFormFragment;
+			return this._formFragments[sFragmentName];
 		},
 
 		_showFormFragment : function (sFragmentName) {
-			var oPage = this.getView().byId("page");
+			var oPage = this.byId("page");
 
 			oPage.removeAllContent();
 			oPage.insertContent(this._getFormFragment(sFragmentName));

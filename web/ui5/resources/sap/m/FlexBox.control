@@ -3,10 +3,9 @@
     <name>FlexBox</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The &lt;code&gt;sap.m.FlexBox&lt;/code&gt; control builds the container for a flexible box layout.
-
-Browser support:
-This control is not supported in Internet Explorer 9!</documentation>
+    <documentation>The &lt;code&gt;sap.m.FlexBox&lt;/code&gt; control builds the container for a flexible box layout.&lt;br&gt;
+&lt;br&gt;
+&lt;b&gt;Note:&lt;/b&gt; Be sure to check the &lt;code&gt;renderType&lt;/code&gt; setting to avoid issues due to browser inconsistencies.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="height" type="sap.ui.core/CSSSize" defaultValue="" group="Dimension" since="1.9.1">
@@ -25,7 +24,9 @@ This control is not supported in Internet Explorer 9!</documentation>
             <documentation>Determines whether the &lt;code&gt;sap.m.FlexBox&lt;/code&gt; will be sized to completely fill its container. If the &lt;code&gt;sap.m.FlexBox&lt;/code&gt; is inserted into a Page, the property 'enableScrolling' of the Page needs to be set to 'false' for the FlexBox to fit the entire viewport.</documentation>
         </property>
         <property name="renderType" type="sap.m/FlexRendertype" defaultValue="Div" group="Misc">
-            <documentation>Determines whether the layout is rendered as a series of divs or as an unordered list (ul)</documentation>
+            <documentation>Determines whether the layout is rendered as a series of divs or as an unordered list (ul).&lt;br&gt;
+&lt;br&gt;
+We recommend to use &lt;code&gt;Bare&lt;/code&gt; in most cases to avoid layout issues due to browser inconsistencies.</documentation>
         </property>
         <property name="justifyContent" type="sap.m/FlexJustifyContent" defaultValue="Start" group="Appearance">
             <documentation>Determines the layout behavior along the main axis.</documentation>

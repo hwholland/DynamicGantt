@@ -20,6 +20,26 @@ If duplicate keys exists the first item matching, the key is used.</documentatio
         <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Behavior" since="1.15.0">
             <documentation>Specifies whether the control is rendered.</documentation>
         </property>
+        <property name="mode" type="sap.m/IconTabHeaderMode" defaultValue="Standard" group="Appearance" since="1.40">
+            <documentation>Specifies the header mode.
+&lt;b&gt;Note:&lt;/b&gt; The Inline mode works only if no icons are set.</documentation>
+        </property>
+        <property name="showOverflowSelectList" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.42">
+            <documentation>Specifies if the overflow select list is displayed.
+
+The overflow select list represents a list, where all tab filters are displayed,
+so the user can select specific tab filter easier.</documentation>
+        </property>
+        <property name="backgroundDesign" type="sap.m/BackgroundDesign" defaultValue="Solid" group="Appearance" since="1.44">
+            <documentation>Specifies the background color of the header.
+
+Depending on the theme, you can change the state of
+the background color to "Solid", "Translucent", or "Transparent".
+Default is "Solid".</documentation>
+        </property>
+        <property name="enableTabReordering" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.46">
+            <documentation>Specifies whether tab reordering is enabled. Relevant only for desktop devices.</documentation>
+        </property>
     </properties>
     <events>
         <event name="select" allowPreventDefault="false">
@@ -37,6 +57,10 @@ If duplicate keys exists the first item matching, the key is used.</documentatio
     <aggregations>
         <aggregation name="items" type="sap.m/IconTab" cardinality="0..n">
             <documentation>The items displayed in the IconTabHeader.</documentation>
+        </aggregation>
+        <aggregation name="dragDropConfig" type="sap.ui.core/dnd/DragDropInfo" cardinality="0..n">
+            <documentation>Defines the drag-and-drop configuration via {@link sap.ui.core.dnd.DragDropInfo}
+This configuration is set internally by the control</documentation>
         </aggregation>
     </aggregations>
 </control>

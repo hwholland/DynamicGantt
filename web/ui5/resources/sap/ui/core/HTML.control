@@ -3,7 +3,7 @@
     <name>HTML</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Embeds standard HTML in a SAPUI5 control tree.
+    <documentation>Embeds standard HTML in an SAPUI5 control tree.
 
 Security Hint: By default, the HTML content (property 'content') is not sanitized and therefore
 open to XSS attacks. Applications that want to show user defined input in an HTML control, should
@@ -38,14 +38,17 @@ Please consider to consult the jQuery documentation as well.
 The HTML control currently doesn't prevent the usage of multiple root nodes in its DOM content
 (e.g. &lt;code&gt;setContent("&amp;lt;div/&gt;&amp;lt;div/&gt;")&lt;/code&gt;), but this is not a guaranteed feature.
 The accepted content might be restricted to single root nodes in future versions.
-To notify applications about this fact, a warning is written in the log when multiple root nodes are used.</documentation>
+To notify applications about this fact, a warning is written in the log when multiple root nodes are used.
+
+When changing the content dynamically, ensure that the ID of the root node remains the same as the HTML
+control's ID. Otherwise it cannot be guaranteed that certain lifecycle events take place.</documentation>
         </property>
         <property name="preferDOM" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
             <documentation>Whether existing DOM content is preferred over the given content string.
 
 There are two scenarios where this flag is relevant (when set to true):
 &lt;ul&gt;
-&lt;li&gt;for the initial rendering: when an HTML control is added to an UIArea for the first time
+&lt;li&gt;for the initial rendering: when an HTML control is added to a UIArea for the first time
     and if the root node of that UIArea contained DOM content with the same id as the HTML
     control, then that content will be used for rendering instead of any specified string
     content&lt;/li&gt;

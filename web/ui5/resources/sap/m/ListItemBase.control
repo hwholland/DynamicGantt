@@ -3,7 +3,8 @@
     <name>ListItemBase</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>ListItemBase contains the base features of all specific list items.</documentation>
+    <documentation>ListItemBase contains the base features of all specific list items.
+&lt;b&gt;Note:&lt;/b&gt; If not mentioned otherwise in the individual subclasses, list items must only be used in the &lt;code&gt;items&lt;/code&gt; aggregation of &lt;code&gt;sap.m.ListBase&lt;/code&gt; controls.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="type" type="sap.m/ListType" defaultValue="Inactive" group="Misc">
@@ -22,6 +23,9 @@
         </property>
         <property name="counter" type="sap.ui.core/int" group="Misc">
             <documentation>Defines the counter value of the list items.</documentation>
+        </property>
+        <property name="highlight" type="sap.ui.core/MessageType" defaultValue="None" group="Appearance" since="1.44.0">
+            <documentation>Defines the highlight state of the list items.</documentation>
         </property>
     </properties>
     <events>

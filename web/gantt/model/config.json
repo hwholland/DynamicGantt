@@ -1,0 +1,42 @@
+{
+  "columns": [{
+    "label": "Activity",
+    "visible": true,
+    "width": "150px",
+    "sortProperty": "activity",
+    "filterProperty": "activity",
+    "template": {
+      "fragment": "Label",
+      "binding": {
+        "text": "data>activity"
+      }
+    },
+    "mergeDuplicates": false
+  },{
+    "label": "Start Date",
+    "visible": true,
+    "width": "150px",
+    "sortProperty": "startDate",
+    "filterProperty": "startDate",
+    "template": {
+      "fragment": "DatePicker",
+      "binding": {
+        "value": "data>startDate"
+      }
+    },
+    "mergeDuplicates": false
+  },{
+    "label": "End Date",
+    "visible": true,
+    "width": "150px",
+    "sortProperty": "endDate",
+    "filterProperty": "endDate",
+    "template": {
+      "fragment": "DatePicker",
+      "binding": {
+        "value": "data>endDate"
+      }
+    },
+    "mergeDuplicates": false
+  }]
+}

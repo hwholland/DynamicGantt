@@ -11,15 +11,14 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<!-- Set the status bar style on Apple devices -->
 		<meta name="apple-mobile-web-app-status-bar-style" content="default">
+		<script src="shared-config.js"></script>
 		<script src="../../../resources/sap-ui-core.js"
-			type="text/javascript"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.m"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.m">
 		</script>
-
-		<script type="text/javascript">
+		<script>
 			var oImage = new sap.m.Image({
+				id: "image_not_decorative",
 				src: "images/SAPLogo.jpg",
 				alt: "test image",
 				decorative: false
@@ -50,6 +49,7 @@
 			oImage1.addStyleClass("img1");
 
 			var oImageButton = new sap.m.Image({
+				id: "image_button",
 				src: "images/action.png",
 				activeSrc: "images/action_pressed.png",
 				decorative: false,
@@ -69,6 +69,7 @@
 			oImageButton1.setActiveSrc("images/action_pressed.png");
 
 			var oImageInvalid = new sap.m.Image({
+				id: "invalid_image",
 				src:"invalid_src.png",
 				press: function(){
 					//this won't be called before a valid src is set
@@ -78,18 +79,6 @@
 				width: "48px",
 				height: "48px"
 			});
-
-			var oBigImage = new sap.m.Image({
-				src: "images/balloonImageActive.png",
-				activeSrc: "images/balloonImageActiveActive.png"
-			});
-
-			oBigImage.placeAt("imageArea");
-
-			setTimeout(function(){
-				oImageInvalid.setSrc("images/action.png");
-			}, 3000);
-
 
 			var oDataImage = new sap.m.Image({
 				src: "data:image/gif;base64,R0lGODlhHwAeANU/AO1SReW2N+14Kf3YACOAulrAWtTW02Gh1uPIx/BkVFXKXu3t7bjZuoi9R7nV8fbOG8fBulSlWvh8ZlW0WvTu0aG8QqK92sGkdcWjoPr5+WyrUUaiV7q0oHWs2vrTCYOeiJ94QulCOYK34ceNifHEJfLWRuLf3tomHUWUzeQxLf/cDc1+dtzCOqKzo83o92mxbPSSjP/ohspCL2K1WG7Ga+k5NIGfWcbKKcu5ceTPBvDKAJfRkIyvjVvEXeV4af///yH5BAEAAD8ALAAAAAAfAB4AAAb/wJ9wSPwtDBCMEmJYFJ/QXwYx8kmuWIlvBMlEoaZVIptNmBMrw5eIObvfZkACgFn/MIA8/J3vj74jfYJycYMAIYh/TxCIiIaGjYg1NRBFCzYhNZGbk42TNSmhmiZELQogKZ+SNQkwrhICsbKzF0MLLwozMqmTKQAICy7CCxQlOg8PHh4DAyoPTj8QPQWnoikJCw4i29sOGSXKzOIqlT88CgXTuykhJg4HHdwdBxYUKuLjOFIv09Q2JydguIDXoaDBAw5i4GOmgkWGW/2ogTiBQASKAxgzHkAhgsLCZs8WzIjYQ4MMBBs1Zrxo7+MDEyILyJR5CiWKmzhxHmi58OWtzJkye8xA0IFATpwEOnj8SGJBhhdAZ+5wQMBozqoJPw5waC5qUANFq4pNylOcBxX6ok3wWoCGAQtjCVgwUWKhsgflfrKlweCtBQsGGFT46OFBAGg/WkxYu3eH4xcRcuC7+4ADkQURFrOduXiw2cKGEQuBkJkx2wkzlg1QVpgEiXJFWpQ2DXTCjdWUXVuOInuxb84NKD9wTWL3Fw4bIsz2zQIZcRIBjK8x8SG58ggbKjyHfkGNHSIGqm9IHqB8gAvdvXx/cgQCh/dMREMJAgA7",
@@ -136,10 +125,13 @@
 			.img1{
 				width: 50px;
 			}
+
+			.sapMImg {
+				margin-left: 1rem;
+			}
 		</style>
 	</head>
 	<body id="body" class="sapUiBody">
-		<div id="imageArea" class="row"></div>
 		<h3>
 			If this page runs in a high density device, you could see the difference between the two images.
 		</h3>

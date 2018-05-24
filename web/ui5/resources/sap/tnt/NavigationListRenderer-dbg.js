@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -24,10 +24,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
 		 * @param {sap.ui.core.Control} control An object representation of the control that should be rendered
 		 */
 		NavigationListRenderer.render = function (rm, control) {
-			var group,
-				role,
+			var role,
+				visibleGroupsCount,
 				groups = control.getItems(),
-				expanded = control.getExpanded();
+				expanded = control.getExpanded(),
+				visibleGroups = [];
 
 			rm.write("<ul");
 			rm.writeControlData(control);
@@ -47,20 +48,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
 			rm.writeClasses();
 
 			// ARIA
-			if (control.getHasListBoxRole()) {
-				role = 'listbox';
-			} else {
-				role = expanded ? 'tree' : 'toolbar';
-			}
+			role = expanded ? 'tree' : 'toolbar';
 
 			rm.writeAttribute("role", role);
 
 			rm.write(">");
 
-			for (var i = 0; i < groups.length; i++) {
-				group = groups[i];
-				group.render(rm, control);
-			}
+			//Checking which groups should render
+			groups.forEach(function(group) {
+				if (group.getVisible()) {
+					visibleGroups.push(group);
+				}
+			});
+
+			// Rendering the visible groups
+			visibleGroups.forEach(function(group, index) {
+				group.render(rm, control, index, visibleGroupsCount);
+			});
 
 			rm.write("</ul>");
 		};

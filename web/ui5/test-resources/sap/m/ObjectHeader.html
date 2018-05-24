@@ -5,11 +5,12 @@
 <meta charset="utf-8">
 <title>Object Header - sap.m</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m, sap.ui.commons" data-sap-ui-theme="sap_bluecrystal">
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m">
 
 </script>
 
-<script type="text/javascript">
+<script>
 	jQuery.sap.require("sap.ui.core.IconPool");
 
 	function addToPage(oOH){
@@ -182,6 +183,16 @@
 		icon : sap.ui.core.IconPool.getIconURI("attachment"),
 		iconActive : true,
 		iconPress : oh4PressHandler
+	});
+	var oh4WithResponsiveness = new sap.m.VBox({
+		items: [oh4, new sap.m.HBox({
+			alignItems: sap.m.FlexAlignContent.Center,
+			items: [new sap.m.Label({text: "Responsive:"}), new sap.m.Switch({
+				change: function (oEvent) {
+					oh4.setResponsive(oEvent.getParameter("state"));
+				}
+			})]
+		})]
 	});
 
 	var oh5 = new sap.m.ObjectHeader(
@@ -408,7 +419,7 @@
 		title : "Object Header for testing title arrow icon",
 		showTitleSelector : true,
 		titleSelectorPress : oh16EventHandler,
-		titleSelectorTooltip: "custom tooltip",
+		titleSelectorTooltip: "Related Options",
 		number : "1.000",
 		numberUnit : "EUR",
 		numberState : sap.ui.core.ValueState.Error,
@@ -635,7 +646,7 @@
 				number : "500230.09",
 				numberUnit : "USD",
 				numberState : sap.ui.core.ValueState.Success,
-				additionalNumbers : [ 
+				additionalNumbers : [
 					new sap.m.ObjectNumber({
 						number : "1.10234",
 						unit : "Conversion Rate"
@@ -646,17 +657,67 @@
 		width : "200px"
 	}
 );
+
+	var ohMarkers = new sap.m.ObjectHeader(
+			"ohMarkers", {
+				intro : "Object header with sap.m.ObjectMarker",
+				title : "5678 some normal title RTL",
+				number : "3.624,00 RTL",
+				numberUnit : "Euro",
+				numberState : sap.ui.core.ValueState.Success,
+				statuses : [ new sap.m.ObjectStatus({
+					text : "Lorem ipsum dolor sit amet",
+					icon : sap.ui.core.IconPool.getIconURI("inbox"),
+					state : sap.ui.core.ValueState.Success
+				}), new sap.m.ObjectStatus({
+					icon : sap.ui.core.IconPool.getIconURI("inbox"),
+					state : sap.ui.core.ValueState.Error
+				}) ],
+				markers: [
+					new sap.m.ObjectMarker({id: "draft", type: sap.m.ObjectMarkerType.Draft}),
+					new sap.m.ObjectMarker({id: "unsaved", type: sap.m.ObjectMarkerType.Unsaved})
+				]
+			});
+
 	objectHeaderLayout.addItem(ohCondensed9);
 
+	var oLongTitleOH = new sap.m.ObjectHeader({
+		title : "TitleThatDoesNotHaveAnySpaceAsItIsOneVeryLongWordWithoutNarrowClassSet",
+		showTitleSelector: true,
+		titleActive: true,
+		responsive:true
+	});
+
+	var oLongTitleOH1 = new sap.m.ObjectHeader({
+		title : "TitleThatDoesNotHaveAnySpaceAsItIsOneVeryLongWordWithNarrowClassSet",
+		showTitleSelector: true,
+		responsive:true
+	}).addStyleClass("sapUiContainer-Narrow");
+
+	var oLongTitleOH2 = new sap.m.ObjectHeader({
+		title : "TitleThatDoesNotHaveAnySpaceAsItIsOneVeryLongWordWithNarrowClassSet",
+		showTitleSelector: true,
+		titleActive: true,
+		responsive:true
+	}).addStyleClass("sapUiContainer-Narrow");
+
+	var page1 = new sap.m.Page("page1", {
+		title:"ObjectHeader (Responsive)",
+		content : [
+			oLongTitleOH2
+			]
+	});
+
+
 	// put all the testing object header objects on the testing page
-	var app = new sap.m.App();
+	var app = new sap.m.SplitApp("myApp");
 	var page = new sap.m.Page({
 		showHeader : false,
 		enableScrolling : true
 	});
 
-	app.setInitialPage(page.getId());
-	app.addPage(page);
+	app.addMasterPage(page1);
+	app.addDetailPage(page);
 	page.addContent(new sap.ui.core.HTML({
 		content : "<div style='width:100%;height:2px;background-color:blue'/>"
 	}));
@@ -667,7 +728,7 @@
 	addToPage(oh3);
 	addToPage(oh3_1);
 	addToPage(oh3_2);
-	addToPage(oh4);
+	addToPage(oh4WithResponsiveness);
 	addToPage(oh5);
 	addToPage(oh6);
 	addToPage(oh7);
@@ -723,6 +784,9 @@
 	addToPage(ohCondensed7);
 	addToPage(ohCondensed8);
 	addToPage(ohAdditionalNumbers);
+	addToPage(ohMarkers);
+	addToPage(oLongTitleOH);
+	addToPage(oLongTitleOH1);
 
 	app.placeAt('body');
 </script>

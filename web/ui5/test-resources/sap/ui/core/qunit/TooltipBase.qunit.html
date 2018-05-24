@@ -7,30 +7,29 @@
 
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>qUnit Page for sap.ui.core.TooltipBase</title>
+    <title>QUnit Page for sap.ui.core.TooltipBase</title>
 
+    <script src="../shared-config.js"></script>
     <script id="sap-ui-bootstrap"
-      type="text/javascript"
       src="../../../../../resources/sap-ui-core.js"
-      data-sap-ui-theme="sap_bluecrystal"
       data-sap-ui-noConflict="true"
       data-sap-ui-libs="sap.ui.commons, sap.m">
     </script>
 
     <link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-    <script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-    <script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-    <script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+    <script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+    <script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+    <script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
-    <script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-    <script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
-    <script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+    <script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+    <script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+    <script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
 
-    <script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"
+    <script src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"
       data-sap-ui-cover-only="sap/ui/core/TooltipBase.js"
     ></script>
 
-    <script language="javascript">
+    <script>
     sinon.config.useFakeTimers = false;
 
     /**
@@ -138,7 +137,6 @@
           }
 
           assert.ok(mParams.closePopup.calledOnce, "'closePopup' was called for tooltip");
-
           isTooltipNotVisible(oControl.getTooltip());
 
           resolve();
@@ -227,13 +225,13 @@
       assert.equal(this.oTooltip1.getCloseDelay(), 100, "Tooltip1 has default close delay of 100");
     });
 
-    QUnit.test("Remove HTML-title from DOM-element", function(assert){
+    QUnit.test("Remove HTML-title from DOM-element", function(assert) {
       var done = assert.async();
 
       // needed to wait for rendering the icons
       setTimeout(function() {
         var $DomRef = this.oButton1.$();
-        assert.ok(!!!$DomRef.attr("title"), "There should be no title attribute by default");
+        assert.ok(!$DomRef.attr("title"), "There should be no title attribute by default");
 
         $DomRef.attr("title", "Remove me");
         assert.ok($DomRef.attr("title"), "Title attribute added");
@@ -632,7 +630,7 @@
       this.oTooltip1.attachClosed(fnTT1Closed, this);
     });
 
-    QUnit.test("Open Tooltip1 And Move Mouse Between Button1 And Tooltip1", function() {
+    QUnit.test("Open Tooltip1 And Move Mouse Between Button1 And Tooltip1", function(assert) {
       var done = assert.async();
 
       // needed to wait for rendering the icons
@@ -668,7 +666,7 @@
       }.bind(this), 150);
     });
 
-    QUnit.test("Open/Close Tooltip1 Via Keyboad-Support", function() {
+    QUnit.test("Open/Close Tooltip1 Via Keyboad-Support", function(assert) {
       var done = assert.async();
 
       // needed to wait for rendering the icons
@@ -702,7 +700,7 @@
     </script>
   </head>
   <body>
-    <h1 id="qunit-header">qUnit Page for sap.ui.core.LocalBusyIndicator</h1>
+    <h1 id="qunit-header">QUnit Page for sap.ui.core.LocalBusyIndicator</h1>
     <h2 id="qunit-banner"></h2>
     <h2 id="qunit-userAgent"></h2>
     <ol id="qunit-tests"></ol>

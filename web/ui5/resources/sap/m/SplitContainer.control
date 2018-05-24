@@ -31,6 +31,10 @@ only when the pages added to the detail area are sap.m.Page with built-in header
 with built-in header, which is wrapped by one or several sap.ui.core.mvc.View.
 Otherwise, the show/hide of master button needs to be managed by the application.</documentation>
         </property>
+        <property name="masterButtonTooltip" type="sap.ui.core/string" group="Appearance" since="1.48">
+            <documentation>Specifies the tooltip of the master button. If the tooltip is not specified,
+the title of the page, which is displayed is the master part, is set as tooltip to the master button.</documentation>
+        </property>
         <property name="backgroundColor" type="sap.ui.core/string" group="Appearance" since="1.11.2">
             <documentation>Determines the background color of the SplitContainer. If set, this color overrides the default one,
 which is defined by the theme (should only be used when really required).

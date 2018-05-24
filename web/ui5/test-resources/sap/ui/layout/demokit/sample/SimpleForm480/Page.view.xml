@@ -1,8 +1,6 @@
 <mvc:View
 	height="100%"
 	controllerName="sap.ui.layout.sample.SimpleForm480.Page"
-	xmlns:l="sap.ui.layout"
-	xmlns:f="sap.ui.layout.form"
 	xmlns:mvc="sap.ui.core.mvc"
 	xmlns="sap.m">
 	<Page
@@ -11,7 +9,7 @@
 		<footer>
 			<Bar>
 				<contentRight>
-					<Button id="edit" text="Edit" press="handleEditPress" />
+					<Button id="edit" text="Edit" enabled="false" press="handleEditPress" />
 					<Button id="save" text="Save" type="Emphasized" visible="false" press="handleSavePress" />
 					<Button id="cancel" text="Cancel" visible="false" press="handleCancelPress" />
 				</contentRight>

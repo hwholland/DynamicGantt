@@ -6,14 +6,13 @@
 		<title>DatePicker - sap.m</title>
 		<link rel="shortcut icon" type="image/x-icon" href="images/controls/sap.m.DatePicker.gif">
 
+		<script src="shared-config.js"></script>
 		<script src="../../../resources/sap-ui-core.js"
-			type="text/javascript"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.m"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.m">
 		</script>
 
-		<script type="text/javascript">
+		<script>
 
 		var app = new sap.m.App("myApp");
 
@@ -132,6 +131,8 @@
 			content : [
 				new sap.m.Label({text: "initial DatePicker", labelFor: "DP1"}),
 				new sap.m.DatePicker("DP1", { fieldGroupIds: ["group1"], change: handleChange, validateFieldGroup: handleFieldGroupValidation }),
+				new sap.m.Label({text: "initial DatePicker, initialFocusedDate new Date(2017, 5, 13)", labelFor: "DP1_v0"}),
+				new sap.m.DatePicker("DP1_v0", { fieldGroupIds: ["group1"], change: handleChange, validateFieldGroup: handleFieldGroupValidation, initialFocusedDateValue: new Date(2017, 5, 13) }),
 				new sap.m.Label({text: "DatePicker with given Value and Formatter", labelFor: "DP2"}),
 				new sap.m.DatePicker("DP2", { value: "2014-03-26", valueFormat: "yyyy-MM-dd", displayFormat: "long", fieldGroupIds: ["group1"], change: handleChange, validateFieldGroup: handleFieldGroupValidation }),
 				new sap.m.ToggleButton("TB1", { text: "specialDates", press: toggleSpecialDates}),
@@ -160,7 +161,41 @@
 				new sap.m.Label({text: "Warnig DatePicker:", labelFor: "DP8"}),
 				new sap.m.DatePicker("DP8", { valueState: "Warning", valueStateText: "Warning Message" }),
 				new sap.m.Label({text: "Error DatePicker:", labelFor: "DP9"}),
-				new sap.m.DatePicker("DP9", { valueState: "Error", valueStateText: "Error Message" })
+				new sap.m.DatePicker("DP9", { valueState: "Error", valueStateText: "Error Message" }),
+				new sap.m.Label({text: "Lazy loading of special dates DatePicker:", labelFor: "DP11"}),
+				new sap.m.DatePicker("DP11", {
+					navigate: function (oEvent) {
+						var oRange = oEvent.getParameter("dateRange"),
+							oStartDate = oRange.getStartDate(),
+							oEndDate = oRange.getEndDate();
+
+						// Generate some random dates within range
+						oStartDate.setDate(oStartDate.getDate() + Math.floor(Math.random() * 15));
+						oEndDate.setDate(oEndDate.getDate() - Math.floor(Math.random() * 15));
+
+						// Clear existing aggregations
+						this.removeAllAggregation("specialDates");
+
+						// Add the first date as a special date with a random type
+						this.addSpecialDate(
+							new sap.ui.unified.DateTypeRange({
+								startDate: oStartDate,
+								type: "Type0" + (Math.floor(Math.random() * 8) + 1)
+							})
+						);
+
+						// Add the second date as a special date with a random type
+						this.addSpecialDate(
+							new sap.ui.unified.DateTypeRange({
+								startDate: oEndDate,
+								type: "Type0" + (Math.floor(Math.random() * 8) + 1)
+							})
+						);
+
+						// Give feedback
+						sap.m.MessageToast.show("Navigate event fired and new special dates marked");
+					}
+				})
 			],
 			footer: createFooter()
 		});

@@ -2,7 +2,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller','sap/ui/unified/DateRange'],
 	function(Controller, DateRange) {
 	"use strict";
 
-	var CalendarDateIntervalBasicController = Controller.extend("sap.ui.unified.sample.CalendarDateIntervalBasic.CalendarDateIntervalBasic", {
+	return Controller.extend("sap.ui.unified.sample.CalendarDateIntervalBasic.CalendarDateIntervalBasic", {
 		oFormatYyyymmdd: null,
 
 		onInit: function() {
@@ -15,7 +15,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller','sap/ui/unified/DateRange'],
 		},
 
 		_updateText: function(oCalendar) {
-			var oText = this.getView().byId("selectedDate");
+			var oText = this.byId("selectedDate");
 			var aSelectedDates = oCalendar.getSelectedDates();
 			var oDate;
 			if (aSelectedDates.length > 0 ) {
@@ -27,13 +27,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller','sap/ui/unified/DateRange'],
 		},
 
 		handleSelectToday: function(oEvent) {
-			var oCalendar = this.getView().byId("calendar");
+			var oCalendar = this.byId("calendar");
 			oCalendar.removeAllSelectedDates();
 			oCalendar.addSelectedDate(new DateRange({startDate: new Date()}));
 			this._updateText(oCalendar);
 		}
 	});
-
-	return CalendarMultipleMonthController;
 
 });

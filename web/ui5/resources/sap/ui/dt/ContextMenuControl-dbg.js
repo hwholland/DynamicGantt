@@ -1,13 +1,21 @@
 /*
  * ! UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /* global Promise */
 // Provides control sap.ui.rta.ContextMenuControl.
 sap.ui.define([
-	'jquery.sap.global', './library', 'sap/ui/unified/Menu', 'sap/ui/unified/MenuItem'
-], function(jQuery, library, Menu, MenuItem) {
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/unified/Menu',
+	'sap/ui/unified/MenuItem'
+], function(
+	jQuery,
+	library,
+	Menu,
+	MenuItem
+) {
 	"use strict";
 
 	/**
@@ -16,7 +24,7 @@ sap.ui.define([
 	 * @class Context - Menu for Design time
 	 * @extends sap.ui.unified.Menu
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @constructor
 	 * @private
 	 * @since 1.34
@@ -34,6 +42,8 @@ sap.ui.define([
 	// Standard renderer method is not overridden
 	});
 
+	ContextMenuControl.prototype.aStyleClasses = [];
+
 	/**
 	 * Initialize the context menu
 	 *
@@ -41,6 +51,7 @@ sap.ui.define([
 	 */
 	ContextMenuControl.prototype.init = function() {
 		Menu.prototype.init.apply(this, arguments);
+		this.addStyleClass("sapUiDtContextMenu");
 		this._fnOnKeyDown = this._onKeyDown.bind(this);
 		jQuery(document).keydown(this._fnOnKeyDown);
 		this.attachBrowserEvent("contextmenu", this._onContextMenu, this);
@@ -66,6 +77,39 @@ sap.ui.define([
 		this._oOverlayDomRef = oOverlay.getDomRef();
 	};
 
+	ContextMenuControl.prototype.addStyleClass = function(sStyleClass) {
+		if (this.aStyleClasses.indexOf(sStyleClass) === -1) {
+			this.aStyleClasses.push(sStyleClass);
+		}
+		Menu.prototype.addStyleClass.apply(this, arguments);
+	};
+
+	ContextMenuControl.prototype._createSubMenuWithBinding = function(aItems, sRootMenuItemId, bEnabled) {
+		var oSubmenu = new Menu({
+			enabled: bEnabled
+		});
+
+		aItems.forEach(function(oItem) {
+			var oSubmenuItem = new MenuItem({
+				text: oItem.text,
+				icon: oItem.icon,
+				enabled: oItem.enabled
+			});
+			oSubmenuItem.data({
+				id: sRootMenuItemId,
+				key: oItem.id
+			});
+
+			oSubmenu.addItem(oSubmenuItem);
+		});
+
+		this.aStyleClasses.forEach(function(sStyleClass) {
+			oSubmenu.addStyleClass(sStyleClass);
+		});
+
+		return oSubmenu;
+	};
+
 	/**
 	 * Creates the context menu items based on the currently associated element
 	 *
@@ -78,88 +122,64 @@ sap.ui.define([
 	 *        opened is passed, default true
 	 * @param {function} aMenuItems.enabled? function to determine if the menu entry should be enabled, the element for which the menu should be
 	 *        opened is passed, default true
-	 * @param {object} oElement element for which the menu should be opened
+	 * @param {object} oTargetOverlay overlay for which the menu should be opened
+	 * @return {object} this object will be returned
 	 * @private
 	 */
-	ContextMenuControl.prototype.setMenuItems = function(aMenuItems, oElement) {
-		var that = this;
-
+	ContextMenuControl.prototype.setMenuItems = function(aMenuItems, oTargetOverlay) {
 		this.destroyItems();
+		var aSubMenus = [];
 
 		aMenuItems.forEach(function(oItem) {
-			if (!oItem.available || oItem.available(oElement)) {
-				var bEnabled = !oItem.enabled || oItem.enabled(oElement);
+			if (!oItem.available || oItem.available(oTargetOverlay)) {
+				var bEnabled = !oItem.enabled || oItem.enabled(oTargetOverlay);
 
 				var sText = oItem.text;
 				if (typeof oItem.text === "function") {
-					sText = oItem.text(oElement);
+					sText = oItem.text(oTargetOverlay);
 				}
 
+				// create new MenuItem
 				var oMenuItem = new MenuItem({
 					text: sText,
 					enabled: bEnabled
 				});
+
+				// create new subMenu with Binding
+				if (oItem.submenu) {
+					var oSubmenu = this._createSubMenuWithBinding(oItem.submenu, oItem.id, bEnabled);
+					oMenuItem.setSubmenu(oSubmenu);
+				}
+
 				oMenuItem.data({
 					id: oItem.id
 				});
-				if ((oItem.startSection && typeof (oItem.startSection) === "boolean" ) || (typeof (oItem.startSection) === "function" && oItem.startSection(oElement))) {
+				if ((oItem.startSection && typeof (oItem.startSection) === "boolean" ) || (typeof (oItem.startSection) === "function" && oItem.startSection(oTargetOverlay.getElement()))) {
 					oMenuItem.setStartsSection(true);
 				}
-				that.addItem(oMenuItem);
+
+				if (aSubMenus.length > 0) {
+					aSubMenus.slice(-1)[0].addItem(oMenuItem);
+				} else {
+					this.addItem(oMenuItem);
+				}
 			}
-		});
+		}, this);
 		return this;
-	};
-
-	/**
-	 * Method for calculating the x, y-offset for opening the context menu at the current mouse position
-	 *
-	 * @param {number} iPageX mouse x position
-	 * @param {number} iPageY mouse y position
-	 */
-	ContextMenuControl.prototype._open = function(iPageX, iPageY) {
-
-		// first check if there are some context menu entries
-		if (this.getItems().length === 0) {
-			return;
-		}
-
-		// calculate the offset (depending on context-menu size)
-		var mouseX = iPageX;
-		var mouseY = iPageY;
-		var X = mouseX;
-		var Y = mouseY;
-		var bodyX = jQuery('body').width();
-		var bodyY = jQuery('body').height();
-
-		if (!this.getDomRef()) {
-			this.open(false, undefined, undefined, undefined, undefined, -2000 + " " + -2000, "none");
-		}
-
-		var ContextMenuControlWidth = this.$().context.clientWidth;
-		var ContextMenuControlHeight = this.$().context.clientHeight;
-		var xFlipOffset = (bodyX - mouseX < ContextMenuControlWidth) ? ContextMenuControlWidth : 0;
-		var yFlipOffset = (bodyY - mouseY < ContextMenuControlHeight) ? ContextMenuControlHeight : 0;
-
-		X = ((bodyX / 2 - mouseX) * -1) + ContextMenuControlWidth / 2 + 2 - xFlipOffset;
-		Y = ((bodyY / 2 - mouseY) * -1) + ContextMenuControlHeight / 2 + 2 - yFlipOffset;
-
-		var yOffset = mouseY - ContextMenuControlHeight;
-		if (yOffset < 0 && yFlipOffset !== 0) {
-			Y = Y - yOffset;
-		}
-
-		this.close();
-		this.open(true, this._oOverlayDomRef, undefined, undefined, document.body, X + " " + Y, "flip");
 	};
 
 	/**
 	 * Handler Method for event open menu
 	 *
-	 * @param {object} oContextInfo Information on the context
+	 * @param {object} oOriginalEvent Original Event invoking Context menu
+	 * @param {object} oTargetOverlay Overlay invoking the context menu
 	 */
-	ContextMenuControl.prototype.openMenu = function(oContextInfo) {
-		this._open(oContextInfo.pageX, oContextInfo.pageY);
+	ContextMenuControl.prototype.openMenu = function(oOriginalEvent, oTargetOverlay) {
+		// first check if there are some context menu entries
+		if (this.getItems().length === 0 || !oTargetOverlay.getDomRef()) {
+			return;
+		}
+		this.openAsContextMenu(oOriginalEvent, oTargetOverlay.getDomRef());
 	};
 
 	/**

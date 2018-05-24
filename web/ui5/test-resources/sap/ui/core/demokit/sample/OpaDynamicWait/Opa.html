@@ -22,11 +22,12 @@
 				"sap/ui/test/matchers/PropertyStrictEquals"
 			], function (Opa5, opaTest, PropertyStrictEquals) {
 
-				module("Nested waitFors", {
-					setup : function () {
+				QUnit.module("Nested waitFors", {
+					beforeEach : function () {
 
 						Opa5.extendConfig({
 							viewName : "appUnderTest.view.Main",
+							autoWait : true,
 
 							actions : new Opa5({
 

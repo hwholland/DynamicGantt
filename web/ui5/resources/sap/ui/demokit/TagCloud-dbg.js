@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.TagCloud.
-sap.ui.define(['sap/ui/core/Control', './library'],
-	function(Control, library) {
+sap.ui.define(['sap/ui/core/Control', './library', "./TagCloudRenderer"],
+	function(Control, library, TagCloudRenderer) {
 	"use strict";
 
 
@@ -20,12 +20,12 @@ sap.ui.define(['sap/ui/core/Control', './library'],
 	 * @class
 	 * A simple TagCloud representing a set of weighted tags
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.TagCloud
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var TagCloud = Control.extend("sap.ui.demokit.TagCloud", /** @lends sap.ui.demokit.TagCloud.prototype */ { metadata : {
 
@@ -67,7 +67,7 @@ sap.ui.define(['sap/ui/core/Control', './library'],
 		}
 	}});
 
-	//Called by a tag when a onclick event is triggered there.
+	//Called by a tag when an onclick event is triggered there.
 	//The event is forwarded to the application coding.
 	TagCloud.prototype.firePressEvent = function(tag){
 	  this.firePress({tagId:tag.getId()});

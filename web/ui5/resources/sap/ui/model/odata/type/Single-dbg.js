@@ -1,28 +1,24 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException',
-		'sap/ui/model/odata/type/ODataType', 'sap/ui/model/ParseException',
-		'sap/ui/model/ValidateException'],
-	function(NumberFormat, FormatException, ODataType, ParseException, ValidateException) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/format/NumberFormat',
+		'sap/ui/model/FormatException', 'sap/ui/model/odata/type/ODataType',
+		'sap/ui/model/ParseException', 'sap/ui/model/ValidateException'],
+	function(jQuery, NumberFormat, FormatException, ODataType, ParseException, ValidateException) {
 	"use strict";
 
 	// Math.fround polyfill
 	if (!Math.fround) {
-		if (window.Float32Array) {
-			// IE 10+
-			Math.fround = function (fValue) {
-				return new window.Float32Array([fValue])[0];
-			};
-		} else {
-			// IE 9: simply return the value itself
-			Math.fround = function (fValue) {
-				return fValue;
-			};
-		}
+		// IE 10+
+		var aArray = new window.Float32Array(1);
+
+		Math.fround = function (fValue) {
+			aArray[0] = fValue;
+			return aArray[0];
+		};
 	}
 
 	/**
@@ -73,13 +69,16 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 *   constraints, see {@link #constructor}
 	 */
 	function setConstraints(oType, oConstraints) {
-		var vNullable = oConstraints && oConstraints.nullable;
+		var vNullable;
 
 		oType.oConstraints = undefined;
-		if (vNullable === false || vNullable === "false") {
-			oType.oConstraints = {nullable : false};
-		} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
-			jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+		if (oConstraints) {
+			vNullable = oConstraints.nullable;
+			if (vNullable === false || vNullable === "false") {
+				oType.oConstraints = {nullable : false};
+			} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
+				jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+			}
 		}
 
 		oType._handleLocalizationChange();
@@ -98,7 +97,7 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @alias sap.ui.model.odata.type.Single
 	 * @param {object} [oFormatOptions]
@@ -127,13 +126,15 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 * @param {string|number} vValue
 	 *   the value to be formatted, which is represented as a number in the model
 	 * @param {string} sTargetType
-	 *   the target type; may be "any", "float", "int", "string".
+	 *   the target type; may be "any", "float", "int", "string", or a type with one of these types
+	 *   as its {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {number|string}
 	 *   the formatted output value in the target type; <code>undefined</code> or <code>null</code>
 	 *   are formatted to <code>null</code>
 	 * @throws {sap.ui.model.FormatException}
-	 *   if <code>sTargetType</code> is unsupported
+	 *   If <code>sTargetType</code> is not supported or <code>vValue</code> is not a model value
+	 *   for this type.
 	 * @public
 	 */
 	Single.prototype.formatValue = function(vValue, sTargetType) {
@@ -142,8 +143,14 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 		if (vValue === null || vValue === undefined) {
 			return null;
 		}
-		fValue = typeof vValue !== "number" ? parseFloat(vValue) : vValue;
-		switch (sTargetType) {
+		if (typeof vValue === "number") {
+			fValue = vValue;
+		} else if (typeof vValue === "string") {
+			fValue = parseFloat(vValue);
+		} else if (sTargetType !== "any") {
+			throw new FormatException("Illegal " + this.getName() + " value: " + vValue);
+		}
+		switch (this.getPrimitiveType(sTargetType)) {
 		case "any":
 			return vValue;
 		case "float":
@@ -168,8 +175,9 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 *   <code>null</code>; note that there is no way to enter <code>Infinity</code> or
 	 *   <code>NaN</code> values
 	 * @param {string} sSourceType
-	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int"
-	 *   or "string".
+	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int",
+	 *   "string", or a type with one of these types as its
+	 *   {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {number}
 	 *   the parsed value
@@ -185,7 +193,7 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 		if (vValue === null || vValue === "") {
 			return null;
 		}
-		switch (sSourceType) {
+		switch (this.getPrimitiveType(sSourceType)) {
 		case "string":
 			fResult = getFormatter(this).parse(vValue);
 			if (isNaN(fResult)) {

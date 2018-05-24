@@ -1,4 +1,4 @@
-/*global module, asyncTest, start, sinon, Promise, ok, equal*/
+/*global QUnit,sinon,Promise*/
 
 jQuery.sap.require("sap.ui.fl.FlexController");
 jQuery.sap.require("sap.ui.fl.FlexControllerFactory");
@@ -39,7 +39,7 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 
 	QUnit.module("flex change handling", {
 
-		setup: function() {
+		beforeEach: function() {
 			Cache.setActive(false);
 			Cache._entries = {};
 
@@ -76,7 +76,8 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 
 			this.oControl = new TestingControl("testingID1");
 		},
-		teardown: function() {
+		afterEach: function(assert) {
+			var done = assert.async();
 			QUnit.stop();
 
 			var stubs = this.stubs;
@@ -90,8 +91,8 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 			}, function(error) {
 				return 0;
 			}).then(finalSteps)['catch'](function(err) {
-				ok(false, err);
-				start();
+				assert.ok(false, err);
+				done();
 			});
 			var that = this;
 			function finalSteps() {
@@ -107,7 +108,8 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 		}
 	});
 
-	QUnit.asyncTest('add end user change and save', function(assert) {
+	QUnit.test('add end user change and save', function(assert) {
+		var done = assert.async();
 		// Create different persistence to avoid caching, before every getChanges a new persistence is required
 		var oChangeParameters = {
 			changeType: "renameField",
@@ -122,13 +124,14 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 			QUnit.start();
 		})['catch'](function(err) {
 			assert.ok(false, err);
-			QUnit.start();
+			done();
 		});
 
 	});
 
 	// FIXME processView has currently the issue, that it will automatically be called when the view is instantiated, this should be fixed, as soon as the real hook is inplace
-	//QUnit.asyncTest('process view', function(assert) {
+	//QUnit.test('process view', function(assert) {
+	//	var done = assert.async();
 	//
 	//	// Create different persistence to avoid caching, before every getChanges a new persistence is required
 	//	var oChangeParameters = {
@@ -145,10 +148,10 @@ jQuery.sap.require('sap.ui.core.mvc.View');
 	//		return oFlexController.processView(that.oControl, "integrationTestingFl.Component");
 	//	}).then(function(sStatus) {
 	//		assert.strictEqual(that.oControl.getLabel(), "testFieldLabel");
-	//		QUnit.start();
+	//		done();
 	//	})['catch'](function(oError) {
 	//		assert.ok(false, oError.stack);
-	//		QUnit.start();
+	//		done();
 	//	});
 	//
 	//});

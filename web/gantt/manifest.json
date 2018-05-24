@@ -1,0 +1,79 @@
+{
+	"_version": "1.8.0",
+	"sap.app": {
+		"id": "gantt",
+		"type": "component",
+		"i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+			"version": "1.0.0"
+        },
+        "dataSources": {
+			"config": {
+                "type": "json",
+                "uri": "model/config.json"
+            },
+            "data": {
+                "type": "json",
+                "uri": "model/data.json"
+			}
+        },
+		"title": "{{appTitle}}",
+		"description": "{{appDescription}}"
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"icons": {
+			"icon": "",
+			"favIcon": "",
+			"phone": "",
+			"phone@2": "",
+			"tablet": "",
+			"tablet@2": ""
+		},
+		"deviceTypes": {
+			"desktop": true,
+			"tablet": true,
+			"phone": true
+		}
+	},
+	"sap.ui5": {
+		"resourceRoots": {
+			"gantt": "./"
+		},
+		"dependencies": {
+			"minUI5Version": "1.30.0",
+			"libs": {
+				"sap.ui.core": {},
+				"sap.m": {},
+				"sap.gantt": {}
+			}
+		},
+		"contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
+		"models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "gantt.i18n.i18n"
+				}
+			},
+			"config": {
+                "type": "sap.ui.model.json.JSONModel",
+                "dataSource": "config",
+                "preload": true
+            },
+            "data": {
+                "type": "sap.ui.model.json.JSONModel",
+                "dataSource": "data",
+                "preload": true
+			}
+		},
+		"resources": {
+			"css": [{
+				"uri": "css/style.css"
+			}]
+		}
+	}
+}

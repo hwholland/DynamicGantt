@@ -1,45 +1,58 @@
-/*global QUnit*/
+/* globals QUnit */
+sap.ui.define([
+	"sap/ui/fl/FakeLrepConnectorLocalStorage",
+	"sap/ui/fl/FakeLrepLocalStorage",
+	"sap/ui/core/ComponentContainer"
+], function(
+	FakeLrepConnectorLocalStorage,
+	FakeLrepLocalStorage,
+	ComponentContainer
+) {
+	"use strict";
 
-function startFakeLREP(sModulePath){
-	jQuery.sap.require("sap.ui.fl.FakeLrepConnector");
-	jQuery.sap.require("sap.ui.rta.util.FakeLrepConnectorLocalStorage");
-	
-	jQuery.extend(sap.ui.fl.FakeLrepConnector.prototype, sap.ui.rta.util.FakeLrepConnectorLocalStorage);
-	sap.ui.fl.FakeLrepConnector.enableFakeConnector(jQuery.sap.getModulePath(sModulePath) + ".json");
-}
-function renderTestModuleAt(sNamespace, sDomId){
-	var oCompCont = new sap.ui.core.ComponentContainer("CompCont1", {
-		name : sNamespace,
-		id : "Comp1",
-		settings : {
-			componentData : {
-				"showAdaptButton" : true
+	var RtaQunitUtils = {};
+
+	RtaQunitUtils.renderTestModuleAt = function(sNamespace, sDomId){
+		var oComp = sap.ui.getCore().createComponent({
+			name : "sap.ui.rta.qunitrta",
+			id : "Comp1",
+			settings : {
+				componentData : {
+					"showAdaptButton" : true
+				}
 			}
-		}
-	}).placeAt(sDomId);
-	sap.ui.getCore().applyChanges();
-	
-	return oCompCont;
-}
+		});
 
-function renderTestAppAt(sDomId){
-	startFakeLREP("sap.ui.rta.test.FakeLrepConnector");
+		var oCompCont = new ComponentContainer({
+			component: oComp
+		}).placeAt(sDomId);
+		sap.ui.getCore().applyChanges();
 
-	var oCompCont = new sap.ui.core.ComponentContainer("CompCont1", {
-		name : "sap.ui.rta.test",
-		id : "Comp1",
-		settings : {
-			componentData : {
-				"showAdaptButton" : true
+		return oCompCont;
+	};
+
+	RtaQunitUtils.renderTestAppAt = function(sDomId){
+		FakeLrepConnectorLocalStorage.enableFakeConnector();
+
+		var oComp = sap.ui.getCore().createComponent({
+			name : "sap.ui.rta.qunitrta",
+			id : "Comp1",
+			settings : {
+				componentData : {
+					"showAdaptButton" : true
+				}
 			}
-		}
-	}).placeAt(sDomId);
-	sap.ui.getCore().applyChanges();
-	
-	return oCompCont;
-}
+		});
 
-function waitForChangesToReachedLrepAtTheEnd(iNumberOfChanges, assert) {
+		var oCompCont = new ComponentContainer({
+			component: oComp
+		}).placeAt(sDomId);
+		sap.ui.getCore().applyChanges();
+
+		return oCompCont;
+	};
+
+	RtaQunitUtils.waitForChangesToReachedLrepAtTheEnd = function(iNumberOfChanges, assert) {
 		var done = [];
 		for (var i = 0; i < iNumberOfChanges; i++) {
 			done.push(assert.async());
@@ -48,20 +61,55 @@ function waitForChangesToReachedLrepAtTheEnd(iNumberOfChanges, assert) {
 		var fnAssert = function() {
 			iChangeCounter++;
 			if (iChangeCounter === iNumberOfChanges) {
-				sap.ui.rta.util.FakeLrepLocalStorage.detachModifyCallback(fnAssert);
+				FakeLrepLocalStorage.detachModifyCallback(fnAssert);
 				assert.equal(iChangeCounter, iNumberOfChanges, "then the rta changes are written to LREP");
 			}
 			done[iChangeCounter - 1]();
 		};
 
-		sap.ui.rta.util.FakeLrepLocalStorage.attachModifyCallback(fnAssert);
-	}
+		FakeLrepLocalStorage.attachModifyCallback(fnAssert);
+	};
 
-function removeTestViewAfterTestsWhenCoverageIsRequested(){
-	QUnit.done(function(details) {
-		// If coverage is requested, remove the view to not overlap the coverage result
-		if (QUnit.config.coverage == true && details.failed === 0) {
-			jQuery("#test-view").hide();
+	// At the end of the test, the returning fnDetachEvent function must be called for clean up
+	RtaQunitUtils.waitForExactNumberOfChangesInLrep = function(iNumberOfChanges, assert, sModifyType) {
+		var done = [];
+		for (var i = 0; i < iNumberOfChanges; i++) {
+			done.push(assert.async());
 		}
-	});
-}
+		var iChangeCounter = 0;
+		var fnAssert = function(sPassedModifyType) {
+			// Only collect operations of the given type
+			if (sPassedModifyType !== sModifyType) {
+				throw new Error("Unexpected LREP modification: Expected: " + sModifyType + ", but got " + sPassedModifyType);
+			}
+			iChangeCounter++;
+			if (iChangeCounter === iNumberOfChanges) {
+				assert.equal(iChangeCounter, iNumberOfChanges,
+					"then " + iNumberOfChanges + " operations of type " + sModifyType + " happen in LREP");
+			}
+			if (iChangeCounter > iNumberOfChanges){
+				assert.notOk(true, "Error: there are more " + sModifyType + " operations done in LREP than expected");
+				return;
+			}
+			done[iChangeCounter - 1]();
+		};
+		var fnDetachEvent = function(){
+			FakeLrepLocalStorage.detachModifyCallback(fnAssert);
+		};
+
+		FakeLrepLocalStorage.attachModifyCallback(fnAssert);
+
+		return fnDetachEvent;
+	};
+
+	RtaQunitUtils.removeTestViewAfterTestsWhenCoverageIsRequested = function(){
+		QUnit.done(function(details) {
+			// If coverage is requested, remove the view to not overlap the coverage result
+			if (QUnit.config.coverage == true && details.failed === 0) {
+				jQuery("#test-view").hide();
+			}
+		});
+	};
+
+	return RtaQunitUtils;
+}, /* bExport= */true);

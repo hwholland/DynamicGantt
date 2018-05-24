@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="A collection of methods which help to consume OData Version 4.0 annotations in XML template views."/>
 <meta name="description" content="A collection of methods which help to consume OData Version 4.0 annotations in XML template views."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6409707846942841"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=786684385083849"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=786684385083849"/>
 <title>Annotation Helper</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiodbec058964f545e4bb3b7e9fbaa0602d">
 <div id="wrapper"><div id="container">
@@ -36,12 +22,19 @@
 	<div class="body conbody"><p class="shortdesc"> A collection of methods which help to consume OData Version 4.0 annotations in XML
 		template views.</p>
 
-		<p class="p">The <samp class="ph codeph">AnnotationHelper</samp> connects all the pieces related to XML templating: It
+		<div class="p">The <samp class="ph codeph">AnnotationHelper</samp> connects all the pieces related to XML templating: It
 			knows the OData meta model and its structure as well as the OData v4 annotations. The
 				<samp class="ph codeph">AnnotationHelper</samp> offers formatter functions and helper functions.
 			You can call these methods directly from the JavaScript code without XML runtime
 			templating. You do not need to require
-				<samp class="ph codeph">sap.ui.model.odata.AnnotationHelper</samp> before use. </p>
+				<samp class="ph codeph">sap.ui.model.odata.AnnotationHelper</samp> before use. <div class="note tip"><span class="tiptitle">Tip</span> 
+				<p class="p">You can see more information on the expressions, constants and functions used by the
+						<samp class="ph codeph">AnnotationHelper</samp>, in the respective chapters of the
+					specification <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata%2Fv4.0%2Fodata-v4.0-part3-csdl.html" alt="http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html" title="http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html">OData Version 4.0 Specification: Part 3: Common Schema
+						Definition Language<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a> .</p>
+
+			</div>
+</div>
 
 		<div class="section">
 			<div class="section_title">Formatter Functions</div>
@@ -51,7 +44,7 @@
 			<div class="note note"><span class="notetitle">Note</span> 
 				<p class="p">To use formatter functions, you need to enable the extended binding syntax by setting the
 					configuration option <samp class="ph codeph">xx-bindingSyntax</samp> to
-						<samp class="ph codeph">complex</samp>. For more information, see <a class="xref" href="0c803921b1bf4b3a97a038fbd51ef542.html" title="Complex (or &#34;extended&#34;) syntax can be used for calculated fields in declarative views, such as HTML and XML views.">Complex Syntax for Calculated Fields</a>. If the extended binding
+						<samp class="ph codeph">complex</samp>. For more information, see <a class="xref" href="a2fe8e763014477e87990ff50657a0d0.html" title="Calculated fields enable the binding of multiple properties in different models to a single property of a control.">Composite Binding</a>. If the extended binding
 					syntax is not enabled and expressions are created by means of the annotation
 					helper's format functions, the following warning is issued in the console:
 						<em class="ph i">Complex binding syntax not active</em>.</p>
@@ -186,17 +179,14 @@
 							<p class="p">Dynamic <em class="ph i">"14.5.12 Expression edm:Path"</em> and <em class="ph i">"14.5.13 Expression
 									edm.PropertyPath</em>: This dynamic expression is turned into a
 								data binding relative to an entity including type information and
-								constraints as available from metadata, for example <samp class="ph codeph">"{path :
-									'Name', type : 'sap.ui.model.odata.type.String', constraints :
-									{'maxLength':'255'}}"</samp>.</p>
+								constraints as available from metadata, for example <samp class="ph codeph">"{path : 'Name', type : 'sap.ui.model.odata.type.String', constraints : {'maxLength':'255'}}"</samp>.</p>
 
 						</li>
 
 						<li class="li">
 							<p class="p">Dynamic <em class="ph i">"14.5.6 Expression edm:If"</em>: This dynamic expression is
 								turned into an expression binding to be evaluated at runtime. The
-								expression is conditional, for example, <samp class="ph codeph">"{=condition ?
-									expression1 : expression2}"</samp>.</p>
+								expression is conditional, for example, <samp class="ph codeph">"{=condition ? expression1 : expression2}"</samp>.</p>
 
 						</li>
 
@@ -208,7 +198,7 @@
 
 					</div>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">&lt;Text text="{path: 'meta&gt;Value', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/&gt;</pre></div>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint nocode">&lt;Text text="{path: 'meta&gt;Value', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/&gt;</pre></div>
 
 				</li>
 
@@ -221,19 +211,17 @@
 						example:</p>
 
 					<ul class="ul" id="loiodbec058964f545e4bb3b7e9fbaa0602d__ul_vgs_lyk_cr">
-						<li class="li">The input value <samp class="ph codeph">{AnnotationPath :
-								"ToSupplier/@com.sap.vocabularies.Communication.v1.Address"}</samp>
+						<li class="li">The input value <samp class="ph codeph">{AnnotationPath : "ToSupplier/@com.sap.vocabularies.Communication.v1.Address"}</samp>
 							returns <samp class="ph codeph">"{ToSupplier}"</samp></li>
 
-						<li class="li">The input value <samp class="ph codeph">{AnnotationPath :
-								"@com.sap.vocabularies.UI.v1.FieldGroup#Dimensions"}</samp>
+						<li class="li">The input value <samp class="ph codeph">{AnnotationPath : "@com.sap.vocabularies.UI.v1.FieldGroup#Dimensions"}</samp>
 							returns <samp class="ph codeph">"{}"</samp></li>
 
 						<li class="li">The input value <samp class="ph codeph">{}</samp> returns <samp class="ph codeph">""</samp></li>
 
 					</ul>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:if test="{path: 'facet&gt;Target', formatter: 'sap.ui.model.odata.AnnotationHelper.getNavigationPath'}"&gt;
     &lt;form:SimpleForm binding="{path: 'facet&gt;Target', formatter: 'sap.ui.model.odata.AnnotationHelper.getNavigationPath'}" /&gt;
 &lt;/template:if&gt;</pre></div>
@@ -250,54 +238,12 @@
 						multiple "*" are not the last characters, the formatter returns an
 						error.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:if test="{path: 'facet&gt;Target', formatter: 'sap.ui.model.odata.AnnotationHelper.isMultiple'}"&gt;</pre></div>
 
 				</li>
 
-				<li class="li">
-					<p class="p"><samp class="ph codeph">simplePath</samp>: Specialized method useful for design-time
-						templating in connection with smart fields; it can only return simple
-						binding expressions without type information. This has the advantage that
-						the resulting XML view, which is shown at design-time, looks much simpler
-						and nicer without <samp class="ph codeph">&amp;quot;</samp> escapes.</p>
-
-					<div class="p"><span class="ph emphasis emphasis">Example:
-						</span><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
-&lt;mvc:View
-  xmlns:mvc="sap.ui.core.mvc"
-  xmlns:sfi="sap.ui.comp.smartfield"
-  xmlns:sfo="sap.ui.comp.smartform"
-  xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"&gt;
-  &lt;sfo:SmartForm title="{path: 'meta&gt;com.sap.vocabularies.UI.v1.HeaderInfo/TypeName', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"&gt;
-    &lt;template:repeat list="{path:'meta&gt;', filters: {path: 'RecordType', operator: 'EQ', value1: 'com.sap.vocabularies.UI.v1.FieldGroupType'}}"&gt;
-      &lt;sfo:Group label="{path: 'meta&gt;Label', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"&gt;
-        &lt;template:repeat list="{meta&gt;Data}"&gt;
-          &lt;sfo:GroupElement label="{path: 'meta&gt;Label', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"&gt;
-            &lt;sfi:SmartField value="{path: 'meta&gt;Value', formatter: 'sap.ui.model.odata.AnnotationHelper.simplePath'}"/&gt;
-          &lt;/sfo:GroupElement&gt;
-        &lt;/template:repeat&gt;
-      &lt;/sfo:Group&gt;
-    &lt;/template:repeat&gt;
-  &lt;/sfo:SmartForm&gt;
-&lt;/mvc:View&gt;</pre></div>
-</div>
-
-					<p class="p"><span class="ph emphasis emphasis">Output:</span></p>
-
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
-&lt;mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:sfi="sap.ui.comp.smartfield" xmlns:sfo="sap.ui.comp.smartform"&gt;
-  &lt;sfo:SmartForm title="Sales Order"&gt;
-      &lt;sfo:Group label="Order Note"&gt;
-          &lt;sfo:GroupElement label="Text"&gt;
-            &lt;sfi:SmartField value="{Note}"/&gt;
-          &lt;/sfo:GroupElement&gt;
-      &lt;/sfo:Group&gt;
-  &lt;/sfo:SmartForm&gt;
-&lt;/mvc:View&gt;</pre></div>
-
-				</li>
-
+				
 			</ul>
 
 			<div class="p">The formatter functions can also be called directly from JavaScript. The following
@@ -331,7 +277,7 @@
 							edm:NavigationPropertyPath"</em>, <em class="ph i">"14.5.12 Expression edm:Path"</em>
 						and <em class="ph i">"14.5.13 Expression edm:PropertyPath"</em>.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:with path="facet&gt;Target" helper="sap.ui.model.odata.AnnotationHelper.gotoEntitySet" var="entitySet" /&gt;
 &lt;template:with path="associationSetEnd&gt;entitySet" helper="sap.ui.model.odata.AnnotationHelper.gotoEntitySet" var="entitySet"/&gt;</pre></div>
 
@@ -358,7 +304,7 @@
 						qualified name of the entity type) and in turn the path of that entity type
 						is assigned to the variable <samp class="ph codeph">entityType</samp>.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:with path="entitySet&gt;entityType" helper="sap.ui.model.odata.AnnotationHelper.gotoEntityType" var="entityType"&gt;</pre></div>
 
 				</li>
@@ -377,7 +323,7 @@
 						context's model must be
 						<samp class="ph codeph">sap.ui.model.odata.ODataMetaModel</samp>.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:with path="meta&gt;Value" helper="sap.ui.model.odata.AnnotationHelper.resolvePath" var="target"&gt;</pre></div>
 
 				</li>
@@ -393,7 +339,7 @@
 						function import in the String property) and in turn the path of that
 						function import is assigned to the variable <samp class="ph codeph">function</samp>.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 &lt;template:with path="dataField&gt;Action" helper="sap.ui.model.odata.AnnotationHelper.gotoEntityType" var="function"&gt;</pre></div>
 
 				</li>
@@ -407,23 +353,10 @@
 	<div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.model.odata.AnnotationHelper.html" alt="../../docs/api/symbols/sap.ui.model.odata.AnnotationHelper.html" title="../../docs/api/symbols/sap.ui.model.odata.AnnotationHelper.html">sap.ui.model.odata.AnnotationHelper</a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata%2Fv4.0%2Fodata-v4.0-part3-csdl.html" alt="http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html" title="http://docs.oasis-open.org/odata/odata/v4.0/odata-v4.0-part3-csdl.html">OData Version 4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Annotation Helper";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

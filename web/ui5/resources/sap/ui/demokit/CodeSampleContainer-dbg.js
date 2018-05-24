@@ -1,12 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.CodeSampleContainer.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/commons/Link', './library', './CodeViewer', './UIAreaSubstitute'],
-	function(jQuery, Control, Link, library, CodeViewer, UIAreaSubstitute) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    'sap/ui/commons/Link',
+    './library',
+    './CodeViewer',
+    './UIAreaSubstitute',
+    "./CodeSampleContainerRenderer"
+],
+	function(
+	    jQuery,
+		Control,
+		Link,
+		library,
+		CodeViewer,
+		UIAreaSubstitute,
+		CodeSampleContainerRenderer
+	) {
 	"use strict";
 
 
@@ -22,12 +38,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/commons/Link'
 	 *
 	 * The container provides a sub container that can be used in calls to sap.ui.setRoot() as if it would be a normal UIArea. So the sample code doesn't have to know that it runs in a CodeSample container.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.CodeSampleContainer
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var CodeSampleContainer = Control.extend("sap.ui.demokit.CodeSampleContainer", /** @lends sap.ui.demokit.CodeSampleContainer.prototype */ { metadata : {
 

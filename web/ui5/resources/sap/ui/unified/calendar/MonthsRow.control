@@ -89,7 +89,7 @@ If one day is assigned to more than one type, only the first one will be used.
             <documentation>Checks if a date is focusable in the current rendered output.
 This means that if it is not rendered, it is not focusable.</documentation>
             <parameters>
-                <parameter name="date" type="sap.ui.core/object">
+                <parameter name="dateTime" type="sap.ui.core/object">
                     <documentation>JavaScript Date object for focused date.</documentation>
                 </parameter>
             </parameters>

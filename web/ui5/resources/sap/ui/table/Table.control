@@ -24,7 +24,8 @@
             <documentation>Width of the Table.</documentation>
         </property>
         <property name="rowHeight" type="sap.ui.core/int" group="Appearance">
-            <documentation>Height of a row of the Table in pixel.</documentation>
+            <documentation>The height of the row content in pixel. The actual row height is also influenced by other factors, such as the border width.
+If no value is set, a default height is applied based on the content density configuration.</documentation>
         </property>
         <property name="columnHeaderHeight" type="sap.ui.core/int" group="Appearance">
             <documentation>Height of the column header of the Table in pixel.</documentation>
@@ -40,11 +41,16 @@
         </property>
         <property name="selectionMode" type="sap.ui.table/SelectionMode" defaultValue="MultiToggle" group="Behavior">
             <documentation>Selection mode of the Table. This property controls whether single or multiple rows can be selected and
-how the selection can be extended. It may also influence the visual appearance.</documentation>
+how the selection can be extended. It may also influence the visual appearance.
+When the selection mode is changed, the current selection is removed.
+&lt;b&gt;Note:&lt;/b&gt; Since the group header visualization relies on the row selectors, the row selectors are always shown if the grouping
+functionality (depends on table type) is enabled, even if &lt;code&gt;sap.ui.table.SelectionMode.None&lt;/code&gt; is set.</documentation>
         </property>
         <property name="selectionBehavior" type="sap.ui.table/SelectionBehavior" defaultValue="RowSelector" group="Behavior">
-            <documentation>Selection behavior of the Table. This property defines whether the row selector is displayed and whether the row, the row selector or both
-can be clicked to select a row.</documentation>
+            <documentation>Selection behavior of the Table. This property defines whether the row selector is displayed and whether the row, the row selector or
+both can be clicked to select a row.
+&lt;b&gt;Note:&lt;/b&gt; Since the group header visualization relies on the row selectors, the row selectors are always shown if the grouping
+functionality (depends on table type) is enabled, even if &lt;code&gt;sap.ui.table.SelectionBehavior.RowOnly&lt;/code&gt; is set.</documentation>
         </property>
         <property name="selectedIndex" type="sap.ui.core/int" defaultValue="-1" group="Appearance">
             <documentation>Zero-based index of selected item. Index value for no selection is -1.
@@ -56,12 +62,8 @@ removes any previous selections. When the given index is invalid, the call is ig
             <documentation>Flag whether the controls of the Table are editable or not (currently this only controls the background color in certain themes!)</documentation>
         </property>
         <property name="navigationMode" type="sap.ui.table/NavigationMode" defaultValue="Scrollbar" group="Behavior">
-            <documentation>Determines whether a scrollbar or a paginator is used for navigation inside the table.
-If the paginator mode is used, it requires the &lt;code&gt;sap.ui.commons&lt;/code&gt; library.
-
-This renders a scrollbar as a navigation element. Data fetched from an OData service is still
-loaded page-wise no matter which visual representation is used for navigation inside the table.</documentation>
-            <deprecation since="1.38">there is no replacement, since &lt;code&gt;Scrollbar&lt;/code&gt; is the only supported option</deprecation>
+            <documentation>This property has been deprecated and must not be used anymore, since &lt;code&gt;Scrollbar&lt;/code&gt; is the only supported option.</documentation>
+            <deprecation since="1.38"></deprecation>
         </property>
         <property name="threshold" type="sap.ui.core/int" defaultValue="100" group="Appearance">
             <documentation>The &lt;code&gt;threshold&lt;/code&gt; defines how many additional (not yet visible records) shall be pre-fetched to enable smooth
@@ -74,7 +76,19 @@ the &lt;code&gt;threshold&lt;/code&gt;. If the value is 0 then the thresholding 
             <documentation>Flag to enable or disable column reordering</documentation>
         </property>
         <property name="enableGrouping" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
-            <documentation>Flag to enable or disable column grouping. (experimental!)</documentation>
+            <documentation>Enables or disables grouping. If grouping is enabled, the table is grouped by the column which is defined
+in the &lt;code&gt;groupBy&lt;/code&gt; association.
+
+The following restrictions apply:
+&lt;ul&gt;
+ &lt;li&gt;Only client models are supported (e.g. {@link sap.ui.model.json.JSONModel}). Grouping does not work with OData models.&lt;/li&gt;
+ &lt;li&gt;The table can only be grouped by &lt;b&gt;one&lt;/b&gt; column at a time. Grouping by another column will remove the current grouping.&lt;/li&gt;
+ &lt;li&gt;If grouping has been done, sorting and filtering is not possible. Any existing sorting and filtering rules do no longer apply.
+     The UI is not updated accordingly (e.g. menu items, sort and filter icons).&lt;/li&gt;
+ &lt;li&gt;The column, by which the table is grouped, is not visible. It will become visible again only if the table is grouped by another
+     column or grouping is disabled.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
+            <developmentState state="experimental" since="1.28">This feature has a limited functionality.</developmentState>
         </property>
         <property name="showColumnVisibilityMenu" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
             <documentation>Flag to show or hide the column visibility menu. This menu will get displayed in each
@@ -97,16 +111,16 @@ the visibleRowCount interactively.</documentation>
 For any other visibleRowCountMode, it is ignored.</documentation>
         </property>
         <property name="fixedColumnCount" type="sap.ui.core/int" defaultValue="0" group="Appearance">
-            <documentation>Number of columns that are fix on the left. When you use a horizontal scroll bar, only
+            <documentation>Number of columns that are fix on the left. When you use a horizontal scrollbar, only
 the columns which are not fixed, will scroll. Fixed columns need a defined width for the feature to work.
 Please note that the aggregated width of all fixed columns must not exceed the table width since there
 will be no scrollbar for fixed columns.</documentation>
         </property>
         <property name="fixedRowCount" type="sap.ui.core/int" defaultValue="0" group="Appearance">
-            <documentation>Number of rows that are fix on the top. When you use a vertical scroll bar, only the rows which are not fixed, will scroll.</documentation>
+            <documentation>Number of rows that are fix on the top. When you use a vertical scrollbar, only the rows which are not fixed, will scroll.</documentation>
         </property>
         <property name="fixedBottomRowCount" type="sap.ui.core/int" defaultValue="0" group="Appearance" since="1.18.7">
-            <documentation>Number of rows that are fix on the bottom. When you use a vertical scroll bar, only the rows which are not fixed, will scroll.</documentation>
+            <documentation>Number of rows that are fix on the bottom. When you use a vertical scrollbar, only the rows which are not fixed, will scroll.</documentation>
         </property>
         <property name="enableColumnFreeze" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.21.0">
             <documentation>Flag whether to show or hide the column menu item to freeze or unfreeze a column.</documentation>
@@ -126,9 +140,18 @@ if the row selector is visible and the selection mode is set to any kind of mult
 will be rendered for which' press event (customFilter) you can register an event handler.</documentation>
         </property>
         <property name="enableBusyIndicator" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.27.0">
-            <documentation>Set this parameter to true to make the table handle the busy indicator by its own.
-The table will switch to busy as soon as it scrolls into an unpaged area. This feature can only
-be used when the navigation mode is set to scrolling.</documentation>
+            <documentation>If set to &lt;code&gt;true&lt;/code&gt;, the table changes its busy state, resulting in showing or hiding the busy indicator.
+The table will switch to busy as soon as data is retrieved to be displayed in the currently visible rows. This happens,
+for example, during scrolling, filtering, or sorting. As soon as the data has been retrieved, the table switches back to not busy.
+The busy state of the table can still be set manually by calling {@link sap.ui.core.Control#setBusy}.</documentation>
+        </property>
+        <property name="rowActionCount" type="sap.ui.core/int" defaultValue="0" group="Appearance" since="1.45.0">
+            <documentation>Number of row actions made visible which determines the width of the row action column.
+The values &lt;code&gt;0&lt;/code&gt;, &lt;code&gt;1&lt;/code&gt; and &lt;code&gt;2&lt;/code&gt; are possible.</documentation>
+        </property>
+        <property name="alternateRowColors" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.52">
+            <documentation>Enables alternating table row colors.
+Alternate row coloring is not available for the tree mode.</documentation>
         </property>
     </properties>
     <events>
@@ -254,6 +277,7 @@ the index maintained in the column aggregation.</documentation>
         </event>
         <event name="cellContextmenu" since="1.21.0" allowPreventDefault="true">
             <documentation>fired when the user clicks a cell of the table.</documentation>
+            <deprecation since="1.54">replaced by &lt;code&gt;beforeOpenContextMenu&lt;/code&gt;.</deprecation>
             <parameters>
                 <parameter name="cellControl" type="sap.ui.core/Control">
                     <documentation>The control of the cell.</documentation>
@@ -276,6 +300,21 @@ the index maintained in the column aggregation.</documentation>
                 </parameter>
             </parameters>
         </event>
+        <event name="beforeOpenContextMenu" since="1.54" allowPreventDefault="true">
+            <documentation>Fired when the user requests the context menu for a table cell.</documentation>
+            <parameters>
+                <parameter name="rowIndex" type="sap.ui.core/int">
+                    <documentation>Row index where the context menu opens.</documentation>
+                </parameter>
+                <parameter name="columnIndex" type="sap.ui.core/int">
+                    <documentation>Column index where the context menu opens.
+This is the index of the column in the &lt;code&gt;columns&lt;/code&gt; aggregation.</documentation>
+                </parameter>
+                <parameter name="contextMenu" type="sap.ui.core/IContextMenu">
+                    <documentation>Context menu</documentation>
+                </parameter>
+            </parameters>
+        </event>
         <event name="columnFreeze" since="1.21.0" allowPreventDefault="true">
             <documentation>fired when a column of the table should be freezed</documentation>
             <parameters>
@@ -285,7 +324,8 @@ the index maintained in the column aggregation.</documentation>
             </parameters>
         </event>
         <event name="customFilter" since="1.23.0" allowPreventDefault="false">
-            <documentation>This event is triggered when the custom filter item of the column menu is pressed. The column on which the event was triggered is passed as parameter.</documentation>
+            <documentation>This event is triggered when the custom filter item of the column menu is pressed. The column on which the event was triggered is
+passed as parameter.</documentation>
         </event>
         <event name="firstVisibleRowChanged" since="1.37.0" allowPreventDefault="false">
             <documentation>This event gets fired when the first visible row is changed. It should only be used by composite controls.
@@ -303,10 +343,15 @@ The event even is fired when setFirstVisibleRow is called programmatically.</doc
             <documentation>Control or text of footer section of the Table (if not set it will be hidden)</documentation>
         </aggregation>
         <aggregation name="toolbar" type="sap.ui.core/Toolbar" cardinality="0..1">
-            <documentation>Toolbar of the Table (if not set it will be hidden)</documentation>
+            <documentation>Toolbar of the Table
+If not set, no toolbar area will be rendered.
+Note: The CSS class sapMTBHeader-CTX is applied on the given toolbar.</documentation>
+            <deprecation since="1.38">This aggregation is deprecated, use the &lt;code&gt;extension&lt;/code&gt; aggregation instead.</deprecation>
         </aggregation>
         <aggregation name="extension" type="sap.ui.core/Control" cardinality="0..n">
-            <documentation>Extension section of the Table (if not set it will be hidden)</documentation>
+            <documentation>Extension section of the Table.
+If not set, no extension area will be rendered.
+Note: In case a &lt;code&gt;sap.m.Toolbar&lt;/code&gt; is used as header the CSS class sapMTBHeader-CTX should be applied on this toolbar via &lt;code&gt;addStyleClass&lt;/code&gt;.</documentation>
         </aggregation>
         <aggregation name="columns" type="sap.ui.table/Column" cardinality="0..n" bindable="bindable">
             <documentation>Columns of the Table</documentation>
@@ -319,10 +364,57 @@ The event even is fired when setFirstVisibleRow is called programmatically.</doc
 The control is shown, in case there is no data for the Table available. In case of a string
 value this will simply replace the no data text.</documentation>
         </aggregation>
+        <aggregation name="rowActionTemplate" type="sap.ui.table/RowAction" cardinality="0..1">
+            <documentation>Template for row actions. A template is decoupled from the row or table. Each time
+the template's properties or aggregations are changed, the template has to be applied again via
+&lt;code&gt;setRowActionTemplate&lt;/code&gt; for the changes to take effect.</documentation>
+        </aggregation>
+        <aggregation name="rowSettingsTemplate" type="sap.ui.table/RowSettings" cardinality="0..1">
+            <documentation>Template for row settings. A template is decoupled from the row or table. Each time
+the template's properties or aggregations are changed, the template has to be applied again via
+&lt;code&gt;setRowSettingsTemplate&lt;/code&gt; for the changes to take effect.</documentation>
+        </aggregation>
+        <aggregation name="dragDropConfig" type="sap.ui.core/dnd/DragDropBase" since="1.52" cardinality="0..n">
+            <documentation>Defines the drag-and-drop configuration via {@link sap.ui.core.dnd.DragDropInfo}
+
+The following restrictions apply:
+&lt;ul&gt;
+  &lt;li&gt;Drag and drop is not supported on mobile devices and there is no accessible alternative.&lt;/li&gt;
+  &lt;li&gt;Columns cannot be configured to be draggable.&lt;/li&gt;
+  &lt;li&gt;The following rows are not draggable:
+    &lt;ul&gt;
+      &lt;li&gt;Empty rows&lt;/li&gt;
+      &lt;li&gt;Group header rows&lt;/li&gt;
+      &lt;li&gt;Sum rows&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Columns cannot be configured to be droppable.&lt;/li&gt;
+  &lt;li&gt;The following rows are not droppable:
+    &lt;ul&gt;
+      &lt;li&gt;The dragged row itself&lt;/li&gt;
+      &lt;li&gt;Empty rows&lt;/li&gt;
+      &lt;li&gt;Group header rows&lt;/li&gt;
+      &lt;li&gt;Sum rows&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Texts in draggable rows cannot be selected.&lt;/li&gt;
+  &lt;li&gt;The text of input fields in draggable rows can be selected, but not dragged.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
+        </aggregation>
+        <aggregation name="contextMenu" type="sap.ui.core/IContextMenu" since="1.54" cardinality="0..1">
+            <documentation>Defines the context menu for the table.
+
+&lt;b&gt;Note:&lt;/b&gt; The context menu will also be available for the row selectors as well as in the row actions cell of the table control.
+
+The custom context menu will not be shown in the group header rows and the sum row of the &lt;code&gt;AnalyticalTable&lt;/code&gt; control.
+
+If this aggregation is set, then the &lt;code&gt;enableCellFilter&lt;/code&gt; property will have no effect.</documentation>
+        </aggregation>
     </aggregations>
     <associations>
         <association name="groupBy" type="sap.ui.table/Column" cardinality="0..1">
-            <documentation>Group By Column (experimental!)</documentation>
+            <documentation>The column by which the table is grouped. Grouping will only be performed if &lt;code&gt;enableGrouping&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt;.</documentation>
+            <developmentState state="experimental" since="1.28">This feature has a limited functionality.</developmentState>
         </association>
         <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
             <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
@@ -330,13 +422,14 @@ value this will simply replace the no data text.</documentation>
     </associations>
     <methods>
         <method name="getSortedColumns">
-            <documentation>gets sorted columns</documentation>
+            <documentation>Gets sorted columns in the order of which the sort API at the table or column was called.
+Sorting on binding level is not reflected here.</documentation>
         </method>
         <method name="sort" type="sap.ui.table/Table">
-            <documentation>sorts the given column ascending or descending</documentation>
+            <documentation>Sorts the given column ascending or descending.</documentation>
             <parameters>
                 <parameter name="column" type="sap.ui.table/Column">
-                    <documentation>column to be sorted</documentation>
+                    <documentation>column to be sorted or undefined to clear sorting</documentation>
                 </parameter>
                 <parameter name="sortOrder" type="sap.ui.table/SortOrder">
                     <documentation>sort order of the column (if undefined the default will be ascending)</documentation>
@@ -347,7 +440,7 @@ value this will simply replace the no data text.</documentation>
             </parameters>
         </method>
         <method name="filter" type="sap.ui.table/Table">
-            <documentation>filter the given column by the given value</documentation>
+            <documentation>Filter the given column by the given value.</documentation>
             <parameters>
                 <parameter name="column" type="sap.ui.table/Column">
                     <documentation>column to be filtered</documentation>

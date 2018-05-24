@@ -1,71 +1,273 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides helper sap.ui.table.TableUtils.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHandler', './library'],
-	function(jQuery, Control, ResizeHandler, library) {
+sap.ui.define([
+	"jquery.sap.global", "sap/ui/core/Control", "sap/ui/core/ResizeHandler", "sap/ui/core/library", "sap/ui/model/ChangeReason",
+	"./TableGrouping", "./TableColumnUtils", "./TableMenuUtils", "./TableBindingUtils", "./library"
+], function(jQuery, Control, ResizeHandler, coreLibrary, ChangeReason, TableGrouping, TableColumnUtils, TableMenuUtils, TableBindingUtils, library) {
 	"use strict";
 
-	// shortcuts
-	var SelectionBehavior = library.SelectionBehavior,
-		NavigationMode = library.NavigationMode,
-		SelectionMode = library.SelectionMode;
+	// Shortcuts
+	var SelectionBehavior = library.SelectionBehavior;
+	var SelectionMode = library.SelectionMode;
+	var MessageType = coreLibrary.MessageType;
 
 	/**
-	 * The border width of a row in pixels.
+	 * Table cell type.
+	 *
+	 * @type {sap.ui.table.TableUtils.CellType}
+	 * @static
+	 * @constant
+	 * @typedef {Object} sap.ui.table.TableUtils.CellType
+	 * @property {int} DATACELL - Data cell.
+	 * @property {int} COLUMNHEADER - Column header cell.
+	 * @property {int} ROWHEADER - Row header cell.
+	 * @property {int} ROWACTION - Row action cell.
+	 * @property {int} COLUMNROWHEADER - SelectAll cell.
+	 * @property {int} ANYCONTENTCELL - Any cell of a row in the table content area (table body).
+	 * @property {int} ANYCOLUMNHEADER - Any cell of a row in the table header area (table head).
+	 * @property {int} ANYROWHEADER - Any row header cell (including the SelectAll cell).
+	 * @property {int} ANY - Any table cell.
+	 */
+	var CELLTYPE = {
+		DATACELL: 1, // Standard data cell (standard, group or sum)
+		COLUMNHEADER: 2, // Column header
+		ROWHEADER: 4, // Row header (standard, group or sum)
+		ROWACTION: 8, // Row action (standard, group or sum)
+		COLUMNROWHEADER: 16 // Select all row selector (top left cell)
+	};
+	CELLTYPE.ANYCONTENTCELL = CELLTYPE.ROWHEADER | CELLTYPE.DATACELL | CELLTYPE.ROWACTION;
+	CELLTYPE.ANYCOLUMNHEADER = CELLTYPE.COLUMNHEADER | CELLTYPE.COLUMNROWHEADER;
+	CELLTYPE.ANYROWHEADER = CELLTYPE.ROWHEADER | CELLTYPE.COLUMNROWHEADER;
+	CELLTYPE.ANY = CELLTYPE.ANYCONTENTCELL | CELLTYPE.ANYCOLUMNHEADER;
+
+	/**
+	 * The horizontal frame size of a row in pixels. This is the height of a row excluding the content height.
 	 *
 	 * @type {int}
+	 * @static
 	 * @constant
 	 */
-	var ROW_BORDER_WIDTH = 1;
+	var ROW_HORIZONTAL_FRAME_SIZE = 1; /* 1px border */
+
+	/**
+	 * The default row content heights in pixels for the different content densities.
+	 *
+	 * @type {sap.ui.table.TableUtils.DefaultRowContentHeight}
+	 * @static
+	 * @constant
+	 * @typedef {Object} sap.ui.table.TableUtils.DefaultRowContentHeight
+	 * @property {int} sapUiSizeCondensed - The default content height of a row in pixels in condensed content density.
+	 * @property {int} sapUiSizeCompact - The default content height of a row in pixels in compact content density.
+	 * @property {int} sapUiSizeCozy - The default content height of a row in pixels in cozy content density.
+	 * @property {int} undefined - The default content height of a row in pixels in case no content density information is available.
+	 */
+	var DEFAULT_ROW_CONTENT_HEIGHT = {
+		sapUiSizeCozy: 48,
+		sapUiSizeCompact: 32,
+		sapUiSizeCondensed: 24,
+		undefined: 32
+	};
+
+	/**
+	 * The default row heights in pixels for the different content densities.
+	 *
+	 * @type {sap.ui.table.TableUtils.DefaultRowHeight}
+	 * @static
+	 * @constant
+	 * @typedef {Object} sap.ui.table.TableUtils.DefaultRowHeight
+	 * @property {int} sapUiSizeCondensed - The default height of a row in pixels in condensed content density.
+	 * @property {int} sapUiSizeCompact - The default height of a row in pixels in compact content density.
+	 * @property {int} sapUiSizeCozy - The default height of a row in pixels in cozy content density.
+	 * @property {int} undefined - The default height of a row in pixels in case no content density information is available.
+	 */
+	var DEFAULT_ROW_HEIGHT = {
+		sapUiSizeCozy: DEFAULT_ROW_CONTENT_HEIGHT.sapUiSizeCozy + ROW_HORIZONTAL_FRAME_SIZE,
+		sapUiSizeCompact: DEFAULT_ROW_CONTENT_HEIGHT.sapUiSizeCompact + ROW_HORIZONTAL_FRAME_SIZE,
+		sapUiSizeCondensed: DEFAULT_ROW_CONTENT_HEIGHT.sapUiSizeCondensed + ROW_HORIZONTAL_FRAME_SIZE,
+		undefined: DEFAULT_ROW_CONTENT_HEIGHT.undefined + ROW_HORIZONTAL_FRAME_SIZE
+	};
+
+	/**
+	 * Reason for updates of the rows. Inherits from {@link sap.ui.model.ChangeReason}.
+	 *
+	 * @type {sap.ui.table.TableUtils.ROWS_UPDATE_REASON}
+	 * @static
+	 * @constant
+	 * @typedef {Object} sap.ui.table.TableUtils.ROWS_UPDATE_REASON
+	 * @property {string} Sort - {@link sap.ui.model.ChangeReason.Sort}
+	 * @property {string} Filter - {@link sap.ui.model.ChangeReason.Filter}
+	 * @property {string} Change - {@link sap.ui.model.ChangeReason.Change}
+	 * @property {string} Context - {@link sap.ui.model.ChangeReason.Context}
+	 * @property {string} Refresh - {@link sap.ui.model.ChangeReason.Refresh}
+	 * @property {string} Expand - {@link sap.ui.model.ChangeReason.Expand}
+	 * @property {string} Collapse - {@link sap.ui.model.ChangeReason.Collapse}
+	 * @property {string} Remove - {@link sap.ui.model.ChangeReason.Remove}
+	 * @property {string} Add - {@link sap.ui.model.ChangeReason.Add}
+	 * @property {string} Binding - {@link sap.ui.model.ChangeReason.Binding}
+	 * @property {string} Render - The table has been rendered.
+	 * @property {string} VerticalScroll - The table has been scrolled vertically.
+	 * @property {string} FirstVisibleRowChange - The first visible row has been changed by API call.
+	 * @property {string} Unbind - The row binding has been removed.
+	 * @property {string} Animation - An animation has been performed.
+	 * @property {string} Resize - The table has been resized.
+	 * @property {string} Zoom - The browsers zoom level has changed.
+	 * @property {string} Unknown - The reason for the update is unknown.
+	 */
+	var ROWS_UPDATE_REASON = {
+		Render: "Render",
+		VerticalScroll: "VerticalScroll",
+		FirstVisibleRowChange: "FirstVisibleRowChange",
+		Unbind: "Unbind",
+		Animation: "Animation",
+		Resize: "Resize",
+		Unknown: "Unknown"
+	};
+	for (var sProperty in ChangeReason) {
+		ROWS_UPDATE_REASON[sProperty] = ChangeReason[sProperty];
+	}
 
 	/**
 	 * Static collection of utility functions related to the sap.ui.table.Table, ...
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @namespace
 	 * @name sap.ui.table.TableUtils
 	 * @private
 	 */
 	var TableUtils = {
+		// Make other utils available.
+		Grouping: TableGrouping,
+		Column: TableColumnUtils,
+		Menu: TableMenuUtils,
+		Binding: TableBindingUtils,
 
-		/*
- 		 * Known basic cell types in the table
-		 */
-		CELLTYPES : {
-			DATACELL : "DATACELL", // standard data cell (standard, group or sum)
-			COLUMNHEADER : "COLUMNHEADER", // column header
-			ROWHEADER : "ROWHEADER", // row header (standard, group or sum)
-			COLUMNROWHEADER : "COLUMNROWHEADER" // select all row selector (top left cell)
-		},
-
-		CONTENT_DENSITY_ROW_HEIGHTS : {
-			sapUiSizeCondensed : 24 + ROW_BORDER_WIDTH,
-			sapUiSizeCompact : 32 + ROW_BORDER_WIDTH,
-			sapUiSizeCozy : 48 + ROW_BORDER_WIDTH,
-			undefined : 27 + ROW_BORDER_WIDTH
-		},
+		CELLTYPE: CELLTYPE,
+		ROW_HORIZONTAL_FRAME_SIZE: ROW_HORIZONTAL_FRAME_SIZE,
+		DEFAULT_ROW_HEIGHT: DEFAULT_ROW_HEIGHT,
+		RowsUpdateReason: ROWS_UPDATE_REASON,
 
 		/**
 		 * Returns whether the table has a row header or not
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {boolean}
+		 * @returns {boolean}
 		 * @private
 		 */
 		hasRowHeader : function(oTable) {
-			return oTable.getSelectionMode() !== SelectionMode.None
-					&& oTable.getSelectionBehavior() !== SelectionBehavior.RowOnly;
+			return (oTable.getSelectionMode() !== SelectionMode.None
+					&& oTable.getSelectionBehavior() !== SelectionBehavior.RowOnly)
+					|| TableGrouping.isGroupMode(oTable);
+		},
+
+		/**
+		 * Returns whether the table has a SelectAll checkbox.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table.
+		 * @returns {boolean} Returns <code>true</code>, if the table has a SelectAll checkbox.
+		 * @private
+		 */
+		hasSelectAll: function(oTable) {
+			var sSelectionMode = oTable != null ? oTable.getSelectionMode() : SelectionMode.None;
+			return (sSelectionMode === SelectionMode.Multi || sSelectionMode === SelectionMode.MultiToggle)
+				   && oTable.getEnableSelectAll();
+		},
+
+		/**
+		 * Returns whether the table has row highlights.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean} Returns <code>true</code>, if the table has row highlights
+		 * @private
+		 */
+		hasRowHighlights: function(oTable) {
+			if (oTable == null) {
+				return false;
+			}
+
+			var oRowSettingsTemplate = oTable.getRowSettingsTemplate();
+
+			if (oRowSettingsTemplate == null) {
+				return false;
+			}
+
+			var sHighlight = oRowSettingsTemplate.getHighlight();
+
+			return oRowSettingsTemplate.isBound("highlight")
+				   || (sHighlight != null && sHighlight !== MessageType.None);
+		},
+
+		/**
+		 * Returns the number of row actions in case the tahe has a row action column, <code>0</code> otherwise
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {int}
+		 * @private
+		 */
+		getRowActionCount : function(oTable) {
+			var oTemplate = oTable.getRowActionTemplate();
+			return oTemplate ? oTemplate._getCount() : 0;
+		},
+
+		/**
+		 * Returns whether the table has a row action column or not
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean}
+		 * @private
+		 */
+		hasRowActions : function(oTable) {
+			var oRowActionTemplate = oTable.getRowActionTemplate();
+
+			return oRowActionTemplate != null
+				   && (oRowActionTemplate.isBound("visible") || oRowActionTemplate.getVisible())
+				   && TableUtils.getRowActionCount(oTable) > 0;
+		},
+
+		/**
+		 * Returns whether selection is allowed on the cells of a row (not row selector).
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean}
+		 * @private
+		 */
+		isRowSelectionAllowed : function(oTable) {
+			return oTable.getSelectionMode() !== SelectionMode.None &&
+				(oTable.getSelectionBehavior() === SelectionBehavior.Row || oTable.getSelectionBehavior() === SelectionBehavior.RowOnly);
+		},
+
+		/**
+		 * Returns whether selection is allowed via the row selector.
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean}
+		 * @private
+		 */
+		isRowSelectorSelectionAllowed : function(oTable) {
+			// Incl. that RowOnly works like Row
+			return oTable.getSelectionMode() !== SelectionMode.None && TableUtils.hasRowHeader(oTable);
+		},
+
+		/**
+		 * Finds out if all rows are selected in a table.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table.
+		 * @returns {boolean} Returns <code>true</code> if all rows in the table are selected.
+		 */
+		areAllRowsSelected: function(oTable) {
+			if (oTable == null) {
+				return false;
+			}
+
+			var iSelectableRowCount = oTable._getSelectableRowCount();
+			return iSelectableRowCount > 0 && iSelectableRowCount === oTable._getSelectedIndicesCount();
 		},
 
 		/**
 		 * Returns whether the no data text is currently shown or not
 		 * If true, also CSS class sapUiTableEmpty is set on the table root element.
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {boolean}
+		 * @returns {boolean}
 		 * @private
 		 */
 		isNoDataVisible : function(oTable) {
@@ -73,16 +275,92 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 				return false;
 			}
 
+			return !TableUtils.hasData(oTable);
+		},
+
+		/**
+		 * Returns whether the table currently has data.
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean}
+		 * @private
+		 */
+		hasData : function(oTable) {
 			var oBinding = oTable.getBinding("rows"),
-				iBindingLength = oTable._getRowCount(),
-				bHasData = oBinding ? !!iBindingLength : false;
+			iBindingLength = oTable._getTotalRowCount(),
+			bHasData = oBinding ? !!iBindingLength : false;
 
 			if (oBinding && oBinding.providesGrandTotal) { // Analytical Binding
 				var bHasTotal = oBinding.providesGrandTotal() && oBinding.hasTotaledMeasures();
 				bHasData = (bHasTotal && iBindingLength < 2) || (!bHasTotal && iBindingLength === 0) ? false : true;
 			}
 
-			return !bHasData;
+			return bHasData;
+		},
+
+		/**
+		 * Returns whether the busy indicator is visible. It is considered as visible when the busy indicator element exists in the DOM as
+		 * a child of the table element. It is not checked whether the indicator is actually visible on the screen.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {boolean} Returns <code>true</code>, if the busy indicator is visible.
+		 * @private
+		 */
+		isBusyIndicatorVisible: function(oTable) {
+			if (oTable == null || oTable.getDomRef() == null) {
+				return false;
+			}
+
+			return oTable.getDomRef().querySelector(".sapUiTableCnt > .sapUiLocalBusyIndicator") != null;
+		},
+
+		/**
+		 * Returns whether one or more requests are currently in process by the binding.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table.
+		 * @returns {boolean} Returns <code>true</code>, if the binding of the table is currently requesting data.
+		 * @private
+		 */
+		hasPendingRequests: function(oTable) {
+			if (oTable == null) {
+				return false;
+			}
+
+			if (TableUtils.canUsePendingRequestsCounter(oTable)) {
+				return oTable._iPendingRequests > 0;
+			} else {
+				return oTable._bPendingRequest;
+			}
+		},
+
+		/**
+		 * A counter to determine whether there are pending requests can be used if exactly one dataReceived event is fired for every
+		 * dataRequested event. If this is not the case and there can be an imbalance between dataReceived and dataRequested events, a more limited
+		 * method using a boolean flag must be used.
+		 *
+		 * It is not always possible to correctly determine whether there is a pending request, because the table must use a flag instead of a
+		 * counter. A flag is necessary under the following conditions:
+		 *
+		 * If the AnalyticalBinding is created with the parameter "useBatchRequest" set to false, an imbalance between dataRequested and
+		 * dataReceived events can occur. There will be one dataRequested event for every request that would otherwise be part of a batch
+		 * request. But still only one dataReceived event is fired after all responses are received.
+		 *
+		 * If the ODataTreeBindingFlat adapter is applied to the TreeBinding, the adapter fires a dataRequested event on every call of getNodes,
+		 * even if no request is sent. This can happen if the adapter ignores the request, because it finds out there is a pending request which
+		 * covers it. When a request is ignored no dataReceived event is fired.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table.
+		 * @returns {boolean} Returns <code>true</code>, if the table can use a counter for pending request detection.
+		 */
+		canUsePendingRequestsCounter: function(oTable) {
+			var oBinding = oTable != null ? oTable.getBinding("rows") : null;
+
+			if (TableUtils.isInstanceOf(oBinding, "sap/ui/model/analytics/AnalyticalBinding")) {
+				return oBinding.bUseBatchRequests;
+			} else if (TableUtils.isInstanceOf(oBinding, "sap/ui/model/TreeBinding")) {
+				return false;
+			}
+
+			return true;
 		},
 
 		/**
@@ -90,7 +368,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * without the need of loading the types module.
 		 * @param {sap.ui.base.ManagedObject} oObject The object to check
 		 * @param {string} sType The type given in AMD module syntax
-		 * @return {boolean}
+		 * @returns {boolean}
 		 * @private
 		 */
 		isInstanceOf : function(oObject, sType) {
@@ -102,50 +380,91 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		},
 
 		/**
-		 * Toggles the expand / collapse state of the group which contains the given Dom element.
+		 * Toggles the selection state of the row which contains the given cell DOM element.
+		 *
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @param {Object} oRef DOM reference of an element within the table group header
-		 * @param {boolean} [bExpand] If defined instead of toggling the desired state is set.
-		 * @return {boolean} <code>true</code> when the operation was performed, <code>false</code> otherwise.
+		 * @param {jQuery|HTMLElement|int} oRowIndicator The data cell in the row, or the data row index of the row,
+		 * 												 where the selection state should be toggled.
+		 * @param {boolean} [bSelect] If defined, then instead of toggling the desired state is set.
+		 * @param {function} [fnDoSelect] If defined, then instead of the default selection code, this custom callback is used.
+		 * @returns {boolean} Returns <code>true</code> if the selection state of the row has been changed.
 		 * @private
 		 */
-		toggleGroupHeader : function(oTable, oRef, bExpand) {
-			var $Ref = jQuery(oRef),
-				$GroupRef;
+		toggleRowSelection: function(oTable, oRowIndicator, bSelect, fnDoSelect) {
+			if (oTable == null ||
+				oTable.getBinding("rows") == null ||
+				oTable.getSelectionMode() === SelectionMode.None ||
+				oRowIndicator == null) {
 
-			if ($Ref.hasClass("sapUiTableTreeIcon")) {
-				$GroupRef = $Ref.closest("tr");
-			} else {
-				$GroupRef = $Ref.closest(".sapUiTableGroupHeader");
+				return false;
 			}
 
-			var oBinding = oTable.getBinding("rows");
-			if ($GroupRef.length > 0 && oBinding) {
-				var iRowIndex = oTable.getFirstVisibleRow() + parseInt($GroupRef.attr("data-sap-ui-rowindex"), 10);
-				var bIsExpanded = oBinding.isExpanded(iRowIndex);
-				if (bExpand === true && !bIsExpanded) { // Force expand
-					oBinding.expand(iRowIndex);
-				} else if (bExpand === false && bIsExpanded) { // Force collapse
-					oBinding.collapse(iRowIndex);
-				} else if (bExpand !== true && bExpand !== false) { // Toggle state
-					oBinding.toggleIndex(iRowIndex);
-				} else {
+			function setSelectionState(iAbsoluteRowIndex) {
+				if (!oTable._isRowSelectable(iAbsoluteRowIndex)) {
 					return false;
 				}
 
-				if (oTable._onGroupHeaderChanged) {
-					oTable._onGroupHeaderChanged(iRowIndex, !bIsExpanded);
+				oTable._iSourceRowIndex = iAbsoluteRowIndex; // To indicate that the selection was changed by user interaction.
+
+				var bSelectionChanged = true;
+
+				if (fnDoSelect) {
+					bSelectionChanged = fnDoSelect(iAbsoluteRowIndex, bSelect);
+				} else {
+
+					if (oTable.isIndexSelected(iAbsoluteRowIndex)) {
+						if (bSelect != null && bSelect) {
+							return false;
+						}
+						oTable.removeSelectionInterval(iAbsoluteRowIndex, iAbsoluteRowIndex);
+					} else {
+						if (bSelect != null && !bSelect) {
+							return false;
+						}
+						oTable.addSelectionInterval(iAbsoluteRowIndex, iAbsoluteRowIndex);
+					}
 				}
-				return true;
+
+				delete oTable._iSourceRowIndex;
+				return bSelectionChanged;
 			}
-			return false;
+
+			// Variable oRowIndicator is a row index value.
+			if (typeof oRowIndicator === "number") {
+				if (oRowIndicator < 0 || oRowIndicator >= oTable._getTotalRowCount()) {
+					return false;
+				}
+				return setSelectionState(oRowIndicator);
+
+			// Variable oRowIndicator is a jQuery object or DOM element.
+			} else {
+				var $Cell = jQuery(oRowIndicator);
+				var oCellInfo = TableUtils.getCellInfo($Cell[0]);
+				var bIsRowSelectionAllowed = TableUtils.isRowSelectionAllowed(oTable);
+
+				if (!TableUtils.Grouping.isInGroupingRow($Cell[0])
+					&& ((oCellInfo.isOfType(TableUtils.CELLTYPE.DATACELL | TableUtils.CELLTYPE.ROWACTION) && bIsRowSelectionAllowed)
+					|| (oCellInfo.isOfType(TableUtils.CELLTYPE.ROWHEADER) && TableUtils.isRowSelectorSelectionAllowed(oTable)))) {
+
+					var iAbsoluteRowIndex;
+					if (oCellInfo.isOfType(TableUtils.CELLTYPE.DATACELL)) {
+						iAbsoluteRowIndex = oTable.getRows()[parseInt($Cell.closest("tr", oTable.getDomRef()).attr("data-sap-ui-rowindex"), 10)].getIndex();
+					} else { // CELLTYPES.ROWHEADER, CELLTYPES.ROWACTION
+						iAbsoluteRowIndex = oTable.getRows()[parseInt($Cell.attr("data-sap-ui-rowindex"), 10)].getIndex();
+					}
+
+					return setSelectionState(iAbsoluteRowIndex);
+				}
+
+				return false;
+			}
 		},
 
 		/**
 		 * Returns the text to be displayed as no data message.
 		 * If a custom noData control is set null is returned.
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {String|string|null}
+		 * @returns {String|string|null}
 		 * @private
 		 */
 		getNoDataText : function(oTable) {
@@ -162,7 +481,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		/**
 		 * Returns the number of currently visible columns
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {int}
+		 * @returns {int}
 		 * @private
 		 */
 		getVisibleColumnCount : function(oTable) {
@@ -172,27 +491,37 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		/**
 		 * Returns the number of header rows
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {int}
+		 * @returns {int}
 		 * @private
 		 */
 		getHeaderRowCount : function(oTable) {
-			if (!oTable.getColumnHeaderVisible()) {
-				return 0;
+
+			if (oTable._iHeaderRowCount === undefined) {
+				if (!oTable.getColumnHeaderVisible()) {
+					oTable._iHeaderRowCount = 0;
+				} else {
+					var iHeaderRows = 1;
+					var aColumns = oTable.getColumns();
+					for (var i = 0; i < aColumns.length; i++) {
+						if (aColumns[i].shouldRender()) {
+							// only visible columns need to be considered. We don't invoke getVisibleColumns due to
+							// performance considerations. With several dozens of columns, it's quite costy to loop them twice.
+							iHeaderRows = Math.max(iHeaderRows, aColumns[i].getMultiLabels().length);
+						}
+					}
+					oTable._iHeaderRowCount = iHeaderRows;
+				}
 			}
-			var iHeaderRows = 0;
-			jQuery.each(oTable._getVisibleColumns(), function(iIndex, oColumn) {
-				iHeaderRows = Math.max(iHeaderRows,  oColumn.getMultiLabels().length);
-			});
-			return iHeaderRows > 0 ? iHeaderRows : 1;
+			return oTable._iHeaderRowCount;
 		},
 
-		/**
+		/* *
 		 * Returns the height of the defined row, identified by its row index.
 		 * @param {Object} oTable current table object
 		 * @param {int} iRowIndex the index of the row which height is needed
 		 * @private
-		 * @return {number}
-		 */
+		 * @returns {int}
+		 * /
 		getRowHeightByIndex : function(oTable, iRowIndex) {
 			var iRowHeight = 0;
 
@@ -211,7 +540,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			}
 
 			return iRowHeight;
-		},
+		},*/
 
 		/**
 		 * Checks whether all conditions for pixel-based scrolling (Variable Row Height) are fulfilled.
@@ -220,10 +549,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * @private
 		 */
 		isVariableRowHeightEnabled : function(oTable) {
-			return oTable._bVariableRowHeightEnabled
-				&& oTable.getNavigationMode() === NavigationMode.Scrollbar
-				&& oTable.getFixedRowCount() <= 0
-				&& oTable.getFixedBottomRowCount() <= 0;
+			return oTable._bVariableRowHeightEnabled && oTable.getFixedRowCount() <= 0 && oTable.getFixedBottomRowCount() <= 0;
 		},
 
 		/**
@@ -232,11 +558,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * rows is smaller than the number of visible rows)
 		 * @param {sap.ui.table.Table} oTable Instance of the table
 		 * @param {boolean} bIncludeEmptyRows
-		 * @return {int}
+		 * @returns {int}
 		 * @private
 		 */
 		getTotalRowCount : function(oTable, bIncludeEmptyRows) {
-			var iRowCount = oTable._getRowCount();
+			var iRowCount = oTable._getTotalRowCount();
 			if (bIncludeEmptyRows) {
 				iRowCount = Math.max(iRowCount, oTable.getVisibleRowCount());
 			}
@@ -252,20 +578,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * @private
 		 */
 		getNonEmptyVisibleRowCount : function(oTable) {
-			return Math.min(oTable.getVisibleRowCount(), oTable._getRowCount());
+			return Math.min(oTable.getVisibleRowCount(), oTable._getTotalRowCount());
 		},
 
 		/**
 		 * Returns a combined info about the currently focused item (based on the item navigation)
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {Object|null}
-		 * @type {Object}
-		 * @property {int} cell Index of focused cell in ItemNavigation
-		 * @property {int} columnCount Number of columns in ItemNavigation
-		 * @property {int} cellInRow Index of the cell in row
-		 * @property {int} row Index of row in ItemNavigation
-		 * @property {int} cellCount Number of cells in ItemNavigation
-		 * @property {Object|undefined} domRef Focused DOM reference of undefined
+		 * @returns {sap.ui.table.TableUtils.FocusedItemInfo|null} Returns the information about the focused item, or <code>null</code>, if the
+		 *                                                         item navigation is not yet initialized.
+		 * @typedef {Object} sap.ui.table.TableUtils.FocusedItemInfo
+		 * @property {int} cell Index of focused cell in the ItemNavigation.
+		 * @property {int} columnCount Number of columns in the ItemNavigation.
+		 * @property {int} cellInRow Index of the cell in the row.
+		 * @property {int} row Index of row in the ItemNavigation.
+		 * @property {int} cellCount Number of cells in the ItemNavigation.
+		 * @property {Object|undefined} domRef Reference to the focused DOM element.
 		 * @private
 		 */
 		getFocusedItemInfo : function(oTable) {
@@ -284,20 +611,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		},
 
 		/**
-		 * Returns the index of the column (in the array of visible columns (see Table._getVisibleColumns())) of the current focused cell
-		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {int}
-		 * @private
-		 */
-		getColumnIndexOfFocusedCell : function(oTable) {
-			var oInfo = TableUtils.getFocusedItemInfo(oTable);
-			return oInfo.cellInRow - (TableUtils.hasRowHeader(oTable) ? 1 : 0);
-		},
-
-		/**
 		 * Returns the index of the row (in the rows aggregation) of the current focused cell
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {int}
+		 * @returns {int}
 		 * @private
 		 *
 		 */
@@ -307,43 +623,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		},
 
 		/**
-		 * Returns whether the given cell is located in a group header.
-		 * @param {Object} oCellRef DOM reference of table cell
-		 * @return {boolean}
-		 * @private
-		 */
-		isInGroupingRow : function(oCellRef) {
-			var oInfo = TableUtils.getCellInfo(oCellRef);
-			if (oInfo && oInfo.type === TableUtils.CELLTYPES.DATACELL) {
-				return oInfo.cell.parent().hasClass("sapUiTableGroupHeader");
-			} else if (oInfo && oInfo.type === TableUtils.CELLTYPES.ROWHEADER) {
-				return oInfo.cell.hasClass("sapUiTableGroupHeader");
-			}
-			return false;
-		},
-
-		/**
-		 * Returns whether the given cell is located in a analytical summary row.
-		 * @param {Object} oCellRef DOM reference of table cell
-		 * @return {boolean}
-		 * @private
-		 */
-		isInSumRow : function(oCellRef) {
-			var oInfo = TableUtils.getCellInfo(oCellRef);
-			if (oInfo && oInfo.type === TableUtils.CELLTYPES.DATACELL) {
-				return oInfo.cell.parent().hasClass("sapUiAnalyticalTableSum");
-			} else if (oInfo && oInfo.type === TableUtils.CELLTYPES.ROWHEADER) {
-				return oInfo.cell.hasClass("sapUiAnalyticalTableSum");
-			}
-			return false;
-		},
-
-		/**
 		 * Returns whether column with the given index (in the array of visible columns (see Table._getVisibleColumns()))
 		 * is a fixed column.
 		 * @param {sap.ui.table.Table} oTable Instance of the table
 		 * @param {int} iColIdx Index of column in the tables column aggregation
-		 * @return {boolean}
+		 * @returns {boolean}
 		 * @private
 		 */
 		isFixedColumn : function(oTable, iColIdx) {
@@ -353,7 +637,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		/**
 		 * Returns whether the table has fixed columns.
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @return {boolean}
+		 * @returns {boolean}
 		 * @private
 		 */
 		hasFixedColumns : function(oTable) {
@@ -375,55 +659,114 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		},
 
 		/**
-		 * Returns the cell type and the jQuery wrapper object of the given cell dom ref or
-		 * null if the given dom element is not a table cell.
-		 * {type: <TYPE>, cell: <$CELL>}
-		 * @param {Object} oCellRef DOM reference of table cell
-		 * @return {Object}
-		 * @type {Object}
-		 * @property {sap.ui.table.CELLTYPES} type
-		 * @property {Object} cell jQuery object of the cell
-		 * @see TableUtils.CELLTYPES
-		 * @private
+		 * The following rules apply for the cell information.
+		 * <ul>
+		 *     <li><b>type</b>: Is <code>0</code>, if the cell is not a table cell.</li>
+		 *     <li><b>rowIndex</b>: Is <code>null</code>, if the cell is not a table cell or the SelectAll cell. The header rows and content rows have
+		 *     their own index areas. This means, that the index of the first content row starts from 0 again.</li>
+		 *     <li><b>columnIndex</b>: The index of the column in the <code>columns</code> aggregation. Is <code>null</code>, if the cell is not a
+		 *     table cell. Is <code>-1</code> for row header cells (including the SelectAll cell). Is <code>-2</code> for row action cells.</li>
+		 *     <li><b>spanLength</b>: Is <code>null</code>, if the cell is not a table cell. For all cells (including the SelectAll cell) other
+		 *     than column header cells the <code>spanLength</code> is always <code>1</code>.</li>
+		 *     <li><b>cell</b>: Is <code>null</code>, if the cell is not a table cell.</li>
+		 * </ul>
+		 *
+		 * @typedef {Object} sap.ui.table.TableUtils.CellInfo
+		 * @property {sap.ui.table.TableUtils.CellType} [type] The type of the cell.
+		 * @property {int|null} [rowIndex] The index of the row the cell is inside.
+		 * @property {int|null} columnIndex The index of the column, in the <code>columns</code> aggregation, the cell is inside.
+		 * @property {int|null} columnSpan The amount of columns the cell spans over.
+		 * @property {jQuery|null} cell The jQuery reference to the table cell.
+		 * @property {sap.ui.table.TableUtils.CellInfo#isOfType} isOfType Function to check for the type of the cell.
 		 */
-		getCellInfo : function(oCellRef) {
-			if (!oCellRef) {
-				return null;
-			}
-			var $Cell = jQuery(oCellRef);
-			if ($Cell.hasClass("sapUiTableTd")) {
-				return {type: TableUtils.CELLTYPES.DATACELL, cell: $Cell};
-			} else if ($Cell.hasClass("sapUiTableCol")) {
-				return {type: TableUtils.CELLTYPES.COLUMNHEADER, cell: $Cell};
-			} else if ($Cell.hasClass("sapUiTableRowHdr")) {
-				return {type: TableUtils.CELLTYPES.ROWHEADER, cell: $Cell};
-			} else if ($Cell.hasClass("sapUiTableColRowHdr")) {
-				return {type: TableUtils.CELLTYPES.COLUMNROWHEADER, cell: $Cell};
-			}
-			return null;
-		},
 
 		/**
-		 * Returns the index and span information of a column header cell.
-		 * @param {jQuery|HtmlElement} oCell The column header cell.
-		 * @returns {{index: int, span: int}|null} Returns <code>null</code> if <code>oCell</code> is not a table column header cell.
+		 * Collects all available information of a table cell by reading the DOM and returns them in a single object.
+		 *
+		 * @param {jQuery|HTMLElement} oCellRef DOM reference of a table cell.
+		 * @returns {sap.ui.table.TableUtils.CellInfo} An object containing information about the cell.
+		 * @see sap.ui.table.TableUtils.CellInfo
+		 * @private
 		 */
-		getColumnHeaderCellInfo: function(oCell) {
-			if (oCell == null) {
-				return null;
+		getCellInfo: function(oCellRef) {
+			var oCellInfo;
+			var $Cell = jQuery(oCellRef);
+			var sColumnId;
+			var oColumn;
+			var rRowIndex;
+			var aRowIndexMatch;
+			var iRowIndex;
+
+			// Initialize cell info object with default values.
+			oCellInfo = {
+				type: 0,
+				cell: null,
+				rowIndex: null,
+				columnIndex: null,
+				columnSpan: null
+			};
+
+			if ($Cell.hasClass("sapUiTableTd")) { // Data Cell
+				sColumnId = $Cell.data("sap-ui-colid");
+				oColumn = sap.ui.getCore().byId(sColumnId);
+
+				oCellInfo.type = TableUtils.CELLTYPE.DATACELL;
+				oCellInfo.rowIndex = parseInt($Cell.parent().data("sap-ui-rowindex"), 10);
+				oCellInfo.columnIndex = oColumn.getIndex();
+				oCellInfo.columnSpan = 1;
+
+			} else if ($Cell.hasClass("sapUiTableCol")) { // Column Header Cell
+				rRowIndex = /_([\d]+)/;
+				sColumnId = $Cell.attr("id");
+				aRowIndexMatch = rRowIndex.exec(sColumnId);
+				iRowIndex =  aRowIndexMatch == null || aRowIndexMatch[1] == null ? 0 : parseInt(aRowIndexMatch[1], 10);
+
+				oCellInfo.type = TableUtils.CELLTYPE.COLUMNHEADER;
+				oCellInfo.rowIndex = iRowIndex;
+				oCellInfo.columnIndex = parseInt($Cell.data("sap-ui-colindex"), 10);
+				oCellInfo.columnSpan = parseInt($Cell.attr("colspan") || 1, 10);
+
+			} else if ($Cell.hasClass("sapUiTableRowHdr")) { // Row Header Cell
+				oCellInfo.type = TableUtils.CELLTYPE.ROWHEADER;
+				oCellInfo.rowIndex = parseInt($Cell.data("sap-ui-rowindex"), 10);
+				oCellInfo.columnIndex = -1;
+				oCellInfo.columnSpan = 1;
+
+			} else if ($Cell.hasClass("sapUiTableRowAction")) { // Row Action Cell
+				oCellInfo.type = TableUtils.CELLTYPE.ROWACTION;
+				oCellInfo.rowIndex = parseInt($Cell.data("sap-ui-rowindex"), 10);
+				oCellInfo.columnIndex = -2;
+				oCellInfo.columnSpan = 1;
+
+			} else if ($Cell.hasClass("sapUiTableColRowHdr")) { // SelectAll Cell
+				oCellInfo.type = TableUtils.CELLTYPE.COLUMNROWHEADER;
+				oCellInfo.columnIndex = -1;
+				oCellInfo.columnSpan = 1;
 			}
 
-			var $Cell = jQuery(oCell);
-			var oCellInfo = this.getCellInfo($Cell);
-
-			if (oCellInfo !== null && oCellInfo.type === TableUtils.CELLTYPES.COLUMNHEADER) {
-				return {
-					index: parseInt($Cell.data("sap-ui-colindex"), 10),
-					span: parseInt($Cell.data("sap-ui-colspan"), 10)
-				};
-			} else {
-				return null;
+			// Set the cell object for easier access to the cell for the caller.
+			if (oCellInfo.type !== 0) {
+				oCellInfo.cell = $Cell;
 			}
+
+			/**
+			 * Function to check whether a cell is of certain types. Cell types are flags and have to be passed as a bitmask.
+			 * Returns true if the cell is of one of the specified types, otherwise false. Also returns false if no or an invalid bitmask
+			 * is specified.
+			 *
+			 * @name sap.ui.table.TableUtils.CellInfo#isOfType
+			 * @param {int} cellTypeMask Bitmask of cell types to check.
+			 * @returns {boolean} Whether the specified cell type mask matches the type of the cell.
+			 * @see CELLTYPE
+			 */
+			oCellInfo.isOfType = function(cellTypeMask) {
+				if (cellTypeMask == null) {
+					return false;
+				}
+				return (this.type & cellTypeMask) > 0;
+			};
+
+			return oCellInfo;
 		},
 
 		/**
@@ -431,31 +774,106 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * and column index (in the array of visible columns (see Table._getVisibleColumns()).
 		 * @param {sap.ui.table.Table} oTable Instance of the table
 		 * @param {int} iRowIdx Index of row in the tables rows aggregation
-		 * @param {int} iColIdx Index of column in the tables columns aggregation
-		 * @return {Object}
+		 * @param {int} iColIdx Index of column in the list of visible columns
+		 * @param {boolean} bIdxInColumnAgg Whether the given column index is the index in the columns (<code>true</code>)
+		 * 									aggregation or in the list of visble columns (<code>false</code>).
+		 * @returns {Object}
 		 * @type {Object}
 		 * @property {sap.ui.table.Row} row Row of the table
 		 * @property {sap.ui.table.Column} column Column of the table
 		 * @property {sap.ui.core.Control} cell Cell control of row/column
 		 * @private
 		 */
-		getRowColCell : function(oTable, iRowIdx, iColIdx) {
-			var oRow = oTable.getRows()[iRowIdx];
-			var oColumn = oTable._getVisibleColumns()[iColIdx];
-			var oCell = oRow && oRow.getCells()[iColIdx];
+		getRowColCell : function(oTable, iRowIdx, iColIdx, bIdxInColumnAgg) {
+			var oRow = iRowIdx >= 0 && iRowIdx < oTable.getRows().length ? oTable.getRows()[iRowIdx] : null;
+			var aColumns = bIdxInColumnAgg ? oTable.getColumns() : oTable._getVisibleColumns();
+			var oColumn = iColIdx >= 0 && iColIdx < aColumns.length ? aColumns[iColIdx] : null;
+			var oCell = null;
 
-			//TBD: Clarify why this is needed!
-			if (oCell && oCell.data("sap-ui-colid") != oColumn.getId()) {
-				var aCells = oRow.getCells();
-				for (var i = 0; i < aCells.length; i++) {
-					if (aCells[i].data("sap-ui-colid") === oColumn.getId()) {
-						oCell = aCells[i];
-						break;
+			if (oRow && oColumn) {
+				if (bIdxInColumnAgg) {
+					if (oColumn.shouldRender()) {
+						var aVisibleColumns = oTable._getVisibleColumns();
+						for (var i = 0; i < aVisibleColumns.length; i++) {
+							if (aVisibleColumns[i] === oColumn) {
+								oCell = oRow.getCells()[i];
+								break;
+							}
+						}
+					}
+				} else {
+					oCell = oRow.getCells()[iColIdx];
+				}
+
+				//TBD: Clarify why this is needed!
+				if (oCell && oCell.data("sap-ui-colid") != oColumn.getId()) {
+					var aCells = oRow.getCells();
+					for (var i = 0; i < aCells.length; i++) {
+						if (aCells[i].data("sap-ui-colid") === oColumn.getId()) {
+							oCell = aCells[i];
+							break;
+						}
 					}
 				}
 			}
 
 			return {row: oRow, column: oColumn, cell: oCell};
+		},
+
+		/**
+		 * Returns the table cell which is either the parent of an element, or returns the element if it is a table cell itself.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table used as the context within which to search for the cell.
+		 * @param {jQuery|HTMLElement} oElement A table cell or an element inside a table cell.
+		 * @returns {jQuery|null} Returns <code>null</code>, if the element is neither a table cell nor inside a table cell.
+		 * @private
+		 */
+		getCell: function(oTable, oElement) {
+			if (oTable == null || oElement == null) {
+				return null;
+			}
+
+			var $Element = jQuery(oElement);
+			var $Cell;
+			var oTableElement = oTable.getDomRef();
+			var aTableCellSelectors = [
+				".sapUiTableTd",
+				".sapUiTableCol",
+				".sapUiTableRowHdr",
+				".sapUiTableRowAction",
+				".sapUiTableColRowHdr"
+			];
+			var sSelector;
+
+			for (var i = 0; i < aTableCellSelectors.length; i++) {
+				sSelector = aTableCellSelectors[i];
+				$Cell = $Element.closest(sSelector, oTableElement);
+
+				if ($Cell.length > 0) {
+					return $Cell;
+				}
+			}
+
+			return null;
+		},
+
+		/**
+		 * Returns the table cell which is the parent of an element.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table used as the context within which to search for the parent cell.
+		 * @param {jQuery|HTMLElement} oElement An element inside a table cell.
+		 * @returns {jQuery|null} Returns <code>null</code>, if the element is not inside a table cell.
+		 * @private
+		 */
+		getParentCell: function(oTable, oElement) {
+			var $Element = jQuery(oElement);
+			var $Cell = TableUtils.getCell(oTable, oElement);
+
+			if ($Cell === null || $Cell[0] === $Element[0]) {
+				return null; // The element is not inside a table cell.
+			} else {
+				return $Cell;
+			}
 		},
 
 		/**
@@ -468,7 +886,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 * @param {Function} fnHandler Function to handle the resize event
 		 * @param {boolean}[bRegisterParent] Flag to register the ResizeHandler for the parent DOM element of the one identified by sIdSuffix
 		 *
-		 * @return {int|undefined} ResizeHandler ID or undefined if the DOM element could not be found
+		 * @returns {int|undefined} ResizeHandler ID or undefined if the DOM element could not be found
 		 * @private
 		 */
 		registerResizeHandler : function(oTable, sIdSuffix, fnHandler, bRegisterParent) {
@@ -486,7 +904,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			}
 
 			// make sure that each DOM element of the table can only have one resize handler in order to avoid memory leaks
-			this.deregisterResizeHandler(oTable, sIdSuffix);
+			TableUtils.deregisterResizeHandler(oTable, sIdSuffix);
 
 			if (!oTable._mResizeHandlerIds) {
 				oTable._mResizeHandlerIds = {};
@@ -540,89 +958,35 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		},
 
 		/**
-		 * Scrolls the data in the table forward or backward by manipulating the property <code>firstVisibleRow</code>.
-		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @param {boolean} bDown Whether to scroll down or up
-		 * @param {boolean} bPage Whether scrolling should be page wise or a single step (only possibe with navigation mode <code>Scrollbar</code>)
-		 * @private
-		 */
-		scroll : function(oTable, bDown, bPage) {
-			var bPage = oTable.getNavigationMode() === NavigationMode.Scrollbar ? bPage : true;
-			var bScrolled = false;
-			var iRowCount = oTable._getRowCount();
-			var iVisibleRowCount = oTable.getVisibleRowCount();
-			var iScrollableRowCount = iVisibleRowCount - oTable.getFixedRowCount() - oTable.getFixedBottomRowCount();
-			var iFirstVisibleScrollableRow = oTable._getSanitizedFirstVisibleRow();
-			var iSize = bPage ? iScrollableRowCount : 1;
-
-			if (bDown) {
-				if (iFirstVisibleScrollableRow + iVisibleRowCount < iRowCount) {
-					oTable.setFirstVisibleRow(Math.min(iFirstVisibleScrollableRow + iSize, iRowCount - iVisibleRowCount));
-					bScrolled = true;
-				}
-			} else {
-				if (iFirstVisibleScrollableRow > 0) {
-					oTable.setFirstVisibleRow(Math.max(iFirstVisibleScrollableRow - iSize, 0));
-					bScrolled = true;
-				}
-			}
-
-			oTable._bIsScrolledByKeyboard = bScrolled;
-
-			return bScrolled;
-		},
-
-		/**
-		 * Scrolls the data in the table to the end or to the beginning by manipulating the property <code>firstVisibleRow</code>.
-		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @param {boolean} bDown Whether to scroll down or up
-		 * @returns {boolean} True if scrolling was actually performed
-		 * @private
-		 */
-		scrollMax : function(oTable, bDown) {
-			var bScrolled = false;
-			var iFirstVisibleScrollableRow = oTable._getSanitizedFirstVisibleRow();
-
-			if (bDown) {
-				var iFirstVisibleRow = oTable._getRowCount() - this.getNonEmptyVisibleRowCount(oTable);
-				if (iFirstVisibleScrollableRow < iFirstVisibleRow) {
-					oTable.setFirstVisibleRow(iFirstVisibleRow);
-					bScrolled = true;
-				}
-			} else {
-				if (iFirstVisibleScrollableRow > 0) {
-					oTable.setFirstVisibleRow(0);
-					bScrolled = true;
-				}
-			}
-
-			return bScrolled;
-		},
-
-		/**
 		 * Checks whether the cell of the given DOM reference is in the first row (from DOM point of view) of the scrollable area.
 		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @param {Object} oRef Cell DOM Reference
+		 * @param {Object|int} row Cell DOM reference or row index
 		 * @private
 		 */
-		isFirstScrollableRow : function(oTable, oRef) {
-			var $Ref = jQuery(oRef);
-			var iRowIndex = parseInt($Ref.add($Ref.parent()).filter("[data-sap-ui-rowindex]").attr("data-sap-ui-rowindex"), 10);
+		isFirstScrollableRow : function(oTable, row) {
+			if (isNaN(row)) {
+				var $Ref = jQuery(row);
+				row = parseInt($Ref.add($Ref.parent()).filter("[data-sap-ui-rowindex]").data("sap-ui-rowindex"), 10);
+			}
 			var iFixed = oTable.getFixedRowCount() || 0;
-			return iRowIndex == iFixed;
+			return row == iFixed;
 		},
 
 		/**
 		 * Checks whether the cell of the given DOM reference is in the last row (from DOM point of view) of the scrollable area.
-		 * @param {sap.ui.table.Table} oTable Instance of the table
-		 * @param {Object} oRef Cell DOM Reference
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table.
+		 * @param {jQuery|HTMLElement|int} row The row element or row index.
+		 * @returns {boolean} Returns <code>true</code>, if the row is the last scrollable row of the table based on the data.
 		 * @private
 		 */
-		isLastScrollableRow : function(oTable, oRef) {
-			var $Ref = jQuery(oRef);
-			var iRowIndex = parseInt($Ref.add($Ref.parent()).filter("[data-sap-ui-rowindex]").attr("data-sap-ui-rowindex"), 10);
+		isLastScrollableRow : function(oTable, row) {
+			if (isNaN(row)) {
+				var $Ref = jQuery(row);
+				row = parseInt($Ref.add($Ref.parent()).filter("[data-sap-ui-rowindex]").data("sap-ui-rowindex"), 10);
+			}
 			var iFixed = oTable.getFixedBottomRowCount() || 0;
-			return iRowIndex == oTable.getVisibleRowCount() - iFixed - 1;
+			return row == oTable.getVisibleRowCount() - iFixed - 1;
 		},
 
 		/**
@@ -720,144 +1084,58 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		 */
 		sanitizeSelectionMode: function(oTable, sSelectionMode) {
 			if (sSelectionMode === SelectionMode.Multi) {
-				if (!oTable._enableLegacyMultiSelection) {
-					sSelectionMode = SelectionMode.MultiToggle;
-					jQuery.sap.log.warning("The selection mode 'Multi' is deprecated and must not be used anymore. Your setting was defaulted to selection mode 'MultiToggle'");
-				} else {
-					jQuery.sap.log.warning("The selection mode 'Multi' is deprecated and must not be used anymore. Starting with SAP UI5 1.40 your setting will be defaulted to selection mode 'MultiToggle'");
-				}
+				sSelectionMode = SelectionMode.MultiToggle;
+				jQuery.sap.log.warning("The selection mode 'Multi' is deprecated and must not be used anymore. Your setting was defaulted to selection mode 'MultiToggle'");
 			}
 			return sSelectionMode;
 		},
 
 		/**
-		 * Resizes one or more visible columns by the given amount of pixels.
-		 *
-		 * In case a column span is specified:
-		 * The span covers only visible columns. If columns directly after the column with index <code>iColumnIndex</code> are invisible they
-		 * will be skipped and not be considered for resizing.
-		 * The new width <code>iWidth</code> will be equally applied among all resizable columns in the span of visible columns,
-		 * considering the minimum column width. The actual resulting width might differ due to rounding errors and the minimum column width.
-		 *
-		 * Resizing of a column won't be performed if the ColumnResize event is fired
-		 * and execution of the default action is prevented in the event handler.
-		 *
-		 * @param {sap.ui.table.Table} oTable Instance of the table.
-		 * @param {int} iColumnIndex The index of a column. Must the the index of a visible column.
-		 * @param {int} iWidth The width in pixel to set the column or column span to. Must be greater than 0.
-		 * @param {boolean} [bFireEvent=true] Whether the ColumnResize event should be fired. The event will be fired for every resized column.
-		 * @param {int} [iColumnSpan=1] The span of columns to resize beginning from <code>iColumnIndex</code>.
+		 * Checks if the given CSS width is not fix.
+		 * @param {string} sWidth
+		 * @returns {boolean} true if the width is flexible
+		 * @private
 		 */
-		resizeColumn: function(oTable, iColumnIndex, iWidth, bFireEvent, iColumnSpan) {
-			if (oTable == null ||
-				iColumnIndex == null || iColumnIndex < 0 ||
-				iWidth == null || iWidth <= 0) {
-				return;
-			}
-			if (iColumnSpan == null || iColumnSpan <= 0) {
-				iColumnSpan = 1;
-			}
-			if (bFireEvent == null) {
-				bFireEvent = true;
-			}
-
-			var aColumns = oTable.getColumns();
-			if (iColumnIndex >= aColumns.length || !aColumns[iColumnIndex].getVisible()) {
-				return;
-			}
-
-			var aVisibleColumns = [];
-			for (var i = iColumnIndex; i < aColumns.length; i++) {
-				var oColumn = aColumns[i];
-
-				if (oColumn.getVisible()) {
-					aVisibleColumns.push(oColumn);
-
-					// Consider only the required amount of visible columns.
-					if (aVisibleColumns.length === iColumnSpan) {
-						break;
-					}
-				}
-			}
-
-			var aResizableColumns = [];
-			for (var i = 0; i < aVisibleColumns.length; i++) {
-				var oVisibleColumn = aVisibleColumns[i];
-				if (oVisibleColumn.getResizable()) {
-					aResizableColumns.push(oVisibleColumn);
-				}
-			}
-			if (aResizableColumns.length === 0) {
-				return;
-			}
-
-			var iSpanWidth = 0;
-			for (var i = 0; i < aVisibleColumns.length; i++) {
-				var oVisibleColumn = aVisibleColumns[i];
-				iSpanWidth += this.getColumnWidth(oTable, oVisibleColumn.getIndex());
-			}
-
-			var iPixelDelta = iWidth - iSpanWidth;
-			var iSharedPixelDelta = Math.round(iPixelDelta / aResizableColumns.length);
-
-			// Resize all resizable columns. Share the width change (pixel delta) between them.
-			for (var i = 0; i < aResizableColumns.length; i++) {
-				var oResizableColumn = aResizableColumns[i];
-				var iColumnWidth = this.getColumnWidth(oTable, oResizableColumn.getIndex());
-
-				var iNewWidth = iColumnWidth + iSharedPixelDelta;
-				if (iNewWidth < oTable._iColMinWidth) {
-					iNewWidth = oTable._iColMinWidth;
-				}
-
-				var iWidthChange = iNewWidth - iColumnWidth;
-
-				// Distribute any remaining delta to the remaining columns.
-				if (Math.abs(iWidthChange) < Math.abs(iSharedPixelDelta)) {
-					var iRemainingColumnCount = aResizableColumns.length - (i + 1);
-					iPixelDelta -= iWidthChange;
-					iSharedPixelDelta = Math.round(iPixelDelta / iRemainingColumnCount);
-				}
-
-				if (iWidthChange !== 0) {
-					var bExecuteDefault = true;
-
-					if (bFireEvent) {
-						bExecuteDefault = oTable.fireColumnResize({
-							column: oResizableColumn,
-							width: iNewWidth
-						});
-					}
-
-					if (bExecuteDefault) {
-						oResizableColumn.setWidth(iNewWidth + "px");
-					}
-				}
-			}
+		isVariableWidth: function(sWidth) {
+			return !sWidth || sWidth == "auto" || sWidth.toString().match(/%$/);
 		},
 
 		/**
-		 * Returns the width of a visible column in pixels.
-		 * @param {sap.ui.table.Table} oTable Instance of the table.
-		 * @param {int} iColumnIndex The index of a column. Must be a visible column.
-		 * @returns {int|null} Returns <code>null</code> if <code>iColumnIndex</code> is out of bound.
+		 * Returns the index of the first fixed buttom row in the <code>rows</code> aggregation.
+		 *
+		 * @param {sap.ui.table.Table} oTable Instance of the table
+		 * @returns {int} The index of the first fixed buttom row in the <code>rows</code> aggregation, or <code>-1</code>.
+		 * @private
 		 */
-		getColumnWidth: function(oTable, iColumnIndex) {
-			if (oTable == null ||
-				iColumnIndex == null || iColumnIndex < 0) {
-				return null;
+		getFirstFixedButtomRowIndex: function(oTable) {
+			var iFixedBottomRowCount = oTable.getFixedBottomRowCount();
+			var oBinding = oTable.getBinding("rows");
+			var iFirstFixedButtomIndex = -1;
+
+			if (oBinding && iFixedBottomRowCount > 0) {
+				var iVisibleRowCount = oTable.getVisibleRowCount();
+				var iFirstVisibleRow = oTable.getFirstVisibleRow();
+				var iTotalRowCount = oTable._getTotalRowCount();
+
+				if (iTotalRowCount >= iVisibleRowCount) {
+					iFirstFixedButtomIndex = iVisibleRowCount - iFixedBottomRowCount;
+				} else {
+					var iIdx = iTotalRowCount - iFixedBottomRowCount - iFirstVisibleRow;
+					if (iIdx >= 0 && (iFirstVisibleRow + iIdx) < iTotalRowCount) {
+						iFirstFixedButtomIndex = iIdx;
+					}
+				}
 			}
 
-			var aColumns = oTable.getColumns();
-			if (iColumnIndex >= aColumns.length) {
-				return null;
-			}
-
-			var oColumn = aColumns[iColumnIndex];
-
-			return oTable._CSSSizeToPixel(oColumn.getWidth());
+			return iFirstFixedButtomIndex;
 		}
 	};
+
+	// Avoid cyclic dependency.
+	TableGrouping.TableUtils = TableUtils;
+	TableColumnUtils.TableUtils = TableUtils;
+	TableMenuUtils.TableUtils = TableUtils;
+	TableBindingUtils.TableUtils = TableUtils;
 
 	return TableUtils;
 

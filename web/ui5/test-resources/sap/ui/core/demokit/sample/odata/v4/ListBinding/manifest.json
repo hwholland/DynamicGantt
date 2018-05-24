@@ -1,10 +1,9 @@
 {
-	"_version" : "1.1.0",
+	"_version" : "1.8.0",
 	"sap.app" : {
-		"_version" : "1.1.0",
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.38.33"
+			"version" : "1.54.5"
 		},
 		"description" : "{{sap.app.description}}",
 		"dataSources" : {
@@ -22,20 +21,14 @@
 		"type" : "application"
 	},
 	"sap.ui" : {
-		"_version" : "1.1.0",
 		"deviceTypes" : {
 			"desktop" : true,
 			"phone" : true,
 			"tablet" : true
 		},
-		"supportedThemes" : [
-			"sap_bluecrystal",
-			"sap_hcb"
-		],
 		"technology" : "UI5"
 	},
 	"sap.ui5" : {
-		"_version" : "1.1.0",
 		"config" : {
 			"sample" : {
 				"files" : [
@@ -60,10 +53,16 @@
 			"" : {
 				"dataSource" : "default",
 				"settings" : {
-					"synchronizationMode" : "None"
+					"operationMode" : "Server",
+					"synchronizationMode" : "None",
+					"updateGroupId" : "update"
 				}
 			}
 		},
-		"rootView" : "Main.view.xml"
+		"rootView" : {
+			"async" : true,
+			"type" : "XML",
+			"viewName" : "Main.view.xml"
+		}
 	}
 }

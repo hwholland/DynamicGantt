@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,17 +14,15 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 		 * Creates an instance of sap.ui.core.support.plugins.TechInfo.
 		 * @class This class represents the technical info plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
-		 * @abstract
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.38.33
-		 * @constructor
+		 * @version 1.54.5
 		 * @private
 		 * @alias sap.ui.core.support.plugins.TechInfo
 		 */
 		var TechInfo = Plugin.extend("sap.ui.core.support.plugins.TechInfo", {
 			constructor : function(oSupportStub) {
 				Plugin.apply(this, ["sapUiSupportTechInfo", "Technical Information", oSupportStub]);
-				this._aEventIds = this.isToolPlugin() ? [
+				this._aEventIds = this.runsAsToolPlugin() ? [
 					this.getId() + "Data",
 					this.getId() + "FinishedE2ETrace"
 				] : [
@@ -35,14 +33,13 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 					this.getId() + "ToggleStatistics"
 				];
 
-				if (this.isToolPlugin()) {
+				if (this.runsAsToolPlugin()) {
 					this.e2eLogLevel = "medium";
 					this.e2eTraceStarted = false;
 				}
 
 			}
 		});
-
 
 		/**
 		 * Handler for sapUiSupportTechInfoData event
@@ -56,9 +53,9 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 			oData.modules.sort();
 			this.e2eTraceStarted = oData["e2e-trace"].isStarted;
 			var html = ["<div class='sapUiSupportToolbar'>",
-						"<a href='javascript:void(0);' id='", that.getId(), "-Refresh' class='sapUiSupportLink'>Refresh</a>",
+						"<button id='", that.getId(), "-Refresh' class='sapUiSupportRoundedButton'>Refresh</button>",
 						"<div><div class='sapUiSupportTechInfoCntnt'>",
-						"<table border='0' cellpadding='3'>"];
+						"<table border='0' cellpadding='3' class='infoTable'>"];
 
 			// version information
 			function formatBuildInfo(timestamp, scmRevision) {
@@ -81,7 +78,7 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 				var oVersionInfo = sap.ui.getVersionInfo();
 				sProductName = oVersionInfo.name;
 				sVersionInfoEncoded =
-					"<a href='" + sap.ui.resource("", "sap-ui-version.json") + "' target='_blank' title='Open Version Info'>" + encode(oVersionInfo.version) + "</a>" +
+					"<a href='" + sap.ui.resource("", "sap-ui-version.json") + "' target='_blank' class='sapUiSupportLink' title='Open Version Info'>" + encode(oVersionInfo.version) + "</a>" +
 					formatBuildInfo(oVersionInfo.buildTimestamp, oVersionInfo.scmRevision);
 			} catch (ex) {
 				// ignore
@@ -101,7 +98,7 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 				return oData.useragent + (oData.docmode ? ", Document Mode '" + oData.docmode + "'" : "");
 			});
 			line(html, true, true, "Debug Sources", function(buffer){
-				buffer.push((oData.debug ? "ON" : "OFF"), "<a href='javascript:void(0);' id='", that.getId(), "-tggleDbgSrc' class='sapUiSupportLink'>Toggle</a>");
+				buffer.push((oData.debug ? "ON" : "OFF"), "<a href='#' id='", that.getId(), "-tggleDbgSrc' class='sapUiSupportLink'>Toggle</a>");
 			});
 			line(html, true, true, "Application", oData.appurl);
 			multiline(html, true, true, "Configuration (bootstrap)", oData.bootconfig);
@@ -124,13 +121,13 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 
 			line(html, true, true, "E2E Trace", function(buffer) {
 				buffer.push("<label class='sapUiSupportLabel'>Trace Level:</label>",
-					"<select id='", that.getId(), "-logLevelE2ETrace' class='sapUiSupportTxtFld' style='margin-left:10px'>",
+					"<select id='", that.getId(), "-logLevelE2ETrace' class='sapUiSupportTxtFld sapUiSupportSelect'>",
 						"<option value='low'" + (that.e2eLogLevel === 'low' ? " selected" : "") + ">LOW</option>",
 						"<option value='medium'" + (that.e2eLogLevel === 'medium' ? " selected" : "") + ">MEDIUM</option>",
 						"<option value='high'" + (that.e2eLogLevel === 'hight' ? " selected" : "") + ">HIGH</option>",
 					"</select>"
 				);
-				buffer.push("<button id='" + that.getId() + "-startE2ETrace' class='sapUiSupportBtn " +
+				buffer.push("<button id='" + that.getId() + "-startE2ETrace' class='sapUiSupportRoundedButton " +
 						(oData["e2e-trace"].isStarted ? " active" : "") + "' style='margin-left: 10px;'>" + (oData["e2e-trace"].isStarted ? "Running..." : "Start") + "</button>");
 				buffer.push("<div style='margin-top:5px'>");
 				buffer.push("<label class='sapUiSupportLabel'>XML Output:</label>");
@@ -141,10 +138,12 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 			html.push("</table></div>");
 			this.$().html(html.join(""));
 
-			this.$("tggleDbgSrc").bind("click", function(){
+			this.$("tggleDbgSrc").bind("click", function(oEvent) {
+				oEvent.preventDefault();
 				Support.getStub().sendEvent(that.getId() + "ToggleDebug", {});
 			});
-			this.$("Refresh").bind("click", function(){
+			this.$("Refresh").bind("click", function(oEvent) {
+				oEvent.preventDefault();
 				Support.getStub().sendEvent(that.getId() + "Refresh", {});
 			});
 
@@ -165,7 +164,7 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 				}
 			});
 
-			document.title = "SAPUI5 Diagnostics - " + oData.title;
+			document.title = "UI5 Diagnostics - " + oData.title;
 		};
 
 
@@ -198,16 +197,17 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 		 */
 		TechInfo.prototype.onsapUiSupportTechInfoStartE2ETrace = function(oEvent) {
 
-			jQuery.sap.require("sap.ui.core.support.trace.E2eTraceLib");
-			var E2eTraceLib = sap.ui.require('sap/ui/core/support/trace/E2eTraceLib');
+			var that = this,
+				sLevel = oEvent.getParameter("level");
 
-			var that = this;
-
-			E2eTraceLib.start(oEvent.getParameter("level"), function(traceXml) {
-				Support.getStub().sendEvent(that.getId() + "FinishedE2ETrace", {
-					trace: traceXml
+			sap.ui.require(['sap/ui/core/support/trace/E2eTraceLib'], function(E2eTraceLib) {
+				E2eTraceLib.start(sLevel, function(traceXml) {
+					Support.getStub().sendEvent(that.getId() + "FinishedE2ETrace", {
+						trace: traceXml
+					});
 				});
 			});
+
 		};
 
 		/**
@@ -245,7 +245,7 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 
 		TechInfo.prototype.init = function(oSupportStub){
 			Plugin.prototype.init.apply(this, arguments);
-			if (!this.isToolPlugin()) {
+			if (!this.runsAsToolPlugin()) {
 				sendData(this);
 				return;
 			}
@@ -302,13 +302,13 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support', '../ToolsAPI', 'j
 
 		function multiline(buffer, right, border, label, content){
 			line(buffer, right, border, label, function(buffer){
-				buffer.push("<table border='0' cellspacing='0' cellpadding='3'>");
+				buffer.push("<table border='0' cellspacing='0' cellpadding='3' style='width: 100%'>");
 				jQuery.each(content, function(i,v){
 					var val = "";
 					if (v) {
 						if (typeof (v) === "string" || typeof (v) === "string" || typeof (v) === "boolean") {
 							val = v;
-						} else if ((jQuery.isArray(v) || jQuery.isPlainObject(v)) && window.JSON) {
+						} else if ((Array.isArray(v) || jQuery.isPlainObject(v)) && window.JSON) {
 							val = window.JSON.stringify(v);
 						}
 					}

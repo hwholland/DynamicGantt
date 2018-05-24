@@ -1,8 +1,4 @@
-/*globals QUnit, sinon*/
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
-
+/*global QUnit, sinon*/
 jQuery.sap.require("sap.ui.fl.DefaultVariant");
 jQuery.sap.require("sap.ui.fl.Change");
 
@@ -122,7 +118,7 @@ jQuery.sap.require("sap.ui.fl.Change");
 		new Array(5).forEach(function(index) {
 			oChanges[index] = new Change({
 				changeType: 'hubbabubba',
-				fileType: 'change',
+				fileType: 'change'
 			});
 		});
 
@@ -214,11 +210,13 @@ jQuery.sap.require("sap.ui.fl.Change");
 				namespace: 'localchange'
 			})
 		};
+		mChanges.firstChange.setState(Change.states.PERSISTED);
 
 		var oUpdatedChange = this.oDefaultVariant.updateDefaultVariantId(mChanges, newDefaultVariantId);
 
 		assert.strictEqual(oUpdatedChange, mChanges.firstChange);
 		assert.strictEqual(mChanges.firstChange.getContent().defaultVariantName, newDefaultVariantId);
+		assert.equal(mChanges.firstChange.getState(), Change.states.DIRTY);
 	});
 
 	QUnit.test('updateDefaultVariantChange shall return undefined if no default variant change has been found', function(assert) {

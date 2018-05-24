@@ -7,7 +7,7 @@
 	<script
 		id="sap-ui-bootstrap"
 		src="../../../../../../../../../resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
+		data-sap-ui-theme="sap_belize"
 		data-sap-ui-libs="sap.m"
 		data-sap-ui-compatVersion="edge"
 		data-sap-ui-preload="async"
@@ -23,7 +23,8 @@
 			// Assign the model object to the SAPUI5 core
 			sap.ui.getCore().setModel(oModel);
 
-			// Create a text UI element that displays a hardcoded text string
+			// Display a text element whose text is derived
+			// from the model object
 			new sap.m.Text({text: "{/greetingText}"})
 				.placeAt("content");
 		});

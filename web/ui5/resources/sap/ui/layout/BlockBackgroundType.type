@@ -11,5 +11,15 @@ the control.</documentation>
         <value name="Light">
             <documentation>Background is with predefined light colors</documentation>
         </value>
+        <value name="Mixed">
+            <documentation>Background with bright and dark background colors</documentation>
+            <deprecation since="1.50"></deprecation>
+        </value>
+        <value name="Accent">
+            <documentation>Background with pre-defined accent colors</documentation>
+        </value>
+        <value name="Dashboard">
+            <documentation>For applications that want to make use of e.g. charts in the Blocks, this layout type has spacings around the Blocks</documentation>
+        </value>
     </enumeration>
 </simple-type>

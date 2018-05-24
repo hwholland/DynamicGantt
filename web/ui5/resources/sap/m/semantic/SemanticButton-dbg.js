@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -13,14 +13,14 @@ sap.ui.define(['sap/m/semantic/SemanticControl', 'sap/m/Button', 'sap/m/semantic
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * A semantic button is either a {@link sap.m.Button} or {@link sap.m.OverflowButton} ,
+	 * A semantic button is either a {@link sap.m.Button} or {@link sap.m.semantic.SemanticOverflowToolbarButton} ,
 	 * eligible for aggregation content of a {@link sap.m.semantic.SemanticPage}.
 	 *
 	 * @extends sap.m.semantic.SemanticControl
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -32,6 +32,7 @@ sap.ui.define(['sap/m/semantic/SemanticControl', 'sap/m/Button', 'sap/m/semantic
 	var SemanticButton = SemanticControl.extend("sap.m.semantic.SemanticButton", /** @lends sap.m.semantic.SemanticButton.prototype */ {
 		metadata : {
 			library : "sap.m",
+			"abstract" : true,
 			properties : {
 
 				/**
@@ -52,9 +53,6 @@ sap.ui.define(['sap/m/semantic/SemanticControl', 'sap/m/Button', 'sap/m/semantic
 		}
 	});
 
-	/**
-	 * @Overwrites
-	 */
 	SemanticButton.prototype._getControl = function() {
 
 		var oControl = this.getAggregation('_control');
@@ -86,4 +84,4 @@ sap.ui.define(['sap/m/semantic/SemanticControl', 'sap/m/Button', 'sap/m/semantic
 	};
 
 	return SemanticButton;
-}, /* bExport= */ true);
+});

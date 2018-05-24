@@ -2,7 +2,12 @@
 <control xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>ObjectAttribute</name>
     <derived/>
-    <documentation>The ObjectAttribute control displays a text field that can be normal or active. The ObjectAttribute fires a press event when the user selects active text.</documentation>
+    <documentation>The &lt;code&gt;ObjectAttribute&lt;/code&gt; control displays a text field that can be normal or active.
+The &lt;code&gt;ObjectAttribute&lt;/code&gt; fires a &lt;code&gt;press&lt;/code&gt; event when the user chooses the active text.
+
+&lt;b&gt;Note:&lt;/b&gt; If property &lt;code&gt;active&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt;, only the value of the
+&lt;code&gt;text&lt;/code&gt; property is styled and acts as a link. In this case the &lt;code&gt;text&lt;/code&gt;
+property must also be set, as otherwise there will be no link displayed for the user.</documentation>
     <since>1.12</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
@@ -13,7 +18,9 @@
             <documentation>Defines the ObjectAttribute text.</documentation>
         </property>
         <property name="active" type="sap.ui.core/boolean" group="Misc">
-            <documentation>Indicates if the ObjectAttribute text is selectable for the user.</documentation>
+            <documentation>Indicates if the &lt;code&gt;ObjectAttribute&lt;/code&gt; text is selectable for the user.
+
+&lt;b&gt;Note:&lt;/b&gt; As of version 1.48, only the value of the &lt;code&gt;text&lt;/code&gt; property becomes active (styled and acts like a link) as opposed to both the &lt;code&gt;title&lt;/code&gt; and &lt;code&gt;text&lt;/code&gt; in the previous versions. If you set this property to &lt;code&gt;true&lt;/code&gt;, you have to also set the &lt;code&gt;text&lt;/code&gt; property.</documentation>
         </property>
         <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance">
             <documentation>Determines the direction of the text, not including the title.

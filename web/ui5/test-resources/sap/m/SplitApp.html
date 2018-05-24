@@ -3,19 +3,54 @@
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>SplitApp - sap.m</title>
+		<script src="shared-config.js"></script>
 		<script src="../../../resources/sap-ui-core.js"
 				id="sap-ui-bootstrap"
-				data-sap-ui-libs="sap.m,sap.ui.commons"
-				data-sap-ui-theme="sap_bluecrystal">
+				data-sap-ui-libs="sap.m">
 
 		</script>
-		<script type="text/javascript">
+		<script>
+			function generateDetailPage2Content() {
+				var aContent = [];
+				var sLabelText = "This is detail ";
+				var iInputCount = 19;
+				var oLabelControl;
+				var oInputControl;
+
+				for (var iNumber = 0; iNumber < iInputCount; iNumber += 1) {
+					oInputControl = new sap.m.Input();
+					oLabelControl = new sap.m.Label({
+						labelFor: oInputControl.getId(),
+						text: sLabelText + (iNumber + 1)
+					});
+					aContent.push(oLabelControl);
+					aContent.push(oInputControl);
+				}
+
+				return aContent;
+			}
+
+			function createIconCompetitorsButtons() {
+				var buttonCount = 4;
+				var content = [];
+
+				for (var number = 0; number < buttonCount; number += 1) {
+					content.push(new sap.m.Button({
+						icon: "images/iconCompetitors.png",
+						tooltip: "Competitors icon " + ++number
+					}))
+				}
+
+				return content;
+			}
+
 			// create first detail page
 			var oDetailPage = new sap.m.Page("detail", {
 				title: "Detail 1",
 				content: [
 					new sap.m.Label({
-						text: "this is Detail 1"
+						text: "this is Detail 1",
+						labelFor: "saNavigationToDetail"
 					}),
 					new sap.m.Button("saNavigationToDetail", {
 						text: "To DetailDetail",
@@ -58,16 +93,20 @@
 					id: "detail-footer",
 					contentMiddle: [
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon detail 1"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon detail 2"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon detail 3"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon detail 4"
 						})
 					]
 				})
@@ -124,82 +163,7 @@
 					oSplitApp.backDetail();
 				},
 				content: [
-					new sap.m.Label({
-						text: "this is Detail 1"
-					}),
-					oScrollToElementInput2,
-					new sap.m.Label({
-						text: "this is Detail 2"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 3"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 4"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 5"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 6"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 7"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 8"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 9"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 10"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 11"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 12"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 13"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 14"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 15"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 16"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 17"
-					}),
-					new sap.m.Input(),
-					new sap.m.Label({
-						text: "this is Detail 18"
-					}),
-					oScrollToElementInput,
-					new sap.m.Label({
-						text: "this is Detail 19"
-					}),
-					new sap.m.Input()
+					generateDetailPage2Content()
 				],
 				subHeader: new sap.m.Bar({
 					contentMiddle: []
@@ -207,18 +171,7 @@
 				footer: new sap.m.Bar({
 					id: "detai2l-footer",
 					contentMiddle: [
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						})
+						createIconCompetitorsButtons()
 					]
 				})
 			}).addStyleClass("sapUiStdPage");
@@ -245,32 +198,37 @@
 					id: "master-footer",
 					contentMiddle: [
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon master 1"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon master 2"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon master 3"
 						}),
 						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
+							icon: "images/iconCompetitors.png",
+							tooltip: "Competitors icon master 4"
 						})
 					]
 				})
 			});
 
+			var iDetailPage2Lenght = oDetailPage2.getContent().length;
 			var oButtonToLast = new sap.m.Button({
 				text: "Scroll to last input",
 				press: function() {
-					oDetailPage2.scrollToElement( document.getElementById("oScrollToElementInput"), 1000 );
+					oDetailPage2.scrollToElement( oDetailPage2.getContent()[iDetailPage2Lenght - 1], 1000 );
 				}
 			});
 
 			var oButtonToFirst = new sap.m.Button({
 				text: "Scroll to first input",
 				press: function() {
-					oDetailPage2.scrollToElement( document.getElementById("oScrollToElementInput2"), 1000 );
+					oDetailPage2.scrollToElement( oDetailPage2.getContent()[1], 1000 );
 				}
 			});
 
@@ -319,18 +277,7 @@
 				footer: new sap.m.Bar({
 					id: "master2-footer",
 					contentMiddle: [
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						}),
-						new sap.m.Button({
-							icon: "images/iconCompetitors.png"
-						})
+						createIconCompetitorsButtons()
 					]
 				})
 			});

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The preload variant for bootstrapping (library-preload.js) is used if you want to load all JavaScript modules of a library in advance with one single request for performance reasons. It provides the auto, sync and async parameters for synchronous or asynchronous loading of the modules."/>
 <meta name="description" content="The preload variant for bootstrapping (library-preload.js) is used if you want to load all JavaScript modules of a library in advance with one single request for performance reasons. It provides the auto, sync and async parameters for synchronous or asynchronous loading of the modules."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=11847226948411793"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=44275987814223616"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=44275987814223616"/>
 <title>Preload Variant for Bootstrapping</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio91f1e3626f4d1014b6dd926db0e91070">
 <div id="wrapper"><div id="container">
@@ -42,7 +28,7 @@
 					<samp class="ph codeph">preload</samp>, SAPUI5 automatically loads the file.</p>
 
 		</div>
-<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> runtime executes the code only if the application requires the module. Thus, the preload
+<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> runtime executes the code only if the application requires the module. Thus, the preload
 			variant significantly reduces the number of roundtrips. To activate the preload variant,
 			set the <samp class="ph codeph">preload</samp> configuration parameter with one of the following
 			values:</p>
@@ -52,11 +38,11 @@
 
 				<p class="p">If you set the <samp class="ph codeph">preload</samp> configuration option to
 						<samp class="ph codeph">async</samp>, the runtime loads the modules for all declared
-					libraries asynchronously. Thus, any code that follows the <span class="ph"><span class="ph pname">SAPUI5</span></span> bootstrap
-					tag can <strong class="ph b">not</strong> be sure that the <span class="ph"><span class="ph pname">SAPUI5</span></span> classes are
-					available already. Therefore, the application must delay the access to the <span class="ph"><span class="ph pname">SAPUI5</span></span> APIs by
-					using the <samp class="ph codeph">Core.attachInitEvent</samp> method. <span class="ph"><span class="ph pname">SAPUI5</span></span> supports the
-						<samp class="ph codeph">async</samp> mode only for libraries that are loaded by the <span class="ph"><span class="ph pname">SAPUI5</span></span> core.
+					libraries asynchronously. Thus, any code that follows the <span class="ph"><span class="ph pname">OpenUI5</span></span> bootstrap
+					tag can <strong class="ph b">not</strong> be sure that the <span class="ph"><span class="ph pname">OpenUI5</span></span> classes are
+					available already. Therefore, the application must delay the access to the <span class="ph"><span class="ph pname">OpenUI5</span></span> APIs by
+					using the <samp class="ph codeph">Core.attachInitEvent</samp> method. <span class="ph"><span class="ph pname">OpenUI5</span></span> supports the
+						<samp class="ph codeph">async</samp> mode only for libraries that are loaded by the <span class="ph"><span class="ph pname">OpenUI5</span></span> core.
 					Libraries that are loaded dynamically by using the
 						<samp class="ph codeph">sap.ui.getCore().loadLibrary()</samp> API will be preloaded with
 						<samp class="ph codeph">preload=sync</samp>.</p>
@@ -78,7 +64,7 @@
 				</p>
 
 		  <p class="p">The <samp class="ph codeph">preload=auto</samp> configuration parameter is the default value. This mode
-		  	checks whether <span class="ph"><span class="ph pname">SAPUI5</span></span> runtime uses optimized sources. If optimized sources are
+		  	checks whether <span class="ph"><span class="ph pname">OpenUI5</span></span> runtime uses optimized sources. If optimized sources are
 					used, it enables the <samp class="ph codeph">preload=sync</samp> option to further optimize
 					the runtime. For normal or debug sources, the preload is deactivated.</p>
  
@@ -93,12 +79,12 @@
 				<samp class="ph codeph">sap-ui-preload=/mode/</samp> parameter in the start URL by adding the
 				<samp class="ph codeph">data-sap-ui-preload</samp> attribute to the bootstrap tag:</p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;script 
     id="sap-ui-bootstrap"            
     src="resources/sap-ui-core.js" 
-    data-sap-ui-libs="sap.ui.m"
-    data-sap-ui-theme="sap_bluecrystal" 
+    data-sap-ui-libs="sap.m"
+    data-sap-ui-theme="sap_belize" 
     data-sap-ui-preload="async" &gt;
 &lt;/script&gt;</pre></div>
 <div class="note note" id="loio91f1e3626f4d1014b6dd926db0e91070__note_N10070_N10013_N10001"><span class="notetitle">Note</span> The <samp class="ph codeph">preload=async</samp> option requires active
@@ -110,26 +96,12 @@
 
 	<div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f1dd0c6f4d1014b6dd926db0e91070.html" title="The noJQuery variant supports bootstrapping for an application that already integrates jQuery or uses a different jQuery version than SAPUI5.">noJQuery Variant for Bootstrapping</a></div>
-<div><a class="link" href="91f08de06f4d1014b6dd926db0e91070.html" title="SAPUI5 provides several options for the configuration of the SAPUI5 runtime, such as runtime default values and script tag attributes.">Configuration of the SAPUI5 Runtime</a></div>
+<div><a class="link" href="91f1dd0c6f4d1014b6dd926db0e91070.html" title="The noJQuery variant supports bootstrapping for an application that already integrates jQuery or uses a different jQuery version than OpenUI5.">noJQuery Variant for Bootstrapping</a></div>
+<div><a class="link" href="91f08de06f4d1014b6dd926db0e91070.html" title="OpenUI5 provides several options for the configuration of the OpenUI5 runtime, such as runtime default values and script tag attributes.">Configuration of the OpenUI5 Runtime</a></div>
 </div>
 
 <div class="linklist linklist"/>
 </div></div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Preload Variant for Bootstrapping";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -3,7 +3,7 @@
     <name>ImageContent</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>This control can be displayed as image content in a tile.</documentation>
+    <documentation>This control can be used to display image content in a GenericTile.</documentation>
     <since>1.38</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
@@ -16,7 +16,7 @@
     </properties>
     <events>
         <event name="press" allowPreventDefault="false">
-            <documentation>The event is fired when the user chooses the image content.</documentation>
+            <documentation>The event is triggered when the image content is pressed.</documentation>
         </event>
     </events>
     <aggregations default="_content">

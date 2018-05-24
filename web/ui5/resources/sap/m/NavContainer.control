@@ -11,7 +11,16 @@ All children of this control will receive navigation events like {@link sap.m.Na
         <property name="autoFocus" type="sap.ui.core/boolean" defaultValue="true" group="Behavior" since="1.30">
             <documentation>Determines whether the initial focus is set automatically on first rendering and after navigating to a new page.
 This is useful when on touch devices the keyboard pops out due to the focus being automatically set on an input field.
-If necessary the "afterShow" event can be used to focus another element.</documentation>
+If necessary the "afterShow" event can be used to focus another element.
+
+&lt;b&gt;Note:&lt;/b&gt;  The following scenarios are possible, depending on where the focus
+was before navigation to a new page:
+&lt;ul&gt;&lt;li&gt;If &lt;code&gt;autoFocus&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt; and the focus was
+inside the current page, the focus will be moved automatically on the new page.&lt;/li&gt;
+&lt;li&gt;If &lt;code&gt;autoFocus&lt;/code&gt; is set to &lt;code&gt;false&lt;/code&gt; and the focus was inside
+the current page, the focus will disappear.
+&lt;li&gt;If the focus was outside the current page, after the navigation it will remain
+unchanged regardless of what is set to the &lt;code&gt;autoFocus&lt;/code&gt; property.&lt;/li&gt;&lt;/ul&gt;</documentation>
         </property>
         <property name="height" type="sap.ui.core/CSSSize" defaultValue="100%" group="Dimension">
             <documentation>The height of the NavContainer. Can be changed when the NavContainer should not cover the whole available area.</documentation>
@@ -118,25 +127,29 @@ This could be used not only for the initial display, but also if the user wants 
         <method name="getPage" type="sap.ui.core/Control">
             <documentation>Returns the control with the given ID from the "pages" aggregation (if available).</documentation>
             <parameters>
-                <parameter name="id" type="sap.ui.core/string">
-                    <documentation>The ID of the aggregated control to find.</documentation>
+                <parameter name="pageId" type="sap.ui.core/string">
+                    <documentation>The ID of the aggregated control to find</documentation>
                 </parameter>
             </parameters>
         </method>
         <method name="getCurrentPage" type="sap.ui.core/Control">
-            <documentation>Returns the currently displayed page-level control. Note: it is not necessarily an instance of sap.m.Page, but it could also be a sap.ui.core.View, sap.m.Carousel, or whatever is aggregated.
+            <documentation>Returns the currently displayed page-level control.
 
-Returns undefined if no page has been added yet.</documentation>
+&lt;b&gt;Note:&lt;/b&gt; Returns &lt;code&gt;undefined&lt;/code&gt; if no page has been added yet,
+otherwise returns an instance of &lt;code&gt;sap.m.Page&lt;/code&gt;,
+&lt;code&gt;sap.ui.core.View&lt;/code&gt;, &lt;code&gt;sap.m.Carousel&lt;/code&gt; or whatever is aggregated.</documentation>
         </method>
         <method name="getPreviousPage" type="sap.ui.core/Control" since="1.7.1">
             <documentation>Returns the previous page (the page from which the user drilled down to the current page with "to()").
-Note: this is not the page which the user has seen before, but the page which is the target of the next "back()" navigation.
-If there is no previous page, "undefined" is returned.</documentation>
+
+&lt;b&gt;Note:&lt;/b&gt; this is not the page which the user has seen before, but the page which is the target of the next "back()" navigation.
+If there is no previous page, &lt;code&gt;undefined&lt;/code&gt; is returned.</documentation>
         </method>
         <method name="currentPageIsTopPage" type="sap.ui.core/boolean">
             <documentation>Returns whether the current page is the top/initial page.
 
-Note: going to the initial page again with a row of "to" navigations causes the initial page to be displayed again, but logically one is not at the top level, so this method returns "false" in this case.</documentation>
+&lt;b&gt;Note:&lt;/b&gt; going to the initial page again with a row of "to" navigations causes the initial page to be displayed again,
+but logically one is not at the top level, so this method returns "false" in this case.</documentation>
         </method>
         <method name="insertPreviousPage" type="sap.m/NavContainer" since="1.16.1">
             <documentation>Inserts the page/control with the specified ID into the navigation history stack of the NavContainer.
@@ -170,7 +183,7 @@ Calling this navigation method triggers first the (cancelable) "navigate" event 
                     <documentation>The type of the transition/animation to apply. This parameter can be omitted; then the default is "slide" (horizontal movement from the right).</documentation>
                 </parameter>
                 <parameter name="data" type="sap.ui.core/object">
-                    <documentation>Since version 1.7.1. This optional object can carry any payload data which should be made available to the target page. The "beforeShow" event on the target page will contain this data object as "data" property.</documentation>
+                    <documentation>Since version 1.7.1. This optional object can carry any payload data which should be made available to the target page.</documentation>
                 </parameter>
                 <parameter name="transitionParameters" type="sap.ui.core/object">
                     <documentation>Since version 1.7.1. This optional object can contain additional information for the transition function, like the DOM element which triggered the transition or the desired transition duration.</documentation>

@@ -1,114 +1,146 @@
+
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
-    function (Slider, Input, InvisibleText) {
+sap.ui.define([
+    "jquery.sap.global",
+    "./Slider",
+    "./SliderTooltip",
+    "./SliderUtilities",
+    "sap/ui/core/InvisibleText",
+    "./RangeSliderRenderer"
+],
+    function(
+    jQuery,
+    Slider,
+    SliderTooltip,
+    SliderUtilities,
+    InvisibleText,
+    RangeSliderRenderer
+    ) {
         "use strict";
 
         /**
-         * Constructor for a new <code>sap.m.RangeSlider</code>.
+         * Constructor for a new <code>RangeSlider</code>.
          *
-         * @param {string} [sId] ID for the new control, generated automatically if no ID is given.
-         * @param {object} [mSettings] Initial settings for the new control.
+         * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+         * @param {object} [mSettings] Initial settings for the new control
          *
          * @class
-         * A range slider is a user interface control that enables the user
-         * to select a value range in a predifined numerical interval.
+         * Represents a numerical interval and two handles to select a sub-range within it.
+         * <h3>Overview</h3>
+         * The purpose of the control is to enable visual selection of sub-ranges within a given interval.
+         * <h4>Notes:<h4>
+         * <ul>
+         * <li>The RangeSlider extends the functionality of the {@link sap.m.Slider Slider}</li>
+         * <li>The right and left handle can be moved individually and their positions could therefore switch.</li>
+         * <li>The entire range can be moved along the interval.</li>
+         * <li>The right and left handle can select the same value</li>
+         * </ul>
+         *
+         * <h3>Usage</h3>
+         * The most common usecase is to select and move sub-ranges on a continuous numerical scale.
+         *
+         * <h3>Responsive Behavior</h3>
+         * You can move the currently selected range by clicking on it and dragging it along the interval.
          * @extends sap.m.Slider
          *
          * @author SAP SE
-         * @version 1.38.33
+         * @version 1.54.5
          *
          * @constructor
          * @public
          * @since 1.38
          * @alias sap.m.RangeSlider
-         * @ui5-metamodel This control will also be described in the UI5 (legacy) design time meta model.
+         * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
          */
         var RangeSlider = Slider.extend("sap.m.RangeSlider", /** @lends sap.m.RangeSlider.prototype */ {
             metadata: {
                 library: "sap.m",
                 properties: {
                     /**
-                     * Determines the range in which the user can select values.
+                     * Current second value of the slider. (Position of the second handle.)
                      *
-                     * If the value is lower/higher than the allowed minimum/maximum,
-                     * a warning message will be output to the console.
+                     * <b>Note:</b> If the value is not in the valid range (between <code>min</code> and <code>max</code>) it will be changed to be in the valid range.
+                     * If it is smaller than <code>value</code> it will be set to the same value.
                      */
-                    range: {type: "float[]", group: "Data", defaultValue: [0,100]}, //Default value of [0, 100] would be set onInit
-
+                    value2: {type: "float", group: "Data", defaultValue: 100},
                     /**
-                     * Indicates whether an Input fields should be used as tooltips for the handles.
+                     * Determines the currently selected range on the slider.
+                     *
+                     * If the value is lower/higher than the allowed minimum/maximum, a warning message will be output to the console.
                      */
-                    inputsAsTooltips : {type: "boolean", group: "Appearance", defaultValue: false}
-                }
+                    range: {type: "float[]", group: "Data", defaultValue: [0,100]}
+                },
+                designtime: "sap/m/designtime/RangeSlider.designtime"
             }
         });
 
-        // Defines threshold for entire range movement (px)
-        var RANGE_MOVEMENT_THRESHOLD = 32,
-            CHARACTER_WIDTH_PX = 8;
-
         RangeSlider.prototype.init = function () {
-            var aRange;
+            var oStartLabel, oEndLabel, oRangeLabel;
+
             Slider.prototype.init.call(this, arguments);
 
-            /**
-             * Workaround for range property issue where range's value is shared across RangeSlider instances.
-             * Changing range's value in a RangeSlider instance would change the range of another instance
-             * with the same initial value.
-             */
-            aRange = this.getRange();
-            aRange = Array.isArray(aRange) && aRange.length === 2 ? aRange : [0, 100]/* Default value */;
-            this.setRange(aRange);
+            // Do not execute "_adjustRangeValue" before all initial setters are finished.
+            // As max, min, range, value and value2 are dependent on each other,
+            // we should be sure that at the first run they are set  properly and then to be validated.
+            this._bInitialRangeChecks = true;
 
             this._bRTL = sap.ui.getCore().getConfiguration().getRTL();
 
             // the initial focus range which should be used
-            this._aInitialFocusRange = Array.prototype.slice.call(this.getRange());
-
-            // the width of the longest range value, which determines the width of the tooltips shown above the handles
-            this._iLongestRangeTextWidth = 0;
-
-            // half the width of the tooltip in percent of the total RangeSlider width
-            this._fTooltipHalfWidthPercent = 0;
+            this._aInitialFocusRange = this.getRange();
 
             this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
 
             this._ariaUpdateDelay = [];
+
+            // this is the second(right) tooltip of the RangeSlider - first is defined in Slider's init
+            var oTooltip = new SliderTooltip(this.getId() + "-" + "rightTooltip", {
+                change: this.handleTooltipChange.bind(this)
+            });
+
+            this.addAggregation("_tooltips", oTooltip);
+            this.getAggregation("_tooltipContainer").addAssociation("associatedTooltips", oTooltip);
+
+            oStartLabel = new InvisibleText({
+                text: this._oResourceBundle.getText("RANGE_SLIDER_LEFT_HANDLE")
+            });
+            oEndLabel = new InvisibleText({
+                text: this._oResourceBundle.getText("RANGE_SLIDER_RIGHT_HANDLE")
+            });
+
+            oRangeLabel = new InvisibleText({
+                text: this._oResourceBundle.getText("RANGE_SLIDER_RANGE_HANDLE")
+            });
+
+            // clear Slider's tooltip
+            this.destroyAggregation("_handlesLabels", true);
+
+            this.addAggregation("_handlesLabels", oStartLabel);
+            this.addAggregation("_handlesLabels", oEndLabel);
+            this.addAggregation("_handlesLabels", oRangeLabel);
+
+            this._mHandleTooltip = {
+                start: {
+                    handle: null, // Handle is provided by the renderer, available onAfterRendering
+                    tooltip: null,
+                    label: oStartLabel
+                },
+                end: {
+                    handle: null, // Handle is provided by the renderer, available onAfterRendering
+                    tooltip: null,
+                    label: oEndLabel
+                }
+            };
         };
 
         RangeSlider.prototype.exit = function () {
             this._oResourceBundle = null;
             this._aInitialFocusRange = null;
-
-			if (this._oRangeLabel) {
-				this._oRangeLabel.destroy();
-			}
-
-            this._oRangeLabel = null;
-
-            if (this.getInputsAsTooltips()) {
-
-				if (this._mHandleTooltip.start.tooltip) {
-					this._mHandleTooltip.start.tooltip.destroy();
-				}
-
-				if (this._mHandleTooltip.end.tooltip) {
-					this._mHandleTooltip.end.tooltip.destroy();
-				}
-            }
-
-			if (this._mHandleTooltip.start.label) {
-				this._mHandleTooltip.start.label.destroy();
-			}
-
-			if (this._mHandleTooltip.end.label) {
-				this._mHandleTooltip.end.label.destroy();
-			}
-
+            this._liveChangeLastValue = null;
             this._mHandleTooltip.start.handle = null;
             this._mHandleTooltip.start.tooltip = null;
             this._mHandleTooltip.start.label = null;
@@ -119,112 +151,67 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
         };
 
         RangeSlider.prototype.onBeforeRendering = function () {
-            var aAbsRange = [Math.abs(this.getMin()), Math.abs(this.getMax())],
-                iRangeIndex = aAbsRange[0] > aAbsRange[1] ? 0 : 1,
-                bInputsAsTooltips = !!this.getInputsAsTooltips(),
-                oStartLabel = new InvisibleText({text: this._oResourceBundle.getText("RANGE_SLIDER_LEFT_HANDLE")}),
-                oEndLabel = new InvisibleText({text: this._oResourceBundle.getText("RANGE_SLIDER_RIGHT_HANDLE")});
+            var aRange = this.getRange();
 
-            this._oRangeLabel = new InvisibleText({text: this._oResourceBundle.getText("RANGE_SLIDER_RANGE_HANDLE")});
+            // At this point it's certain that all setters are executed and values of
+            // min, max, value, value2 and range are set properly and are not using the Default values.
+            // It's important however to keep the slider values within the boundaries defined by min and max.
+            // Executing once again the range setter would adjust values accordingly. It should not matter if we do:
+            // this.setRange(aRange) OR this.setValue(fValue) && this.setValue2(fValue2).
+            // Note: this.getRange() is intended to have the same value as [this.getValue(), this.getValue2()]
+            this._bInitialRangeChecks = false;
+
+            // We need the decimal precision in order to be able to set the correct values.
+            // It is well known that JavaScript has issues with handling floating point values.
+            // E.g. 0.0001 + 0.0002 = 0.00029999999999999998
+            this._iDecimalPrecision = this.getDecimalPrecisionOfNumber(this.getStep());
+
+            this.setRange(aRange);
 
             this._validateProperties();
 
-            //TODO: find a better way to determine this
-            this._iLongestRangeTextWidth = ((aAbsRange[iRangeIndex].toString()).length
-                + this.getDecimalPrecisionOfNumber(this.getStep()) + 1) * CHARACTER_WIDTH_PX;
+            // Attach tooltips
+            if (!this._mHandleTooltip.start.tooltip) {
+                this._mHandleTooltip.start.tooltip = this.getAggregation("_tooltips")[0];
+            }
+            if (!this._mHandleTooltip.end.tooltip) {
+                this._mHandleTooltip.end.tooltip =  this.getAggregation("_tooltips")[1];
+            }
 
-            this._mHandleTooltip = {
-                start: {
-                    handle: null, // Handle is provided by the renderer, available onAfterRendering
-                    tooltip: bInputsAsTooltips ? this._createInputField("LeftTooltip", oStartLabel) : null,
-                    label: oStartLabel
-                },
-                end: {
-                    handle: null, // Handle is provided by the renderer, available onAfterRendering
-                    tooltip: bInputsAsTooltips ? this._createInputField("RightTooltip", oEndLabel) : null,
-                    label: oEndLabel
-                }
-            };
+            this._mHandleTooltip.bTooltipsSwapped = false; // Reset tooltips swapping
 
-	        this._iDecimalPrecision = this.getDecimalPrecisionOfNumber(this.getStep());
+            // For backwards compatibility when tickmarks are enabled, should be visible
+            if (this.getEnableTickmarks() && !this.getAggregation("scale")) {
+                this.setAggregation("scale", new sap.m.ResponsiveScale(), true);
+            }
+
+            if (this.getShowAdvancedTooltip()) {
+                this._forwardProperties(["enabled"], this.getAggregation("_tooltipContainer"));
+                this.getAggregation("_tooltips").forEach(function(oTooltip) {
+                    this._forwardPropertiesToTooltip(oTooltip);
+                }, this);
+            }
         };
 
         RangeSlider.prototype.onAfterRendering = function () {
-            var aRange = this.getRange(),
-                fMin = this.getMin(),
-                fMax = this.getMax(),
-                bRangeExceedsBoundaries = aRange.reduce(function (bResult, fValue) {
-                    return bResult || fValue < fMin || fValue > fMax;
-                });
+            Slider.prototype.onAfterRendering.apply(this, arguments);
+
+            var aRange = this.getRange();
 
             this._mHandleTooltip.start.handle = this.getDomRef("handle1");
             this._mHandleTooltip.end.handle = this.getDomRef("handle2");
 
-            if (!this.getInputsAsTooltips()) {
-                this._mHandleTooltip.start.tooltip = this.$("LeftTooltip");
-                this._mHandleTooltip.end.tooltip = this.$("RightTooltip");
-            }
-
             this._recalculateStyles();
-
-            // No error in Min,Max,Step properties.
-            // We need to validate the passed parameters
-            // min and max parameters are superior to range
-            if (bRangeExceedsBoundaries) {
-                jQuery.sap.log.warning("Warning: " + "Property wrong range: [" + aRange + "] not in the range: ["
-                    + fMin + "," + fMax + "]", this);
-            }
-
-            //TODO: May be this is not the best choice
-            this.$("TooltipsContainer").css("min-width", (this._fTooltipHalfWidthPercent * 4) + "%");
-
 
             // Setting the handles to the Start and the End points of the provided or the default range
             this._updateHandle(this._mHandleTooltip.start.handle, aRange[0]);
             this._updateHandle(this._mHandleTooltip.end.handle, aRange[1]);
-        };
 
-		/**
-         * Creates input field that will be used in slider's tooltip
-         *
-         * @param {String} sSuffix Suffix to append to the ID
-         * @param {Object} oAriaLabel Control that will be used as reference for the screen reader
-         * @returns {Object} sap.m.Input with all needed events attached and properties filled
-         * @private
-         */
-        RangeSlider.prototype._createInputField = function (sSuffix, oAriaLabel) {
-            var oInput = new Input(this.getId() + "-" + sSuffix, {
-                value: this.getMin(),
-                width: this._iLongestRangeTextWidth + (2 * CHARACTER_WIDTH_PX) /*16 px in paddings for the input*/ + "px",
-                type: "Number",
-                textAlign: sap.ui.core.TextAlign.Center,
-                ariaLabelledBy: oAriaLabel
-            });
-
-            oInput.attachChange(this._handleInputChange.bind(this, oInput));
-
-            oInput.addEventDelegate({
-                onfocusout: function (oEvent) {
-                    oEvent.srcControl.fireChange({value: oEvent.target.value});
-                }
-            });
-
-            return oInput;
-        };
-
-        /**
-         * Recalculate some styles.
-         *
-         * @private
-         */
-        RangeSlider.prototype._recalculateStyles = function () {
-            Slider.prototype._recalculateStyles.call(this, arguments);
-
-            // Here we take the value of the tooltip width as percent value of the total range of the slider
-            // This will help us decide if the tooltip should move along with the handle or not based
-            // on the interaction specification
-            this._fTooltipHalfWidthPercent =
-                ((this._fSliderWidth - (this._fSliderWidth - (this._iLongestRangeTextWidth / 2 + CHARACTER_WIDTH_PX))) / this._fSliderWidth) * 100;
+            //Swap tooltips so when range is with reversed values e.g. [12, 1]
+            //to have properly updated tooltips
+            if (aRange[0] > aRange[1]) {
+                this._swapTooltips(aRange);
+            }
         };
 
         /**
@@ -254,6 +241,13 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             }
         };
 
+        /**
+         * Gets the closest to the oEvent x coordinate handle dom element.
+         * @param {jQuery.Event} oEvent The event object
+         * @returns {HTMLElement} The handle, from which the event comes from.
+         * @private
+         * @override
+         */
         RangeSlider.prototype.getClosestHandleDomRef = function (oEvent) {
             var oHandle1 = this._mHandleTooltip.start.handle,
                 oHandle2 = this._mHandleTooltip.end.handle,
@@ -274,6 +268,20 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
         };
 
         /**
+         * Gets a handle corresponding to a tooltip
+         * @param {sap.m.ISliderTooltip} oTooltip Slider/Range slider tooltip
+         * @sap-restricted sap.m.SliderTooltipContainer.js
+         * @returns {HTMLElement} The handle, from which the tooltip is responsible.
+         * @private
+         */
+        RangeSlider.prototype._getHandleForTooltip = function (oTooltip) {
+            var oHandle = oTooltip === this._mHandleTooltip.start.tooltip ?
+                this._mHandleTooltip.start.handle : this._mHandleTooltip.end.handle;
+
+            return oHandle;
+        };
+
+        /**
          * Updates the handle with the given new value and recalculates the progress indicator
          * @param {HTMLElement} oHandle The handle that should be updated
          * @param {float} fValue The new value of the handle
@@ -287,15 +295,15 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
                 fPercentVal = this._getPercentOfValue(fValue);
 
             aRange[iIndex] = fValue;
-            this.setProperty("range", Array.prototype.slice.call(aRange), true);
+            this._updateRangePropertyDependencies(aRange);
 
             this._updateHandleDom(oHandle, aRange, iIndex, fValue, fPercentVal);
             this._updateTooltipContent(oTooltip, fValue);
-            this._adjustTooltipsContainer(fPercentVal);
+            this._adjustTooltipsContainer();
             this._recalculateRange();
         };
 
-        RangeSlider.prototype._updateHandleDom = function (oHandle, aRange, iIndex, fValue, fPercentVal) {
+        RangeSlider.prototype._updateHandleDom = function (oHandle, aRange, iIndex, sValue, fPercentVal) {
             var bMergedRanges,
                 sCssClass = this.getRenderer().CSS_CLASS,
                 oFormInput = this.getDomRef("input");
@@ -312,7 +320,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             }
 
             if (this.getShowHandleTooltip()) {
-                oHandle.title = fValue;
+                oHandle.title = sValue;
             }
 
             bMergedRanges = aRange[0] === aRange[1];
@@ -322,16 +330,17 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             // ARIA updates. Delay the update to prevent multiple updates- for example holding the arrow key.
             // We need only the latest state
             jQuery.sap.clearDelayedCall(this._ariaUpdateDelay[iIndex]);
-            this._ariaUpdateDelay[iIndex] = jQuery.sap.delayedCall(100, this, "_updateHandleAria", [oHandle, fValue]);
+            this._ariaUpdateDelay[iIndex] = jQuery.sap.delayedCall(100, this, "_updateHandleAria", [oHandle, sValue]);
         };
 
-        RangeSlider.prototype._updateHandleAria = function (oHandle, fValue) {
+        RangeSlider.prototype._updateHandleAria = function (oHandle, sValue) {
             var aRange = this.getRange(),
-                oProgressHandle = this.getDomRef("progress");
+                oProgressHandle = this.getDomRef("progress"),
+                fNormalizedValue = this.toFixed(sValue, this._iDecimalPrecision);
 
             this._updateHandlesAriaLabels();
 
-            oHandle.setAttribute("aria-valuenow", fValue);
+            oHandle.setAttribute("aria-valuenow", fNormalizedValue);
 
             if (oProgressHandle) {
                 oProgressHandle.setAttribute("aria-valuenow", aRange.join("-"));
@@ -340,7 +349,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             }
         };
 
-		/**
+        /**
          * Updates handles' ARIA Labels.
          * When handles are swapped, the corresponding labels should be swapped too. So the state would be always acurate
          *
@@ -355,8 +364,12 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
                 this._mHandleTooltip.start.label = this._mHandleTooltip.end.label;
                 this._mHandleTooltip.end.label = oTempLabel;
 
-                this._mHandleTooltip.start.handle.setAttribute("aria-labelledby", this._mHandleTooltip.start.label.getId());
-                this._mHandleTooltip.end.handle.setAttribute("aria-labelledby", this._mHandleTooltip.end.label.getId());
+                if (this._mHandleTooltip.start.handle) {
+                    this._mHandleTooltip.start.handle.setAttribute("aria-labelledby", this._mHandleTooltip.start.label.getId());
+                }
+                if (this._mHandleTooltip.end.handle) {
+                    this._mHandleTooltip.end.handle.setAttribute("aria-labelledby", this._mHandleTooltip.end.label.getId());
+                }
 
                 this._mHandleTooltip.bAriaHandlesSwapped = !this._mHandleTooltip.bAriaHandlesSwapped;
             }
@@ -369,15 +382,9 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * @private
          */
         RangeSlider.prototype._updateTooltipContent = function (oTooltip, fNewValue) {
-            var bInputTooltips = this.getInputsAsTooltips(),
-                sNewValue = this.toFixed(fNewValue, this._iDecimalPrecision);
+            var sNewValue = this.toFixed(fNewValue, this._iDecimalPrecision);
 
-            if (!bInputTooltips) {
-                oTooltip.text(sNewValue);
-            } else if (bInputTooltips && oTooltip.getValue() !== sNewValue) {
-                oTooltip.setValue(sNewValue);
-                oTooltip.$("inner").attr("value", sNewValue);
-            }
+            oTooltip.setValue(parseFloat(sNewValue));
         };
 
         RangeSlider.prototype._swapTooltips = function (aRange) {
@@ -402,99 +409,151 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
         };
 
         RangeSlider.prototype._adjustTooltipsContainer = function () {
-            var oTooltipsContainer = this.getDomRef("TooltipsContainer"),
-                sAdjustPropertyStart = this._bRTL ? "right" : "left",
-                sAdjustPropertyEnd = this._bRTL ? "left" : "right",
-                aRange = this.getRange(),
-                fStartPct = this._getPercentOfValue(aRange[0] > aRange[1] ? aRange[1] : aRange[0]),
-                fEndPct = this._getPercentOfValue(aRange[0] > aRange[1] ? aRange[0] : aRange[1]);
+            var oTooltipsContainer = this.getAggregation("_tooltipContainer");
 
-            //Left Tooltip
-            if (fStartPct <= this._fTooltipHalfWidthPercent) {
-                oTooltipsContainer.style[sAdjustPropertyStart] = 0 + "%";
-            } else if (fStartPct >= (100 - 3 * this._fTooltipHalfWidthPercent)) {
-                oTooltipsContainer.style[sAdjustPropertyStart] = (100 - 4 * this._fTooltipHalfWidthPercent) + "%";
-            } else {
-                oTooltipsContainer.style[sAdjustPropertyStart] = fStartPct - this._fTooltipHalfWidthPercent + "%";
-            }
-
-            //Right Tooltip
-            if (fEndPct >= (100 - this._fTooltipHalfWidthPercent)) {
-                oTooltipsContainer.style[sAdjustPropertyEnd] = 0 + "%";
-            } else {
-                oTooltipsContainer.style[sAdjustPropertyEnd] = (100 - fEndPct - this._fTooltipHalfWidthPercent) + "%";
-            }
-
-            this._swapTooltips(aRange);
-        };
-
-        RangeSlider.prototype._handleInputChange = function (oInput, oEvent) {
-            var oHandle, oActiveTooltip,
-                bTooltipsInitialPositionTouched = this._mHandleTooltip.bTooltipsSwapped,
-                newValue = Number(oEvent.getParameter("value"));
-
-            if (isNaN(newValue) || newValue < this.getMin() || newValue > this.getMax()) {
-                oInput.setValueState("Error");
+            if (!oTooltipsContainer.getDomRef()) {
                 return;
             }
 
-            oInput.setValueState("None");
+            oTooltipsContainer.repositionTooltips(this.getMin(), this.getMax());
 
-            oHandle = this._mHandleTooltip.start.tooltip === oInput ?
+            this._swapTooltips(this.getRange());
+        };
+
+        /**
+         * Handles changes in Tooltip Inputs
+         * @param {jQuery.Event} oEvent The event object
+         * @private
+         * @override
+         */
+        RangeSlider.prototype.handleTooltipChange = function (oEvent) {
+            var oHandle, oActiveTooltip,
+                oTooltip = oEvent.getSource(),
+                bTooltipsInitialPositionTouched = this._mHandleTooltip.bTooltipsSwapped,
+                newValue = Number(oEvent.getParameter("value"));
+
+            newValue = this._adjustRangeValue(newValue);
+            oHandle = this._mHandleTooltip.start.tooltip === oTooltip ?
                 this._mHandleTooltip.start.handle : this._mHandleTooltip.end.handle;
 
             this._updateHandle(oHandle, newValue);
 
             // When tooltips are swapped, we should put the focus to the corresponding visual representation
             if (bTooltipsInitialPositionTouched !== this._mHandleTooltip.bTooltipsSwapped) {
-                oActiveTooltip = this._mHandleTooltip.start.tooltip !== oInput ?
+                oActiveTooltip = this._mHandleTooltip.start.tooltip !== oTooltip ?
                     this._mHandleTooltip.start.tooltip : this._mHandleTooltip.end.tooltip;
 
                 oActiveTooltip.focus();
             }
 
-            this._fireChangeAndLiveChange({range: this.getRange()});
+            this._fireChangeAndLiveChange({ range: this.getRange() });
+            this.updateAdvancedTooltipDom();
+        };
+
+        RangeSlider.prototype._updateDOMAfterSetters = function (fValue, aRange, iHandleIndex) {
+            var fPercentOfValue, oHandle;
+
+            if (this.getDomRef()) {
+                fPercentOfValue = this._getPercentOfValue(fValue);
+                oHandle = iHandleIndex === 1 ? this._mHandleTooltip.end : this._mHandleTooltip.start;
+
+                this._updateHandleDom(oHandle.handle, aRange, iHandleIndex, fValue, fPercentOfValue);
+                this._updateTooltipContent(oHandle.tooltip, fValue);
+
+                return true;
+            }
+
+            return false;
         };
 
         RangeSlider.prototype.setRange = function (aRange) {
-            var fMax = this.getMax(),
-                fMin = this.getMin(),
-                aRange = this.validateProperty("range", aRange),
-                bRangeValidityCheck = aRange.every(function (value) {
-                    return !isNaN(value);
-                });
-
-            // validateProperty can return array with NaN values in it
-            // so a check is needed
-            if (!bRangeValidityCheck) {
-                jQuery.sap.log.error("Error: " + "Cannot set property range: " + aRange + " not an array in the range: ["
-                    + fMin + "," + fMax + "]", this);
-                return this;
-            }
-
             aRange = aRange.map(this._adjustRangeValue, this);
 
-            this.setProperty("range", aRange, true);
+            this._updateRangePropertyDependencies(aRange);
 
-            if (this.getDomRef()) {
-                var fPercentValStart = this._getPercentOfValue(aRange[0]),
-                    fPercentValEnd = this._getPercentOfValue(aRange[1]);
-
-                this._updateHandleDom(this._mHandleTooltip.start.handle, aRange, 0, aRange[0], fPercentValStart);
-                this._updateHandleDom(this._mHandleTooltip.end.handle, aRange, 1, aRange[1], fPercentValEnd);
-
-                this._updateTooltipContent(this._mHandleTooltip.start.tooltip, parseInt(aRange[0], 10));
-                this._updateTooltipContent(this._mHandleTooltip.end.tooltip, parseInt(aRange[1], 10));
+            if (this._updateDOMAfterSetters(aRange[0], aRange, 0) && this._updateDOMAfterSetters(aRange[1], aRange, 1)) {
                 this._recalculateRange();
             }
+
             return this;
         };
 
-        RangeSlider.prototype.setValue = RangeSlider.prototype.setRange;
+        RangeSlider.prototype.setStep = function (fStep) {
+            var oTooltipContainer = this.getAggregation("_tooltipContainer");
 
-        RangeSlider.prototype.getValue = function () {
+            if (!oTooltipContainer instanceof sap.ui.core.Control || !oTooltipContainer["getAssociatedTooltipsAsControls"]) {
+                return this;
+            }
+
+            var aTooltips = oTooltipContainer.getAssociatedTooltipsAsControls();
+
+            this.setProperty("step", fStep, true);
+
+            //Log warning in case fStep is not valid
+            this._validateProperties();
+
+            //Get the new decimal precision
+            this._iDecimalPrecision = this.getDecimalPrecisionOfNumber(fStep);
+
+            aTooltips.forEach(function (oTooltip) {
+                if (oTooltip.getStep() !== fStep) {
+                    oTooltip.setStep(fStep);
+                }
+            });
+
+            return this;
+        };
+
+        RangeSlider.prototype.setValue = function (fValue) {
             var aRange = this.getRange();
-            return Math.abs(aRange[1] - aRange[0]);
+
+            // validate the new value before arithmetic calculations
+            if (typeof fValue !== "number" || !isFinite(fValue)) {
+                return this;
+            }
+
+            fValue = this._adjustRangeValue(fValue);
+            aRange[0] = fValue;
+
+            this._updateRangePropertyDependencies(aRange);
+            if (this._updateDOMAfterSetters(aRange[0], aRange, 0)) {
+                this._recalculateRange();
+            }
+
+            return this;
+        };
+
+        RangeSlider.prototype.setValue2 = function (fValue) {
+            var aRange = this.getRange();
+
+            fValue = this._adjustRangeValue(fValue);
+            aRange[1] = fValue;
+
+            this._updateRangePropertyDependencies(aRange);
+            if (this._updateDOMAfterSetters(aRange[1], aRange, 1)) {
+                this._recalculateRange();
+            }
+
+            return this;
+        };
+
+        RangeSlider.prototype._updateRangePropertyDependencies = function (aRange) {
+            var aRangeCopy = Array.isArray(aRange) ? aRange.slice() : [],
+                iDecimal = this._iDecimalPrecision ? this._iDecimalPrecision : 0,
+                fNewValue = Number(aRangeCopy[0].toFixed(iDecimal)),
+                fNewValue2 = Number(aRangeCopy[1].toFixed(iDecimal));
+
+            if (this.getProperty("value") !== fNewValue) {
+                this.setProperty("value", fNewValue, true);
+                aRangeCopy[0] = fNewValue;
+            }
+
+            if (this.getProperty("value2") !== fNewValue2) {
+                this.setProperty("value2", fNewValue2, true);
+                aRangeCopy[1] = fNewValue2;
+            }
+
+            this.setProperty("range", aRangeCopy, true);
         };
 
         /**
@@ -520,7 +579,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             return this._adjustRangeValue(fNewValue);
         };
 
-		/**
+        /**
          * Checks and adjusts value according to Min and Max properties and checks RTL mode
          *
          * @param {float} fValue Value to be checked and adjusted
@@ -533,6 +592,10 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
                 fStep = this.getStep(),
                 fModStepVal;
 
+            if (this._bInitialRangeChecks) {
+                return fValue;
+            }
+
             fModStepVal = Math.abs((fValue - fMin) % fStep);
             if (fModStepVal !== 0 /* division with remainder */) {
                 // snap the new value to the nearest step
@@ -540,8 +603,12 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             }
 
             if (fValue < fMin) {
+                jQuery.sap.log.warning("Warning: " + "Min value (" + fValue + ") not in the range: ["
+                    + fMin + "," + fMax + "]", this);
                 fValue = fMin;
             } else if (fValue > fMax) {
+                jQuery.sap.log.warning("Warning: " + "Max value (" + fValue + ") not in the range: ["
+                    + fMin + "," + fMax + "]", this);
                 fValue = fMax;
             }
 
@@ -552,6 +619,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handle the touchstart event happening on the range slider.
          * @param {jQuery.Event} oEvent The event object.
          * @private
+         * @override
          */
         RangeSlider.prototype.ontouchstart = function (oEvent) {
             var oTouch = oEvent.targetTouches[0],
@@ -565,6 +633,11 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
 
             // mark the event for components that needs to know if the event was handled
             oEvent.setMarked();
+            // Should be prevent as in Safari while dragging the handle everything else gets selection.
+            // As part of the RangeSlider, Inputs in the tooltips should be excluded
+            if (oEvent.target.className.indexOf("sapMInput") === -1) {
+                oEvent.preventDefault();
+            }
 
             // we need to recalculate the styles since something may have changed
             // the screen size between touches.
@@ -577,15 +650,17 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             fValue = this._calculateHandlePosition(oTouch.pageX);
             aRange = this.getRange();
             aHandles = [this._mHandleTooltip.start.handle, this._mHandleTooltip.end.handle];
-            iHandleIndex = aRange.indexOf(fValue);
+            iHandleIndex = this._getIndexOfHandle(oEvent.target);
             fHandlesDistance = aHandles.reduce(function (fAccumulation, oHandle) {
                 return Math.abs(fAccumulation - oHandle.offsetLeft);
             }, 0);
 
             // if the click is outside the range or distance between handles is below the threshold - update the closest slider handle
-            if (fValue < Math.min.apply(Math, aRange) || fValue > Math.max.apply(Math, aRange) || fHandlesDistance <= RANGE_MOVEMENT_THRESHOLD) {
+            if (fValue < Math.min.apply(Math, aRange) || fValue > Math.max.apply(Math, aRange) || fHandlesDistance <= SliderUtilities.CONSTANTS.RANGE_MOVEMENT_THRESHOLD) {
                 aHandles = [this.getClosestHandleDomRef(oTouch)];
                 this._updateHandle(aHandles[0], fValue);
+                // _updateHandle would update the range and the check for change event fire would fail in _ontouchend
+                this._fireChangeAndLiveChange({range: this.getRange()});
             } else if (iHandleIndex !== -1) { // Determine if the press event is on certain handle
                 aHandles = [this.getDomRef(iHandleIndex === 0 ? "handle1" : "handle2")];
             }
@@ -595,7 +670,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
                 .on("touchend" + sEventNamespace + " touchcancel" + sEventNamespace + " mouseup" + sEventNamespace,
                     this._ontouchend.bind(this, aHandles))
                 .on("touchmove" + sEventNamespace + (oEvent.originalEvent.type !== "touchstart" ? " mousemove" + sEventNamespace : ""),
-                    this._ontouchmove.bind(this, fValue, Array.prototype.slice.call(this.getRange()), aHandles));
+                    this._ontouchmove.bind(this, fValue, this.getRange(), aHandles));
 
             // adds pressed state
             aHandles.map(function (oHandle) {
@@ -611,14 +686,19 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
         /**
          * Handle the touchmove event happening on the slider.
          * @param {Int} [fInitialPointerPosition] Mouse pointer's initial position
-         * @param {Int} [aInitialRange] Mouse pointer's initial position
+         * @param {Int} [aInitialRange] Initial range array
          * @param {HTMLElement} [aHandles] The handle that should be updated
          * @param {jQuery.Event} oEvent The event object.
          * @private
+         * @override
          */
         RangeSlider.prototype._ontouchmove = function (fInitialPointerPosition, aInitialRange, aHandles, oEvent) {
-            var fOffset, bInBoundaries, fMax, fMin,
-                iPageX = oEvent.targetTouches ? oEvent.targetTouches[0].pageX : oEvent.pageX;
+            var fOffset, bRangesEquality, bRangeInBoudaries, bRangeOnBoudaries,
+                iPageX = oEvent.targetTouches ? oEvent.targetTouches[0].pageX : oEvent.pageX,
+                fMax = this.getMax(),
+                fMin = this.getMin(),
+                aRange = [],
+                aRangeTemp = [];
 
             // note: prevent native document scrolling
             oEvent.preventDefault();
@@ -636,47 +716,95 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
                 return;
             }
 
-            // Check slider's boundaries
-            fMax = this.getMax();
-            fMin = this.getMin();
+            //calculation of the new range based on the mouse position
             fOffset = this._calculateHandlePosition(iPageX) - fInitialPointerPosition;
-            bInBoundaries = aInitialRange.every(function (fRange) {
-                var fMovement = fRange + fOffset;
-                if (aHandles.length === 1) {
-                    return fMax >= fMovement || fMovement >= fMin;
-                } else {
-                    return fMax >= fMovement && fMovement >= fMin;
+            for (var i = 0; i < aInitialRange.length; i++) {
+                aRange[i] = aInitialRange[i] + fOffset;
+            }
+
+            aRangeTemp = this._getNormalizedRange(this.getRange(), aInitialRange, aHandles);
+            //check if the current range is equal to the new one
+            bRangesEquality = aRange.every(function (fValue, iIndex) {return fValue === aRangeTemp[iIndex];});
+            bRangeInBoudaries = aRange.every(function (fValue) {return (fValue >= fMin && fValue <= fMax );});
+            bRangeOnBoudaries = aRangeTemp.indexOf(fMin) > -1 || aRangeTemp.indexOf(fMax) > -1;
+            if (!bRangesEquality) {
+                //check the need to update the handle depending of number of the selected handles and the handles position
+                if ((aHandles.length === 1) || bRangeInBoudaries || !bRangeOnBoudaries) {
+                    aHandles.map(function (oHandle) {this._updateHandle(oHandle, aInitialRange[this._getIndexOfHandle(oHandle)] + fOffset);}, this);
                 }
-            });
+                this._adjustTooltipsContainer();
+                aRangeTemp = this._getNormalizedRange(this.getRange(), aInitialRange, aHandles);
+            }
 
-            bInBoundaries && aHandles.map(function (oHandle) {
-                this._updateHandle(oHandle, aInitialRange[this._getIndexOfHandle(oHandle)] + fOffset);
-            }, this);
-
-	        this._triggerLiveChange();
+            this._triggerLiveChange();
+            this.setRange(aRangeTemp);
         };
 
-	    RangeSlider.prototype._triggerLiveChange = function () {
-		    var bFireLiveChange,
-			    aRange = this.getRange();
+        /**
+         * Updates values of the advanced tooltips.
+         *
+         * @param {string} sNewValue The new value
+         * @protected
+         */
+        RangeSlider.prototype.updateAdvancedTooltipDom = function () {
+            this.getAggregation("_tooltipContainer").repositionTooltips(this.getMin(), this.getMax());
+        };
 
-		    this._liveChangeLastValue = this._liveChangeLastValue || [];
+        RangeSlider.prototype._triggerLiveChange = function () {
+            var bFireLiveChange,
+                aRange = this.getRange();
 
-		    bFireLiveChange = aRange.some(function (fValue, index) {
-			    return fValue !== this._liveChangeLastValue[index];
-		    }, this);
+            this._liveChangeLastValue = this._liveChangeLastValue || [];
 
-		    if (bFireLiveChange) {
-			    this._liveChangeLastValue = aRange.slice(); //Save a copy, not a reference
-			    this.fireLiveChange({range: aRange});
-		    }
-	    };
+            bFireLiveChange = aRange.some(function (fValue, index) {
+                return fValue !== this._liveChangeLastValue[index];
+            }, this);
+
+            if (bFireLiveChange) {
+                this._liveChangeLastValue = aRange.slice(); //Save a copy, not a reference
+                this.fireLiveChange({range: aRange});
+            }
+        };
+
+        /**
+         * Get the range normalized in the boundaries.
+         * @param {Array} aRange range value
+         * @param {Array} aInitialRange last range values
+         * @param {HTMLElement} [aHandles] The handles of the slider
+         * @returns {number} The normalized range
+         * @private
+         * @override
+         */
+        RangeSlider.prototype._getNormalizedRange = function (aRange, aInitialRange, aHandles) {
+            var fMax = this.getMax(),
+                fMin = this.getMin(),
+                iSelectedRange = Math.abs(aInitialRange[0] - aInitialRange[1]),
+                aRangeNormalized = [],
+                i, iOtherElementIndex;
+
+            for (i = 0; i < aRange.length; i++) {
+                aRangeNormalized[i] = (aRange[i] < fMin ? fMin : aRange[i]);
+                aRangeNormalized[i] = (aRange[i] > fMax ? fMax : aRangeNormalized[i]);
+                if (aHandles.length === 2) {
+                    if (aRangeNormalized[0] == fMin) {
+                        aRangeNormalized[1] = aRangeNormalized[0] + iSelectedRange;
+                    } else {
+                        iOtherElementIndex = Math.abs(i - 1);
+                        aRangeNormalized[iOtherElementIndex] = (aRangeNormalized[i] <= fMin ? aRangeNormalized[i] + iSelectedRange : aRangeNormalized[iOtherElementIndex]);
+                        aRangeNormalized[iOtherElementIndex] = (aRangeNormalized[i] >= fMax ? aRangeNormalized[i] - iSelectedRange : aRangeNormalized[iOtherElementIndex]);
+
+                    }
+                }
+            }
+            return aRangeNormalized;
+        };
 
         /**
          * Handle the touchend event happening on the slider.
          * @param {HTMLElement} aHandle The handle that should be updated
          * @param {jQuery.Event} oEvent The event object.
          * @private
+         * @override
          */
         RangeSlider.prototype._ontouchend = function (aHandle, oEvent) {
             var aNewRange = this.getRange(),
@@ -701,32 +829,26 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             this._updateTooltipContent(this._mHandleTooltip.end.tooltip, aNewRange[1]);
         };
 
+        /**
+         * @param {jQuery.Event} oEvent The event object.
+         * @override
+         */
         RangeSlider.prototype.onfocusin = function (oEvent) {
-            var sCSSClass = this.getRenderer().CSS_CLASS;
+            var oTooltipsContainer = this.getAggregation("_tooltipContainer");
 
-            this.$("TooltipsContainer").addClass(sCSSClass + "HandleTooltipsShow");
+            if (this.getShowAdvancedTooltip()) {
+                oTooltipsContainer.show(this);
+                this._adjustTooltipsContainer();
+            }
 
             // remember the initial focus range so when esc key is pressed we can return to it
-            if (!this._hasFocus()) {
-                this._aInitialFocusRange = Array.prototype.slice.call(this.getRange());
+            if (!(document.activeElement === this.getFocusDomRef())) {
+                this._aInitialFocusRange = this.getRange();
             }
         };
 
-        RangeSlider.prototype.onfocusout = function (oEvent) {
-            var sCSSClass = this.getRenderer().CSS_CLASS,
-                bInputTooltips = this.getInputsAsTooltips();
-
-            if (bInputTooltips && jQuery.contains(this.getDomRef(),oEvent.relatedTarget)) {
-                return;
-            }
-
-            this.$("TooltipsContainer").removeClass(sCSSClass + "HandleTooltipsShow");
-        };
-
-
-        RangeSlider.prototype._fireChangeAndLiveChange = function(oParam) {
-            this.fireChange(oParam);
-            this.fireLiveChange(oParam);
+        RangeSlider.prototype.getFocusDomRef = function() {
+            return this.getDomRef("progress");
         };
 
         /* ----------------------------------------------------------- */
@@ -742,7 +864,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * @private
          */
         RangeSlider.prototype._updateSliderValues = function (fOffset, oHandle) {
-            var aRange = Array.prototype.slice.call(this.getRange()),
+            var aRange = this.getRange(),
                 fMax = this.getMax(),
                 fMin = this.getMin(),
                 fRangeMax = Math.max.apply(null, aRange),
@@ -768,10 +890,23 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             }, this);
         };
 
+
+        RangeSlider.prototype.onkeydown = function (oEvent) {
+            var bFocusableTooltip = this.getInputsAsTooltips(),
+                bF2Pressed = oEvent.keyCode === SliderUtilities.CONSTANTS.F2_KEYCODE,
+                bStartTooltipFocused = (oEvent.target === this._mHandleTooltip.start.handle),
+                bTargetIsHandle = jQuery(oEvent.target).hasClass(SliderUtilities.CONSTANTS.HANDLE_CLASS);
+
+            if (bF2Pressed && bFocusableTooltip && bTargetIsHandle) {
+                this._mHandleTooltip[bStartTooltipFocused ? "start" : "end"].tooltip.focus();
+            }
+        };
+
         /**
          * Handles the <code>sapincrease</code> event when right arrow or up arrow is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapincrease = function (oEvent) {
             if (["number", "text"].indexOf(oEvent.target.type) > -1) {
@@ -794,6 +929,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>onsapplus</code> event when "+" is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapplus = RangeSlider.prototype.onsapincrease;
 
@@ -801,6 +937,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sapincreasemodifiers</code> event when Ctrl + right arrow or up arrow are pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapincreasemodifiers = function (oEvent) {
             if (["number", "text"].indexOf(oEvent.target.type) > -1 || oEvent.altKey) {
@@ -809,7 +946,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
 
             // note: prevent document scrolling when arrow keys are pressed
             oEvent.preventDefault();
-
+            oEvent.stopPropagation();
             // mark the event for components that needs to know if the event was handled
             oEvent.setMarked();
 
@@ -823,6 +960,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sappageup</code> event when page up is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsappageup = RangeSlider.prototype.onsapincreasemodifiers;
 
@@ -830,6 +968,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sapdecrease</code> event when left arrow or down arrow are pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapdecrease = function (oEvent) {
             if (["number", "text"].indexOf(oEvent.target.type) > -1) {
@@ -852,6 +991,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sapminus</code> event when "-" is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapminus = RangeSlider.prototype.onsapdecrease;
 
@@ -859,6 +999,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sapdecreasemodifiers</code> event when Ctrl + left or Ctrl + down keys are pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapdecreasemodifiers = function (oEvent) {
             if (["number", "text"].indexOf(oEvent.target.type) > -1 || oEvent.altKey) {
@@ -867,7 +1008,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
 
             // note: prevent document scrolling when arrow keys are pressed
             oEvent.preventDefault();
-
+            oEvent.stopPropagation();
             // mark the event for components that needs to know if the event was handled
             oEvent.setMarked();
 
@@ -881,6 +1022,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sappagedown</code> event when when page down is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsappagedown = RangeSlider.prototype.onsapdecreasemodifiers;
 
@@ -888,8 +1030,11 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>saphome</code> event when home key is pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsaphome = function (oEvent) {
+            var iHandleIndex = 0,
+                fRangeValue, oHandle, fMin;
             if (["number", "text"].indexOf(oEvent.target.type) > -1) {
                 return;
             }
@@ -900,8 +1045,13 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
             // note: prevent document scrolling when Home key is pressed
             oEvent.preventDefault();
 
-            if (this.getEnabled()) {
-                this._updateSliderValues(this.getMin(), oEvent.target);
+            iHandleIndex = this._getIndexOfHandle(oEvent.target);
+            fRangeValue = this.getRange()[iHandleIndex];
+            fMin = this.getMin();
+
+            if (this.getEnabled() && (fRangeValue !== fMin)) {
+                oHandle = (iHandleIndex === 1 ? this._mHandleTooltip.end : this._mHandleTooltip.start);
+                this._updateHandle(oHandle.handle, fMin);
                 this._fireChangeAndLiveChange({range: this.getRange()});
             }
         };
@@ -910,6 +1060,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
          * Handles the <code>sapend</code> event when the End key pressed.
          *
          * @param {jQuery.Event} oEvent The event object.
+         * @override
          */
         RangeSlider.prototype.onsapend = function (oEvent) {
             if (["number", "text"].indexOf(oEvent.target.type) > -1) {
@@ -930,7 +1081,7 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
 
         /**
          * Handles the <code>sapescape</code> event when escape key is pressed.
-         *
+         * @override
          */
         RangeSlider.prototype.onsapescape = function () {
             // reset the slider back to the value
@@ -942,4 +1093,4 @@ sap.ui.define(["./Slider", "./Input", 'sap/ui/core/InvisibleText'],
 
 
         return RangeSlider;
-    }, /* bExport= */ true);
+    });

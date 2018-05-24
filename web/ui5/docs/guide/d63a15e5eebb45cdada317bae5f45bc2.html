@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="We now configure the visibility and properties of controls based on the device that we run the application on. By making use of the sap.ui.Device API and defining a device model we will make the app look great on many devices."/>
 <meta name="description" content="We now configure the visibility and properties of controls based on the device that we run the application on. By making use of the sap.ui.Device API and defining a device model we will make the app look great on many devices."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=44120245996397933"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=1318402372201104"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=1318402372201104"/>
 <title>Step 36: Device Adaptation</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiod63a15e5eebb45cdada317bae5f45bc2">
 <div id="wrapper"><div id="container">
@@ -49,12 +35,11 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview">Walkthrough - Step 36</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.36/preview">Walkthrough - Step 36</a></span>.</p>
 
 			<div class="section_title">webapp/view/HelloPanel.view.xml</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-	controllerName="sap.ui.demo.wt.controller.HelloPanel"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+	controllerName="sap.ui.demo.walkthrough.controller.HelloPanel"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
 	&lt;Panel
@@ -72,14 +57,14 @@
 			&lt;Button
 				text="{i18n&gt;showHelloButtonText}"
 				press="onShowHello"
-				class="myAppDemoWTmyCustomButton"/&gt;
+				class="myCustomButton"/&gt;
 			&lt;Input
 				value="{/recipient/name}"
 				valueLiveUpdate="true"
 				width="60%"/&gt;
-			&lt;Text
-				text="Hello {/recipient/name}"
-				class="sapUiSmallMargin sapThemeHighlight-asColor myAppDemoWTmyCustomText"/&gt;
+			&lt;FormattedText
+				htmlText="Hello {/recipient/name}"
+				class="sapUiSmallMargin sapThemeHighlight-asColor myCustomText"/&gt;
 		&lt;/content&gt;
 	&lt;/Panel&gt;
 &lt;/mvc:View&gt;</pre></div>
@@ -87,9 +72,9 @@
 			<p class="p">We add two new properties <samp class="ph codeph">expandable</samp> and <samp class="ph codeph">expanded</samp> to the <samp class="ph codeph">HelloPanel</samp>. The user can now close
 				and open the panel to have more space for the table below on devices with small screens. The property <samp class="ph codeph">expandable</samp> is
 				bound to a model named <samp class="ph codeph">device</samp> and the path <span class="ph filepath">/system/phone</span>. So the panel can be expanded on phone
-				devices only. The device model is filled with the <span class="keyword apiname">sap.ui.Device</span> API of <span class="ph"><span class="ph pname">SAPUI5</span></span> as we see further down. The <samp class="ph codeph">expanded</samp> property
+				devices only. The device model is filled with the <span class="keyword apiname">sap.ui.Device</span> API of <span class="ph"><span class="ph pname">OpenUI5</span></span> as we see further down. The <samp class="ph codeph">expanded</samp> property
 				controls the state of the panel and we use expression binding syntax to close it on phone devices and have the panel expanded on all
-				other devices. The device API of <span class="ph"><span class="ph pname">SAPUI5</span></span> offers more functionality to
+				other devices. The device API of <span class="ph"><span class="ph pname">OpenUI5</span></span> offers more functionality to
 				detect various device-specific settings, please have a look at the documentation for more details.</p>
 
 			<div class="note note"><span class="notetitle">Note</span> 
@@ -111,14 +96,14 @@
 
 		<div class="section"><div class="section_title">webapp/Component.js</div><div type="webapp/Component.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">sap.ui.define([
 	"sap/ui/core/UIComponent",
 	"sap/ui/model/json/JSONModel",
-	"sap/ui/demo/wt/controller/HelloDialog"<span class="ph emphasis emphasis">,
+	"sap/ui/demo/walkthrough/controller/HelloDialog"<span class="ph emphasis emphasis">,
 	"sap/ui/Device"</span>
 ], function (UIComponent, JSONModel, HelloDialog<span class="ph emphasis emphasis">, Device</span>) {
 	"use strict";
-	return UIComponent.extend("sap.ui.demo.wt.Component", {
+	return UIComponent.extend("sap.ui.demo.walkthrough.Component", {
 		metadata: {
 			manifest: "json"
 		},
@@ -136,15 +121,27 @@
 			this.setModel(oModel);
 			// disable batch grouping for v2 API of the northwind service
 			this.getModel("invoice").setUseBatch(false);
+
 			<span class="ph emphasis emphasis">// set device model
 			var oDeviceModel = new JSONModel(Device);
 			oDeviceModel.setDefaultBindingMode("OneWay");
-			this.setModel(oDeviceModel, "device");</span>
+			this.setModel(oDeviceModel, "device");
+</span>
 			// set dialog
-			this.helloDialog = new HelloDialog();
+			this._helloDialog = new HelloDialog(this.getRootControl());
 			// create the views based on the url/hash
 			this.getRouter().initialize();
+		},
+
+		exit : function() {
+			this._helloDialog.destroy();
+			delete this._helloDialog;
+		},
+
+		openHelloDialog : function () {
+			this._helloDialog.open();
 		}
+
 	});
 });</pre></div>
 
@@ -152,14 +149,14 @@
 					<samp class="ph codeph">sap.ui.Device</samp> and initialize the device model in the
 					<samp class="ph codeph">init</samp> method. We can simply pass the loaded dependency
 					<samp class="ph codeph">Device</samp> to the constructor function of the JSONModel. This will
-				make most properties of the <span class="ph"><span class="ph pname">SAPUI5</span></span> device API
+				make most properties of the <span class="ph"><span class="ph pname">OpenUI5</span></span> device API
 				available as a JSON model.  The model is then set on the component as a named model
 				so that we can reference it in data binding as we have seen in the view above.</p>
 
 			<div class="note note"><span class="notetitle">Note</span> 
 				<p class="p">We have to set the binding mode to <samp class="ph codeph">OneWay</samp> as the device model is
 					read-only and we want to avoid changing the model accidentally  when we bind
-					properties of a control to it. By default, models in <span class="ph"><span class="ph pname">SAPUI5</span></span> are
+					properties of a control to it. By default, models in <span class="ph"><span class="ph pname">OpenUI5</span></span> are
 					bidirectional (<samp class="ph codeph">TwoWay</samp>). When the property changes, the bound
 					model value is updated as well.</p>
 
@@ -172,17 +169,17 @@
 			<div class="note tip"><span class="tiptitle">Tip</span> 
 				<p class="p">You can test the device specific features of your app with the developer tools of
 					your browser. For example in Google Chrome, you can emulate a tablet or a phone
-					easily and see the effects. Some responsive options of <span class="ph"><span class="ph pname">SAPUI5</span></span> are only set
+					easily and see the effects. Some responsive options of <span class="ph"><span class="ph pname">OpenUI5</span></span> are only set
 					initially when loading the app, so you might have to reload your page to see the
 					results.</p>
 
 			</div>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-	controllerName="sap.ui.demo.wt.controller.Detail"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+	controllerName="sap.ui.demo.walkthrough.controller.Detail"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
-	xmlns:wt="sap.ui.demo.wt.control"&gt;
+	xmlns:wt="sap.ui.demo.walkthrough.control"&gt;
 	&lt;Page
 		title="{i18n&gt;detailPageTitle}"
 		showNavButton="true"
@@ -214,7 +211,7 @@
 				  }"/&gt;
 			&lt;/attributes&gt;</span>
 		&lt;/ObjectHeader&gt;
-		&lt;wt:ProductRating class="sapUiSmallMarginBeginEnd" change="onRatingChange"/&gt;
+		&lt;wt:ProductRating id="rating" class="sapUiSmallMarginBeginEnd" change="onRatingChange"/&gt;
 	&lt;/Page&gt;
 &lt;/mvc:View&gt;</pre></div>
 
@@ -240,14 +237,14 @@
 
 		<div class="section"><div class="section_title">webapp/controller/Detail.controller.js</div><div type="webapp/controller/Detail.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/core/routing/History",
 	"sap/m/MessageToast"<span class="ph emphasis emphasis">,
 	"sap/ui/model/json/JSONModel"</span>
 ], function (Controller, History, MessageToast<span class="ph emphasis emphasis">, JSONModel</span>) {
-	use strict;
-	return Controller.extend(sap.ui.demo.wt.controller.Detail, {
+	"use strict";
+	return Controller.extend("sap.ui.demo.walkthrough.controller.Detail", {
 		onInit : function () {
 			<span class="ph emphasis emphasis">var oViewModel = new JSONModel({
 				currency: "EUR"
@@ -268,7 +265,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp># Detail Page
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"># Detail Page
 detailPageTitle=Walkthrough - Details
 ratingConfirmation=You have rated this product with {0} stars
 <span class="ph emphasis emphasis">dateTitle=Order date
@@ -295,13 +292,13 @@ quantityTitle=Quantity</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
-<strong>Previous: </strong><a class="link" href="a96e18b4cd924196b255eb9623431dbb.html" title="In this step, we improve the responsiveness of our app. SAPUI5 applications can be run on phone, tablet, and desktop devices and we can configure the application to make best use of the screen estate for each scenario. Fortunately, SAPUI5 controls like the sap.m.Table already deliver a lot of features that we can use.">Step 35: Responsiveness</a><br/>
+<strong>Previous: </strong><a class="link" href="a96e18b4cd924196b255eb9623431dbb.html" title="In this step, we improve the responsiveness of our app. OpenUI5 applications can be run on phone, tablet, and desktop devices and we can configure the application to make best use of the screen estate for each scenario. Fortunately, OpenUI5 controls like the sap.m.Table already deliver a lot of features that we can use.">Step 35: Responsiveness</a><br/>
 </div>
 <div class="nextlink"><br/>
-<strong>Next: </strong><a class="link" href="d935dbf196d34997bf1ac42ac3e81579.html" title="In the last step of our Walkthrough tutorial, we adjust the content density based on the user’s device. SAPUI5 contains different content densities allowing you to display larger controls for touch-enabled devices and a smaller, more compact design for devices that are operated by mouse. In our app, we will detect the device and adjust the density accordingly.">Step 37: Content Density</a><br/>
+<strong>Next: </strong><a class="link" href="d935dbf196d34997bf1ac42ac3e81579.html" title="In the last step of our Walkthrough tutorial, we adjust the content density based on the user’s device. OpenUI5 contains different content densities allowing you to display larger controls for touch-enabled devices and a smaller, more compact design for devices that are operated by mouse. In our app, we will detect the device and adjust the density accordingly.">Step 37: Content Density</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
@@ -311,19 +308,5 @@ quantityTitle=Quantity</span></pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 36: Device Adaptation";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

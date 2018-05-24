@@ -1,28 +1,79 @@
 /*
  * ! UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.QuickViewPage
 sap.ui.define([
-			'jquery.sap.global', './library', 'sap/ui/core/Control',
-				'sap/ui/core/IconPool', 'sap/ui/layout/form/SimpleForm',
-				'sap/ui/layout/VerticalLayout', 'sap/ui/layout/HorizontalLayout',
-				'./Page', './Button', './ButtonType', './Bar',
-				'./Title', './Image', './Link', './Text',
-				'./QuickViewGroupElementType',
-				'./Label', './HBox', 'sap/ui/core/Icon', 'sap/ui/core/Title', 'sap/ui/core/TitleLevel',
-				'sap/ui/core/CustomData', 'sap/ui/layout/form/SimpleFormLayout'],
-		function(jQuery, library, Control,
-					IconPool, SimpleForm,
-					VerticalLayout, HorizontalLayout,
-					Page, Button, ButtonType, Bar,
-					Title, Image, Link, Text,
-					QuickViewGroupElementType,
-					Label, HBox, Icon, CoreTitle, CoreTitleLevel,
-					CustomData, SimpleFormLayout) {
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/IconPool',
+	'sap/ui/layout/form/SimpleForm',
+	'sap/ui/layout/VerticalLayout',
+	'sap/ui/layout/HorizontalLayout',
+	'./Page',
+	'./Button',
+	'./Bar',
+	'./Title',
+	'./Image',
+	'./Link',
+	'./Text',
+	'./Label',
+	'./HBox',
+	'sap/ui/core/Icon',
+	'sap/ui/core/Title',
+	'sap/ui/core/CustomData',
+	'sap/ui/core/library',
+	'sap/ui/layout/library',
+	'sap/ui/Device',
+	'sap/ui/layout/form/ResponsiveGridLayout',
+	'./QuickViewPageRenderer'
+],
+	function(
+		jQuery,
+		library,
+		Control,
+		IconPool,
+		SimpleForm,
+		VerticalLayout,
+		HorizontalLayout,
+		Page,
+		Button,
+		Bar,
+		Title,
+		Image,
+		Link,
+		Text,
+		Label,
+		HBox,
+		Icon,
+		CoreTitle,
+		//SimpleForm is loading ResponsiveGridLayout too late, only need as a dependency
+		CustomData,
+		coreLibrary,
+		layoutLibrary,
+		Device,
+		ResponsiveGridLayout,
+		QuickViewPageRenderer
+		) {
 			"use strict";
+
+			// shortcut for sap.m.URLHelper
+			var URLHelper = library.URLHelper;
+
+			// shortcut for sap.ui.layout.form.SimpleFormLayout
+			var SimpleFormLayout = layoutLibrary.form.SimpleFormLayout;
+
+			// shortcut for sap.ui.core.TitleLevel
+			var CoreTitleLevel = coreLibrary.TitleLevel;
+
+			// shortcut for sap.m.QuickViewGroupElementType
+			var QuickViewGroupElementType = library.QuickViewGroupElementType;
+
+			// shortcut for sap.m.ButtonType
+			var ButtonType = library.ButtonType;
 
 			/**
 			* Constructor for a new QuickViewPage.
@@ -37,7 +88,7 @@ sap.ui.define([
 			* @extends sap.ui.core.Control
 			*
 			* @author SAP SE
-			* @version 1.38.33
+			* @version 1.54.5
 			*
 			* @constructor
 			* @public
@@ -220,6 +271,12 @@ sap.ui.define([
 					}, this);
 				}
 
+				//When there is only a single page in QuickView and no header set the header should be removed and device is not a phone
+				if (this.getHeader() === "" && mNavContext.quickView.getPages().length === 1 && !Device.system.phone) {
+					oPage.setShowHeader(false);
+					oPage.addStyleClass('sapMQuickViewPageWithoutHeader');
+				}
+
 				if (mPageContent.header) {
 					oPage.addContent(mPageContent.header);
 				}
@@ -241,6 +298,7 @@ sap.ui.define([
 							tooltip : this._oResourceBundle.getText("PAGE_NAVBUTTON_TEXT"),
 							press : function() {
 								if (mNavContext.navContainer) {
+									mNavContext.quickView._setNavOrigin(null);
 									mNavContext.navContainer.back();
 								}
 							}
@@ -248,7 +306,7 @@ sap.ui.define([
 					);
 				}
 
-				if (mNavContext.popover && sap.ui.Device.system.phone) {
+				if (mNavContext.popover && Device.system.phone) {
 					oCustomHeader.addContentRight(
 						new Button({
 							icon : IconPool.getIconURI("decline"),
@@ -307,7 +365,7 @@ sap.ui.define([
 			 */
 			QuickViewPage.prototype._createForm = function () {
 				var aGroups = this.getAggregation("groups"),
-				    oForm = new SimpleForm({
+					oForm = new SimpleForm({
 						maxContainerCols: 1,
 						editable: false,
 						layout: SimpleFormLayout.ResponsiveGridLayout
@@ -332,11 +390,11 @@ sap.ui.define([
 			QuickViewPage.prototype._getPageHeaderContent = function() {
 				var oIcon,
 					oVLayout = new VerticalLayout(),
-					oHLayout = new HorizontalLayout();
-
-				var sIcon = this.getIcon();
-				var sTitle = this.getTitle();
-				var sDescription = this.getDescription();
+					oHLayout = new HorizontalLayout(),
+					sIcon = this.getIcon(),
+					sTitle = this.getTitle(),
+					sDescription = this.getDescription(),
+					sTitleUrl = this.getTitleUrl();
 
 				if (!sIcon && !sTitle && !sDescription) {
 					return null;
@@ -346,20 +404,21 @@ sap.ui.define([
 					if (this.getIcon().indexOf("sap-icon") == 0) {
 						oIcon = new Icon({
 							src: sIcon,
-							useIconTooltip : false,
-							tooltip : sTitle
+							decorative: !sTitleUrl,
+							useIconTooltip: false,
+							tooltip: sTitle
 						});
 					} else {
 						oIcon = new Image({
 							src: sIcon,
-							decorative : false,
-							tooltip : sTitle
+							decorative: false,
+							tooltip: sTitle
 						}).addStyleClass("sapUiIcon");
 					}
 
 					oIcon.addStyleClass("sapMQuickViewThumbnail");
 
-					if (this.getTitleUrl()) {
+					if (sTitleUrl) {
 						oIcon.attachPress(this._crossApplicationNavigation(this));
 					}
 
@@ -368,10 +427,10 @@ sap.ui.define([
 
 				var oTitle;
 
-				if (this.getTitleUrl()) {
+				if (sTitleUrl) {
 					oTitle = new Link({
 						text	: sTitle,
-						href	: this.getTitleUrl(),
+						href	: sTitleUrl,
 						target	: "_blank"
 					});
 				} else if (this.getCrossAppNavCallback()) {
@@ -447,12 +506,8 @@ sap.ui.define([
 
 					if (!oCurrentGroupElementValue) {
 						// Add dummy text element so that the form renders the oLabel
-						oForm.addContent(new sap.m.Text({text : ""}));
+						oForm.addContent(new Text({text : ""}));
 						continue;
-					}
-
-					if (oCurrentGroupElementValue instanceof Link) {
-						oCurrentGroupElementValue.addAriaLabelledBy(oCurrentGroupElementValue);
 					}
 
 					oLabel.setLabelFor(oCurrentGroupElementValue.getId());
@@ -462,7 +517,7 @@ sap.ui.define([
 					}
 
 					if (oCurrentGroupElement.getType() == QuickViewGroupElementType.mobile &&
-						!sap.ui.Device.system.desktop) {
+						!Device.system.desktop) {
 						var oSmsLink = new Icon({
 							src: IconPool.getIconURI("post"),
 							tooltip : this._oResourceBundle.getText("QUICKVIEW_SEND_SMS"),
@@ -488,7 +543,7 @@ sap.ui.define([
 			 * Helper function used to navigate to another Fiori application (intent based navigation) or
 			 * to an external link.
 			 * This will be applicable only for the header link.
-			 * @param {sap.m.QuickViewPage} The page from which the navigation starts
+			 * @param {sap.m.QuickViewPage} that - The page from which the navigation starts
 			 * @returns {Function} A function that executes the navigation
 			 * @private
 			 */
@@ -508,7 +563,7 @@ sap.ui.define([
 								}
 							);
 
-							sap.m.URLHelper.redirect(href);
+							URLHelper.redirect(href);
 						}
 					} else  if (that.getTitleUrl()) {
 						window.open(that.getTitleUrl(), "_blank");
@@ -561,6 +616,7 @@ sap.ui.define([
 					e.preventDefault();
 					var sPageId = this.getCustomData()[0].getValue();
 					if (mNavContext.navContainer && sPageId) {
+						mNavContext.quickView._setNavOrigin(this);
 						mNavContext.navContainer.to(sPageId);
 					}
 				};
@@ -588,13 +644,17 @@ sap.ui.define([
 
 					mNavContext.popover.focus();
 
-					mNavContext.quickView._clearContainerHeight();
+					if (mNavContext.quickView.indexOfPage(this) == 0) {
+						mNavContext.quickView._clearContainerHeight();
+					}
 
 					this._createPage();
 
 					// in some cases the popover has display:none style here,
 					// which delays the simple form re-arranging and an unwanted scrollbar might appear.
 					mNavContext.popover.$().css('display', 'block');
+
+					mNavContext.quickView._adjustContainerHeight();
 
 					mNavContext.quickView._restoreFocus();
 				}
@@ -624,4 +684,4 @@ sap.ui.define([
 
 			return QuickViewPage;
 
-		}, /* bExport= */true);
+		});

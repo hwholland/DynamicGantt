@@ -1,14 +1,14 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.core.support.plugins.ControlTree (ControlTree support plugin)
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/core/support/Plugin', 'sap/ui/core/util/serializer/ViewSerializer', 'sap/ui/thirdparty/jszip',
+'jquery.sap.global', 'sap/ui/core/support/Plugin', 'sap/ui/core/util/serializer/ViewSerializer', 'sap/ui/thirdparty/jszip',
 	'sap/ui/base/DataType', 'sap/ui/core/Element', 'sap/ui/core/ElementMetadata', 'sap/ui/core/UIArea', 'sap/ui/core/mvc/View', 'sap/ui/core/mvc/Controller',
-	'sap/ui/model/Binding', 'sap/ui/model/CompositeBinding'
+	'sap/ui/model/Binding', 'sap/ui/model/CompositeBinding', 'jquery.sap.keycodes'
 ], function(jQuery, Plugin, ViewSerializer, JSZip, DataType, Element, ElementMetadata, UIArea, View, Controller, Binding, CompositeBinding) {
 	"use strict";
 
@@ -18,10 +18,9 @@ sap.ui.define([
 		/**
 		 * Creates an instance of sap.ui.core.support.plugins.ControlTree.
 		 * @class This class represents the ControlTree plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
-		 * @abstract
+		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.38.33
-		 * @constructor
+		 * @version 1.54.5
 		 * @private
 		 * @alias sap.ui.core.support.plugins.ControlTree
 		 */
@@ -31,7 +30,7 @@ sap.ui.define([
 
 				this._oStub = oSupportStub;
 
-				if (this.isToolPlugin()) {
+				if (this.runsAsToolPlugin()) {
 
 					// TOOLS SIDE!
 
@@ -90,7 +89,7 @@ sap.ui.define([
 		ControlTree.prototype.init = function(oSupportStub){
 			Plugin.prototype.init.apply(this, arguments);
 
-			if (this.isToolPlugin()) {
+			if (this.runsAsToolPlugin()) {
 				initInTools.call(this, oSupportStub);
 			} else {
 				initInApps.call(this, oSupportStub);
@@ -124,7 +123,7 @@ sap.ui.define([
 
 		ControlTree.prototype.exit = function(oSupportStub) {
 			Plugin.prototype.exit.apply(this, arguments);
-			if (this.isToolPlugin()) {
+			if (this.runsAsToolPlugin()) {
 				$(document)
 				.off('click', 'li img.sapUiControlTreeIcon')
 				.off('click', 'li div')
@@ -166,15 +165,15 @@ sap.ui.define([
 		ControlTree.prototype.renderContentAreas = function() {
 			var rm = sap.ui.getCore().createRenderManager();
 
-			rm.write('<div>You can find a control in this tree by clicking it in the application UI while pressing the Ctrl+Alt+Shift keys.</div>');
+			rm.write('<div style="padding: 0.5rem">You can find a control in this tree by clicking it in the application UI while pressing the Ctrl+Alt+Shift keys.</div>');
 
 			rm.write('<div id="sapUiSupportControlTreeArea"><ul class="sapUiSupportControlTreeList"></ul></div>');
 
 			rm.write('<div id="sapUiSupportControlTabs" style="visibility:hidden">');
-				rm.write('<button id="sapUiSupportControlTabProperties" class="sapUiSupportBtn">Properties</button>');
-				rm.write('<button id="sapUiSupportControlTabBindingInfos" class="sapUiSupportBtn">Binding Infos</button>');
-				rm.write('<button id="sapUiSupportControlTabBreakpoints" class="sapUiSupportBtn">Breakpoints</button>');
-				rm.write('<button id="sapUiSupportControlTabExport" class="sapUiSupportBtn">Export</button>');
+				rm.write('<button id="sapUiSupportControlTabProperties" class="sapUiSupportBtn sapUiSupportTab sapUiSupportTabLeft">Properties</button>');
+				rm.write('<button id="sapUiSupportControlTabBindingInfos" class="sapUiSupportBtn sapUiSupportTab">Binding Infos</button>');
+				rm.write('<button id="sapUiSupportControlTabBreakpoints" class="sapUiSupportBtn sapUiSupportTab">Breakpoints</button>');
+				rm.write('<button id="sapUiSupportControlTabExport" class="sapUiSupportBtn sapUiSupportTab sapUiSupportTabRight">Export</button>');
 			rm.write('</div>');
 
 			rm.write('<div id="sapUiSupportControlPropertiesArea"></div>');
@@ -416,7 +415,7 @@ sap.ui.define([
 
 						rm.write('</td><td>');
 
-						rm.write('<div><a class="control-tree sapUiSupportLink" title="' + encode(oContext.location.name) + '" data-sap-ui-control-id="' + encode(oContext.location.id) + '" href="javascript:void(0);">' +
+						rm.write('<div><a class="control-tree sapUiSupportLink" title="' + encode(oContext.location.name) + '" data-sap-ui-control-id="' + encode(oContext.location.id) + '" href="#">' +
 								encode(basename(oContext.location.name)) +
 								' (' + encode(oContext.location.id) + ')</a></div>');
 
@@ -599,7 +598,7 @@ sap.ui.define([
 
 						if (oBinding.model && oBinding.model.location && oBinding.model.location.type) {
 							if (oBinding.model.location.type === 'control') {
-								rm.write('<div><a class="control-tree sapUiSupportLink" title="' + encode(oBinding.model.location.name) + '" data-sap-ui-control-id="' + encode(oBinding.model.location.id) + '" href="javascript:void(0);">' +
+								rm.write('<div><a class="control-tree sapUiSupportLink" title="' + encode(oBinding.model.location.name) + '" data-sap-ui-control-id="' + encode(oBinding.model.location.id) + '" href="#">' +
 										encode(basename(oBinding.model.location.name)) +
 										' (' + encode(oBinding.model.location.id) + ')</a></div>');
 							} else {
@@ -632,7 +631,7 @@ sap.ui.define([
 
 			rm.write('<div class="sapUiSupportControlMethods" data-sap-ui-controlid="' + encode(sControlId) + '">');
 
-			rm.write('<select id="sapUiSupportControlMethodsSelect" class="sapUiSupportAutocomplete"><option></option>');
+			rm.write('<select id="sapUiSupportControlMethodsSelect" class="sapUiSupportAutocomplete sapUiSupportSelect"><option></option>');
 
 			$.each(aMethods, function(iIndex, oValue) {
 				if (!oValue.active) {
@@ -643,7 +642,7 @@ sap.ui.define([
 			rm.write('</select>');
 
 			rm.write('<input class="sapUiSupportControlBreakpointInput sapUiSupportAutocomplete" type="text"/>');
-			rm.write('<button id="sapUiSupportControlAddBreakPoint" class="sapUiSupportBtn">Add breakpoint</button>');
+			rm.write('<button id="sapUiSupportControlAddBreakPoint" class="sapUiSupportRoundedButton ">Add breakpoint</button>');
 			rm.write('<hr class="no-border"/><ul id="sapUiSupportControlActiveBreakpoints" class="sapUiSupportList sapUiSupportBreakpointList">');
 
 			$.each(aMethods, function(iIndex, oValue) {
@@ -670,9 +669,9 @@ sap.ui.define([
 
 			var rm = sap.ui.getCore().createRenderManager();
 
-			rm.write('<button id="sapUiSupportControlExportToXml" class="sapUiSupportBtn">Export To XML</button>');
+			rm.write('<button id="sapUiSupportControlExportToXml" class="sapUiSupportRoundedButton sapUiSupportExportButton">Export To XML</button>');
 			rm.write('<br><br>');
-			rm.write('<button id="sapUiSupportControlExportToHtml" class="sapUiSupportBtn">Export To HTML</button>');
+			rm.write('<button id="sapUiSupportControlExportToHtml" class="sapUiSupportRoundedButton sapUiSupportExportButton">Export To HTML</button>');
 
 			rm.flush(this.$().find("#sapUiSupportControlPropertiesArea").get(0));
 			rm.destroy();
@@ -1315,7 +1314,7 @@ sap.ui.define([
 
 						var oType = jQuery.sap.getObject(mAssoc.type);
 
-						if (!oType) {
+						if (!(typeof oType === "function")) {
 							continue;
 						}
 
@@ -1396,7 +1395,7 @@ sap.ui.define([
 							}
 
 							if (sName == '_sGetter' || sName == '_sMutator') {
-								mProperty["bp" + sName] = $.grep(mMethods, function(o) {
+								mProperty["bp" + sName] = mMethods.filter(function(o) {
 									return o.name === sValue && o.active;
 								}).length === 1;
 							}
@@ -1424,7 +1423,7 @@ sap.ui.define([
 								}
 
 								if (sName == '_sGetter' || sName == '_sMutator') {
-									mAggregation["bp" + sName] = $.grep(mMethods, function(o) {
+									mAggregation["bp" + sName] = mMethods.filter(function(o) {
 										return o.name === sValue && o.active;
 									}).length === 1;
 								}

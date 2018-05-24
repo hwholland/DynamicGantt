@@ -5,7 +5,8 @@
 
 <title>sap.m.List Test</title>
 
-<script src="../../../resources/sap-ui-core.js" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m" data-sap-ui-theme="sap_bluecrystal">
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m">
 
 </script>
 
@@ -19,7 +20,6 @@
 
 <script>
 	var app = new sap.m.App("myApp");
-	var isBlueCrystal = window.location.search.search("sap_bluecrystal") >= 0;
 
 	function addFioriButton(){
 		return new sap.m.Select({
@@ -589,7 +589,7 @@
 							new sap.m.Button('myButtonSetSelectionItem3', {text:"#3", press: setSelectionItem3}),
 							new sap.m.Button('myButtonSetSelectionItem4', {text:"#4", press: setSelectionItem4}),
 							new sap.m.Button('myButtonSetSelectionItem5', {text:"#5", press: setSelectionItem5}),
-							new sap.m.Button('myButtonGetSelection', {text:"Get Selection", press: getSelection}),
+							new sap.m.Button('myButtonGetSelection', {text:"Get Selection", press: getSelection2}),
 											oButtonRemoveSelection = new sap.m.Button('myButtonRemoveSelection', {text:"Remove Selection", press: removeSelection}) ]
 		}),
 		footer : new sap.m.Bar({
@@ -1819,7 +1819,7 @@
 		}
 	}
 
-	function getSelection() {
+	function getSelection2() {
 		if (oListSelection.getMode() == sap.m.ListMode.SingleSelect || oListSelection.getMode() == sap.m.ListMode.SingleSelectLeft|| oListSelection.getMode() == sap.m.ListMode.SingleSelectMaster) {
 			var oResult = oListSelection.getSelectedItem();
 			showPopup(oResult);

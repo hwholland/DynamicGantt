@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.HorizontalLayout.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
-	function(jQuery, Control, library) {
+sap.ui.define(['sap/ui/core/Control', './library', "./HorizontalLayoutRenderer"],
+	function(Control, library, HorizontalLayoutRenderer) {
 	"use strict";
 
 
@@ -22,7 +22,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -48,27 +48,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 			 */
 			content : {type : "sap.ui.core.Control", multiple : true, singularName : "content"}
 		},
-		designtime : true
+		designtime: "sap/ui/layout/designtime/HorizontalLayout.designtime"
 	}});
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @returns {object} Current accessibility state of the control
 	 * @protected
 	 */
 	HorizontalLayout.prototype.getAccessibilityInfo = function() {
-		var aContent = this.getContent();
-		var aChildren = [];
-		for (var i = 0; i < aContent.length; i++) {
-			if (aContent[i].getAccessibilityInfo) {
-				var oInfo = aContent[i].getAccessibilityInfo();
-				if (oInfo) {
-					aChildren.push(oInfo);
-				}
-			}
-		}
-		return {children: aChildren};
+		return {children: this.getContent()};
+
 	};
 
 	return HorizontalLayout;
 
-}, /* bExport= */ true);
+});

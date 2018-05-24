@@ -1,13 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.PaneContainer.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', './Splitter', './AssociativeSplitter'],
-	function(jQuery, library, Element, Splitter, AssociativeSplitter) {
+sap.ui.define(['./library', 'sap/ui/core/Element', './AssociativeSplitter', 'sap/ui/core/library'],
+	function(library, Element, AssociativeSplitter, coreLibrary) {
 	"use strict";
+
+	// shortcut for sap.ui.core.Orientation
+	var Orientation = coreLibrary.Orientation;
 
 	/**
 	 * Constructor for a new PaneContainer.
@@ -16,12 +19,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', './Split
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * PaneContainer is an abstraction of Splitter
+	 * PaneContainer is an abstraction of Splitter.
+	 *
 	 * Could be used as an aggregation of ResponsiveSplitter or other PaneContainers.
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -34,7 +38,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', './Split
 			/**
 			 The orientation of the Splitter
 			 */
-			orientation : { type : "sap.ui.core.Orientation", group : "Behavior", defaultValue : sap.ui.core.Orientation.Horizontal }
+			orientation : { type : "sap.ui.core.Orientation", group : "Behavior", defaultValue : Orientation.Horizontal }
 		},
 		defaultAggregation : "panes",
 		aggregations : {
@@ -83,6 +87,61 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', './Split
 		return this._oSplitter.setLayoutData(oLayoutData);
 	};
 
+	/**
+	 * Pane insertion
+	 *
+	 * @public
+	 * @param oObject
+	 * @param iIndex
+	 * @returns {sap.ui.base.ManagedObject}
+	 */
+	PaneContainer.prototype.insertPane = function (oObject, iIndex) {
+		var vResult =  this.insertAggregation("panes", oObject, iIndex),
+			oEventDelegate = {
+				onAfterRendering: function () {
+					this.triggerResize();
+					this.removeEventDelegate(oEventDelegate);
+				}
+			};
+
+		// When nesting Panes there should be resize event everytime a new pane is inserted.
+		// However for the newly inserted pane is too early and it has not been subscribed yet to the resize handler.
+		// Therefore the resize event should be triggered manually.
+		if (oObject instanceof PaneContainer && oObject._oSplitter) {
+			oObject._oSplitter.addEventDelegate(oEventDelegate, oObject._oSplitter);
+		}
+
+		return vResult;
+	};
+
+	/**
+	 * Pane removal
+	 *
+	 * @public
+	 * @param oObject
+	 * @returns {sap.ui.base.ManagedObject}
+	 */
+	PaneContainer.prototype.removePane = function (oObject) {
+		var vResult =  this.removeAggregation("panes", oObject),
+			oEventDelegate = {
+				onAfterRendering: function () {
+					this.triggerResize();
+					this.removeEventDelegate(oEventDelegate);
+				}
+			};
+
+		// When nesting Panes there should be resize event everytime a new pane is removed.
+		// However it is too early and it has not been subscribed yet to the resize handler.
+		// Therefore the resize event should be triggered manually.
+		this.getPanes().forEach(function (pane) {
+			if (pane instanceof PaneContainer && pane._oSplitter) {
+				pane._oSplitter.addEventDelegate(oEventDelegate, pane._oSplitter);
+			}
+		});
+
+		return vResult;
+	};
+
 	return PaneContainer;
 
-}, /* bExport= */ true);
+});

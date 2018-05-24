@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -20,8 +20,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/library
 		var ValueState = coreLibrary.ValueState;
 
 		var FeedbackClient = function () {
-			this._oFeedbackContextText;
-			this._oIncludeFeedbackContextCB;
 		};
 
 		FeedbackClient.prototype.updateFeedbackContextText = function () {
@@ -66,7 +64,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/library
 
 			var FEEDBACK_INPUT_PLACEHOLDER = 'Describe what you like or what needs to be improved. You can share your feedback for the overall Demokit experience or for the specific page you are currently viewing.';
 
-			var oFeedbackRatingLabel, iRatingValue, oFeedbackRatingButton, oFeedbackInput, oContextDataLink, oCloseFeedbackButton, oSendFeedbackButton;
+			var oFeedbackPopup, feedbackSubmitSuccessLayout, feedbackSubmitErrorLayout, oFeedbackRatingLabel, iRatingValue, oFeedbackRatingButton, oFeedbackInput, oContextDataLink, oCloseFeedbackButton, oSendFeedbackButton;
 
 			function setFeedbackPopupContent(oLayout){
 				resetFeedbackPopupState();
@@ -292,11 +290,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/library
 					}
 				});
 
-				var feedbackSubmitSuccessLayout = new VerticalLayout({
+				feedbackSubmitSuccessLayout = new VerticalLayout({
 					content:[new FormattedTextView('successMsg', {htmlText: '<h4>Your feedback was sent successfully.</h4>'})]
 				});
 
-				var feedbackSubmitErrorLayout = new VerticalLayout({
+				feedbackSubmitErrorLayout = new VerticalLayout({
 					content:[new FormattedTextView('errorMsg', {htmlText: '<h4>Your feedback was not sent.</h4>'})]
 				});
 
@@ -322,7 +320,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/library
 			});
 
 			var sIconPrefix = "theme/img/themeswitch_";
-			var oFeedbackPopup = new ToolPopup('feedBackPopup', {
+			oFeedbackPopup = new ToolPopup('feedBackPopup', {
 				icon: 'sap-icon://comment',
 				iconHover: sIconPrefix + 'hover.png',
 				iconSelected: sIconPrefix + 'selected.png',

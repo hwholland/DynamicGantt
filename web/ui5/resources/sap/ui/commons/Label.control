@@ -24,7 +24,7 @@
         </property>
         <property name="icon" type="sap.ui.core/URI" group="Appearance">
             <documentation>Determines the icon to be displayed in the control.
-This can be an URI to an image or an icon font URI.</documentation>
+This can be a URI to an image or an icon font URI.</documentation>
         </property>
         <property name="textAlign" type="sap.ui.core/TextAlign" defaultValue="Begin" group="Appearance">
             <documentation>Determines the alignment of the text. Available options are &lt;code&gt;Begin&lt;/code&gt;, &lt;code&gt;Center&lt;/code&gt;, &lt;code&gt;End&lt;/code&gt;, &lt;code&gt;Left&lt;/code&gt;, and &lt;code&gt;Right&lt;/code&gt;.</documentation>

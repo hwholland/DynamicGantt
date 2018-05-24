@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,8 +11,9 @@
  */
 sap.ui.define([
 		'sap/ui/core/UIComponent',
+		'sap/ui/test/TestUtils',
 		'sap/ui/thirdparty/sinon'
-	], function (UIComponent, sinon) {
+	], function (UIComponent, TestUtils, sinon) {
 	"use strict";
 
 	var Component = UIComponent.extend("sap.ui.core.sample.common.Component", {
@@ -47,9 +48,7 @@ sap.ui.define([
 				alert("Cannot use a proxy for hosts other than localhost!"); // eslint-disable-line
 				return sAbsolutePath;
 			}
-
-			// for local testing prefix with proxy
-			return "proxy" + sAbsolutePath;
+			return TestUtils.proxy(sAbsolutePath);
 		}
 	});
 

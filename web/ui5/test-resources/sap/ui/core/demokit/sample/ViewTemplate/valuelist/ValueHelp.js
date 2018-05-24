@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -28,8 +28,6 @@ sap.ui.define([
 			init : function () {
 				this.setEditable(false);
 				this.attachValueHelpRequest(this._onValueHelp.bind(this));
-				this.setIconURL("sap-icon://value-help");
-				this.setTooltip("No value help");
 			},
 
 			onBeforeRendering : function () {
@@ -66,6 +64,8 @@ sap.ui.define([
 								that.setIconURL("sap-icon://value-help");
 								that.setEditable(true);
 							});
+					} else {
+						that.setTooltip("No value help");
 					}
 				}, function (oError) {
 					//TODO errors cannot seriously be handled per _instance_ of a control
@@ -102,7 +102,8 @@ sap.ui.define([
 						return new Text({text : oMetaModel.getODataProperty(oEntityType,
 							sPropertyPath)["sap:label"]});
 					}
-						return new ValueHelp({value : "{" + sPropertyPath + "}"});
+					return new ValueHelp({showDetails : oControl.getShowDetails(),
+						value : "{" + sPropertyPath + "}"});
 				}
 
 				function onClose() {

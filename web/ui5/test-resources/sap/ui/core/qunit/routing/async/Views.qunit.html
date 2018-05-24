@@ -3,11 +3,11 @@
 
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>qUnit Page for sap.ui.core.routing.Views</title>
+<title>QUnit Page for sap.ui.core.routing.Views</title>
 
-<script id="sap-ui-bootstrap" type="text/javascript"
+<script src="../../../shared-config.js"></script>
+<script id="sap-ui-bootstrap"
 	src="../../../../../../../resources/sap-ui-core.js"
-	data-sap-ui-theme="sap_bluecrystal"
 	data-sap-ui-libs="sap.ui.commons,sap.ui.ux3,sap.m"
 	data-sap-ui-resourceroots='{"qunit.routing":".", "qunit.view":"../../testdata/routing"}'>
 
@@ -42,7 +42,7 @@
 				}
 
 				QUnit.module("views - creation and caching", {
-					setup: function () {
+					beforeEach: function () {
 						// System under test + Arrange
 						this.oViews = new Views({async: true});
 						this.oViewOptions = {
@@ -53,12 +53,13 @@
 
 						this.oView = createXmlView();
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oViews.destroy();
 					}
 				});
 
-				QUnit.asyncTest("Should create a view", function (assert) {
+				QUnit.test("Should create a view", function (assert) {
+					var done = assert.async();
 					var fnStub = this.stub(sap.ui, "view", function () {
 							return this.oView;
 						}.bind(this));
@@ -71,12 +72,13 @@
 						assert.strictEqual(oView, this.oView, "the view was created");
 						assert.strictEqual(fnStub.callCount, 1, "the stub was invoked");
 						fnStub.restore();
-						QUnit.start();
+						done();
 					}.bind(this));
 				});
 
 
-				QUnit.asyncTest("Should set a view to the cache", function (assert) {
+				QUnit.test("Should set a view to the cache", function (assert) {
+					var done = assert.async();
 					var that = this,
 							oReturnValue,
 							fnStub = this.stub(sap.ui, "view", function () {
@@ -93,17 +95,17 @@
 						assert.strictEqual(oReturnValue, this.oViews, "able to chain this function");
 						assert.strictEqual(fnStub.callCount, 0, "the stub not invoked - view was loaded from the cache");
 						fnStub.restore();
-						QUnit.start();
+						done();
 					}.bind(this));
 				});
 
 				QUnit.module("component", {
-					setup: function () {
+					beforeEach: function () {
 						this.oUIComponent = new UIComponent({});
 						// System under test
 						this.oViews = new Views({ component: this.oUIComponent, async: true });
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oViews.destroy();
 						this.oUIComponent.destroy();
 					}
@@ -200,7 +202,7 @@
 				});
 
 				QUnit.module("error handling", {
-					setup: function () {
+					beforeEach: function () {
 						this.oViews = new Views({async: true});
 						this.fnView = function() {
 							return {
@@ -211,12 +213,13 @@
 							};
 						}
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oViews.destroy();
 					}
 				});
 
-				QUnit.asyncTest("Should log an error if the options are missing", function (assert) {
+				QUnit.test("Should log an error if the options are missing", function (assert) {
+					var done = assert.async();
 					// Arrange
 					var fnStub = this.stub(sap.ui, "view", this.fnView);
 					var fnErrorSpy = this.spy(jQuery.sap.log, "error");
@@ -232,7 +235,8 @@
 					}.bind(this));
 				});
 
-				QUnit.asyncTest("Should log an error if the viewName is missing", function (assert) {
+				QUnit.test("Should log an error if the viewName is missing", function (assert) {
+					var done = assert.async();
 					// Arrange
 					var fnStub = this.stub(sap.ui, "view", this.fnView);
 					var fnErrorSpy = this.spy(jQuery.sap.log, "error");
@@ -244,16 +248,16 @@
 						sinon.assert.calledWith(fnErrorSpy, sinon.match(/name for the view has to be defined/), sinon.match(this.oViews));
 						fnErrorSpy.restore();
 						fnStub.restore();
-						QUnit.start();
+						done();
 					}.bind(this));
 				});
 
 				QUnit.module("events", {
-					setup: function () {
+					beforeEach: function () {
 						// System under test + Arrange
 						this.oViews = new Views({async: true});
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oViews.destroy();
 					}
 				});
@@ -262,9 +266,9 @@
 					// Arrange
 					var oParameters = { foo : "bar" },
 							fnEventSpy = this.spy(function(oEvent, oActualData) {
-								strictEqual(oActualData, oData, "the data is correct");
-								strictEqual(oEvent.getParameters(), oParameters, "the parameters are correct");
-								strictEqual(this, oListener, "the this pointer is correct");
+								assert.strictEqual(oActualData, oData, "the data is correct");
+								assert.strictEqual(oEvent.getParameters(), oParameters, "the parameters are correct");
+								assert.strictEqual(this, oListener, "the this pointer is correct");
 							}),
 							oListener = {},
 							oData = { some : "data" },
@@ -382,7 +386,7 @@
 </script>
 </head>
 <body>
-	<h1 id="qunit-header">qUnit Page for sap.ui.core.routing.Views</h1>
+	<h1 id="qunit-header">QUnit Page for sap.ui.core.routing.Views</h1>
 	<h2 id="qunit-banner"></h2>
 	<h2 id="qunit-userAgent"></h2>
 	<div id="qunit-testrunner-toolbar"></div>

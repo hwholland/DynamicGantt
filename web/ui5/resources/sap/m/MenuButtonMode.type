@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>MenuButtonMode</name>
     <derived/>
-    <documentation>Different mode for a MenuButton (predefined types)</documentation>
+    <documentation>Different modes for a MenuButton (predefined types).</documentation>
     <since>1.38.0</since>
     <enumeration>
         <value name="Regular">

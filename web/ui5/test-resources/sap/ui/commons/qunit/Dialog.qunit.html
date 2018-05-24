@@ -7,9 +7,10 @@
 
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Dialog - sap.ui.commons - qUnit test page</title>
+<title>Dialog - sap.ui.commons - QUnit test page</title>
 
-<script id="sap-ui-bootstrap" type="text/javascript"
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap"
 	src="../../../../../resources/sap-ui-core.js"
 	data-sap-ui-theme="sap_bluecrystal" data-sap-ui-noConflict="true"
 	data-sap-ui-libs="sap.ui.commons">
@@ -17,13 +18,13 @@
 </script>
 
 <link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+<script src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+<script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 <script>
 	sinon.config.useFakeTimers = false;
@@ -112,7 +113,7 @@
 			assert.ok(this.initialPopupFocusSpy.calledWithExactly(undefined), 'setInitialFocusId should be called with the proper sId');
 		});
 
-		QUnit.test('Get minimal reasonable size', function(assert){
+		QUnit.test('Get minimal reasonable size', function(assert) {
 			var done = assert.async(),
 				that = this;
 
@@ -242,7 +243,7 @@
 
 				sap.ui.test.qunit.triggerMouseEvent(headerDomRef, 'mousemove');
 				assert.strictEqual(mouseMoveSpy.callCount, 1,'The dialog should be moved');
-				assert.ok(popupPositionSpy.callCount === 2, 'should call setPosition on the popup once as drag calls setPosition internally');
+				assert.ok(popupPositionSpy.callCount === 2, 'should call setPosition on the popup 2 times as drag calls setPosition internally. Open dialog also calls it.');
 				assert.strictEqual(mouseMoveSpy.returnValues[0], false, 'handleMove should return false');
 				assert.ok(deregisterSpy.callCount === 1, "move/resize dialog triggers deregister method of sap.ui.core.ResizeHandler");
 
@@ -284,9 +285,9 @@
 				assert.strictEqual(that.oDialog.sDragMode, 'resize', 'should be trigger resize mode');
 
 				sap.ui.test.qunit.triggerMouseEvent(gripHandleRef, 'mousemove');
-				assert.strictEqual(setPropertySpy.callCount, 4,'should set its the width and height once at the begining and once after resize is finished');
+				assert.strictEqual(setPropertySpy.callCount, 4,'should set its the width and height once at the beginning and once after resize is finished');
 				assert.strictEqual(invalidateSpy.callCount, 0, 'should not cause rerendering');
-				assert.strictEqual(popupPositionSpy.callCount, 1,'The popup setPosition is not called as handler is deregistered');
+				assert.strictEqual(popupPositionSpy.callCount, 1,'The popup setPosition is not called as handler is deregistered, but Dialog.open calls it');
 
 
 				sap.ui.test.qunit.triggerMouseEvent(gripHandleRef, 'mouseup');
@@ -323,7 +324,7 @@
 			this.oDialog.open();
 		});
 
-		QUnit.test("Test dialog onClick event handling", function () {
+		QUnit.test("Test dialog onClick event handling", function (assert) {
 			var done = assert.async(),
 					that = this;
 
@@ -448,7 +449,7 @@
 				assert.strictEqual(that.oDialog.sDragMode, 'resize', 'should be trigger resize mode');
 
 				sap.ui.test.qunit.triggerMouseEvent(gripHandleRef, 'mousemove');
-				assert.strictEqual(setPropertySpy.callCount, 4,'should set its the width and height once at the begining and once after resize is finished');
+				assert.strictEqual(setPropertySpy.callCount, 4,'should set its the width and height once at the beginning and once after resize is finished');
 				assert.strictEqual(invalidateSpy.callCount, 0, 'should not cause rerendering');
 
 				sap.ui.test.qunit.triggerMouseEvent(gripHandleRef, 'mouseup');
@@ -524,7 +525,7 @@
 			}
 		});
 
-		QUnit.test('Dialog with focusable elements', function(assert){
+		QUnit.test('Dialog with focusable elements', function(assert) {
 			var that = this,
 				done = assert.async();
 
@@ -540,7 +541,7 @@
 		});
 
 
-		QUnit.test('Dialog without focusable elements', function(assert){
+		QUnit.test('Dialog without focusable elements', function(assert) {
 			var that = this,
 				done = assert.async();
 
@@ -552,7 +553,7 @@
 			this.oDialog.open();
 		});
 
-		QUnit.test('Dialog with variable size of the footer/header', function(assert){
+		QUnit.test('Dialog with variable size of the footer/header', function(assert) {
 			var that = this,
 				done = assert.async(),
 				oOldMinSize,
@@ -591,8 +592,8 @@
 			var fnOpened2 = function() {
 				this.oDialog.oPopup.detachOpened(fnOpened2);
 
-				ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
-				equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+				assert.ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+				assert.equal(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
 
 				this.oDialog.oPopup.attachClosed(done);
 
@@ -602,7 +603,7 @@
 			var fnClosed1 = function() {
 				this.oDialog.oPopup.detachClosed(fnClosed1);
 
-				equals(document.querySelector("#htmlControl").parentElement.id, "sap-ui-preserve", "HTML control rendered (preserved)");
+				assert.equal(document.querySelector("#htmlControl").parentElement.id, "sap-ui-preserve", "HTML control rendered (preserved)");
 
 				this.oDialog.open();
 				this.oDialog.oPopup.attachOpened(fnOpened2);
@@ -612,15 +613,15 @@
 			var fnOpened1 = function() {
 				this.oDialog.oPopup.detachOpened(fnOpened1);
 
-				ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
-				equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+				assert.ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+				assert.equal(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
 
 				this.oDialog.oPopup.attachClosed(fnClosed1);
 				this.oDialog.close();
 			}.bind(this);
 
 
-			equals(document.querySelector("#htmlControl"), null, "HTML control not rendered");
+			assert.equal(document.querySelector("#htmlControl"), null, "HTML control not rendered");
 
 			this.oDialog.oPopup.attachOpened(fnOpened1);
 			this.oDialog.open();

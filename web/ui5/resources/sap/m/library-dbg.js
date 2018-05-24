@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,7 +11,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	'sap/ui/core/library', // library dependency
 	'jquery.sap.mobile', // referenced here in case the Core decides to throw it out - shall always be available when using the mobile lib.
 	'./Support'], // referenced here to enable the Support feature
-	function(jQuery, Device, DataType) {
+	function(jQuery, Device, DataType, CoreLibrary) {
 
 	"use strict";
 
@@ -22,19 +22,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 * @namespace
 	 * @name sap.m
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @public
 	 */
 
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.m",
-		version: "1.38.33",
+		version: "1.54.5",
 		dependencies : ["sap.ui.core"],
+		designtime: "sap/m/designtime/library.designtime",
 		types: [
 			"sap.m.BackgroundDesign",
 			"sap.m.BarDesign",
 			"sap.m.ButtonType",
+			"sap.m.CarouselArrowsAlign",
 			"sap.m.DateTimeInputType",
 			"sap.m.DialogType",
 			"sap.m.DeviationIndicator",
@@ -44,10 +46,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.FlexAlignItems",
 			"sap.m.FlexAlignSelf",
 			"sap.m.FlexDirection",
+			"sap.m.FlexWrap",
 			"sap.m.FlexJustifyContent",
 			"sap.m.FlexRendertype",
 			"sap.m.FrameType",
 			"sap.m.GenericTileMode",
+			"sap.m.GenericTileScope",
 			"sap.m.HeaderLevel",
 			"sap.m.IBarHTMLTag",
 			"sap.m.IconTabFilterDesign",
@@ -57,6 +61,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.ValueCSSColor",
 			"sap.m.InputType",
 			"sap.m.LabelDesign",
+			"sap.m.LinkConversion",
+			"sap.m.ListGrowingDirection",
 			"sap.m.ListHeaderDesign",
 			"sap.m.ListKeyboardMode",
 			"sap.m.ListMode",
@@ -67,28 +73,37 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.OverflowToolbarPriority",
 			"sap.m.P13nPanelType",
 			"sap.m.PageBackgroundDesign",
+			"sap.m.PanelAccessibleRole",
 			"sap.m.PlacementType",
 			"sap.m.PopinDisplay",
+			"sap.m.PopinLayout",
 			"sap.m.QuickViewGroupElementType",
 			"sap.m.RatingIndicatorVisualMode",
 			"sap.m.ScreenSize",
+			"sap.m.SelectionDetailsActionLevel",
 			"sap.m.SelectListKeyboardNavigationMode",
 			"sap.m.SelectType",
 			"sap.m.SplitAppMode",
 			"sap.m.StandardTileType",
+			"sap.m.StringFilterOperator",
 			"sap.m.SwipeDirection",
 			"sap.m.SwitchType",
+			"sap.m.TimePickerMaskMode",
 			"sap.m.ToolbarDesign",
-			"sap.m.VerticalPlacementType"
+			"sap.m.VerticalPlacementType",
+			"sap.m.semantic.SemanticRuleSetType"
 		],
 		interfaces: [
 			"sap.m.IBar",
+			"sap.m.IBreadcrumbs",
 			"sap.m.IconTab",
-			"sap.m.ISnappable",
+			"sap.m.IScale",
+			"sap.m.ISliderTooltip",
 			"sap.m.semantic.IGroup",
 			"sap.m.semantic.IFilter",
 			"sap.m.semantic.ISort",
-			"sap.m.ObjectHeaderContainer"
+			"sap.m.ObjectHeaderContainer",
+			"sap.m.IOverflowToolbarContent"
 		],
 		controls: [
 			"sap.m.ActionListItem",
@@ -96,9 +111,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.ActionSheet",
 			"sap.m.App",
 			"sap.m.Bar",
-			"sap.m.DynamicPage",
-			"sap.m.DynamicPageHeader",
-			"sap.m.DynamicPageTitle",
 			"sap.m.BusyDialog",
 			"sap.m.BusyIndicator",
 			"sap.m.Button",
@@ -106,13 +118,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.Carousel",
 			"sap.m.CheckBox",
 			"sap.m.ColumnListItem",
+			"sap.m.ColorPalette",
+			"sap.m.ColorPalettePopover",
 			"sap.m.ComboBox",
 			"sap.m.ComboBoxTextField",
 			"sap.m.ComboBoxBase",
 			"sap.m.CustomListItem",
 			"sap.m.CustomTile",
+			"sap.m.CustomTreeItem",
+			"sap.m.ColumnHeader",
 			"sap.m.DatePicker",
 			"sap.m.DateRangeSelection",
+			"sap.m.DateTimeField",
 			"sap.m.DateTimeInput",
 			"sap.m.DateTimePicker",
 			"sap.m.Dialog",
@@ -126,12 +143,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.FeedListItem",
 			"sap.m.FlexBox",
 			"sap.m.FormattedText",
-			"sap.m.FlexibleColumnLayout",
 			"sap.m.GenericTile",
 			"sap.m.GroupHeaderListItem",
 			"sap.m.GrowingList",
 			"sap.m.HBox",
+			"sap.m.HeaderContainer",
 			"sap.m.IconTabBar",
+			"sap.m.IconTabBarSelectList",
 			"sap.m.IconTabHeader",
 			"sap.m.Image",
 			"sap.m.ImageContent",
@@ -139,6 +157,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.InputBase",
 			"sap.m.InputListItem",
 			"sap.m.Label",
+			"sap.m.LightBox",
 			"sap.m.Link",
 			"sap.m.List",
 			"sap.m.ListBase",
@@ -148,15 +167,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.MenuButton",
 			"sap.m.MessagePage",
 			"sap.m.MessagePopover",
+			"sap.m.MessageView",
 			"sap.m.MessageStrip",
 			"sap.m.MultiComboBox",
+			"sap.m.MultiEditField",
 			"sap.m.MultiInput",
 			"sap.m.NavContainer",
 			"sap.m.NewsContent",
 			"sap.m.NumericContent",
+			"sap.m.NotificationListBase",
 			"sap.m.NotificationListItem",
 			"sap.m.NotificationListGroup",
 			"sap.m.PagingButton",
+			"sap.m.PlanningCalendarLegend",
 			"sap.m.ObjectAttribute",
 			"sap.m.ObjectHeader",
 			"sap.m.ObjectIdentifier",
@@ -166,9 +189,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.ObjectStatus",
 			"sap.m.OverflowToolbar",
 			"sap.m.OverflowToolbarButton",
-			"sap.m.P13nColumnsItem",
-			"sap.m.P13nDimMeasureItem",
+			"sap.m.OverflowToolbarToggleButton",
 			"sap.m.P13nColumnsPanel",
+			"sap.m.P13nSelectionPanel",
 			"sap.m.P13nDimMeasurePanel",
 			"sap.m.P13nConditionPanel",
 			"sap.m.P13nDialog",
@@ -177,6 +200,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.P13nSortPanel",
 			"sap.m.Page",
 			"sap.m.Panel",
+			"sap.m.PDFViewer",
 			"sap.m.PlanningCalendar",
 			"sap.m.Popover",
 			"sap.m.ProgressIndicator",
@@ -184,8 +208,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.QuickView",
 			"sap.m.QuickViewCard",
 			"sap.m.QuickViewPage",
-			"sap.m.QuickViewGroup",
-			"sap.m.QuickViewGroupElement",
 			"sap.m.RadioButton",
 			"sap.m.RadioButtonGroup",
 			"sap.m.RangeSlider",
@@ -197,27 +219,30 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.Select",
 			"sap.m.SelectDialog",
 			"sap.m.SelectList",
+			"sap.m.SelectionDetails",
 			"sap.m.Shell",
 			"sap.m.Slider",
+			"sap.m.SliderTooltip",
+			"sap.m.SliderTooltipContainer",
 			"sap.m.SlideTile",
+			"sap.m.StepInput",
 			"sap.m.SplitApp",
 			"sap.m.SplitContainer",
 			"sap.m.StandardListItem",
+			"sap.m.StandardTreeItem",
 			"sap.m.StandardTile",
 			"sap.m.Switch",
 			"sap.m.Table",
 			"sap.m.TableSelectDialog",
 			"sap.m.TabContainer",
 			"sap.m.TabStrip",
-			"sap.m.TabStripSelect",
-			"sap.m.TabStripSelectList",
-			"sap.m.TabStripItem",
 			"sap.m.Text",
 			"sap.m.TextArea",
 			"sap.m.Tile",
 			"sap.m.TileContainer",
 			"sap.m.TileContent",
 			"sap.m.TimePicker",
+			"sap.m.TimePickerSliders",
 			"sap.m.Title",
 			"sap.m.ToggleButton",
 			"sap.m.Token",
@@ -225,12 +250,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.Toolbar",
 			"sap.m.ToolbarSpacer",
 			"sap.m.ToolbarSeparator",
+			"sap.m.Tree",
+			"sap.m.TreeItemBase",
 			"sap.m.UploadCollection",
 			"sap.m.UploadCollectionToolbarPlaceholder",
 			"sap.m.VBox",
 			"sap.m.ViewSettingsDialog",
 			"sap.m.ViewSettingsPopover",
 			"sap.m.semantic.DetailPage",
+			"sap.m.semantic.SemanticPage",
+			"sap.m.semantic.ShareMenuPage",
 			"sap.m.semantic.FullscreenPage",
 			"sap.m.semantic.MasterPage",
 			"sap.m.Wizard",
@@ -239,21 +268,32 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		elements: [
 			"sap.m.Column",
 			"sap.m.FlexItemData",
+			"sap.m.FeedListItemAction",
 			"sap.m.IconTabFilter",
 			"sap.m.IconTabSeparator",
+			"sap.m.LightBoxItem",
 			"sap.m.OverflowToolbarLayoutData",
 			"sap.m.MaskInputRule",
 			"sap.m.MenuItem",
+			"sap.m.MessageItem",
 			"sap.m.MessagePopoverItem",
 			"sap.m.PageAccessibleLandmarkInfo",
 			"sap.m.P13nFilterItem",
 			"sap.m.P13nItem",
 			"sap.m.PlanningCalendarRow",
 			"sap.m.PlanningCalendarView",
+			"sap.m.P13nColumnsItem",
+			"sap.m.P13nDimMeasureItem",
 			"sap.m.P13nSortItem",
+			"sap.m.QuickViewGroup",
+			"sap.m.QuickViewGroupElement",
+			"sap.m.ResponsiveScale",
 			"sap.m.SegmentedButtonItem",
+			"sap.m.SelectionDetailsItem",
+			"sap.m.SelectionDetailsItemLine",
 			"sap.m.SuggestionItem",
 			"sap.m.TabContainerItem",
+			"sap.m.TabStripItem",
 			"sap.m.ToolbarLayoutData",
 			"sap.m.UploadCollectionItem",
 			"sap.m.UploadCollectionParameter",
@@ -262,8 +302,153 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			"sap.m.ViewSettingsFilterItem",
 			"sap.m.ViewSettingsItem",
 			"sap.m.semantic.SemanticButton",
-			"sap.m.semantic.SemanticSelect"
-		]
+			"sap.m.semantic.SemanticSelect",
+			"sap.m.semantic.AddAction",
+			"sap.m.semantic.CancelAction",
+			"sap.m.semantic.DeleteAction",
+			"sap.m.semantic.DiscussInJamAction",
+			"sap.m.semantic.EditAction",
+			"sap.m.semantic.FavoriteAction",
+			"sap.m.semantic.FilterAction",
+			"sap.m.semantic.FilterSelect",
+			"sap.m.semantic.FlagAction",
+			"sap.m.semantic.ForwardAction",
+			"sap.m.semantic.GroupAction",
+			"sap.m.semantic.GroupSelect",
+			"sap.m.semantic.MainAction",
+			"sap.m.semantic.MessagesIndicator",
+			"sap.m.semantic.MultiSelectAction",
+			"sap.m.semantic.NegativeAction",
+			"sap.m.semantic.OpenInAction",
+			"sap.m.semantic.PositiveAction",
+			"sap.m.semantic.PrintAction",
+			"sap.m.semantic.SaveAction",
+			"sap.m.semantic.SendEmailAction",
+			"sap.m.semantic.SendMessageAction",
+			"sap.m.semantic.ShareInJamAction",
+			"sap.m.semantic.SortAction",
+			"sap.m.semantic.SortSelect"
+		],
+		extensions: {
+			flChangeHandlers: {
+				"sap.m.ActionSheet": {
+					"moveControls": "default"
+				},
+				"sap.m.Bar": "sap/m/flexibility/Bar",
+				"sap.m.Button": "sap/m/flexibility/Button",
+				"sap.m.CheckBox": "sap/m/flexibility/CheckBox",
+				"sap.m.ColumnListItem": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.CustomListItem": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.DatePicker": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.Dialog": "sap/m/flexibility/Dialog",
+				"sap.m.FlexBox": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.HBox": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.IconTabBar": {
+					"moveControls": "default"
+				},
+				"sap.m.IconTabFilter": "sap/m/flexibility/IconTabFilter",
+				"sap.m.Image": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.Input": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.InputBase": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.InputListItem": "sap/m/flexibility/InputListItem",
+				"sap.m.Label": "sap/m/flexibility/Label",
+				"sap.m.MultiInput": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.ListItemBase": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.Link": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.List": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.ListBase": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.MaskInput": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.MenuButton": "sap/m/flexibility/MenuButton",
+				"sap.m.OverflowToolbar":"sap/m/flexibility/OverflowToolbar",
+				"sap.m.Page": "sap/m/flexibility/Page",
+				"sap.m.Panel": "sap/m/flexibility/Panel",
+				"sap.m.Popover": "sap/m/flexibility/Popover",
+				"sap.m.RadioButton": "sap/m/flexibility/RadioButton",
+				"sap.m.RatingIndicator": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.RangeSlider": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.ScrollContainer": {
+					"hideControl": "default",
+					"moveControls": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.Slider": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.StandardListItem":"sap/m/flexibility/StandardListItem",
+				"sap.m.Table": "sap/m/flexibility/Table",
+				"sap.m.Column": {
+					"hideControl": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.Text": "sap/m/flexibility/Text",
+				"sap.m.Title": "sap/m/flexibility/Title",
+				"sap.m.Toolbar": "sap/m/flexibility/Toolbar",
+				"sap.m.VBox": {
+					"hideControl": "default",
+					"unhideControl": "default",
+					"moveControls": "default"
+				}
+			},
+			//Configuration used for rule loading of Support Assistant
+			"sap.ui.support": {
+				publicRules:true,
+				internalRules:true
+			}
+		}
 	});
 
 
@@ -298,7 +483,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 
 	/**
-	 * Types of the Bar design
+	 * Types of the Bar design.
 	 *
 	 * @enum {string}
 	 * @public
@@ -333,9 +518,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 	};
 
-
 	/**
-	 * Different types for a button (predefined types)
+	 * Different types for a button (predefined types).
 	 *
 	 * @enum {string}
 	 * @public
@@ -356,7 +540,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		Back : "Back",
 
 		/**
-		 * accept type (blue button)
+		 * accept type (green button)
 		 * @public
 		 */
 		Accept : "Accept",
@@ -372,6 +556,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * @public
 		 */
 		Transparent : "Transparent",
+
+		/**
+		 * ghost type
+		 * @public
+		 */
+		Ghost : "Ghost",
 
 		/**
 		 * up type (up navigation button for header)
@@ -393,6 +583,65 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 	};
 
+	/**
+	 * Carousel arrows align.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.CarouselArrowsPlacement = {
+		/**
+		 * Carousel arrows are placed on the sides of the current Carousel page.
+		 * @public
+		 */
+		Content : "Content",
+
+		/**
+		 * Carousel arrows are placed on the sides of the page indicator of the Carousel.
+		 * @public
+		 */
+		PageIndicator : "PageIndicator"
+	};
+
+	/**
+	 * A list of the default built-in views in a {@link sap.m.PlanningCalendar}, described by their keys.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.50
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.PlanningCalendarBuiltInView = {
+
+		/**
+		 * Represents the key of the built-in view, in which the intervals have the size of one hour.
+		 */
+		Hour : "Hour",
+
+		/**
+		 * Represents the key of the built-in view, in which the intervals have the size of one day.
+		 */
+		Day : "Day",
+
+		/**
+		 * Represents the key of the built-in view, in which the intervals have the size of one month.
+		 */
+		Month : "Month",
+
+		/**
+		 * Represents the key of the built-in view, in which the intervals have the size of one day
+		 * where 7 days are displayed, starting with the first day of the week.
+		 */
+		Week : "Week",
+
+		/**
+		 * Represents the key of the built-in view, in which the intervals have the size of one day
+		 * where 31 days are displayed, starting with the first day of the month.
+		 */
+		OneMonth : "One Month"
+
+	};
 
 	/**
 	 * A subset of DateTimeInput types that fit to a simple API returning one string.
@@ -429,7 +678,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 
 	/**
-	 * Enum for the type of sap.m.Dialog control.
+	 * Enum for the type of {@link sap.m.Dialog} control.
 	 *
 	 * @enum {string}
 	 * @public
@@ -484,7 +733,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 
 	/**
-	 * Enum for the state of sap.m.DraftIndicator control.
+	 * Enum for the state of {@link sap.m.DraftIndicator} control.
 	 *
 	 * @enum {string}
 	 * @public
@@ -541,7 +790,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		Time : "Time",
 
 		/**
-		 * >An input control for specifying a Integer value
+		 * >An input control for specifying an Integer value
 		 * @public
 		 */
 		Integer : "Integer",
@@ -879,22 +1128,28 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	sap.m.FlexRendertype = {
 
 		/**
-		 * The UI5 controls are wrapped in DIV elements
+		 * The UI5 controls are wrapped in DIV elements.
 		 * @public
 		 */
 		Div : "Div",
 
 		/**
-		 * The UI5 controls are wrapped in LI elements, the entire Flex Box is an unordered list (UL)
+		 * The UI5 controls are wrapped in LI elements, the surrounding Flex Box is an unordered list (UL).
 		 * @public
 		 */
-		List : "List"
+		List : "List",
 
+		/**
+		 * The UI5 controls are not wrapped in an additional HTML element, the surrounding Flex Box is a DIV element.
+		 * @public
+		 * @since 1.42.1
+		 */
+		Bare : "Bare"
 	};
 
 
 		/**
-		 * Enum for possible frame size types for sap.m.DynamicContent and sap.m.GenricTile control.
+		 * Enum for possible frame size types for sap.m.TileContent and sap.m.GenericTile control.
 		 *
 		 * @enum {string}
 		 * @public
@@ -917,16 +1172,82 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 		/**
 		 * The 2/3 frame type.
+		 * @deprecated since 1.48.0
 		 * @protected
 		 */
 		TwoThirds : "TwoThirds",
 
 		/**
 		 * The Auto frame type that adjusts the size of the control to the content.
+		 * Support for this type in sap.m.GenericTile is deprecated since 1.48.0.
 		 * @protected
 		 */
 		Auto : "Auto"
 
+	};
+
+	/**
+	 * Enumeration for possible link-to-anchor conversion strategy.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.45.5
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.LinkConversion = {
+
+		/**
+		 * Default mode (no conversion).
+		 * @public
+		 */
+		None: "None",
+
+		/**
+		 * Valid links with protocols, such as http, https, ftp.
+		 * @public
+		 */
+		ProtocolOnly: "ProtocolOnly",
+
+		/**
+		 * Valid links with protocols, such as http, https, ftp and those starting with the string "www".
+		 * @public
+		 */
+		All: "All"
+	};
+
+	/**
+	 * Defines how the input display text should be formatted.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.44.0
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.InputTextFormatMode = {
+
+		/**
+		 * Text
+		 * @public
+		 */
+		Value: "Value",
+
+		/**
+		 * Key
+		 * @public
+		 */
+		Key: "Key",
+
+		/**
+		 * A value-key pair formatted like "text (key)"
+		 * @public
+		 */
+		ValueKey: "ValueKey",
+
+		/**
+		 * A key-value pair formatted like "(key) text"
+		 * @public
+		 */
+		KeyValue: "KeyValue"
 	};
 
 	/**
@@ -949,11 +1270,42 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * Header mode (Four lines for the header and one line for the subtitle).
 		 * @public
 		 */
-		HeaderMode : "HeaderMode"
+		HeaderMode : "HeaderMode",
+		/**
+		 * Line mode (Implemented for both, cozy and compact densities. Generic Tile is displayed as in-line element, header and subheader are displayed in one line.
+		 * In case the texts need more than one line, the representation depends on the used density.
+		 * <b>Cozy:</b> The text will be truncated and the full text is shown in a tooltip as soon as the tile is hovered (desktop only).
+		 * <b>Compact:</b> Header and subheader are rendered continuously spanning multiple lines, no tooltip is provided).
+		 * @since 1.44.0
+		 * @public
+		 */
+		LineMode : "LineMode"
 	};
 
 	/**
-	 * Different levels for headers
+	 * Defines the scopes of GenericTile enabling the developer to implement different "flavors" of tiles.
+	 *
+	 * @enum {string}
+	 * @since 1.46.0
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 * @public
+	 */
+	sap.m.GenericTileScope = {
+		/**
+		 * Default scope (The default scope of the tile, no action icons are rendered).
+		 * @public
+		 */
+		Display: "Display",
+
+		/**
+		 * Action scope (Possible footer and Error State information is overlaid, "Remove" and "More" icons are added to the tile).
+		 * @public
+		 */
+		Actions: "Actions"
+	};
+
+	/**
+	 * Different levels for headers.
 	 *
 	 * @enum {string}
 	 * @public
@@ -1014,12 +1366,34 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 */
 
 	/**
+	 * Interface for controls which have the meaning of a breadcrumbs navigation.
 	 *
-	 *   Interface for controls which are suitable as a Header in sap.m.DynamicPage.
-	 *   If the control wants to get have the pin/unpin functionality, it must fire the pinUnpinPress event
+	 * @since 1.52
+	 * @name sap.m.IBreadcrumbs
+	 * @interface
+	 * @public
+	 * @ui5-metamodel This interface also will be described in the UI5 (legacy) designtime metamodel
+	 */
+
+	/**
 	 *
-	 * @since 1.38
-	 * @name sap.m.ISnappable
+	 *   Interface for controls which are suitable as a Scale for the Slider/RangeSlider.
+	 *
+	 *
+	 * @since 1.46
+	 * @name sap.m.IScale
+	 * @interface
+	 * @public
+	 * @ui5-metamodel This interface also will be described in the UI5 (legacy) designtime metamodel
+	 */
+
+	/**
+	 *
+	 *   Interface for controls which are suitable as a Tooltip for the Slider/RangeSlider.
+	 *
+	 *
+	 * @since 1.54
+	 * @name sap.m.ISliderTooltip
 	 * @interface
 	 * @public
 	 * @ui5-metamodel This interface also will be described in the UI5 (legacy) designtime metamodel
@@ -1081,7 +1455,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
 
-
 	/**
 	 *
 	 *   Marker interface for controls which are suitable as items of the filter aggregation of sap.m.Semantic.MasterPage.
@@ -1105,6 +1478,76 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
 
+	/**
+	 *
+	 *   Interface for controls which can have special behavior inside <code>sap.m.OverflowToolbar</code>.
+	 *   Controls that implement this interface must provide a <code>getOverflowToolbarConfig</code> method
+	 *   that accepts no arguments and returns an object with the following fields:
+	 *   <ul>
+	 *       <li><code>canOverflow</code> - A boolean that tells whether the control can move to the overflow menu or not.
+	 *
+	 *       <b>Note:</b> Even if <code>canOverflow</code> is set to <code>false</code>, the <code>propsUnrelatedToSize</code> field is taken into account,
+	 *       allowing to optimize the behavior of controls that do not need to overflow, but are used in an <code>sap.m.OverflowToolbar</code> regardless.</li>
+	 *
+	 *       <li><code>autoCloseEvents</code> - An array of strings, listing all of the control's events that should trigger the closing of the overflow menu, when fired.</li>
+	 *
+	 *       <li><code>propsUnrelatedToSize</code> - An array of strings, listing all of the control's properties that, when changed, should not cause the overflow toolbar to invalidate.
+	 *
+	 *       <b>Note:</b> By default <code>sap.m.OverflowToolbar</code> invalidates whenever any property of a child control changes. This is to ensure that whenever the size of a child control changes, the overflow toolbar's layout is recalculated.
+	 *       Some properties however do not affect control size, making it unnecessary to invalidate the overflow toolbar when they change. You can list them here for optimization purposes.</li>
+	 *
+	 *       <li><code>onBeforeEnterOverflow(oControl)</code> - A callback function that will be invoked before moving the control into the overflow menu. The control instance will be passed as an argument.
+	 *
+	 *       <b>Note:</b> The context of the function is not the control instance (use the <code>oControl</code> parameter for this purpose), but rather an internal helper object, associated with the current <code>sap.m.OverflowToolbar</code> instance.
+	 *       This object only needs to be manipulated in special cases (e.g. when you want to store state on it, rather than on the control instance).</li>
+	 *
+	 *       <li><code>onAfterExitOverflow(oControl)</code> - A callback function that will be invoked after taking the control out of the overflow menu (before moving it back to the toolbar itself). The control instance will be passed as an argument.
+	 *
+	 *       <b>Note:</b> See: <code>onBeforeEnterOverflow</code> for details about the function's context.</li>
+	 *
+	 *       <li><code>getCustomImportance()</code> - A function that, if provided, will be called to determine the priority of the control.
+	 *       This function must return a value of type <code>sap.m.OverflowToolbarPriority</code>. The string "Medium" is also accepted and interpreted as priority between <code>Low</code> and <code>High<code>.
+	 *
+	 *       <b>Note:</b> Normally priority in <code>sap.m.OverflowToolbar</code> is managed with the <code>priority</code> property of <code>sap.m.OverflowToolbarLayoutData</code>.
+	 *       However, some controls may have other means of defining priority, such as dedicated properties or other types of layout data for that purpose.
+	 *       In summary, implementing this function allows a control to override the default priority logic (<code>sap.m.OverflowToolbarLayoutData</code>) by providing its own.</li>
+	 *   </ul>
+	 *
+	 *   <b>Important:</b> In addition, the control can implement a CSS class, scoped with the <code>.sapMOverflowToolbarMenu-CTX</code> context selector, that will be applied whenever the control is inside the overflow menu.
+	 *   For example, to make your control take up the whole width of the overflow menu, you can add a context class to your control's base CSS file like this:
+	 *
+	 *   <pre>
+	 *       .sapMOverflowToolbarMenu-CTX .sapMyControlClass {
+	 *       	width: 100%;
+	 *       }
+	 *   </pre>
+	 *
+	 * @since 1.52
+	 * @name sap.m.IOverflowToolbarContent
+	 * @interface
+	 * @public
+	 * @ui5-metamodel This interface also will be described in the UI5 (legacy) designtime metamodel
+	 */
+
+	/**
+	 * Specifies <code>IconTabBar</code> header mode.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.IconTabHeaderMode = {
+
+		/**
+		 * Standard. In this mode when the <code>count</code> and the <code>text</code> are set, they are displayed in two separate lines.
+		 */
+		Standard : "Standard",
+
+		/**
+		 * Inline. In this mode when the <code>count</code> and the <code>text</code> are set, they are displayed in one line.
+		 */
+		Inline : "Inline"
+	};
 
 		/**
 	 * Available Filter Item Design.
@@ -1188,10 +1631,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		L : "L",
 
 		/**
-		 * The size of the tile depends on the device it is running on. It is medium size for desktop and tablet and small size for phone.
+		 * The size depends on the device it is running on. It is medium size for desktop and tablet and small size for phone.
 		 * @public
 		 */
-		Auto : "Auto"
+		Auto : "Auto",
+
+		/**
+		 * The width and height of the control are determined by the width and height of the container the control is placed in.
+		 * Please note: it is decided by the control whether or not sap.m.Size.Responsive is supported.
+		 * @public
+		 * @since 1.44.0
+		 */
+		Responsive : "Responsive"
 	};
 
 	/**
@@ -1230,11 +1681,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * @classdesc A string type that represents CSS color values and sap.m.ValueColor.
-	 *
-	 * Allowed values are {@link sap.ui.core.CSSColor} and {@link sap.m.ValueColor}
-	 *
-	 * The empty string is also allowed and has the same effect as setting no color.
+	 * @classdesc A string type that represents CSS color values, sap.m.ValueColor or less parameter values.
+	 * Allowed values are {@link sap.ui.core.CSSColor}, {@link sap.m.ValueColor} and {String} as a less parameter name.
+	 * In case the less parameter color cannot be determined, the validation failed. You need to check if less parameters are supported on control level.
+	 * An empty string is also allowed and has the same effect as setting no color.
 	 *
 	 * @final
 	 * @namespace
@@ -1242,15 +1692,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 * @ui5-metamodel This simple type also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	sap.m.ValueCSSColor = DataType.createType('sap.m.ValueCSSColor', {
-		isValid : function(vValue) {
-				// Note: the following regexp by intention is a single regexp literal.
-				// It could be made much more readable by constructing it out of (reused) sub-expressions (strings)
-				// but this would not be parseable by the metamodel recovery tooling that is used inside SAP
-				return /^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgb\(\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*(,\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|rgba\((\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){3}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|hsl\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*(,\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|hsla\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*,(\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){2}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coralcornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silverskyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen|transparent|inherit|Neutral|Good|Critical|Error|)$/.test(vValue);
+		isValid : function (vValue) {
+			var bResult = sap.m.ValueColor.hasOwnProperty(vValue);
+			if (bResult) {
+				return bResult;
+			} else { // seems to be a less parameter or sap.ui.core.CSSColor
+				bResult = CoreLibrary.CSSColor.isValid(vValue);
+				if (bResult) {
+					return bResult;
+				} else {
+					jQuery.sap.require("sap.ui.core.theming.Parameters");
+					return CoreLibrary.CSSColor.isValid(sap.ui.core.theming.Parameters.get(vValue));
+				}
 			}
-		},
-		DataType.getType('string')
-	);
+		}
+	}, DataType.getType('string'));
 
 	/**
 	 * A subset of input types that fits to a simple API returning one string.
@@ -1473,6 +1929,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
+	 * Defines the growing direction of the <code>sap.m.List</code> or <code>sap.m.Table</code>.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.40.0
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.ListGrowingDirection = {
+
+		/**
+		 * User has to scroll down to load more items or the growing button is displayed at the bottom.
+		 * @public
+		 */
+		Downwards : "Downwards",
+
+		/**
+		 * User has to scroll up to load more items or the growing button is displayed at the top.
+		 * <b>Note:</b> If this option is active, there should not be any other control than <code>sap.m.List</code> inside its <code>ScollContainer</code>.
+		 * @public
+		 */
+		Upwards : "Upwards"
+
+	};
+
+	/**
 	 * Defines which separator style will be applied for the items.
 	 *
 	 * @enum {string}
@@ -1521,7 +2002,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 		/**
 		 * Enables detail button of the list item that fires <code>detailPress</code> event.
-		 * Also see {@link sap.m.ListBase#attachDetailPress}.
+		 * Also see {@link sap.m.ListItemBase#attachDetailPress}.
 		 * @public
 		 */
 		Detail : "Detail",
@@ -1539,7 +2020,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		Active : "Active",
 
 		/**
-		 * Enables {@link sap.m.ListType#Detail} and {@link sap.m.ListType#Active} enumerations together.
+		 * Enables {@link sap.m.ListType.Detail} and {@link sap.m.ListType.Active} enumerations together.
 		 * @public
 		 */
 		DetailAndActive : "DetailAndActive"
@@ -1605,7 +2086,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * Different mode for a MenuButton (predefined types)
+	 * Different modes for a MenuButton (predefined types).
 	 *
 	 * @enum {string}
 	 * @since 1.38.0
@@ -1629,7 +2110,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * Defines the priorities of the controls within sap.m.OverflowToolbar
+	 * Defines the priorities of the controls within {@link sap.m.OverflowToolbar}.
 	 *
 	 * @enum {string}
 	 * @public
@@ -1642,7 +2123,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * NeverOverflow priority forces OverflowToolbar items to remain always in the toolbar
 		 * @public
 		 */
-		NeverOverflow : "Never",
+		NeverOverflow : "NeverOverflow",
+
+		/**
+		 * Deprecated - Use <code>sap.m.OverflowToolbarPriority.NeverOverflow</code> instead
+		 * @deprecated Since version 1.48
+		 * @public
+		 */
+		Never : "Never",
 
 		/**
 		 * High priority OverflowToolbar items overflow after the items with lower priority
@@ -1666,7 +2154,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * AlwaysOverflow priority forces OverflowToolbar items to remain always in the overflow area
 		 * @public
 		 */
-		AlwaysOverflow : "Always"
+		AlwaysOverflow : "AlwaysOverflow",
+
+		/**
+		 * Deprecated - Use <code>sap.m.OverflowToolbarPriority.AlwaysOverflow</code> instead
+		 * @deprecated Since version 1.48
+		 * @public
+		 */
+		Always : "Always"
 
 	};
 
@@ -1717,7 +2212,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * Panel type for dimension and measure settings.
 		 * @public
 		 */
-		dimeasure: "dimeasure"
+		dimeasure: "dimeasure",
+
+		/**
+		 * Panel type for selection settings in general.
+		 *
+		 * @private
+		 */
+		selection: "selection"
 
 	};
 
@@ -1758,7 +2260,38 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * Types for the placement of popover control.
+	 * Available Panel Accessible Landmark Roles.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.PanelAccessibleRole = {
+
+		/**
+		 * Represents the ARIA role <code>complementary</code>.
+		 * A section of the page, designed to be complementary to the main content at a similar level in the DOM hierarchy.
+		 * @public
+		 */
+		Complementary : "Complementary",
+
+		/**
+		 * Represents the ARIA role <code>Form</code>.
+		 * A landmark region that contains a collection of items and objects that, as a whole, create a form.
+		 * @public
+		 */
+		Form: "Form",
+
+		/**
+		 * Represents the ARIA role <code>Region</code>.
+		 * A section of a page, that is important enough to be included in a page summary or table of contents.
+		 * @public
+		 */
+		Region: "Region"
+	};
+
+	/**
+	 * Types for the placement of Popover control.
 	 *
 	 * @enum {string}
 	 * @public
@@ -1907,7 +2440,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * QuickViewGroupElement is a combination of one label and another control (Link or Text) associated to this label
+	 * QuickViewGroupElement is a combination of one label and another control (Link or Text) associated to this label.
 	 *
 	 * @enum {string}
 	 * @public
@@ -1954,7 +2487,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	* Types for the placement of message popover control.
+	* Types for the placement of message Popover control.
 	*
 	* @enum {string}
 	* @public
@@ -1982,7 +2515,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	};
 
 	/**
-	 * Defines the display of table pop-ins
+	 * Defines the display of table pop-ins.
 	 *
 	 * @enum {string}
 	 * @public
@@ -2012,9 +2545,70 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		WithoutHeader : "WithoutHeader"
 	};
 
+	/**
+	 * Defines the layout options of the table popins.
+	 * @enum {string}
+	 * @public
+	 * @since 1.52
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.PopinLayout = {
+
+		/**
+		 * Sets block layout for rendering the table popins. The elements inside the popin container are rendered one below the other.
+		 * <b>Note:</b> This option enables the former rendering behavior of the table popins.
+		 * @public
+		 * @since 1.52
+		 */
+		Block : "Block",
+
+		/**
+		 * Sets grid layout for rendering the table popins.
+		 * The grid width for each table popin is small, hence this allows more content to be rendered in a single popin row.
+		 * This value defines small grid width for the table popins.
+		 *
+		 * <b>Note:</b> This feature is currently not supported with IE and Edge browsers.
+		 * @public
+		 * @since 1.52
+		 */
+		GridSmall: "GridSmall",
+
+		/**
+		 * Sets grid layout for rendering the table popins.
+		 * The grid width for each table popin is comparatively larger than <code>GridSmall</code>, hence this allows less content to be rendered in a single popin row.
+		 *
+		 * <b>Note:</b> This feature is currently not supported with IE and Edge browsers.
+		 * @public
+		 * @since 1.52
+		 */
+		GridLarge: "GridLarge"
+	};
 
 	/**
-	 * Possible values for the visualization of float values in the RatingIndicator Control.
+	 * Defines which area of the control remains fixed at the top of the page during vertical scrolling as long as the control is in the viewport.
+	 * @enum {string}
+	 * @public
+	 * @since 1.54
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.Sticky = {
+
+		/**
+		 * No area remains in a fixed position.
+		 * @public
+		 */
+		None: "None",
+
+		/**
+		 * Only column headers remain in a fixed position.
+		 * If no column headers are available, this option behaves the same as <code>None</code>.
+		 * @public
+		 */
+		ColumnHeaders: "ColumnHeaders"
+	};
+
+	/**
+	 * Possible values for the visualization of float values in the RatingIndicator control.
 	 *
 	 * @enum {string}
 	 * @public
@@ -2108,6 +2702,34 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 	};
 
+	/**
+	 * Enumeration for different action levels in sap.m.SelectionDetails control.
+	 *
+	 * @enum {string}
+	 * @protected
+	 * @since 1.48
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.SelectionDetailsActionLevel = {
+
+		/**
+		 * Action on SelectionDetailsItem level.
+		 * @private
+		 */
+		Item : "Item",
+
+		/**
+		 * Action on SelectionDetails list level.
+		 * @private
+		 */
+		List : "List",
+
+		/**
+		 * ActionGroup on SelectionDetails list level.
+		 * @private
+		 */
+		Group : "Group"
+	};
 
 	/**
 	 * Enumeration for different Select types.
@@ -2171,7 +2793,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 
 	/**
-	 * Types for StandardTile
+	 * Types for StandardTile.
 	 *
 	 * @enum {string}
 	 * @public
@@ -2196,6 +2818,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * @public
 		 */
 		None : "None"
+
+	};
+
+
+	/**
+	 * Declares the type of semantic ruleset that will govern the styling and positioning of semantic content.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 * @since 1.44
+	 */
+	sap.m.semantic.SemanticRuleSetType = {
+
+		/**
+		 * The default ruleset type, for which the Share Menu is always in the footer of the page.
+		 * @public
+		 */
+		Classic : "Classic",
+
+		/**
+		 * Offers an optimized user experience, with displaying the Share Menu in the header, rather than the footer, for Fullscreen mode.
+		 * @public
+		 */
+		Optimized : "Optimized"
 
 	};
 
@@ -2237,8 +2884,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		 * Unsaved type
 		 * @public
 		 */
-		Unsaved : "Unsaved"
+		Unsaved : "Unsaved",
 
+		/**
+		 * LockedBy type
+		 * Use when you need to display the name of the user who locked the object.
+		 * @public
+		 */
+		LockedBy : "LockedBy",
+
+		/**
+		 * UnsavedBy type
+		 * Use when you need to display the name of the user whos changes were unsaved.
+		 * @public
+		 */
+		UnsavedBy : "UnsavedBy"
 	};
 
 
@@ -2325,28 +2985,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 
 	};
 
-	/**
-	 * Types of three-column layout for the sap.m.FlexibleColumnLayout control
-	 *
-	 * @enum {string}
-	 * @public
-	 * @since 1.38
-	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
-	 */
-	sap.m.ThreeColumnLayoutType = {
-
-		/**
-		 * Emphasized last column (endColumn) - column layout 25/25/50
-		 * @public
-		 */
-		EndColumnEmphasized : "EndColumnEmphasized",
-
-		/**
-		 * Emphasized middle column (midColumn) - column layout 25/50/25
-		 * @public
-		 */
-		MidColumnEmphasized : "MidColumnEmphasized"
-	};
 
 	/**
 	 * Types of the Toolbar Design.
@@ -2384,7 +3022,195 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		Solid : "Solid"
 
 	};
+
+	/**
+	 * Types of visual styles for the {@link sap.m.Toolbar}.
+	 *
+	 * <b>Note:</b> Keep in mind that the styles are theme-dependent and can differ based on the currently used theme.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.54
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.ToolbarStyle = {
+
+		/**
+		 * Default visual style dependent on the used theme.
+		 * @public
+		 */
+		Standard : "Standard",
+
+		/**
+		 * Simplified visual style dependent on the used theme.
+		 * @public
+		 */
+		Clear : "Clear"
+
+	};
+
+	/**
+	 * Different modes for the <code>sap.m.TimePicker</code> mask.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.54
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.TimePickerMaskMode = {
+		/**
+		 * <code>MaskInput</code> is enabled for the <code>sap.m.TimePicker</code>.
+		 * @public
+		 */
+		On: "On",
+
+		/**
+		 * <code>MaskInput</code> is disabled for the <code>sap.m.TimePicker</code>.
+		 * @public
+		 */
+		Off: "Off"
+	};
+
+	/**
+	 * Types of string filter operators.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.42
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.StringFilterOperator = {
+
+		/**
+		 * Checks if the text is equal with the search string.
+		 * @public
+		 */
+		Equals : "Equals",
+
+		/**
+		 * Checks if the text contains the search string.
+		 * @public
+		 */
+		Contains : "Contains",
+
+		/**
+		 * Checks if the text starts with the search string.
+		 * @public
+		 */
+		StartsWith : "StartsWith",
+
+		/**
+		 * Checks if any word in the text starts with the search string.
+		 * @public
+		 */
+		AnyWordStartsWith : "AnyWordStartsWith"
+	};
+
 	/*global Element: true */
+
+	/**
+	 * Types of LightBox loading stages.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.40
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.LightBoxLoadingStates = {
+
+		/**
+		 * The LightBox image is still loading.
+		 * @public
+		 */
+		Loading : "LOADING",
+		/**
+		 * The LightBox image has loaded.
+		 * @public
+		 */
+		Loaded : "LOADED",
+
+		/**
+		 * The LightBox image has timed out, could not load.
+		 * @public
+		 */
+		TimeOutError : "TIME_OUT_ERROR",
+
+		/**
+		 * The LightBox image could not load.
+		 * @public
+		 */
+		Error : "ERROR"
+	};
+
+	/**
+	 * Available validation modes for {@link sap.m.StepInput}.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.StepInputValidationMode = {
+
+		/**
+		 * Validation happens on <code>FocusOut</code>.
+		 * @public
+		 */
+		FocusOut : "FocusOut",
+
+		/**
+		 * Validation happens on <code>LiveChange</code>.
+		 * @public
+		 */
+		LiveChange : "LiveChange"
+
+	};
+
+	/**
+	 * Available step modes for {@link sap.m.StepInput}.
+	 * @enum {string}
+	 * @public
+	 * @since 1.54
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.m.StepInputStepModeType = {
+		/**
+		 * Choosing increase/decrease button will add/subtract the <code>step</code> value
+		 * to/from the current value. For example, if <code>step</code> is 5, current
+		 * <code>value</code> is 17 and increase button is chosen, the result will be 22 (5+17).
+		 *
+		 * <b>Note:</b> Using keyboard PageUp/PageDown will add/subtract the <code>step</code>
+		 * multiplied by the <code>largerStep</code> values to/from the current
+		 * <code>value</code>. For example, if <code>step</code> is 5, <code>largerStep</code>
+		 * is 3, current <code>value</code> is 17 and PageUp is chosen, the result would be 32 (5*3+17).
+		 *
+		 * For more information, see {@link sap.m.StepInput}'s <code>step</code>,
+		 * <code>largerStep</code> and <code>stepMode</code> properties.
+		 */
+		AdditionAndSubtraction: "AdditionAndSubtraction",
+		 /**
+		 * Pressing increase/decrease button will increase/decrease the current
+		 * <code>value</code> to the closest number that is divisible by the
+		 * <code>step</code>.
+		 *
+		 * For example, if <code>step</code> is 5, current <code>value</code> is 17 and
+		 * increase button is chosen, the result will be 20 as it is the closest larger number
+		 * that is divisible by 5.
+		 *
+		 * <b>Note:</b> Using keyboard PageUp/PageDown will increase/decrease the current
+		 * <code>value</code> to the closest number that is divisible by the multiplication of
+		 * the <code>step</code> and the <code>largerStep</code> values. For example, if
+		 * <code>step</code> is 5, <code>largerStep</code> is 3, current <code>value</code> is
+		 * 17 and PageUp is chosen, the result would be 30 as it is the closest larger number
+		 * that is divisible by 15.
+		 *
+		 * The logic above will work only if both <code>step</code> and
+		 * <code>largerStep</code> are integers.
+		 *
+		 * For more information, see {@link sap.m.StepInput}'s <code>step</code>,
+		 * <code>largerStep</code> and <code>stepMode</code> properties.
+		 */
+		Multiple: "Multiple"
+	};
 
 
 	//lazy imports for MessageToast
@@ -2566,12 +3392,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		};
 
 		/**
-		 * Base font-size
+		 * Base font-size.
 		 * @private
 		 * @since 1.12
 		 * @name sap.m#BaseFontSize
 		 */
-		oLib.BaseFontSize = jQuery(document.documentElement).css("font-size");
+		oLib.BaseFontSize = jQuery(document.documentElement).css("font-size") || "16px";
 
 		/**
 		 * Hide the soft keyboard.
@@ -2674,7 +3500,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			$TouchTarget = jQuery(oTouchList[i].target);
 
 			//	If the current target have only one HTML element or
-			//	have a HTML element antecessor that match with the given element id.
+			//	have an HTML element antecessor that match with the given element id.
 			if ((iElementChildrenL === 0  && $TouchTarget.is(vElement)) ||
 				(vElement[0].contains($TouchTarget[0]))) {
 
@@ -2931,7 +3757,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 			},
 
 
-			/**
+			/*
 			 * @protected
 			 * @returns
 			 */
@@ -3146,7 +3972,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	}());
 
 	/**
-	 * Suggestion helper for sap.m.Input fields: Creates a multi column suggest list for a sap.m.Input field based on a ValueList
+	 * Suggestion helper for sap.m.Input fields: Creates a multi column suggest list for an sap.m.Input field based on a ValueList
 	 * annotation. The ValueList annotation will be resolved via the binding information of the Input field.
 	 *
 	 * If the annotation describes multiple input parameter the suggest provider will resolve all of these relative to the
@@ -3155,7 +3981,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 	 * the model runs in "TwoWay" binding mode. Both features can be switched of via the bResolveInput/bResolveOutput parameter
 	 * of the suggest function:
 	 *
-	 * @param {event} oEvent
+	 * @param {sap.ui.base.Event} oEvent
 	 * @param {boolean} bResolveInput SuggestProvider resolves all input parameters for the data query
 	 * @param {boolean} bResolveOutput SuggestProvider writes back all output parameters.
 	 * @param {int} iLength If iLength is provided only these number of entries will be requested.
@@ -3382,10 +4208,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		createLabel: function(sText){
 			return new sap.m.Label({text: sText});
 		},
-		createButton: function(sId, fPressFunction){
-			var oButton = new sap.m.Button(sId, {type: sap.m.ButtonType.Transparent});
-			oButton.attachEvent('press', fPressFunction, this); // attach event this way to have the right this-reference in handler
-			return oButton;
+		createButton: function(sId, fPressFunction, fnCallback){
+			var that = this;
+			var _createButton = function(Button){
+				var oButton = new Button(sId, {type: sap.m.ButtonType.Transparent});
+				oButton.attachEvent('press', fPressFunction, that); // attach event this way to have the right this-reference in handler
+				fnCallback.call(that, oButton);
+			};
+			var fnButtonClass = sap.ui.require("sap/m/Button");
+			if (fnButtonClass) {
+				// already loaded -> execute synchron
+				_createButton(fnButtonClass);
+			} else {
+				sap.ui.require(["sap/m/Button"], _createButton);
+			}
 		},
 		setButtonContent: function(oButton, sText, sTooltip, sIcon, sIconHovered){
 			oButton.setText(sText);
@@ -3426,6 +4262,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		bFinal: true
 	});
 
+	// implements ColorPicker helper factory with common controls
+	jQuery.sap.setObject("sap.ui.unified.ColorPickerHelper", {
+		isResponsive: function () {
+			return true;
+		},
+		factory: {
+			createLabel: function (mConfig) {
+				return new sap.m.Label(mConfig);
+			},
+			createInput: function (sId, mConfig) {
+				return new sap.m.InputBase(sId, mConfig);
+			},
+			createSlider: function (sId, mConfig) {
+				return new sap.m.Slider(sId, mConfig);
+			},
+			createRadioButtonGroup: function (mConfig) {
+				return new sap.m.RadioButtonGroup(mConfig);
+			},
+			createRadioButtonItem: function (mConfig) {
+				return new sap.m.RadioButton(mConfig);
+			}
+		},
+		bFinal: true
+	});
+
 	//implement table helper factory with m controls
 	//possible is set before layout lib is loaded.
 	jQuery.sap.setObject("sap.ui.table.TableHelper", {
@@ -3435,16 +4296,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 		createTextView: function(mConfig){
 			return new sap.m.Label(mConfig);
 		},
-		createTextField: function(mConfig){
-			return new sap.m.Input(mConfig);
-		},
-		createImage: function(mConfig){
-			var oImage = new sap.m.Image(mConfig);
-			oImage.setDensityAware(false); // by default we do not have density aware images in the Table
-			return oImage;
-		},
 		addTableClass: function() { return "sapUiTableM"; },
-		bFinal: true
+		bFinal: true /* This table helper wins, even when commons helper was set before */
 	});
 
 
@@ -3459,6 +4312,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/DataType',
 				}, 0);
 			}
 		});
+	}
+
+	// ES6 constant represents the maximum safe integer
+	if (!Number.MAX_SAFE_INTEGER) {
+		Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
 	}
 
 	return sap.m;

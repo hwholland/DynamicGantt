@@ -7,7 +7,7 @@
 		<script
 				id="sap-ui-bootstrap"
 				src="../../../../../../../../../resources/sap-ui-core.js"
-				data-sap-ui-theme="sap_bluecrystal"
+				data-sap-ui-theme="sap_belize"
 				data-sap-ui-libs="sap.m"
 				data-sap-ui-bindingSyntax="complex"
 				data-sap-ui-compatVersion="edge"
@@ -27,9 +27,11 @@
 				], function (mockserver, Shell, ComponentContainer) {
 					mockserver.init();
 					new Shell({
-						app: new ComponentContainer({
-							name: "sap.ui.demo.nav",
-							height: "100%"
+						app : new ComponentContainer({
+							name : "sap.ui.demo.nav",
+							settings : {
+								id : "nav"
+							}
 						})
 					}).placeAt("content");
 				});

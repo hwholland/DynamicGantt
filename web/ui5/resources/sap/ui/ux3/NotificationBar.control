@@ -4,7 +4,10 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>A NotificationBar is a "toolbar" that can be added to a page to show messages and notifications from the application.
-Its position, height and width is inherited from the element that the notification bar is added to.</documentation>
+Its position, height and width is inherited from the element that the notification bar is added to.
+The NotificationBar uses position: fixed; to always stay at the bottom of the screen. This CSS may sometimes cause
+issues when nested deeply inside other controls. To have a proper behavior of the NotificationBar use it as high
+in the control hierarchy as possible.</documentation>
     <since>1.7.0</since>
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.MessagePopover&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Control</baseType>

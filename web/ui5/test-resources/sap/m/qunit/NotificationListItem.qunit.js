@@ -1,3 +1,5 @@
+/* global QUnit, sinon */
+
 (function() {
 	'use strict';
 
@@ -8,9 +10,7 @@
 	jQuery.sap.require('sap.ui.thirdparty.sinon-qunit');
 	sinon.config.useFakeTimers = true;
 
-	if(!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-		jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-	}
+	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
 
 	var classNameUnread = '.sapMNLI-Unread';
 	var classNameHeader = '.sapMNLI-Header';
@@ -26,7 +26,7 @@
 	// Notification List Item API
 	//================================================================================
 	QUnit.module('API', {
-		setup: function() {
+		beforeEach: function() {
 			this.NotificationListItem = new sap.m.NotificationListItem();
 			this.list = new sap.m.List({
 				items: [
@@ -37,7 +37,7 @@
 			this.list.placeAt(RENDER_LOCATION);
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function() {
+		afterEach: function() {
 			this.NotificationListItem.destroy();
 			this.list.destroy();
 		}
@@ -282,7 +282,7 @@
 	//================================================================================
 
 	QUnit.module('Rendering', {
-		setup: function() {
+		beforeEach: function() {
 			this.NotificationListItem = new sap.m.NotificationListItem();
 			this.list = new sap.m.List({
 				items: [
@@ -293,7 +293,7 @@
 			this.list.placeAt(RENDER_LOCATION);
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function() {
+		afterEach: function() {
 			this.NotificationListItem.destroy();
 			this.list.destroy();
 		}
@@ -333,7 +333,7 @@
 			new sap.m.Button({
 				text: 'Accept',
 				tap: function () {
-					new sap.m.MessageToast('Accept button pressed');
+					sap.m.MessageToast.show('Accept button pressed');
 				}
 			})
 		);
@@ -541,7 +541,7 @@
 		assert.strictEqual(this.NotificationListItem.getTruncate(), false, 'Notification shouldn\'t be truncated after pressing "Show More" button.');
 		assert.strictEqual(fnEventSpy.callCount, 1, 'Pressing the "Show More" button should call the _deregisterResize() method.');
 		assert.strictEqual(this.NotificationListItem.getDomRef('expandCollapseButton').textContent, collapseText,
-			'The "'+ expandText +'" button text should be changed to "' + collapseText + '".');
+			'The "' + expandText + '" button text should be changed to "' + collapseText + '".');
 	});
 
 	QUnit.test('When resizing _registerResize() should be called', function(assert) {
@@ -602,22 +602,65 @@
 		// arrange
 		this.list.setWidth('50%');
 		sap.ui.getCore().applyChanges();
-		/** @type {DOMTokenList[]}
-         */
-		var buttonClassList = this.NotificationListItem.getDomRef('expandCollapseButton').classList;
 
 		// assert
 		assert.strictEqual(fnEventSpy.callCount, 1, 'The _showHideTruncateButton() method should be called.');
-		assert.strictEqual(buttonClassList.contains('sapMNLI-CollapseButtonHide'), false, 'The "Show More" button should be shown by default.');
+		assert.strictEqual(this.NotificationListItem.$('expandCollapseButton').hasClass('sapMNLI-CollapseButtonHide'), false, 'The hideShowMoreButton is not hidden');
 
 		// arrange
 		this.NotificationListItem.setHideShowMoreButton(true);
+
 		sap.ui.getCore().applyChanges();
-		buttonClassList = this.NotificationListItem.getDomRef('expandCollapseButton').classList;
 
 		// assert
 		assert.strictEqual(fnEventSpy.callCount, 2, 'The _showHideTruncateButton() method should be called again.');
-		assert.strictEqual(buttonClassList.contains('sapMNLI-CollapseButtonHide'), true, 'The "Show More" button should be hidden.');
+		assert.strictEqual(this.NotificationListItem.$('expandCollapseButton').hasClass('sapMNLI-CollapseButtonHide'), true, 'The hideShowMoreButton is hidden');
+	});
+
+	QUnit.test('Notifications truncate and hideShowMoreButton properties test', function(assert) {
+
+		//arrange
+		this.NotificationListItem.setTitle('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi id lorem at ' +
+			'magna laoreet lobortis quis id tortor. Cras in tellus a nibh cursus porttitor et vel purus. Nulla neque ' +
+			'lacus, eleifend sed quam eget, facilisis luctus nulla. Vestibulum ut mollis sem, ac sollicitudin massa. ' +
+			'Mauris vehicula posuere tortor ac vulputate.');
+
+		this.NotificationListItem.setDescription('Donec felis sem, tincidunt vitae gravida eget, egestas sit amet dolor. ' +
+			'Duis mauris erat, eleifend sit amet dapibus vel, cursus quis ante. Pellentesque erat dui, aliquet id ' +
+			'fringilla eget, aliquam at odio. Interdum et malesuada fames ac ante ipsum primis in faucibus. ' +
+			'Donec tincidunt semper mattis. Nunc id convallis ex. Sed bibendum volutpat urna, vitae eleifend nisi ' +
+			'maximus id. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. ' +
+			'Nunc suscipit nulla ligula, ut faucibus ex pellentesque vel. Suspendisse id aliquet mauris. ');
+
+		sap.ui.getCore().applyChanges();
+
+		//act
+		this.NotificationListItem.setTruncate(false);
+
+		//assert - no truncate and button
+		assert.strictEqual(this.NotificationListItem.getTruncate(), false, 'The truncate property is set to false');
+		assert.strictEqual(this.NotificationListItem.getHideShowMoreButton(), false, 'The hideShowMoreButton property is false by default');
+
+		//act
+		this.NotificationListItem.setHideShowMoreButton(true);
+		//assert - no truncate but with button - which is implossible
+		assert.strictEqual(this.NotificationListItem.getTruncate(), false, 'The truncate property is set to false');
+		assert.strictEqual(this.NotificationListItem.getHideShowMoreButton(), true, 'The hideShowMoreButton property is set to true');
+
+		//act
+		this.NotificationListItem.setTruncate(true);
+		this.NotificationListItem.setHideShowMoreButton(true);
+
+		//assert - with truncate and button
+		assert.strictEqual(this.NotificationListItem.getTruncate(), true, 'The truncate property is set to true');
+		assert.strictEqual(this.NotificationListItem.getHideShowMoreButton(), true, 'The hideShowMoreButton property is set to true');
+
+		//act
+		this.NotificationListItem.setHideShowMoreButton(false);
+
+		//assert - with truncate but no button - default
+		assert.strictEqual(this.NotificationListItem.getTruncate(), true, 'The truncate property is set to true');
+		assert.strictEqual(this.NotificationListItem.getHideShowMoreButton(), false, 'The hideShowMoreButton property is false by default');
 	});
 
 	QUnit.test('Notifications on L size (bigger than 640px) should position footer differently', function(assert) {
@@ -625,7 +668,7 @@
 		var lSizeClass = 'sapMNLI-LSize';
 
 	    // act
-		this.list.setWidth('648px'); // 8px over the threshold go for margins
+		this.list.setWidth('658px'); // 8px over the threshold go for margins
 		sap.ui.getCore().applyChanges();
 		this.NotificationListItem._resizeNotification(); // Manually triggering resizing
 
@@ -674,7 +717,7 @@
 	//================================================================================
 
 	QUnit.module('Events', {
-		setup: function() {
+		beforeEach: function() {
 			this.NotificationListItem = new sap.m.NotificationListItem();
 			this.list = new sap.m.List({
 				items: [
@@ -685,7 +728,7 @@
 			this.list.placeAt(RENDER_LOCATION);
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function() {
+		afterEach: function() {
 			this.NotificationListItem.destroy();
 		}
 	});
@@ -756,11 +799,60 @@
 	});
 
 	//================================================================================
+	// Notification List Item Data Binding
+	//================================================================================
+
+	QUnit.module('Data Binding', {
+		beforeEach: function() {
+			var model = new sap.ui.model.json.JSONModel();
+			var oItemTemplate = new sap.m.NotificationListItem({
+				close : function(oEvent) {
+					var item = oEvent.getSource();
+					model.setProperty(item.getBindingContext().getPath() + "/displayed", false);
+					sap.ui.getCore().byId("list").getBinding("items").filter([
+						new sap.ui.model.Filter("displayed", "EQ", true)
+					]);
+				}
+			});
+			model.setData([
+				{lastName: "Dente", name: "Al", displayed: true, linkText: "www.sap.com", href: "http://www.sap.com", rating: 4},
+				{lastName: "Friese", name: "Andy", displayed: true, linkText: "www.spiegel.de", href: "http://www.spiegel.de", rating: 2},
+				{lastName: "Mann", name: "Anita", displayed: true, linkText: "www.kicker.de", href: "http://www.kicker.de", rating: 3}
+			]);
+
+			this.list = new sap.m.List("list", {
+				headerText : "Items",
+				items : {
+					path : "/",
+					template: oItemTemplate
+				}
+			}).setModel(model);
+
+			this.list.placeAt(RENDER_LOCATION);
+			sap.ui.getCore().applyChanges();
+		},
+		afterEach: function() {
+			this.list.destroy();
+		}
+	});
+
+	QUnit.test('Closing the Notification from itself', function(assert) {
+		// arrange
+		var item = this.list.getItems()[2];
+
+		// act
+		item.close();
+
+		// assert
+		assert.strictEqual(this.list.getItems().length, 2, 'The list should have only 2 list items');
+	});
+
+	//================================================================================
 	// Notification List Item ARIA support
 	//================================================================================
 
 	QUnit.module('ARIA support', {
-		setup: function() {
+		beforeEach: function() {
 			this.NotificationListItem = new sap.m.NotificationListItem();
 			this.list = new sap.m.List({
 				items: [
@@ -771,7 +863,7 @@
 			this.list.placeAt(RENDER_LOCATION);
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function() {
+		afterEach: function() {
 			this.NotificationListItem.destroy();
 		}
 	});
@@ -788,20 +880,47 @@
 	QUnit.test('Checking the labelledby attribute', function(assert) {
 	    // arrange
 		var notificationDomRef = this.NotificationListItem.getDomRef();
+		var descibedByControls = this.NotificationListItem._getHeaderTitle().getId() + ' ' +
+			this.NotificationListItem._getDescriptionText().getId() + ' ' + this.NotificationListItem._ariaDetailsText.getId();
 		var labelledby = notificationDomRef.getAttribute('aria-labelledby');
 
 	    // assert
-	    assert.strictEqual(labelledby, this.NotificationListItem._getHeaderTitle().getId(), 'The labbeledby attribute should point to the title of the control');
+	    assert.strictEqual(labelledby, descibedByControls, 'The labbeledby attribute should point to the detailed invisible text, describing the control');
 	});
 
-	QUnit.test('Checking the describedby attribute', function(assert) {
+	QUnit.test('Checking the labelledby info text is set correctly', function(assert) {
 		// arrange
-		var notificationDomRef = this.NotificationListItem.getDomRef();
-		var describedby = notificationDomRef.getAttribute('aria-describedby');
-		var describedByString = this.NotificationListItem._getDescriptionText().getId() + ' ' +
-			this.NotificationListItem._ariaDetailsText.getId();
+		var resourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
+		var unreadText = resourceBundle.getText('NOTIFICATION_LIST_ITEM_UNREAD');
+		var createdBy = resourceBundle.getText('NOTIFICATION_LIST_ITEM_CREATED_BY') + ' ' + 'John Smith';
+		var dueAndPriorityString = resourceBundle.getText('NOTIFICATION_LIST_ITEM_DATETIME_PRIORITY',
+			['5 minutes', sap.ui.core.Priority.High]);
+		var infoText = unreadText + ' ' + createdBy + ' ' + dueAndPriorityString;
+
+		this.NotificationListItem.setUnread(true);
+		this.NotificationListItem.setPriority(sap.ui.core.Priority.High);
+		this.NotificationListItem.setAuthorName('John Smith');
+		this.NotificationListItem.setDatetime('5 minutes');
 
 		// assert
-		assert.strictEqual(describedby, describedByString, 'The describedby attribute should point to the description and hidden text of the control');
+		assert.strictEqual(this.NotificationListItem._ariaDetailsText.getText(), infoText,
+			'The info text should be set correctly with unread status, author, due date and priority');
+	});
+
+	QUnit.test('Checking the labelledby info text is set correctly without author name', function(assert) {
+		// arrange
+		var resourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
+		var unreadText = resourceBundle.getText('NOTIFICATION_LIST_ITEM_UNREAD');
+		var dueAndPriorityString = resourceBundle.getText('NOTIFICATION_LIST_ITEM_DATETIME_PRIORITY',
+			['5 minutes', sap.ui.core.Priority.High]);
+		var infoText = unreadText + ' ' + dueAndPriorityString;
+
+		this.NotificationListItem.setUnread(true);
+		this.NotificationListItem.setPriority(sap.ui.core.Priority.High);
+		this.NotificationListItem.setDatetime('5 minutes');
+
+		// assert
+		assert.strictEqual(this.NotificationListItem._ariaDetailsText.getText(), infoText,
+			'The info text should be set correctly with unread status, author, due date and priority');
 	});
 })();

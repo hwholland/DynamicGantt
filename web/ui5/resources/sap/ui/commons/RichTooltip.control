@@ -4,7 +4,7 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>Is used to provide tool tips that can have long text, image and title. This tool tip extends the TooltipBase.</documentation>
-    <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.Popover&lt;/code&gt; control.</deprecation>
+    <deprecation since="1.38">Tf you want to achieve a similar behavior, use a &lt;code&gt;sap.m.Popover&lt;/code&gt; control and open it next to your control.</deprecation>
     <baseType>sap.ui.core/TooltipBase</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Misc">

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Our panel content is getting more and more complex and now it is time to move the panel content to a separate view. With that approach, the application structure is much easier to understand, and the individual parts of the app can be reused."/>
 <meta name="description" content="Our panel content is getting more and more complex and now it is time to move the panel content to a separate view. With that approach, the application structure is much easier to understand, and the individual parts of the app can be reused."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5544485244025971"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=32545987619996886"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=32545987619996886"/>
 <title>Step 15: Nested Views</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiodf8c9c3d79b54c928855162bafcd88ee">
 <div id="wrapper"><div id="container">
@@ -48,12 +34,11 @@
 
 		<div class="section">
 		   <div class="section_title">Coding</div>
-		   <p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo
-            Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview">Walkthrough - Step 15</a></span>.</p>
+		   <p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.15/preview">Walkthrough - Step 15</a></span>.</p>
 
          <div class="section_title">webapp/view/App.view.xml</div>
-         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-   controllerName="sap.ui.demo.wt.controller.App"
+         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+   controllerName="sap.ui.demo.walkthrough.controller.App"
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"
    displayBlock="true" &gt;
@@ -61,7 +46,7 @@
       &lt;pages&gt;
          &lt;Page title="{i18n&gt;homePageTitle}"&gt;
             &lt;content&gt;
-               <span class="ph emphasis emphasis">&lt;mvc:XMLView viewName="sap.ui.demo.wt.view.HelloPanel"/&gt;</span>
+               <span class="ph emphasis emphasis">&lt;mvc:XMLView viewName="sap.ui.demo.walkthrough.view.HelloPanel"/&gt;</span>
             &lt;/content&gt;
          &lt;/Page&gt;
       &lt;/pages&gt;
@@ -76,8 +61,8 @@
 
       <div class="section"><div class="section_title">webapp/view/HelloPanel.view.xml (New)</div><div type="webapp/view/HelloPanel.view.xml (New)">
          
-         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
-   controllerName="sap.ui.demo.wt.controller.HelloPanel"
+         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
+   controllerName="sap.ui.demo.walkthrough.controller.HelloPanel"
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"&gt;
    &lt;Panel
@@ -93,8 +78,8 @@
             value="{/recipient/name}"
             valueLiveUpdate="true"
             width="60%"/&gt;
-         &lt;Text
-            text="Hello {/recipient/name}"
+         &lt;FormattedText
+            htmlText="Hello {/recipient/name}"
             class="sapUiSmallMargin sapThemeHighlight-asColor myCustomText"/&gt;
       &lt;/content&gt;
    &lt;/Panel&gt;
@@ -108,12 +93,12 @@
 
       <div class="section"><div class="section_title">webapp/controller/HelloPanel.controller.js (New)</div><div type="webapp/controller/HelloPanel.controller.js (New)">
          
-         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
    "sap/ui/core/mvc/Controller",
    "sap/m/MessageToast"
 ], function (Controller, MessageToast) {
    "use strict";
-   return Controller.extend("sap.ui.demo.wt.controller.HelloPanel", {
+   return Controller.extend("sap.ui.demo.walkthrough.controller.HelloPanel", {
       onShowHello : function () {
          // read msg from i18n model
          var oBundle = this.getView().getModel("i18n").getResourceBundle();
@@ -132,11 +117,11 @@
 
       <div class="section"><div class="section_title">webapp/controller/App.controller.js</div><div type="webapp/controller/App.controller.js">
          
-         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+         <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
    "sap/ui/core/mvc/Controller"
 ], function (Controller) {
    "use strict";
-   return Controller.extend("sap.ui.demo.wt.controller.App", {
+   return Controller.extend("sap.ui.demo.walkthrough.controller.App", {
    });
 });</pre></div>
 
@@ -152,7 +137,7 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="723f4b2334e344c08269159797f6f796.html" title="Sometimes we need to define some more fine-granular layouts and this is when we can use the flexibility of CSS by adding custom style classes to controls and style them as we like.">Step 14: Custom CSS and Theme Colors</a><br/>
@@ -164,19 +149,5 @@
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 15: Nested Views";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

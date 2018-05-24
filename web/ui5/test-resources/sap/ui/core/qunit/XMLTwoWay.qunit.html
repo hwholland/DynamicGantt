@@ -8,7 +8,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <!-- Initialization -->
-<script id="sap-ui-bootstrap" type="text/javascript"
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap"
 	src="../../../../../resources/sap-ui-core.js"
 	data-sap-ui-theme="sap_bluecrystal" data-sap-ui-libs="sap.ui.commons">
 	</script>
@@ -16,15 +17,15 @@
 <link rel="stylesheet"
 	href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css"
 	media="screen" />
-<script type="text/javascript"
+<script
 	src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript"
+<script
 	src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript"
+<script
 	src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
 <!-- Test functions -->
-<script language="javascript">
+<script>
 
 	var oModel;
 	var testData;
@@ -77,41 +78,41 @@
 
 	};
 
-	test("supported BindingModes", function(){
+	QUnit.test("supported BindingModes", function(assert) {
 		setup();
-		ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.OneWay), "One Way supported");
-		ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.TwoWay), "Two Way supported");
-		ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.OneTime), "One Time supported");
-		ok(!oModel.isBindingModeSupported(sap.ui.model.BindingMode.Default), "Default not supported");
+		assert.ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.OneWay), "One Way supported");
+		assert.ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.TwoWay), "Two Way supported");
+		assert.ok(oModel.isBindingModeSupported(sap.ui.model.BindingMode.OneTime), "One Time supported");
+		assert.ok(!oModel.isBindingModeSupported(sap.ui.model.BindingMode.Default), "Default not supported");
 	});
 
-	test("getDefaultBindingMode", function(){
+	QUnit.test("getDefaultBindingMode", function(assert) {
 		setup();
 		var sMode = oModel.getDefaultBindingMode();
-		equal(sMode, sap.ui.model.BindingMode.TwoWay, "default binding mode");
+		assert.equal(sMode, sap.ui.model.BindingMode.TwoWay, "default binding mode");
 	});
 
-	test("setDefaultBindingMode", function(){
+	QUnit.test("setDefaultBindingMode", function(assert) {
 		setup();
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneWay);
 		var sMode = oModel.getDefaultBindingMode();
-		equal(sMode, sap.ui.model.BindingMode.OneWay, "new default binding mode");
+		assert.equal(sMode, sap.ui.model.BindingMode.OneWay, "new default binding mode");
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.TwoWay);
 		sMode = oModel.getDefaultBindingMode();
-		equal(sMode, sap.ui.model.BindingMode.TwoWay, "new default binding mode");
+		assert.equal(sMode, sap.ui.model.BindingMode.TwoWay, "new default binding mode");
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneTime);
 		sMode = oModel.getDefaultBindingMode();
-		equal(sMode, sap.ui.model.BindingMode.OneTime, "new default binding mode");
+		assert.equal(sMode, sap.ui.model.BindingMode.OneTime, "new default binding mode");
 		raises(function(){oModel.setDefaultBindingMode(sap.ui.model.BindingMode.Default)}, "test set not supported binding mode");
 	});
 
-	test("One Way model test", function(){
+	QUnit.test("One Way model test", function(assert) {
 		setup();
 		// should be set first before any binding creation
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneWay);
 		createPropertyBindingsUI("value", "@firstName", "");
 
-		equal(aTextFields.length, 7, "check amount");
+		assert.equal(aTextFields.length, 7, "check amount");
 
 
 		var counter = 0;
@@ -120,20 +121,20 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 	});
 
-	test("Two Way model test", function(){
+	QUnit.test("Two Way model test", function(assert) {
 		setup();
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.TwoWay);
 		createPropertyBindingsUI("value", "@firstName", "");
 
-		equal(aTextFields.length, 7, "check amount");
+		assert.equal(aTextFields.length, 7, "check amount");
 
 
 		var counter = 0;
@@ -142,15 +143,15 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue == "ggg" + i, "check value should have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue == "ggg" + i, "check value should have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 	});
 
-	test("One Way model with Two Way bindings", function(){
+	QUnit.test("One Way model with Two Way bindings", function(assert) {
 		setup();
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneWay);
 		createPropertyBindingsUI("value", "@firstName", sap.ui.model.BindingMode.TwoWay);
@@ -161,16 +162,16 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue == "ggg" + i, "check value should have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue == "ggg" + i, "check value should have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 
 	});
 
-	test("Two Way model with One Way bindings", function(){
+	QUnit.test("Two Way model with One Way bindings", function(assert) {
 		setup();
 		//oModel.setDefaultBindingMode(sap.ui.model.BindingMode.TwoWay);
 		createPropertyBindingsUI("value", "@firstName", sap.ui.model.BindingMode.OneWay);
@@ -181,14 +182,14 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 	});
 
-	test("Two Way with multimodels", function(){
+	QUnit.test("Two Way with multimodels", function(assert) {
 		setup();
 
 		// create 2nd model
@@ -207,9 +208,9 @@
 		aTextFields.push(oTextField);
 
 		var oValue = oModel.getProperty("/clients/member/0/@lastName");
-		equal(oValue, "Duck", "old value check");
+		assert.equal(oValue, "Duck", "old value check");
 		var bEnabled = oModel2.getProperty("/test/0/enabled");
-		ok(bEnabled, "old value check");
+		assert.ok(bEnabled, "old value check");
 
 		// modify
 		oTextField.setValue("newValue");
@@ -217,13 +218,13 @@
 
 		//check
 		var oValue = oModel.getProperty("/clients/member/0/@lastName");
-		equal(oValue, "newValue", "new value check");
+		assert.equal(oValue, "newValue", "new value check");
 		var bEnabled = oModel2.getProperty("/test/0/enabled");
-		ok(!bEnabled, "new value check");
+		assert.ok(!bEnabled, "new value check");
 
 	});
 
-	test("One Way with multimodels", function(){
+	QUnit.test("One Way with multimodels", function(assert) {
 		setup();
 
 		// create 2nd model
@@ -243,9 +244,9 @@
 		aTextFields.push(oTextField);
 
 		var oValue = oModel.getProperty("/clients/member/0/@lastName");
-		equal(oValue, "Duck", "old value check");
+		assert.equal(oValue, "Duck", "old value check");
 		var bEnabled = oModel2.getProperty("/test/0/enabled");
-		ok(bEnabled, "old value check");
+		assert.ok(bEnabled, "old value check");
 
 		// modify
 		oTextField.setValue("newValue");
@@ -253,19 +254,19 @@
 
 		//check
 		var oValue = oModel.getProperty("/clients/member/0/@lastName");
-		equal(oValue, "newValue", "new value check");
+		assert.equal(oValue, "newValue", "new value check");
 		var bEnabled = oModel2.getProperty("/test/0/enabled");
-		ok(bEnabled, "new value check");
+		assert.ok(bEnabled, "new value check");
 
 	});
 
-	test("One Time model test", function(){
+	QUnit.test("One Time model test", function(assert) {
 		setup();
 		// should be set first before any binding creation
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneTime);
 		createPropertyBindingsUI("value", "@firstName");
 
-		equal(aTextFields.length, 7, "check amount");
+		assert.equal(aTextFields.length, 7, "check amount");
 
 
 		var counter = 0;
@@ -274,30 +275,30 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 		// modify value in model...nothing should change in UI
 		jQuery(aTextFields).each(function (i, oTextField){
 			oModel.setProperty("/clients/member/" + i + "/@firstName", "newmodelvalue" + i);
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			equal(oValue, "newmodelvalue" + i, "new model value");
+			assert.equal(oValue, "newmodelvalue" + i, "new model value");
 		});
 
 		jQuery(aTextFields).each(function (i, oTextField){
 			var oValue = oTextField.getValue();
 			// check model value
-			ok(oValue != null, "value null check");
-			ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
 			counter++;
 		});
 
 	});
 
-	test("One Way model with One Time bindings", function(){
+	QUnit.test("One Way model with One Time bindings", function(assert) {
 		setup();
 		oModel.setDefaultBindingMode(sap.ui.model.BindingMode.OneWay);
 		createPropertyBindingsUI("value", "@firstName", sap.ui.model.BindingMode.OneTime);
@@ -308,30 +309,30 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 		// modify value in model...nothing should change in UI
 		jQuery(aTextFields).each(function (i, oTextField){
 			oModel.setProperty("/clients/member/" + i + "/@firstName", "newmodelvalue" + i);
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			equal(oValue, "newmodelvalue" + i, "new model value");
+			assert.equal(oValue, "newmodelvalue" + i, "new model value");
 		});
 
 		jQuery(aTextFields).each(function (i, oTextField){
 			var oValue = oTextField.getValue();
 			// check model value
-			ok(oValue != null, "value null check");
-			ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
 			counter++;
 		});
 
 	});
 
-	test("Two Way model with One Time bindings", function(){
+	QUnit.test("Two Way model with One Time bindings", function(assert) {
 		setup();
 		//oModel.setDefaultBindingMode(sap.ui.model.BindingMode.TwoWay);
 		createPropertyBindingsUI("value", "@firstName", sap.ui.model.BindingMode.OneTime);
@@ -342,24 +343,24 @@
 			oTextField.setValue("ggg" + i);
 			// check model value
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			ok(oValue != null, "value null check");
-			ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue != "ggg" + i, "check value should not have changed in model: " + oValue);
 			counter++;
 		});
-		equal(counter, 7, "check amount");
+		assert.equal(counter, 7, "check amount");
 
 		// modify value in model...nothing should change in UI
 		jQuery(aTextFields).each(function (i, oTextField){
 			oModel.setProperty("/clients/member/" + i + "/@firstName", "newmodelvalue" + i);
 			var oValue = oModel.getProperty("/clients/member/" + i + "/@firstName");
-			equal(oValue, "newmodelvalue" + i, "new model value");
+			assert.equal(oValue, "newmodelvalue" + i, "new model value");
 		});
 
 		jQuery(aTextFields).each(function (i, oTextField){
 			var oValue = oTextField.getValue();
 			// check model value
-			ok(oValue != null, "value null check");
-			ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
+			assert.ok(oValue != null, "value null check");
+			assert.ok(oValue == "ggg" + i, "check value should not have changed in control " + oValue);
 			counter++;
 		});
 	});

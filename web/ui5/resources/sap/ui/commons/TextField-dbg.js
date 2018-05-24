@@ -1,12 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.TextField.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/ValueStateSupport'],
-	function(jQuery, library, Control, ValueStateSupport) {
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/ValueStateSupport',
+    "./TextFieldRenderer"
+],
+	function(jQuery, library, Control, ValueStateSupport, TextFieldRenderer) {
 	"use strict";
 
 	/**
@@ -16,23 +22,24 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * Renders a input field for text input.
+	 * Renders an input field for text input.
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.commons.ToolbarItem
+	 * @implements sap.ui.commons.ToolbarItem, sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.Input</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.Input}
 	 * @alias sap.ui.commons.TextField
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var TextField = Control.extend("sap.ui.commons.TextField", /** @lends sap.ui.commons.TextField.prototype */ { metadata : {
 
 		interfaces : [
-			"sap.ui.commons.ToolbarItem"
+			"sap.ui.commons.ToolbarItem",
+			"sap.ui.core.IFormContent"
 		],
 		library : "sap.ui.commons",
 		properties : {
@@ -540,7 +547,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/* Overwrite of generated function - no new JS-doc.
 	 * Property setter for the editable state
 	 *
-	 * @param bEditable
+	 * @param {boolean} bEditable
 	 * @return {sap.ui.commons.TextField} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -562,7 +569,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/* Overwrite of generated function - no new JS-doc.
 	 * Property setter for the enabled state
 	 *
-	 * @param bEnabled
+	 * @param {boolean} bEnabled
 	 * @return {sap.ui.commons.TextField} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -584,7 +591,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/* Overwrite of generated function - no new JS-doc.
 	 * Property setter for the Required-State
 	 *
-	 * @param bRequired:
+	 * @param {boolean} bRequired:
 	 * @return {sap.ui.commons.TextField} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -612,7 +619,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/* Overwrite of generated function - no new JS-doc.
 	 * Property setter for the Design
 	 *
-	 * @param sDesign:
+	 * @param {sap.ui.core.Design} sDesign:
 	 * @return {sap.ui.commons.TextField} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -637,7 +644,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/* Overwrite of generated function - no new JS-doc.
 	 * Property setter for the Value
 	 *
-	 * @param sValue:
+	 * @param {string} sValue:
 	 * @return {sap.ui.commons.TextField} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -852,7 +859,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @returns {Object} Current accessibility state of the control
 	 * @protected
 	 */
 	TextField.prototype.getAccessibilityInfo = function() {

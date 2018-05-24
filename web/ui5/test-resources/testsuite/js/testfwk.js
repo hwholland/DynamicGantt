@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -48,11 +48,12 @@ if ( !sap.ui.testfwk ) {
 
 sap.ui.testfwk.TestFWK = {
 	sLanguage : (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage,
-	sTheme : "sap_bluecrystal",
+	sTheme : "sap_belize",
+	bContrastMode: false,
 	bRTL : false,
 	bAccessibilityMode: true,
-	bSimulateTouch: false,
-	sJQueryVersion: jQuery.fn.jquery
+	bSimulateTouch: false
+
 };
 
 sap.ui.testfwk.TestFWK.LANGUAGES = {
@@ -62,27 +63,22 @@ sap.ui.testfwk.TestFWK.LANGUAGES = {
 
 sap.ui.testfwk.TestFWK.THEMES = {
 	"base" : "Base",
-	"sap_bluecrystal" : "Blue Crystal",
 	"sap_belize" : "Belize",
 	"sap_belize_plus" : "Belize Plus",
+	"sap_belize_hcb" : "Belize High Contrast Black",
+	"sap_belize_hcw" : "Belize High Contrast White",
+	"sap_bluecrystal" : "Blue Crystal",
 	"sap_goldreflection" : "Gold Reflection",
-	"sap_platinum" : "Platinum",
 	"sap_hcb" : "High Contrast Black",
+	"sap_platinum" : "Platinum",
 	"sap_ux" : "Ux Target Design",
 	"edding" : "Edding (EXPERIMENTAL!)"
 };
 
-sap.ui.testfwk.TestFWK.JQUERY_VERSIONS = {
-	"1.10.1" : "jQuery 1.10.1",
-	"1.10.2" : "jQuery 1.10.2",
-	"1.11.1" : "jQuery 1.11.1",
-	"2.2.3" : "jQuery 2.2.3"
-};
-
 // the themes supported by each library
 sap.ui.testfwk.TestFWK.LIBRARY_THEMES = {
-	"sap.m" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_hcb"]},
-	"sap.me" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal"]},
+	"sap.m" : {"default":"sap_belize", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_belize_hcb","sap_belize_hcw","sap_hcb"]},
+	"sap.me" : {"default":"sap_belize", "supports":["sap_bluecrystal","sap_hcb"]},
 	"sap.service.visualization" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum"]},
 	"sap.ui.commons" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
 	"sap.ui.composite" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
@@ -90,7 +86,7 @@ sap.ui.testfwk.TestFWK.LIBRARY_THEMES = {
 	"sap.ui.richtexteditor" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
 	"sap.ui.suite" : {"default":"sap_goldreflection", "supports":["sap_goldreflection","sap_hcb","sap_bluecrystal"]},
 	"sap.ui.ux3" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb"]},
-	"all" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]}
+	"all" : {"default":"sap_belize", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_belize_hcb","sap_belize_hcw","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]}
 };
 
 sap.ui.testfwk.TestFWK.init = function(oContentWindow) {
@@ -124,8 +120,8 @@ sap.ui.testfwk.TestFWK.getContentURL = function() {
  * @private
  *
  * @param sURL
- * @param oThemeConstraints optional
- * @param sLibName optional
+ * @param {object} [oThemeConstraints]
+ * @param {string} [sLibName]
  * @returns {sap.ui.testfwk.TestFWK.setContentURL}
  */
 sap.ui.testfwk.TestFWK.setContentURL = function(sURL, oThemeConstraints, sLibName) {
@@ -157,7 +153,7 @@ sap.ui.testfwk.TestFWK.setContentURL = function(sURL, oThemeConstraints, sLibNam
  *
  * @private
  *
- * @param sLibName optional
+ * @param {string} sLibName optional
  */
 sap.ui.testfwk.TestFWK.updateContent = function(sLibName) {
 	if ( !this.oContentWindow || !this.sContentURL ) {
@@ -230,14 +226,22 @@ sap.ui.testfwk.TestFWK.setSimulateTouch = function(bSimulateTouch) {
 	}
 };
 
-sap.ui.testfwk.TestFWK.getJQueryVersion = function() {
-	return this.sJQueryVersion;
+sap.ui.testfwk.TestFWK.getContrastMode = function() {
+	return this.bContrastMode;
 };
 
-sap.ui.testfwk.TestFWK.setJQueryVersion = function(sJQueryVersion) {
-	if ( this.sJQueryVersion !== sJQueryVersion ) {
-		this.sJQueryVersion = sJQueryVersion;
-		this.applySettings();
+sap.ui.testfwk.TestFWK.setContrastMode = function(bContrastMode) {
+	if ( this.bContrastMode !== bContrastMode ) {
+		var frameDocument = $('frame[name="sap-ui-ContentWindow"]');
+		var frameDocumentBody = frameDocument.contents().find("body");
+		frameDocumentBody.removeClass("sapContrast");
+		frameDocumentBody.removeClass("sapContrastPlus");
+		if (this.sTheme == "sap_belize" && bContrastMode) {
+			frameDocumentBody.addClass("sapContrast");
+		} else if (this.sTheme == "sap_belize_plus" && bContrastMode) {
+			frameDocumentBody.addClass("sapContrastPlus");
+		}
+		this.bContrastMode = bContrastMode;
 	}
 };
 
@@ -247,8 +251,8 @@ sap.ui.testfwk.TestFWK.setJQueryVersion = function(sJQueryVersion) {
  * If either parameter is null, the other will be returned; if both are null, null will be returned.
  *
  * @private
- * @param sRequestedTheme
- * @param oThemeConstraints
+ * @param {string} sRequestedTheme
+ * @param {object} oThemeConstraints
  * @returns
  */
 sap.ui.testfwk.TestFWK.getEffectiveTheme = function(sRequestedTheme, oThemeConstraints) {
@@ -278,7 +282,7 @@ sap.ui.testfwk.TestFWK.applySettings = function() {
 sap.ui.testfwk.TestFWK.addSettingsToURL = function(sURL, oThemeConstraints) {
 
 	// hash rewriting currently doesn't work with webkit browsers and framesets
-	if ( !!!sap.ui.Device.browser.webkit ) {
+	if ( !sap.ui.Device.browser.webkit ) {
 		top.window.location.hash = sURL.replace(/\?/g, "_");
 	}
 
@@ -306,9 +310,6 @@ sap.ui.testfwk.TestFWK.addSettingsToURL = function(sURL, oThemeConstraints) {
 		add("sap-ui-xx-test-mobile", this.bSimulateTouch);
 	}
 	add("sap-ui-accessibility", this.bAccessibilityMode);
-	if ( this.sJQueryVersion ) {
-		add("sap-ui-jqueryversion", this.sJQueryVersion);
-	}
 
 	return sURL;
 };

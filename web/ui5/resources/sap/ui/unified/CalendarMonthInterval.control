@@ -75,6 +75,7 @@ If one day is assigned to more than one type, only the first one will be used.
         </aggregation>
         <aggregation name="monthsRow" type="sap.ui.unified/calendar/MonthsRow" cardinality="0..1" visibility="hidden"/>
         <aggregation name="yearPicker" type="sap.ui.unified/calendar/YearPicker" cardinality="0..1" visibility="hidden"/>
+        <aggregation name="calendarPicker" type="sap.ui.unified/Calendar" cardinality="0..1" visibility="hidden"/>
     </aggregations>
     <associations>
         <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
@@ -90,15 +91,15 @@ If one day is assigned to more than one type, only the first one will be used.
         <method name="focusDate" type="sap.ui.unified/Calendar">
             <documentation>Sets the focused month of the &lt;code&gt;CalendarMonthInterval&lt;/code&gt;.</documentation>
             <parameters>
-                <parameter name="date" type="sap.ui.core/object">
+                <parameter name="datetime" type="any">
                     <documentation>JavaScript date object for focused date. (The month of this date will be focused.)</documentation>
                 </parameter>
             </parameters>
         </method>
-        <method name="displayDate" type="sap.ui.unified/Calendar">
+        <method name="displayDate" type="sap.ui.unified/CalendarMonthInterval">
             <documentation>Displays a month in the &lt;code&gt;CalendarMonthInterval&lt;/code&gt; but doesn't set the focus.</documentation>
             <parameters>
-                <parameter name="date" type="sap.ui.core/object">
+                <parameter name="datetime" type="any">
                     <documentation>JavaScript date object for displayed date. (The month of this date will be displayed.)</documentation>
                 </parameter>
             </parameters>

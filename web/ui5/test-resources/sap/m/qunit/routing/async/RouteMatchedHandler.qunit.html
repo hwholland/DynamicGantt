@@ -2,11 +2,11 @@
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>qUnit Page for RouteMatchedHandler</title>
+<title>QUnit Page for RouteMatchedHandler</title>
 
+<script src="../../../shared-config.js"></script>
 <script
 		src="../../../../../../resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-libs="sap.m"
 		data-sap-ui-resourceroots='{"qunit": "../../"}'>
 </script>
@@ -67,7 +67,7 @@
 					return sap.ui.jsview(sName);
 				}
 
-				test("Should destroy correctly", function () {
+				QUnit.test("Should destroy correctly", function (assert) {
 					//Arrange
 					var oRouteMatchedSpy = this.spy(RouteMatchedHandler.prototype, "_onHandleRouteMatched"),
 							oRoutePatternMatchedSpy = this.spy(RouteMatchedHandler.prototype, "_handleRoutePatternMatched"),
@@ -82,8 +82,8 @@
 					oRouter.fireRouteMatched({config: {}, name: "myRoute"});
 					oRouter.fireRoutePatternMatched({config: {}});
 
-					strictEqual(oRouteMatchedSpy.callCount, 1, "did fire the event");
-					strictEqual(oRoutePatternMatchedSpy.callCount, 1, "did fire the pattern matched event");
+					assert.strictEqual(oRouteMatchedSpy.callCount, 1, "did fire the event");
+					assert.strictEqual(oRoutePatternMatchedSpy.callCount, 1, "did fire the pattern matched event");
 
 					//Act
 					oRouteMatchedHandler.destroy();
@@ -93,15 +93,15 @@
 					oRouter.fireRoutePatternMatched({config: {}});
 
 					//Assert
-					strictEqual(oRouteMatchedSpy.callCount, 1, "did not fire the event again");
-					strictEqual(oRoutePatternMatchedSpy.callCount, 1, "did not fire the pattern matched event again");
+					assert.strictEqual(oRouteMatchedSpy.callCount, 1, "did not fire the event again");
+					assert.strictEqual(oRoutePatternMatchedSpy.callCount, 1, "did not fire the pattern matched event again");
 
-					strictEqual(oRouteMatchedHandler.getCloseDialogs(), false, "close dialogs was set to false");
+					assert.strictEqual(oRouteMatchedHandler.getCloseDialogs(), false, "close dialogs was set to false");
 				});
 
 				QUnit.module("Transition Directions");
 
-				test("Should forward the Direction info to the TargetHandler", function () {
+				QUnit.test("Should forward the Direction info to the TargetHandler", function (assert) {
 					//Arrange
 					var view = createViewAndController("dummy"),
 							oRouter = fnCreateRouter({
@@ -125,22 +125,22 @@
 					oRouter.fireRoutePatternMatched(oEvent);
 
 					//Assert
-					strictEqual(oNavigateStub.callCount, 1, "did call navigate");
+					assert.strictEqual(oNavigateStub.callCount, 1, "did call navigate");
 					var oDirectionInfo = oNavigateStub.firstCall.args[0];
 
-					strictEqual(oEvent.config.viewLevel, oDirectionInfo.viewLevel, "did have the correct viewlevel");
-					ok(oDirectionInfo.askHistory, "did ask the history");
+					assert.strictEqual(oEvent.config.viewLevel, oDirectionInfo.viewLevel, "did have the correct viewlevel");
+					assert.ok(oDirectionInfo.askHistory, "did ask the history");
 
 					oRouter.destroy();
 				});
 
 				QUnit.module("Managing Containers", {
-					setup: function () {
+					beforeEach: function () {
 						this.oRouter = fnCreateRouter({
 							myRoute: {}
 						});
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oRouter.destroy();
 					}
 				});
@@ -259,8 +259,8 @@
 					assert.strictEqual(oNavigateSpy.callCount, 1, "did call navigate");
 				});
 
-				module("Dialog closing", {
-					setup: function () {
+				QUnit.module("Dialog closing", {
+					beforeEach: function () {
 						var oPageToNavigateTo = new Page();
 						this.oNavContainer = new NavContainer({
 							pages: [ new Page(), oPageToNavigateTo ]
@@ -275,7 +275,7 @@
 							myRoute: {}
 						});
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oNavContainer.destroy();
 						this.oRouter.destroy();
 					}
@@ -301,19 +301,19 @@
 					this.oRouter.fireRoutePatternMatched(this.oEvent);
 
 					//Assert
-					strictEqual(oCloseAllPopoversSpy.callCount, iExpectedCallCount, "did close the popups");
-					strictEqual(oCloseAllDialogsSpy.callCount, iExpectedCallCount, "did close the dialogs");
+					assert.strictEqual(oCloseAllPopoversSpy.callCount, iExpectedCallCount, "did close the popups");
+					assert.strictEqual(oCloseAllDialogsSpy.callCount, iExpectedCallCount, "did close the dialogs");
 				}
 
-				test("Should close all dialogs", function () {
+				QUnit.test("Should close all dialogs", function (assert) {
 					closeDialogsTestCase.call(this, true);
 				});
 
-				test("Should not close all dialogs", function () {
+				QUnit.test("Should not close all dialogs", function (assert) {
 					closeDialogsTestCase.call(this, false);
 				});
 
-				test("Should get/set close all dialogs", function (assert) {
+				QUnit.test("Should get/set close all dialogs", function (assert) {
 					// System under test
 					var oRouteMatchedHandler = new RouteMatchedHandler(fnCreateRouter());
 
@@ -327,8 +327,8 @@
 				});
 
 
-				module("Routing with targets", {
-					setup: function () {
+				QUnit.module("Routing with targets", {
+					beforeEach: function () {
 						this.oDummyMaster = createViewAndController("DummyMaster");
 						this.oDummyDetail = createViewAndController("DummyDetail");
 						this.oSplitContainer = new SplitContainer({
@@ -336,14 +336,14 @@
 							detailPages: [ this.oDummyDetail ]
 						});
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oSplitContainer.destroy();
 						this.oDummyMaster.destroy();
 						this.oDummyDetail.destroy();
 					}
 				});
 
-				test("Should also work for routes with targets", function () {
+				QUnit.test("Should also work for routes with targets", function (assert) {
 					//Arrange
 					var oMasterView = createViewAndController("Master"),
 						oDetailView = createViewAndController("Detail"),
@@ -380,8 +380,8 @@
 					oRouter.parse(sPattern);
 					return oRouteMatchedSpy.returnValues[0].then(function() {
 						//Assert
-						strictEqual(this.oSplitContainer.getCurrentDetailPage().getViewName(), "Detail", "did navigate to the detail view");
-						strictEqual(this.oSplitContainer.getCurrentMasterPage().getViewName(), "Master", "did navigate to the master view");
+						assert.strictEqual(this.oSplitContainer.getCurrentDetailPage().getViewName(), "Detail", "did navigate to the detail view");
+						assert.strictEqual(this.oSplitContainer.getCurrentMasterPage().getViewName(), "Master", "did navigate to the master view");
 
 						oMasterView.destroy();
 						oDetailView.destroy();
@@ -392,7 +392,7 @@
 					}.bind(this));
 				});
 
-				test("Should work with routes without targets mixed with routes with targets", function (assert) {
+				QUnit.test("Should work with routes without targets mixed with routes with targets", function (assert) {
 					//Arrange
 					var oMasterView = createViewAndController("Master"),
 						oDetailView = createViewAndController("Detail"),
@@ -448,7 +448,7 @@
 				///////////////////////////////////////////////////////
 				/// Integation test
 				///////////////////////////////////////////////////////
-				module("Integration tests");
+				QUnit.module("Integration tests");
 
 				QUnit.test("Should pass some data to the navContainer", function (assert) {
 					//Arrange
@@ -495,7 +495,7 @@
 				});
 
 				integrationTests.start({
-					setup: function (oConfig) {
+					beforeEach: function (oConfig) {
 						var oRouter = fnCreateRouter(oConfig);
 						this.oGetViewStub = sinon.stub(oRouter._oViews, "_getViewWithGlobalId", helpers.createViewMock);
 
@@ -513,7 +513,7 @@
 						oRouteMatchedSpy.restore();
 						return oPromise;
 					},
-					teardown: function () {
+					afterEach: function () {
 						this.oRouter.destroy();
 						this.oRouteMatchedHandler.destroy();
 					}
@@ -526,7 +526,7 @@
 </script>
 </head>
 <body>
-<h1 id="qunit-header">qUnit Page for RouteMatchedHandler</h1>
+<h1 id="qunit-header">QUnit Page for RouteMatchedHandler</h1>
 <h2 id="qunit-banner"></h2>
 <h2 id="qunit-userAgent"></h2>
 <div id="qunit-testrunner-toolbar"></div>

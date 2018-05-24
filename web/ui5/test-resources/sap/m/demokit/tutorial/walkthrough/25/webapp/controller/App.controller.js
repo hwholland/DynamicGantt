@@ -3,10 +3,10 @@ sap.ui.define([
 ], function (Controller) {
 	"use strict";
 
-	return Controller.extend("sap.ui.demo.wt.controller.App", {
+	return Controller.extend("sap.ui.demo.walkthrough.controller.App", {
 
 		onOpenDialog : function () {
-			this.getOwnerComponent().helloDialog.open(this.getView());
+			this.getOwnerComponent().openHelloDialog();
 		}
 	});
 

@@ -1,47 +1,33 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="This first step is only relevant if you decided to use the SAP Web IDE. In this step, we will set up the worklist app using a template and configure the service to display products in the app. The template includes generic app functionality and tests that can be easily extended with custom functionality for our use case."/>
 <meta name="description" content="This first step is only relevant if you decided to use the SAP Web IDE. In this step, we will set up the worklist app using a template and configure the service to display products in the app. The template includes generic app functionality and tests that can be easily extended with custom functionality for our use case."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8808092787521162"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=3061781588683048"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3061781588683048"/>
 <title>Step 1 (Option 1): Creating the Initial App with an App Template in SAP Web IDE</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio0c5dc937271f4f56b5e7d54676199860">
 <div id="wrapper"><div id="container">
 
-	<h1 class="title topictitle1">Step 1 (Option 1): Creating the Initial App with an App Template in SAP Web IDE</h1>
+	<h1 class="title topictitle1">Step 1 (Option 1): Creating the Initial App with an App Template in <span class="ph pname">SAP Web IDE</span></h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">This first step is only relevant if you decided to use the SAP Web IDE. In this step, we
-		will set up the worklist app using a template and configure the service to display products
-		in the app. The template includes generic app functionality and tests that can be easily
-		extended with custom functionality for our use case.</p>
+	<div class="body conbody"><p class="shortdesc">This first step is only relevant if you decided to use the <span class="ph pname">SAP Web IDE</span>. In this step, we will set up
+		the worklist app using a template and configure the service to display products in the app.
+		The template includes generic app functionality and tests that can be easily extended with
+		custom functionality for our use case.</p>
 
 		<div class="section"><div class="section_title">Prerequisites</div><div type="Prerequisites">
 			
-			<p class="p">Set up your SAP Web IDE and define a destination to the Northwind OData service as described
-				under <a class="xref" href="13ced9493472408999143bc99bbb73b9.html" title="SAP Web IDE is a web-based development environment that is optimized for developing SAPUI5 complex apps using the latest innovations, developing and extending SAP Fiori apps, developing mobile hybrid apps, and extending SAP Web IDE with plugins and templates.">App Development Using SAP Web IDE</a>.</p>
+			<p class="p">Set up your <span class="ph pname">SAP Web IDE</span> and define a
+				destination to the Northwind OData service as described under <a class="xref" href="13ced9493472408999143bc99bbb73b9.html" title="SAP Web IDE is a web-based development environment that is optimized for developing OpenUI5 complex apps using the latest innovations, developing and extending SAP Fiori apps, developing mobile hybrid apps, and extending SAP Web IDE with plug-ins and templates.">App Development Using SAP Web IDE</a>.</p>
 
 		</div></div>
 
@@ -61,19 +47,19 @@
 			
 			<ol class="ol" id="loio0c5dc937271f4f56b5e7d54676199860__ol_pts_xrh_b5">
 				<li class="li">
-					<p class="p">Launch SAP Web IDE in your browser.</p>
+					<p class="p">Launch <span class="ph pname">SAP Web IDE</span>.</p>
 
 				</li>
 
 				<li class="li">
-					<p class="p">Choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">File</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">New</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Project from Template</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span></p>
+					<p class="p">Choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/><span class="ph uicontrol">File</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">New</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Project from Template</span><img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span></p>
 
 				</li>
 
 				<li class="li">
-					<p class="p">Select the <span class="ph uicontrol">SAPUI5 Worklist Application</span> template and
-						choose the latest <span class="ph pname">SAPUI5</span> version in the
-							<span class="ph uicontrol">Available Version</span> field. Choose
+					<p class="p">Select the <span class="ph uicontrol">SAP Fiori Worklist Application</span> template and choose the
+						latest <span class="ph pname">SAPUI5</span>
+						version in the <span class="ph uicontrol">Available Version</span> field. Choose
 							<span class="ph uicontrol">Next</span>.</p>
 
 				</li>
@@ -101,8 +87,7 @@ Validate the URL by choosing the <span class="ph uicontrol">Load service
 							metadata</span> button beneath the URL. In the
 							<span class="ph uicontrol">Details</span> area, you should now see the service
 						entities as displayed in the following screenshot: <img class="image" id="loio0c5dc937271f4f56b5e7d54676199860__image_hyf_3xh_b5" src="loiofde0a644c1204b10bb557be2ce105b63_HiRes.png"/><div class="note note"><span class="notetitle">Note</span> 
-							<p class="p">At runtime, the relative URL
-									<span class="ph filepath">/V2/Northwind/Northwind.svc/</span> is prefixed
+							<p class="p">At runtime, the relative URL <span class="ph filepath">/V2/Northwind/Northwind.svc/</span> is prefixed
 								with <span class="ph filepath">/destinations/northwind</span>. As a result, all
 								our Northwind OData requests will be proxied via the
 									<span class="ph uicontrol">Northwind OData Service</span> destination that
@@ -126,7 +111,7 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 						following data:</p>
 
 					
-<div class="table-wrapper tablenoborder"><table summary="" id="loio0c5dc937271f4f56b5e7d54676199860__table_n3d_hyh_b5" class="table" width="90%" style="table-layout:auto;" frame="border" border="1" rules="all"><caption><span class="tablecap"><span class="ph uicontrol">Application Settings</span></span></caption>
+<div class="table-wrapper tablenoborder"><table summary="" id="loio0c5dc937271f4f56b5e7d54676199860__table_n3d_hyh_b5" class="table pgwide" width="90%" style="table-layout:auto;" frame="border" border="1" rules="all"><caption><span class="tablecap"><span class="ph uicontrol">Application Settings</span></span></caption>
 <colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
 
 							
@@ -134,17 +119,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 							
 							<thead class="thead" align="left">
 								<tr class="row">
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e230">
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e247">
 										<p class="p">Field</p>
 
 									</th>
 
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e236">
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e253">
 										<p class="p">Value</p>
 
 									</th>
 
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e242">Description</th>
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e259">Description</th>
 
 								</tr>
 
@@ -152,17 +137,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 
 							<tbody class="tbody">
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e230 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e247 ">
 										<p class="p"><span class="ph uicontrol">Title</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e236 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e253 ">
 										<p class="p"><kbd class="ph userinput">Manage Products</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e242 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e259 ">
 										<p class="p">Title of the app which will displayed as header.</p>
 
 									</td>
@@ -170,17 +155,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e230 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e247 ">
 										<p class="p"><span class="ph uicontrol">Namespace</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e236 ">
-										<p class="p"><kbd class="ph userinput">myCompany.myApp</kbd></p>
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e253 ">
+										<p class="p"><kbd class="ph userinput">mycompany.myapp</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e242 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e259 ">
 										<p class="p">The application namespace is a unique identifier for your
 											application resources.</p>
 
@@ -189,17 +174,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e230 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e247 ">
 										<p class="p"><span class="ph uicontrol">Description</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e236 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e253 ">
 										<p class="p"><kbd class="ph userinput">My Worklist App</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e242 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e259 ">
 										<p class="p">Short description of your app.</p>
 
 									</td>
@@ -207,21 +192,21 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e230 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e247 ">
 										<p class="p"><span class="ph uicontrol">Type</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e236 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e253 ">
 										<p class="p"><kbd class="ph userinput">Standalone
 										App</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e242 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e259 ">
 										<p class="p">We create a standalone app that can
-										be run without SAP Fiori launchpad
-										(FLP).</p>
+										be run without <span class="ph pname">SAP Fiori launchpad</span>
+										(<span class="ph pname">FLP</span>).</p>
 
 										<p class="p">If you choose to build an
 										<span class="ph uicontrol">App for SAP Fiori
@@ -243,7 +228,7 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 </div>
 
 					
-<div class="table-wrapper tablenoborder"><table summary="" id="loio0c5dc937271f4f56b5e7d54676199860__table_z25_tyh_b5" class="table" width="90%" style="table-layout:auto;" frame="border" border="1" rules="all"><caption><span class="tablecap"><span class="ph uicontrol">Data Binding</span></span></caption>
+<div class="table-wrapper tablenoborder"><table summary="" id="loio0c5dc937271f4f56b5e7d54676199860__table_z25_tyh_b5" class="table pgwide" width="90%" style="table-layout:auto;" frame="border" border="1" rules="all"><caption><span class="tablecap"><span class="ph uicontrol">Data Binding</span></span></caption>
 <colgroup><col width="33.333333333333336%"/><col width="33.333333333333336%"/><col width="33.333333333333336%"/></colgroup>
 
 							
@@ -251,17 +236,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 							
 							<thead class="thead" align="left">
 								<tr class="row">
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e374">
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e397">
 										<p class="p">Field</p>
 
 									</th>
 
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e380">
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e403">
 										<p class="p">Value</p>
 
 									</th>
 
-									<th class="entry" valign="top" width="33.33333333333333%" id="d425485e386">Description</th>
+									<th class="entry" valign="top" width="33.33333333333333%" id="d465774e409">Description</th>
 
 								</tr>
 
@@ -269,17 +254,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 
 							<tbody class="tbody">
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e374 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e397 ">
 										<p class="p"><span class="ph uicontrol">Object Collection</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e380 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e403 ">
 										<p class="p"><kbd class="ph userinput">Products</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e386 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e409 ">
 										<p class="p">This is the main entity set that will be displayed in the
 											app. Some of the other fields below are automatically
 											selected depending on this field.</p>
@@ -289,17 +274,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e374 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e397 ">
 										<p class="p"><span class="ph uicontrol">Object Collection ID</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e380 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e403 ">
 										<p class="p"><kbd class="ph userinput">ProductID</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e386 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e409 ">
 										<p class="p">The unique key that is used to identify the object
 											collection.</p>
 
@@ -308,17 +293,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e374 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e397 ">
 										<p class="p"><span class="ph uicontrol">Object Title</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e380 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e403 ">
 										<p class="p"><kbd class="ph userinput">ProductName</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e386 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e409 ">
 										<p class="p">The display name of the main entity.</p>
 
 									</td>
@@ -326,17 +311,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e374 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e397 ">
 										<p class="p"><span class="ph uicontrol">Object Numeric Attribute</span></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e380 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e403 ">
 										<p class="p"><kbd class="ph userinput">UnitsInStock</kbd></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="33.33333333333333%" headers="d425485e386 ">
+									<td class="entry" valign="top" width="33.33333333333333%" headers="d465774e409 ">
 										<p class="p">The number displayed next to the product name. In this
 											scenario we pick the <samp class="ph codeph">UnitsInStock</samp>. This
 											represents the stock quantity of the product.</p>
@@ -365,8 +350,11 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 					<div class="figcap">Folder structure of the initial project</div></div></div>
 
 					<div class="note note"><span class="notetitle">Note</span> 
-						<p class="p">The auto-generated files <span class="ph filepath">project.json</span> and <span class="ph filepath">neo-app.json</span> are only necessary for working with SAP Web
-							IDE. They are not included in case you download the example code from the <span class="ph uicontrol">Explored</span> app.</p>
+						<p class="p">The auto-generated files <span class="ph filepath">project.json</span> and
+								<span class="ph filepath">neo-app.json</span> are only necessary for working
+							with <span class="ph pname">SAP Web IDE</span>.
+							They are not included in case you download the example code from the
+								<span class="ph uicontrol">Samples</span>.</p>
 
 						<p class="p">These three files will not be changed throughout this tutorial, so we
 							will ignore them in the following steps.</p>
@@ -380,47 +368,42 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 
 					<p class="p">Our component-based app does not have an <span class="ph filepath">index.html</span>
 						file. A component-based app would typically be included in a surrounding
-						container, like the SAP Fiori launchpad and therefore it does not need to
+						container, like the <span class="ph pname">SAP Fiori launchpad</span> and therefore it does not need to
 						have an <span class="ph filepath">index.html</span> file.</p>
 
 					<p class="p">To be able to run the app in different test modes (for example, with or
 						without mock server), there are several HTML files available in the
 							<span class="ph filepath">webapp/test</span> folder.</p>
 
-					<div class="p">To run the app in test mode in SAP Web IDE, choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">Run</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Run in FLP Sandbox (Mock Server)</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>.<div class="note note"><span class="notetitle">Note</span> 
-							<p class="p">The template comes with two run configurations for SAP Web IDE, you can either run the app with data from a real
-								back-end service (<span class="ph uicontrol">Run in FLP Sandbox</span>) or with local mock data (<span class="ph uicontrol">Run in FLP Sandbox
-									(Mock Server)</span>). </p>
+					<div class="p">To run the app in test mode in <span class="ph pname">SAP Web IDE</span>, choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/><span class="ph uicontrol">Run</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">Run in FLP Sandbox (Mock Server)</span><img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span>.<div class="note note"><span class="notetitle">Note</span> 
+							<p class="p">The template comes with two run configurations for <span class="ph pname">SAP Web IDE</span>, you
+								can either run the app with data from a real back-end service
+									(<span class="ph uicontrol">Run in FLP Sandbox</span>) or with local mock
+								data (<span class="ph uicontrol">Run in FLP Sandbox (Mock Server)</span>). </p>
 
-							<p class="p">We choose the mock server option, because then the app will still be able to run even if the back end is unavailable or
-								the service is not implemented yet. We could even configure a delay to make local testing more realistic.</p>
+							<p class="p">We choose the mock server option, because then the app will still be
+								able to run even if the back end is unavailable or the service is
+								not implemented yet. We could even configure a delay to make local
+								testing more realistic.</p>
 
 						</div>
 </div>
 
 					<p class="p">You should see the screen, which contains generated mock data.</p>
 
-					<p class="p">When you choose the <span class="ph uicontrol">Back</span> button, you should see a SAP
-						Fiori launchpad with a list of tiles each representing an application. There
-						you will also see the  <span class="ph uicontrol">Manage Products</span> tile. Choose
-						that to run our generated app again.</p>
+					<p class="p">When you choose the <span class="ph uicontrol">Back</span> button, you should see an <span class="ph pname">SAP Fiori launchpad</span> with a list
+						of tiles each representing an application. There you will also see the
+							<span class="ph uicontrol">Manage Products</span> tile. Choose that to run our
+						generated app again.</p>
 
 				</li>
 
 			</ol>
 
-			<p class="p">From now on you can quickly run the app by selecting the root folder
-					<span class="ph filepath">MyWorklistApp</span> of your project in SAP Web IDE and pressing
-				the <span class="ph uicontrol">Run</span> button. The system will automatically use the option
-				from the <span class="ph uicontrol">Run</span> menu that you chose last (in this case, the
-					<span class="ph uicontrol">Run with MockServer</span> option).</p>
+			<p class="p">From now on you can quickly run the app by selecting the root folder <span class="ph filepath">MyWorklistApp</span> of your project in <span class="ph pname">SAP Web IDE</span> and pressing the <span class="ph uicontrol">Run</span> button. The system will automatically use the option from the <span class="ph uicontrol">Run</span> menu that you chose last (in this case, the <span class="ph uicontrol">Run with MockServer</span> option).</p>
 
 			<div class="note note"><span class="notetitle">Note</span> 
-				<p class="p">The texts in the <span class="ph filepath">i18n.properties</span> file are automatically generated based
-					on the template Customizing (OData entity set, entities, properties, and texts.
-					The result can be incorrect texts like "Enter an Products name or a part of it."
-					You should therefore revise the generated texts in the <span class="ph filepath">i18n.properties
-					</span> file.</p>
+				<p class="p">The texts in the <span class="ph filepath">i18n.properties</span> file are automatically generated based on the template Customizing (OData entity set, entities, properties, and texts). The result can be incorrect texts like "Enter an &lt;Products&gt; name or a part of it." You should therefore revise the generated texts in the <span class="ph filepath">i18n.properties </span> file.</p>
 
 			</div>
 
@@ -432,31 +415,17 @@ Choose <span class="ph uicontrol">Next</span>.</div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using SAPUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
+<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using OpenUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
 </div>
 <div class="nextlink"><br/>
 <strong>Next: </strong><a class="link" href="9d646de79e3a46ee8143a4b21b332e5e.html" title="In this step, we set up the initial app without SAP Web IDE.">Step 1 (Option 2): Downloading the Code</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="13ced9493472408999143bc99bbb73b9.html" title="SAP Web IDE is a web-based development environment that is optimized for developing SAPUI5 complex apps using the latest innovations, developing and extending SAP Fiori apps, developing mobile hybrid apps, and extending SAP Web IDE with plugins and templates.">App Development Using SAP Web IDE</a></div>
+<div><a class="link" href="13ced9493472408999143bc99bbb73b9.html" title="SAP Web IDE is a web-based development environment that is optimized for developing OpenUI5 complex apps using the latest innovations, developing and extending SAP Fiori apps, developing mobile hybrid apps, and extending SAP Web IDE with plug-ins and templates.">App Development Using SAP Web IDE</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 1 (Option 1): Creating the Initial App with an App Template in SAP Web IDE";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

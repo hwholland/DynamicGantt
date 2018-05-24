@@ -1,7 +1,11 @@
-sap.ui.define([], function() {
+/*global QUnit*/
+
+sap.ui.define([
+	"sap/ui/test/opaQunit"
+], function (opaTest) {
 	"use strict";
 
-	module("Worklist");
+	QUnit.module("Worklist");
 
 	opaTest("Should see the table with all entries", function(Given, When, Then) {
 		// Arrangements
@@ -12,7 +16,6 @@ sap.ui.define([], function() {
 
 		// Assertions
 		Then.onTheWorklistPage.theTableShouldHaveAllEntries().
-		and.theTableShouldContainOnlyFormattedUnitNumbers().
 		and.theTitleShouldDisplayTheTotalAmountOfItems();
 	});
 
@@ -39,13 +42,14 @@ sap.ui.define([], function() {
 			and.iTriggerRefresh();
 
 			// Assertions
-			Then.onTheWorklistPage.theTableHasEntries().and.iTeardownMyAppFrame();
+			Then.onTheWorklistPage.theTableHasEntries().
+				and.iTeardownMyAppFrame();
 		});
 
 	opaTest("Should see the busy indicator on app view while worklist view metadata is loaded", function(Given, When, Then) {
 		// Arrangements
 		Given.iStartMyApp({
-			delay: 5000
+			delay: 10000
 		});
 
 		//Actions
@@ -61,7 +65,7 @@ sap.ui.define([], function() {
 
 		// Assertions
 		Then.onTheWorklistPage.iShouldSeeTheWorklistTableBusyIndicator().
-		and.iTeardownMyAppFrame();
+			and.iTeardownMyAppFrame();
 	});
 
 });

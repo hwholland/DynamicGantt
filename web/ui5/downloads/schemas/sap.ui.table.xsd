@@ -32,6 +32,25 @@ correctly annotated OData services. Please check on the SAP Annotations for ODat
 <xsd:documentation>The row.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
+<xsd:element name="RowAction" type="n2:_RowActionType" substitutionGroup="n0:Control">
+<xsd:annotation>
+<xsd:documentation>The &lt;code&gt;RowAction&lt;/code&gt; control allows to display multiple action items which can be selected by the user.
+If more action items are available as the available space allows to display an overflow mechanism is provided.
+This control must only be used in the context of the &lt;code&gt;sap.ui.table.Table&lt;/code&gt; control to define row actions.</xsd:documentation>
+</xsd:annotation>
+</xsd:element>
+<xsd:element name="RowActionItem" type="n2:_RowActionItemType" substitutionGroup="n0:Element">
+<xsd:annotation>
+<xsd:documentation>An action items to be displayed in a &lt;code&gt;RowAction&lt;/code&gt; control.
+This element must only be used in the context of the &lt;code&gt;sap.ui.table.Table&lt;/code&gt; control to define row actions.</xsd:documentation>
+</xsd:annotation>
+</xsd:element>
+<xsd:element name="RowSettings" type="n2:_RowSettingsType" substitutionGroup="n0:Element">
+<xsd:annotation>
+<xsd:documentation>The &lt;code&gt;RowSettings&lt;/code&gt; control allows you to configure a row.
+You can only use this control in the context of the &lt;code&gt;sap.ui.table.Table&lt;/code&gt; control to define row settings.</xsd:documentation>
+</xsd:annotation>
+</xsd:element>
 <xsd:element name="Table" type="n2:_TableType" substitutionGroup="n0:Control">
 <xsd:annotation>
 <xsd:documentation>&lt;p&gt;
@@ -101,7 +120,7 @@ correctly annotated OData services. Please check on the SAP Annotations for ODat
 <xsd:extension base="n2:_TableType">
 <xsd:attribute name="sumOnTop" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Specifies if the total values should be displayed in the group headers or on bottom of the row. Does not affact the total sum.</xsd:documentation>
+<xsd:documentation>Specifies if the total values should be displayed in the group headers or on bottom of the row. Does not affect the total sum.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="numberOfExpandedLevels" type="xsd:int">
@@ -111,8 +130,8 @@ correctly annotated OData services. Please check on the SAP Annotations for ODat
 </xsd:attribute>
 <xsd:attribute name="autoExpandMode" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>The kind of auto expansion algorithm, e.g. optimised filter conditions, per level requests, ...
-sap.ui.table.TreeAutoExpandMode</xsd:documentation>
+<xsd:documentation>The kind of auto expansion algorithm, e.g. optimized filter conditions, per level requests, ...
+Must be a value of &lt;code&gt;sap.ui.table.TreeAutoExpandMode&lt;/code&gt;.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="columnVisibilityMenuSorter" type="xsd:string">
@@ -122,7 +141,10 @@ sap.ui.table.TreeAutoExpandMode</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="collapseRecursive" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Setting collapseRecursive to true means, that when collapsing a node all subsequent child nodes will also be collapsed.</xsd:documentation>
+<xsd:documentation>Setting collapseRecursive to true means, that when collapsing a node all subsequent child nodes will also be collapsed.
+
+Calling the setter of this property only has an effect when the tables &lt;code&gt;rows&lt;/code&gt; aggregation is already bound and
+the binding supports this feature.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="dirty" type="xsd:boolean">
@@ -177,9 +199,15 @@ each header row in the table. Use this aggregation if you want to use multiple h
 </xsd:element>
 <xsd:element name="template" minOccurs="0">
 <xsd:annotation>
-<xsd:documentation>Template (cell renderer) of this column. A template is decoupled from the column, which means after
-changing the templates' properties or aggregations an explicit invalidation of the column or table is
-required. The default depends on the loaded libraries.</xsd:documentation>
+<xsd:documentation>Template (cell renderer) of this column. A template is decoupled from the column. Each time
+the template's properties or aggregations have been changed, the template has to be applied again via
+&lt;code&gt;setTemplate&lt;/code&gt; for the changes to take effect.
+If a string is defined, a default text control will be created with its text property bound to the value of the string. The default
+template depends on the libraries loaded.
+If there is no template, the column will not be rendered in the table.
+The set of supported controls is limited. See section "{@link topic:148892ff9aea4a18b912829791e38f3e Tables: Which One Should I Choose?}"
+in the documentation for more details. While it is technically possible to also use other controls, doing so might lead to issues with regards
+to scrolling, alignment, condensed mode, screen reader support, and keyboard support.</xsd:documentation>
 </xsd:annotation>
 <xsd:complexType>
 <xsd:sequence>
@@ -212,7 +240,21 @@ To add a custom menu to a column, use the aggregation &lt;code&gt;menu&lt;/code&
 </xsd:sequence>
 <xsd:attribute name="width" type="n0:_CSSSizeType">
 <xsd:annotation>
-<xsd:documentation>Width of the column. Works only with px/em/rem values. Em are handled like rem values.</xsd:documentation>
+<xsd:documentation>Width of the column in CSS units.
+Default value is &lt;code&gt;auto&lt;/code&gt;, see &lt;a href="https://www.w3.org/TR/CSS2/tables.html#width-layout"&gt;&lt;/a&gt;
+&lt;p&gt;Minimal column width is device-dependent, for example on desktop devices the column will not be smaller than 48px.
+&lt;p&gt;This property can be changed by the user or by the application configuration/personalization.
+&lt;p&gt;If a user adjusts the column width manually, the resulting value is always set in pixels.
+In addition, other columns with width &lt;code&gt;auto&lt;/code&gt; get a fixed minimum width and do not shrink after the resizing.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="minWidth" type="xsd:int">
+<xsd:annotation>
+<xsd:documentation>Defines the minimum width of a column in pixels.
+&lt;p&gt;This property only has an effect if the given column width is flexible, for example with width &lt;code&gt;auto&lt;/code&gt;.
+&lt;p&gt;This property only influences the automatic behavior. If a user adjusts the column width manually, the column width can become
+smaller.
+&lt;p&gt;Minimal column width is device-dependent, for example on desktop devices the column will not be smaller than 48px.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="flexible" type="xsd:boolean">
@@ -225,7 +267,7 @@ created at the end of the table.</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="resizable" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>If set to true, the column can be resized either using the resize-handle (by mouse) or using
+<xsd:documentation>If set to true, the column can be resized either using the resize bar (by mouse) or using
 the keyboard (SHIFT + Left/Right Arrow keys)</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
@@ -303,7 +345,8 @@ some..thing   between
 <xsd:attribute name="defaultFilterOperator" type="xsd:string">
 <xsd:annotation>
 <xsd:documentation>If this property is set, the default filter operator of the column is overridden.
-By default &lt;code&gt;Contains&lt;/code&gt; is used for string and &lt;code&gt;EQ&lt;/code&gt; for other types. A valid &lt;code&gt;sap.ui.model.FilterOperator&lt;/code&gt; needs to be passed.</xsd:documentation>
+By default &lt;code&gt;Contains&lt;/code&gt; is used for string and &lt;code&gt;EQ&lt;/code&gt; for other types. A valid
+&lt;code&gt;sap.ui.model.FilterOperator&lt;/code&gt; needs to be passed.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="filterType" type="xsd:string">
@@ -314,7 +357,7 @@ in binding for this column. As an alternative you can pass a function which does
 The function receives the entered filter value as parameter and returns the proper
 value for the filter expression. Another option is to pass the class name of the type,
 e.g.: &lt;code&gt;sap.ui.model.type.Date&lt;/code&gt; or an expression similar to the binding syntax,
-e.g.: &lt;code&gt;"\{type: 'sap.ui.model.type.Date', formatOptions: \{UTC: true\}, constraints: {} \}"&lt;/code&gt;.
+e.g.: &lt;code&gt;"\{type: 'sap.ui.model.type.Date', formatOptions: \{UTC: true\}, constraints: \{\} \}"&lt;/code&gt;.
 Here the escaping is mandatory to avoid handling by the binding parser.
 By default the filter type is &lt;code&gt;sap.ui.model.type.String&lt;/code&gt;.</xsd:documentation>
 </xsd:annotation>
@@ -355,7 +398,7 @@ applied for all header rows, with multiple integers you can specify a separate s
 </xsd:attribute>
 <xsd:attribute name="autoResizable" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Enables auto-resizing of the column on double-clicking the resizer. The width is determined on the widest
+<xsd:documentation>Enables auto-resizing of the column on double clicking the resize bar. The width is determined on the widest
 currently displayed content. It does not consider rows which are currently not scrolled into view.
 Currently only implemented to work with the following controls:
 &lt;code&gt;sap.m.Text, sap.m.Label, sap.m.Link, sap.m.Input,
@@ -406,6 +449,80 @@ sap.ui.commons.Checkbox, sap.m.Checkbox&lt;/code&gt;</xsd:documentation>
 </xsd:extension>
 </xsd:complexContent>
 </xsd:complexType>
+<!--type definition for UIElement 'sap.ui.table.RowAction'-->
+<xsd:complexType name="_RowActionType">
+<xsd:complexContent>
+<xsd:extension base="n0:_ControlType">
+<xsd:sequence>
+<!--default aggregation 'items'-->
+<xsd:choice minOccurs="0" maxOccurs="unbounded">
+<xsd:element ref="n2:RowActionItem"/>
+<xsd:element ref="n0:Fragment"/>
+</xsd:choice>
+<xsd:element name="items" minOccurs="0">
+<xsd:annotation>
+<xsd:documentation>The action items which should be displayed.</xsd:documentation>
+</xsd:annotation>
+<xsd:complexType>
+<xsd:sequence>
+<xsd:choice minOccurs="0" maxOccurs="unbounded">
+<xsd:element ref="n2:RowActionItem"/>
+<xsd:element ref="n0:Fragment"/>
+</xsd:choice>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+</xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<!--type definition for UIElement 'sap.ui.table.RowActionItem'-->
+<xsd:complexType name="_RowActionItemType">
+<xsd:complexContent>
+<xsd:extension base="n0:_ElementType">
+<xsd:attribute name="icon" type="n0:_URIType">
+<xsd:annotation>
+<xsd:documentation>The icon of the item.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="visible" type="xsd:boolean">
+<xsd:annotation>
+<xsd:documentation>Whether the item should be visible on the screen.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="text" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The text of the item. It is used as tooltip and for accessibility purposes.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="type" type="n2:_RowActionTypeType">
+<xsd:annotation>
+<xsd:documentation>The type of the item.
+Setting the type ensures default values for the properties &lt;code&gt;icon&lt;/code&gt; and &lt;code&gt;text&lt;/code&gt;.
+If an icon or text is set explicitly this setting is used.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="press" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The &lt;code&gt;press&lt;/code&gt; is fired when the user triggers the corresponding action.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<!--type definition for UIElement 'sap.ui.table.RowSettings'-->
+<xsd:complexType name="_RowSettingsType">
+<xsd:complexContent>
+<xsd:extension base="n0:_ElementType">
+<xsd:attribute name="highlight" type="n0:_MessageTypeType">
+<xsd:annotation>
+<xsd:documentation>The highlight state of the rows.
+If the highlight is set to {@link sap.ui.core.MessageType.None} (default), no highlights are visible.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
 <!--type definition for UIElement 'sap.ui.table.Table'-->
 <xsd:complexType name="_TableType">
 <xsd:complexContent>
@@ -446,7 +563,9 @@ sap.ui.commons.Checkbox, sap.m.Checkbox&lt;/code&gt;</xsd:documentation>
 </xsd:element>
 <xsd:element name="toolbar" minOccurs="0">
 <xsd:annotation>
-<xsd:documentation>Toolbar of the Table (if not set it will be hidden)</xsd:documentation>
+<xsd:documentation>Toolbar of the Table
+If not set, no toolbar area will be rendered.
+Note: The CSS class sapMTBHeader-CTX is applied on the given toolbar.</xsd:documentation>
 </xsd:annotation>
 <xsd:complexType>
 <xsd:sequence>
@@ -460,7 +579,9 @@ sap.ui.commons.Checkbox, sap.m.Checkbox&lt;/code&gt;</xsd:documentation>
 </xsd:element>
 <xsd:element name="extension" minOccurs="0">
 <xsd:annotation>
-<xsd:documentation>Extension section of the Table (if not set it will be hidden)</xsd:documentation>
+<xsd:documentation>Extension section of the Table.
+If not set, no extension area will be rendered.
+Note: In case a &lt;code&gt;sap.m.Toolbar&lt;/code&gt; is used as header the CSS class sapMTBHeader-CTX should be applied on this toolbar via &lt;code&gt;addStyleClass&lt;/code&gt;.</xsd:documentation>
 </xsd:annotation>
 <xsd:complexType>
 <xsd:sequence>
@@ -514,6 +635,93 @@ value this will simply replace the no data text.</xsd:documentation>
 </xsd:sequence>
 </xsd:complexType>
 </xsd:element>
+<xsd:element name="rowActionTemplate" minOccurs="0">
+<xsd:annotation>
+<xsd:documentation>Template for row actions. A template is decoupled from the row or table. Each time
+the template's properties or aggregations are changed, the template has to be applied again via
+&lt;code&gt;setRowActionTemplate&lt;/code&gt; for the changes to take effect.</xsd:documentation>
+</xsd:annotation>
+<xsd:complexType>
+<xsd:sequence>
+<xsd:choice minOccurs="0">
+<xsd:element ref="n2:RowAction"/>
+<xsd:element ref="n0:Fragment"/>
+</xsd:choice>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="rowSettingsTemplate" minOccurs="0">
+<xsd:annotation>
+<xsd:documentation>Template for row settings. A template is decoupled from the row or table. Each time
+the template's properties or aggregations are changed, the template has to be applied again via
+&lt;code&gt;setRowSettingsTemplate&lt;/code&gt; for the changes to take effect.</xsd:documentation>
+</xsd:annotation>
+<xsd:complexType>
+<xsd:sequence>
+<xsd:choice minOccurs="0">
+<xsd:element ref="n2:RowSettings"/>
+<xsd:element ref="n0:Fragment"/>
+</xsd:choice>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="dragDropConfig" minOccurs="0">
+<xsd:annotation>
+<xsd:documentation>Defines the drag-and-drop configuration via {@link sap.ui.core.dnd.DragDropInfo}
+
+The following restrictions apply:
+&lt;ul&gt;
+  &lt;li&gt;Drag and drop is not supported on mobile devices and there is no accessible alternative.&lt;/li&gt;
+  &lt;li&gt;Columns cannot be configured to be draggable.&lt;/li&gt;
+  &lt;li&gt;The following rows are not draggable:
+    &lt;ul&gt;
+      &lt;li&gt;Empty rows&lt;/li&gt;
+      &lt;li&gt;Group header rows&lt;/li&gt;
+      &lt;li&gt;Sum rows&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Columns cannot be configured to be droppable.&lt;/li&gt;
+  &lt;li&gt;The following rows are not droppable:
+    &lt;ul&gt;
+      &lt;li&gt;The dragged row itself&lt;/li&gt;
+      &lt;li&gt;Empty rows&lt;/li&gt;
+      &lt;li&gt;Group header rows&lt;/li&gt;
+      &lt;li&gt;Sum rows&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Texts in draggable rows cannot be selected.&lt;/li&gt;
+  &lt;li&gt;The text of input fields in draggable rows can be selected, but not dragged.&lt;/li&gt;
+&lt;/ul&gt;</xsd:documentation>
+</xsd:annotation>
+<xsd:complexType>
+<xsd:sequence>
+<xsd:choice minOccurs="0" maxOccurs="unbounded">
+<xsd:element ref="n0:DragDropBase"/>
+<xsd:element ref="n0:Fragment"/>
+</xsd:choice>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="contextMenu" minOccurs="0">
+<xsd:annotation>
+<xsd:documentation>Defines the context menu for the table.
+
+&lt;b&gt;Note:&lt;/b&gt; The context menu will also be available for the row selectors as well as in the row actions cell of the table control.
+
+The custom context menu will not be shown in the group header rows and the sum row of the &lt;code&gt;AnalyticalTable&lt;/code&gt; control.
+
+If this aggregation is set, then the &lt;code&gt;enableCellFilter&lt;/code&gt; property will have no effect.</xsd:documentation>
+</xsd:annotation>
+<xsd:complexType>
+<xsd:sequence>
+<xsd:choice minOccurs="0">
+<xsd:element ref="n0:Control"/>
+<xsd:element ref="n0:Fragment"/>
+<xsd:any processContents="lax" namespace="http://www.w3.org/1999/xhtml"/>
+</xsd:choice>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
 </xsd:sequence>
 <xsd:attribute name="width" type="n0:_CSSSizeType">
 <xsd:annotation>
@@ -522,7 +730,8 @@ value this will simply replace the no data text.</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="rowHeight" type="xsd:int">
 <xsd:annotation>
-<xsd:documentation>Height of a row of the Table in pixel.</xsd:documentation>
+<xsd:documentation>The height of the row content in pixel. The actual row height is also influenced by other factors, such as the border width.
+If no value is set, a default height is applied based on the content density configuration.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="columnHeaderHeight" type="xsd:int">
@@ -548,13 +757,18 @@ value this will simply replace the no data text.</xsd:documentation>
 <xsd:attribute name="selectionMode" type="n2:_SelectionModeType">
 <xsd:annotation>
 <xsd:documentation>Selection mode of the Table. This property controls whether single or multiple rows can be selected and
-how the selection can be extended. It may also influence the visual appearance.</xsd:documentation>
+how the selection can be extended. It may also influence the visual appearance.
+When the selection mode is changed, the current selection is removed.
+&lt;b&gt;Note:&lt;/b&gt; Since the group header visualization relies on the row selectors, the row selectors are always shown if the grouping
+functionality (depends on table type) is enabled, even if &lt;code&gt;sap.ui.table.SelectionMode.None&lt;/code&gt; is set.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="selectionBehavior" type="n2:_SelectionBehaviorType">
 <xsd:annotation>
-<xsd:documentation>Selection behavior of the Table. This property defines whether the row selector is displayed and whether the row, the row selector or both
-can be clicked to select a row.</xsd:documentation>
+<xsd:documentation>Selection behavior of the Table. This property defines whether the row selector is displayed and whether the row, the row selector or
+both can be clicked to select a row.
+&lt;b&gt;Note:&lt;/b&gt; Since the group header visualization relies on the row selectors, the row selectors are always shown if the grouping
+functionality (depends on table type) is enabled, even if &lt;code&gt;sap.ui.table.SelectionBehavior.RowOnly&lt;/code&gt; is set.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="selectedIndex" type="xsd:int">
@@ -572,11 +786,7 @@ removes any previous selections. When the given index is invalid, the call is ig
 </xsd:attribute>
 <xsd:attribute name="navigationMode" type="n2:_NavigationModeType">
 <xsd:annotation>
-<xsd:documentation>Determines whether a scrollbar or a paginator is used for navigation inside the table.
-If the paginator mode is used, it requires the &lt;code&gt;sap.ui.commons&lt;/code&gt; library.
-
-This renders a scrollbar as a navigation element. Data fetched from an OData service is still
-loaded page-wise no matter which visual representation is used for navigation inside the table.</xsd:documentation>
+<xsd:documentation>This property has been deprecated and must not be used anymore, since &lt;code&gt;Scrollbar&lt;/code&gt; is the only supported option.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="threshold" type="xsd:int">
@@ -595,7 +805,18 @@ the &lt;code&gt;threshold&lt;/code&gt;. If the value is 0 then the thresholding 
 </xsd:attribute>
 <xsd:attribute name="enableGrouping" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Flag to enable or disable column grouping. (experimental!)</xsd:documentation>
+<xsd:documentation>Enables or disables grouping. If grouping is enabled, the table is grouped by the column which is defined
+in the &lt;code&gt;groupBy&lt;/code&gt; association.
+
+The following restrictions apply:
+&lt;ul&gt;
+ &lt;li&gt;Only client models are supported (e.g. {@link sap.ui.model.json.JSONModel}). Grouping does not work with OData models.&lt;/li&gt;
+ &lt;li&gt;The table can only be grouped by &lt;b&gt;one&lt;/b&gt; column at a time. Grouping by another column will remove the current grouping.&lt;/li&gt;
+ &lt;li&gt;If grouping has been done, sorting and filtering is not possible. Any existing sorting and filtering rules do no longer apply.
+     The UI is not updated accordingly (e.g. menu items, sort and filter icons).&lt;/li&gt;
+ &lt;li&gt;The column, by which the table is grouped, is not visible. It will become visible again only if the table is grouped by another
+     column or grouping is disabled.&lt;/li&gt;
+&lt;/ul&gt;</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="showColumnVisibilityMenu" type="xsd:boolean">
@@ -628,7 +849,7 @@ For any other visibleRowCountMode, it is ignored.</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="fixedColumnCount" type="xsd:int">
 <xsd:annotation>
-<xsd:documentation>Number of columns that are fix on the left. When you use a horizontal scroll bar, only
+<xsd:documentation>Number of columns that are fix on the left. When you use a horizontal scrollbar, only
 the columns which are not fixed, will scroll. Fixed columns need a defined width for the feature to work.
 Please note that the aggregated width of all fixed columns must not exceed the table width since there
 will be no scrollbar for fixed columns.</xsd:documentation>
@@ -636,12 +857,12 @@ will be no scrollbar for fixed columns.</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="fixedRowCount" type="xsd:int">
 <xsd:annotation>
-<xsd:documentation>Number of rows that are fix on the top. When you use a vertical scroll bar, only the rows which are not fixed, will scroll.</xsd:documentation>
+<xsd:documentation>Number of rows that are fix on the top. When you use a vertical scrollbar, only the rows which are not fixed, will scroll.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="fixedBottomRowCount" type="xsd:int">
 <xsd:annotation>
-<xsd:documentation>Number of rows that are fix on the bottom. When you use a vertical scroll bar, only the rows which are not fixed, will scroll.</xsd:documentation>
+<xsd:documentation>Number of rows that are fix on the bottom. When you use a vertical scrollbar, only the rows which are not fixed, will scroll.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="enableColumnFreeze" type="xsd:boolean">
@@ -673,14 +894,27 @@ will be rendered for which' press event (customFilter) you can register an event
 </xsd:attribute>
 <xsd:attribute name="enableBusyIndicator" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Set this parameter to true to make the table handle the busy indicator by its own.
-The table will switch to busy as soon as it scrolls into an unpaged area. This feature can only
-be used when the navigation mode is set to scrolling.</xsd:documentation>
+<xsd:documentation>If set to &lt;code&gt;true&lt;/code&gt;, the table changes its busy state, resulting in showing or hiding the busy indicator.
+The table will switch to busy as soon as data is retrieved to be displayed in the currently visible rows. This happens,
+for example, during scrolling, filtering, or sorting. As soon as the data has been retrieved, the table switches back to not busy.
+The busy state of the table can still be set manually by calling {@link sap.ui.core.Control#setBusy}.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="rowActionCount" type="xsd:int">
+<xsd:annotation>
+<xsd:documentation>Number of row actions made visible which determines the width of the row action column.
+The values &lt;code&gt;0&lt;/code&gt;, &lt;code&gt;1&lt;/code&gt; and &lt;code&gt;2&lt;/code&gt; are possible.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="alternateRowColors" type="xsd:boolean">
+<xsd:annotation>
+<xsd:documentation>Enables alternating table row colors.
+Alternate row coloring is not available for the tree mode.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="groupBy" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>Group By Column (experimental!)</xsd:documentation>
+<xsd:documentation>The column by which the table is grouped. Grouping will only be performed if &lt;code&gt;enableGrouping&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt;.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="ariaLabelledBy" type="xsd:string">
@@ -739,6 +973,11 @@ selection changes - to find out the selected rows you should better use the tabl
 <xsd:documentation>fired when the user clicks a cell of the table.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
+<xsd:attribute name="beforeOpenContextMenu" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>Fired when the user requests the context menu for a table cell.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
 <xsd:attribute name="columnFreeze" type="xsd:string">
 <xsd:annotation>
 <xsd:documentation>fired when a column of the table should be freezed</xsd:documentation>
@@ -746,7 +985,8 @@ selection changes - to find out the selected rows you should better use the tabl
 </xsd:attribute>
 <xsd:attribute name="customFilter" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>This event is triggered when the custom filter item of the column menu is pressed. The column on which the event was triggered is passed as parameter.</xsd:documentation>
+<xsd:documentation>This event is triggered when the custom filter item of the column menu is pressed. The column on which the event was triggered is
+passed as parameter.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="firstVisibleRowChanged" type="xsd:string">
@@ -769,14 +1009,13 @@ The event even is fired when setFirstVisibleRow is called programmatically.</xsd
 <xsd:extension base="n2:_TableType">
 <xsd:attribute name="expandFirstLevel" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Flag to enable or disable expanding of first level.</xsd:documentation>
+<xsd:documentation>Specifies whether the first level is expanded.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="useGroupMode" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>If group mode is enable nodes with subitems are rendered as if they were group headers.
-This can be used to do the grouping for an OData service on the backend and visualize this in a table.
-This mode only makes sense if the tree has a depth of exacly 1 (group headers and entries)</xsd:documentation>
+<xsd:documentation>If group mode is enabled nodes with subitems are rendered as if they were group headers.
+This can be used to do the grouping for an OData service on the backend and visualize this in a table.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="groupHeaderProperty" type="xsd:string">
@@ -787,7 +1026,10 @@ This mode only makes sense if the tree has a depth of exacly 1 (group headers an
 <xsd:attribute name="collapseRecursive" type="xsd:boolean">
 <xsd:annotation>
 <xsd:documentation>Setting collapseRecursive to true means, that when collapsing a node all subsequent child nodes will also be collapsed.
-This property is only supported with sap.ui.model.odata.v2.ODataModel</xsd:documentation>
+This property is only supported with sap.ui.model.odata.v2.ODataModel.
+&lt;b&gt;Note:&lt;/b&gt; collapseRecursive is currently &lt;b&gt;not&lt;/b&gt; supported if your OData service exposes the hierarchy annotation &lt;code&gt;hierarchy-descendant-count-for&lt;/code&gt;.
+In this case the value of the collapseRecursive property is ignored.
+For more information about the OData hierarchy annotations, please see the &lt;b&gt;SAP Annotations for OData Version 2.0&lt;/b&gt; specification.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="rootLevel" type="xsd:int">
@@ -800,7 +1042,7 @@ The hierarchy annotations may also be provided locally as a parameter for the OD
 </xsd:attribute>
 <xsd:attribute name="toggleOpenState" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>fired when a node has been expanded or collapsed (only available in hierachical mode)</xsd:documentation>
+<xsd:documentation>Fired when a row has been expanded or collapsed by user interaction. Only available in hierarchical mode.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 </xsd:extension>
@@ -819,6 +1061,25 @@ The hierarchy annotations may also be provided locally as a parameter for the OD
 This option must no longer be used. Using a scrollbar is the only navigation mode which is supported by
 the &lt;code&gt;sap.ui.table&lt;/code&gt; library. The &lt;code&gt;navigationMode&lt;/code&gt; property has always been a visual representation. No matter which navigation mode
 is used, data fetched from an OData service is loaded page-wise.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="_RowActionTypeType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="Custom">
+<xsd:annotation>
+<xsd:documentation>Custom defined Row Action.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Navigation">
+<xsd:annotation>
+<xsd:documentation>Navigation Row Action.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Delete">
+<xsd:annotation>
+<xsd:documentation>Delete Row Action.</xsd:documentation>
 </xsd:annotation>
 </xsd:enumeration>
 </xsd:restriction>

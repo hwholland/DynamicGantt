@@ -1,5 +1,7 @@
 (function(window, undefined) {
 
+	/*global CollectGarbage */
+
 	/*
 	 * Simulate the JSUnit Testsuite to collect the available
 	 * test pages per Suite
@@ -201,6 +203,13 @@
 			}
 
 			$frame[0].src = "about:blank";
+			$frame[0].contentWindow.document.write('');
+			$frame[0].contentWindow.close();
+
+			if ( typeof CollectGarbage == "function") {
+				CollectGarbage(); // eslint-disable-line
+			}
+
 			$framediv.remove();
 
 			this.printTestResult(oContext);
@@ -252,11 +261,12 @@
 				var oContext;
 				var fnCheckSuccess = function() {
 					var doc = $frame[0].contentWindow.document;
-					var sTestName = jQuery(doc).find("h1#qunit-header").text();
-					var $results = jQuery(doc).find("ol#qunit-tests > li");
-					var oResult = doc.getElementById("qunit-testresult");
+					var $doc = jQuery(doc);
+					var sTestName = $doc.find("h1#qunit-header").text();
+					var $results = $doc.find("ol#qunit-tests > li");
+					var $qunitBanner = $doc.find("#qunit-banner");
 
-					if (oResult && jQuery(oResult).text().indexOf("completed") >= 0) {
+					if ($qunitBanner.hasClass("qunit-fail") || $qunitBanner.hasClass("qunit-pass")) {
 
 						//IE workaround for the lack of document.baseURI property
 						baseURI = doc.location.href;
@@ -438,9 +448,9 @@
 				}
 
 				var $test = jQuery(aTestResults[i]);
-				var sTestSummary = $test.find("strong").text();
+				var sTestSummary = $test.children("strong").text();
 
-				var m = sTestSummary.match(/^(.*)\((\d+)(?:,\s*(\d+),\s*(\d+))?\)\s*$/);
+				var m = sTestSummary.match(/^([\S\s]*)\((\d+)(?:,\s*(\d+),\s*(\d+))?\)\s*$/);
 				var sTestName;
 				var sNumFailed;
 				var sNumPassed;

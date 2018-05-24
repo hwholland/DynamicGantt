@@ -8,6 +8,7 @@ It was build as root control of the Fiori Launchpad application and provides the
 for this purpose. Do not use this control within applications which run inside the Fiori Lauchpad and
 do not use it for other scenarios than the root control usecase.</documentation>
     <since>1.25.0</since>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="showPane" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">

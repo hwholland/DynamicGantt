@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,6 +9,10 @@
 	"use strict";
 
 	if (typeof QUnit !== "undefined") {
+
+		// any version < 2.0 activates legacy support
+		// note that the strange negated condition properly handles NaN
+		var bLegacySupport = !(parseFloat(QUnit.version) >= 2.0);
 
 		//extract base URL from script to attach the qunit-reporter-junit script
 		var sDocumentLocation = document.location.href.replace(/\?.*|#.*/g, ""),
@@ -28,7 +32,7 @@
 		}
 
 		if (sBaseUrl === null) {
-			if (jQuery && jQuery.sap &&  jQuery.sap.getModulePath) {
+			if (typeof jQuery !== 'undefined' && jQuery.sap && jQuery.sap.getModulePath) {
 				sFullUrl = jQuery.sap.getModulePath("sap.ui.thirdparty.qunit-reporter-junit", ".js");
 			} else {
 				throw new Error("qunit-junit.js: The script tag seems to be malformed!");
@@ -48,23 +52,35 @@
 		// HACK: insert our hook in front of QUnit's own hook so that we execute first
 		QUnit.config.callbacks.begin.unshift(function() {
 			// ensure proper structure of DOM
-			var $qunit = jQuery("#qunit");
-			var $qunitDetails = jQuery('#qunit-header,#qunit-banner,qunit-userAgent,#qunit-testrunner-toolbar,#qunit-tests');
-			var $qunitFixture = jQuery("#qunit-fixture");
-			if ( $qunit.size() === 0 && $qunitDetails.size() > 0 ) {
+			var qunitNode = document.querySelector("#qunit");
+			var qunitDetailNodes = document.querySelectorAll('#qunit-header,#qunit-banner,#qunit-userAgent,#qunit-testrunner-toolbar,#qunit-tests');
+			var qunitFixtureNode = document.querySelector("#qunit-fixture");
+			if ( qunitNode == null && qunitDetailNodes.length > 0 ) {
 				// create a "qunit" section and place it before the existing detail DOM
-				$qunit = jQuery("<div id='qunit'></div>").insertBefore($qunitDetails[0]);
+				qunitNode = document.createElement('DIV');
+				qunitNode.id = 'qunit';
+				qunitDetailNodes[0].parentNode.insertBefore(qunitNode, qunitDetailNodes[0]);
 				// move the existing DOM into the wrapper
-				$qunit.append($qunitDetails);
+				for ( var i = 0; i < qunitDetailNodes.length; i++) {
+					qunitNode.appendChild(qunitDetailNodes[i]);
+				}
 			}
-			if ( $qunitFixture.size === 0 ) {
-				$qunit.after("<div id='qunit-fixture'></div>");
+			if ( qunitFixtureNode == null ) {
+				qunitFixtureNode = document.createElement('DIV');
+				qunitFixtureNode.id = 'qunit-fixture';
+				if ( qunitNode.nextSibling ) {
+					qunitNode.parentNode.insertBefore(qunitFixtureNode, qunitNode.nextSibling);
+				} else {
+					qunitNode.parentNode.appendChild(qunitFixtureNode);
+				}
 			}
 		});
 
 		// TODO: Remove deprecated code once all projects adapted
-		QUnit.equals = window.equals = window.equal;
-		QUnit.raises = window.raises = window["throws"];
+		if ( bLegacySupport ) {
+			QUnit.equals = window.equals = window.equal;
+			QUnit.raises = window.raises = window["throws"];
+		}
 
 		// register QUnit event handler to manipulate module names for better reporting in Jenkins
 		QUnit.moduleStart(function(oData) {
@@ -72,20 +88,24 @@
 		});
 		QUnit.testStart(function(oData) {
 			oData.module = sTestPageName + "." + formatModuleName(oData.module);
-			window.assert = QUnit.config.current.assert;
+			if ( bLegacySupport ) {
+				window.assert = QUnit.config.current.assert;
+			}
 		});
 		QUnit.testDone(function(assert) {
-			try {
-				delete window.assert;
-			} catch (ex) {
-				// report that the cleanup of the window.assert compatibility object
-				// failed because some script loaded via script tag defined an assert
-				// function which finally causes the "delete window.assert" to fail
-				if (!window._$cleanupFailed) {
-					QUnit.test("A script loaded via script tag defines a global assert function!", function(assert) {
-						QUnit.ok(QUnit.config.ignoreCleanupFailure, ex);
-					});
-					window._$cleanupFailed = true;
+			if ( bLegacySupport ) {
+				try {
+					delete window.assert;
+				} catch (ex) {
+					// report that the cleanup of the window.assert compatibility object
+					// failed because some script loaded via script tag defined an assert
+					// function which finally causes the "delete window.assert" to fail
+					if (!window._$cleanupFailed) {
+						QUnit.test("A script loaded via script tag defines a global assert function!", function(assert) {
+							assert.ok(QUnit.config.ignoreCleanupFailure, ex);
+						});
+						window._$cleanupFailed = true;
+					}
 				}
 			}
 		});

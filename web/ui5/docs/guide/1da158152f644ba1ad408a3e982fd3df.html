@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Lists have properties and events and they contain list items that inherit from sap.m.ListItemBase, which provides navigation, selection and event features. The list item type determines the way the list item interacts by providing additional features."/>
 <meta name="description" content="Lists have properties and events and they contain list items that inherit from sap.m.ListItemBase, which provides navigation, selection and event features. The list item type determines the way the list item interacts by providing additional features."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4551877772426861"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=31722298178825137"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=31722298178825137"/>
 <title>Lists</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio1da158152f644ba1ad408a3e982fd3df">
 <div id="wrapper"><div id="container">
@@ -156,7 +142,7 @@
 
 				<li class="li">
 					<p class="p"><samp class="ph codeph">CustomListItem</samp> can be used for all list items that are not
-						provided by <span class="ph"><span class="ph pname">SAPUI5</span></span>. You can use it to build your own content and aggregate
+						provided by <span class="ph"><span class="ph pname">OpenUI5</span></span>. You can use it to build your own content and aggregate
 						it.</p>
 
 				</li>
@@ -169,75 +155,75 @@
 				and events:</p>
 
 			<div class="table-wrapper"><table summary="" id="loio1da158152f644ba1ad408a3e982fd3df__simpletable_eq4_hrn_2j" border="1" class="simpletable"><tr class="sthead">
-					<th valign="bottom" align="left" id="d1558220e264" class="stentry">Type</th>
+					<th valign="bottom" align="left" id="d1465869e264" class="stentry">Type</th>
 
-					<th valign="bottom" align="left" id="d1558220e267" class="stentry">Press Event</th>
+					<th valign="bottom" align="left" id="d1465869e267" class="stentry">Press Event</th>
 
-					<th valign="bottom" align="left" id="d1558220e270" class="stentry">detailPress Event</th>
+					<th valign="bottom" align="left" id="d1465869e270" class="stentry">detailPress Event</th>
 
-					<th valign="bottom" align="left" id="d1558220e273" class="stentry">Icon</th>
+					<th valign="bottom" align="left" id="d1465869e273" class="stentry">Icon</th>
 
-					<th valign="bottom" align="left" id="d1558220e276" class="stentry">Active Feedback</th>
-
-				</tr>
-<tr class="strow">
-					<td valign="top" headers="d1558220e264" class="stentry"><strong class="ph b">Inactive (default)</strong></td>
-
-					<td valign="top" headers="d1558220e267" class="stentry">--</td>
-
-					<td valign="top" headers="d1558220e270" class="stentry">--</td>
-
-					<td valign="top" headers="d1558220e273" class="stentry">--</td>
-
-					<td valign="top" headers="d1558220e276" class="stentry">-- </td>
+					<th valign="bottom" align="left" id="d1465869e276" class="stentry">Active Feedback</th>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d1558220e264" class="stentry"><strong class="ph b">Active</strong></td>
+					<td valign="top" headers="d1465869e264" class="stentry"><strong class="ph b">Inactive (default)</strong></td>
 
-					<td valign="top" headers="d1558220e267" class="stentry">yes</td>
+					<td valign="top" headers="d1465869e267" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e270" class="stentry">--</td>
+					<td valign="top" headers="d1465869e270" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e273" class="stentry">--</td>
+					<td valign="top" headers="d1465869e273" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e276" class="stentry">yes</td>
-
-				</tr>
-<tr class="strow">
-					<td valign="top" headers="d1558220e264" class="stentry"><strong class="ph b">Navigation</strong></td>
-
-					<td valign="top" headers="d1558220e267" class="stentry">yes</td>
-
-					<td valign="top" headers="d1558220e270" class="stentry">--</td>
-
-					<td valign="top" headers="d1558220e273" class="stentry">&gt;</td>
-
-					<td valign="top" headers="d1558220e276" class="stentry">yes</td>
+					<td valign="top" headers="d1465869e276" class="stentry">-- </td>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d1558220e264" class="stentry"><strong class="ph b">Detail</strong></td>
+					<td valign="top" headers="d1465869e264" class="stentry"><strong class="ph b">Active</strong></td>
 
-					<td valign="top" headers="d1558220e267" class="stentry">--</td>
+					<td valign="top" headers="d1465869e267" class="stentry">yes</td>
 
-					<td valign="top" headers="d1558220e270" class="stentry">yes</td>
+					<td valign="top" headers="d1465869e270" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e273" class="stentry">(&gt;)</td>
+					<td valign="top" headers="d1465869e273" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e276" class="stentry">--</td>
+					<td valign="top" headers="d1465869e276" class="stentry">yes</td>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d1558220e264" class="stentry"><strong class="ph b">DetailAndActive</strong></td>
+					<td valign="top" headers="d1465869e264" class="stentry"><strong class="ph b">Navigation</strong></td>
 
-					<td valign="top" headers="d1558220e267" class="stentry">yes</td>
+					<td valign="top" headers="d1465869e267" class="stentry">yes</td>
 
-					<td valign="top" headers="d1558220e270" class="stentry">yes</td>
+					<td valign="top" headers="d1465869e270" class="stentry">--</td>
 
-					<td valign="top" headers="d1558220e273" class="stentry">(&gt;)</td>
+					<td valign="top" headers="d1465869e273" class="stentry">&gt;</td>
 
-					<td valign="top" headers="d1558220e276" class="stentry">yes (content only)</td>
+					<td valign="top" headers="d1465869e276" class="stentry">yes</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d1465869e264" class="stentry"><strong class="ph b">Detail</strong></td>
+
+					<td valign="top" headers="d1465869e267" class="stentry">--</td>
+
+					<td valign="top" headers="d1465869e270" class="stentry">yes</td>
+
+					<td valign="top" headers="d1465869e273" class="stentry">(&gt;)</td>
+
+					<td valign="top" headers="d1465869e276" class="stentry">--</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d1465869e264" class="stentry"><strong class="ph b">DetailAndActive</strong></td>
+
+					<td valign="top" headers="d1465869e267" class="stentry">yes</td>
+
+					<td valign="top" headers="d1465869e270" class="stentry">yes</td>
+
+					<td valign="top" headers="d1465869e273" class="stentry">(&gt;)</td>
+
+					<td valign="top" headers="d1465869e276" class="stentry">yes (content only)</td>
 
 				</tr>
 </table></div>
@@ -285,7 +271,7 @@
 						set a center aligned text. This is a simple list item for triggering
 						actions. The following code snippet shows an example:</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
   &lt;List headerText="Actions"&gt;
     &lt;ActionListItem text="Reject" /&gt;
     &lt;ActionListItem text="Accept" /&gt;
@@ -302,7 +288,7 @@
 							<samp class="ph codeph">value</samp> feature to set a value. The following code
 						snippet shows an example:</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
   &lt;DisplayListItem
     label="Name"
     value="{SupplierName}" /&gt;
@@ -319,7 +305,7 @@
 						for example a radio button or a search control. The following code snippet
 						shows an example:</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
   &lt;List&gt;
     &lt;InputListItem label="WLAN"&gt;
       &lt;Switch state="true" /&gt;
@@ -357,7 +343,7 @@
 						for example a radio button or a search control. The following code snippet
 						shows an example:</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 &lt;List headerText="Products"
     items="{/ProductCollection}"&gt;
     &lt;items&gt;
@@ -374,9 +360,9 @@
 					<p class="p">In addition to the features inherited from <samp class="ph codeph">ListItemBase</samp>,
 						this type provides the option to aggregate content. You can use the
 							<samp class="ph codeph">CustomListItem</samp> for all list items that are not
-						available in <span class="ph"><span class="ph pname">SAPUI5</span></span> standard, build your own content, and aggregate it.</p>
+						available in <span class="ph"><span class="ph pname">OpenUI5</span></span> standard, build your own content, and aggregate it.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 &lt;CustomListItem type="Inactive"&gt;
     &lt;Label text="A first custom list item ..."  class="content"/&gt;
     &lt;Button text="Press me!" class="content"/&gt;
@@ -404,26 +390,12 @@
 
 <div class="related-links"> <br/>
 <div class="childtopics"><strong>In this section:</strong></div><ul class="ullinks">
-<div><strong><a class="link" href="3e426f159c7a4ab5ae660aba288c94d2.html" title="You can use the sap.m.CustomListItem control to create your own layout if the other list items available in SAPUI5 do not fit your needs.">Custom List Item</a></strong><br/>
+<div><strong><a class="link" href="3e426f159c7a4ab5ae660aba288c94d2.html" title="You can use the sap.m.CustomListItem control to create your own layout if the other list items available in OpenUI5 do not fit your needs.">Custom List Item</a></strong><br/>
 </div>
 </ul>
 
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Lists";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

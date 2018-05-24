@@ -5,6 +5,7 @@
     <author>SAP SE</author>
     <documentation>Base layout to render a &lt;code&gt;Form&lt;/code&gt;.
 Other layouts to render a &lt;code&gt;Form&lt;/code&gt; must inherit from this one.
+
 &lt;b&gt;Note:&lt;/b&gt; This control must not be used to render a &lt;code&gt;Form&lt;/code&gt; in productive applications as it does not fulfill any
 design guidelines and usability standards.</documentation>
     <since>1.16.0</since>
@@ -13,7 +14,7 @@ design guidelines and usability standards.</documentation>
         <property name="backgroundDesign" type="sap.ui.layout/BackgroundDesign" defaultValue="Translucent" group="Appearance" since="1.36.0">
             <documentation>Specifies the background color of the &lt;code&gt;Form&lt;/code&gt; content.
 
-The visualization of the different options depends on the used theme.</documentation>
+&lt;b&gt;Note:&lt;/b&gt; The visualization of the different options depends on the theme used.</documentation>
         </property>
     </properties>
 </control>

@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>BarDesign</name>
     <derived/>
-    <documentation>Types of the Bar design</documentation>
+    <documentation>Types of the Bar design.</documentation>
     <since>1.20</since>
     <enumeration>
         <value name="Auto">

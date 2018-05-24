@@ -5,8 +5,8 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<title>Test Page for sap.m.ComboBox</title>
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-				data-sap-ui-theme="sap_bluecrystal"
 				data-sap-ui-noConflict="true"
 				data-sap-ui-libs="sap.m, sap.ui.layout"
 				src="../../../../resources/sap-ui-core.js">
@@ -48,7 +48,7 @@
 		var fnTestControlProperty = function(mOptions) {
 			var sProperty = jQuery.sap.charToUpperCase(mOptions.property);
 
-			QUnit.test("get" + sProperty + "()", function() {
+			QUnit.test("get" + sProperty + "()", function(assert) {
 				assert.strictEqual(mOptions.control["get" + sProperty](), mOptions.output, mOptions.description);
 			});
 		};
@@ -114,6 +114,8 @@
 			assert.strictEqual(oComboBox.getList().getWidth(), "100%");
 			assert.ok(oComboBox.getList().hasStyleClass(oComboBox.getRenderer().CSS_CLASS_COMBOBOXBASE + "List"));
 			assert.ok(oComboBox.getList().hasStyleClass(oComboBox.getRenderer().CSS_CLASS_COMBOBOX + "List"));
+			assert.strictEqual(oComboBox.getShowSecondaryValues(), false, 'By default the showSecondaryValues property of the ComboBox control is "false"');
+			assert.strictEqual(oComboBox.getFilterSecondaryValues(), false, 'By default the filterSecondaryValues property of the ComboBox control is "false"');
 
 			// cleanup
 			oComboBox.destroy();
@@ -123,7 +125,7 @@
 
 		// CSN 0120031469 0000547938 2014
 		// do not override the binding for the value property
-		QUnit.test("setValue()", function(assert) {
+		QUnit.test("it should not override the value", function(assert) {
 
 			// system under test
 			var oComboBox = new sap.m.ComboBox({
@@ -141,8 +143,7 @@
 				},
 
 				value: {
-					path: "/value",
-					template: "{value}"
+					path: "/value"
 				}
 			});
 
@@ -172,6 +173,71 @@
 
 			// assert
 			assert.strictEqual(oComboBox.getValue(), "other value");
+
+			// cleanup
+			oComboBox.destroy();
+			oModel.destroy();
+		});
+
+		// BCP 0020751295 0000447582 2016
+		QUnit.test("it should update the value after a new binding context is set", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				selectedKey: "b",
+				items: {
+					path: "items",
+					template: new sap.ui.core.Item({
+						key: "{key}",
+						text: "{text}"
+					})
+				}
+			});
+
+			// arrange
+			var oModel = new sap.ui.model.json.JSONModel();
+			var mData = {
+				"rebum": {
+					"items": [
+						{
+							"key": "a",
+							"text": "lorem"
+						},
+						{
+							"key": "b",
+							"text": "ipsum"
+						}
+					]
+				},
+				"sanctus": {
+					"items": [
+						{
+							"key": "b",
+							"text": "dolor"
+						},
+						{
+							"key": "a",
+							"text": "sadipscing"
+						}
+					]
+				}
+			};
+
+			oModel.setData(mData);
+			sap.ui.getCore().setModel(oModel);
+			oComboBox.setBindingContext(oModel.getContext("/rebum"));
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// assert
+			assert.strictEqual(oComboBox.getValue(), "ipsum");
+
+			// act
+			oComboBox.setBindingContext(oModel.getContext("/sanctus"));
+			sap.ui.getCore().applyChanges();
+
+			// assert
+			assert.strictEqual(oComboBox.getValue(), "dolor");
 
 			// cleanup
 			oComboBox.destroy();
@@ -1317,71 +1383,48 @@
 			oComboBox.destroy();
 		});
 
-		/* ------------------------------ */
-		/* getLabels()                    */
-		/* ------------------------------ */
+		QUnit.module("Cancel selection");
 
-		QUnit.test("it should return an array with one object which is the current target of the ariaLabelledBy association", function(assert) {
+		QUnit.test("it should cancel the selection after closing the dialog with close button", function (assert) {
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				phone: true,
+				tablet: false
+			});
 
 			// system under test
-			var oLabel = sap.m.Label();
-			var oComboBoxTextField = new sap.m.ComboBoxTextField({
-				ariaLabelledBy: [
-					oLabel
+			var oItem1 = new sap.ui.core.Item({
+				text: "Lorem ipsum dolor sit amet, duo ut soleat insolens, commodo vidisse intellegam ne usu"
+			}), oItem2 = new sap.ui.core.Item({
+				text: "Lorem ipsum dolor sit amet, duo ut soleat insolens, commodo vidisse intellegam ne usu"
+			}), oComboBox = new sap.m.ComboBox({
+				items: [
+					oItem1,
+					oItem2
 				]
 			});
 
-			// assertions
-			assert.strictEqual(oComboBoxTextField.getLabels().length, 1);
-			assert.ok(oComboBoxTextField.getLabels()[0] === oLabel);
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.setSelectedItem(oItem1);
+			this.clock.tick(500);
+
+			// act
+			oComboBox.open();
+			this.clock.tick(500);
+
+			assert.strictEqual(oComboBox.getPickerTextField().getValue(), oItem1.getText(), "Picker's textfield should have value as the selected item's text");
+
+			oComboBox.setSelectedItem(oItem2);
+			oComboBox.getPicker().getCustomHeader().getContentRight()[0].firePress();
+			this.clock.tick(500);
+
+			assert.equal(oComboBox.getSelectedItem(), oItem1, "First item should be selected");
+			assert.strictEqual(oComboBox.getValue(), oItem1.getText(), "Value of the combo box text field should be first item's text");
 
 			// cleanup
-			oComboBoxTextField.destroy();
-			oLabel.destroy();
-		});
-
-		QUnit.test("it should return an array with one object which is the label referencing the text field", function(assert) {
-
-			// system under test
-			var oComboBoxTextField = new sap.m.ComboBoxTextField();
-			var oLabel = new sap.m.Label({
-				labelFor: oComboBoxTextField
-			});
-
-			// assertions
-			assert.strictEqual(oComboBoxTextField.getLabels().length, 1);
-			assert.ok(oComboBoxTextField.getLabels()[0] === oLabel);
-
-			// cleanup
-			oComboBoxTextField.destroy();
-			oLabel.destroy();
-		});
-
-		QUnit.test("it should return an array of objects which are the current targets of the ariaLabelledBy association and the labels referencing the text field", function(assert) {
-
-			// system under test
-			var oLabel1 = new sap.m.Label({
-				id: "lorem-ipsum-label",
-				labelFor: oComboBoxTextField
-			});
-			var oComboBoxTextField = new sap.m.ComboBoxTextField({
-				ariaLabelledBy: [
-					"lorem-ipsum-label"
-				]
-			});
-			var oLabel2 = new sap.m.Label({
-				labelFor: oComboBoxTextField
-			});
-
-			// assertions
-			assert.strictEqual(oComboBoxTextField.getLabels().length, 2);
-			assert.ok(oComboBoxTextField.getLabels()[0] === oLabel1);
-			assert.ok(oComboBoxTextField.getLabels()[1] === oLabel2);
-
-			// cleanup
-			oComboBoxTextField.destroy();
-			oLabel1.destroy();
-			oLabel2.destroy();
+			oComboBox.destroy();
 		});
 
 		QUnit.module("addItem");
@@ -2814,11 +2857,11 @@
 			oTarget.value = sExpectedValue;
 			sap.ui.qunit.QUnitUtils.triggerEvent("input", oTarget);
 			oComboBox.open();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the open animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the open animation is completed
 
 			// assert
 			assert.strictEqual(oComboBox.getPickerTextField().getValue(), sExpectedValue);
-			assert.strictEqual(oPicker.getShowHeader(), false, "it should not show the picker header");
+			assert.strictEqual(oPicker.getShowHeader(), true, "it should show the picker header");
 
 			// cleanup
 			oComboBox.destroy();
@@ -2848,18 +2891,18 @@
 
 			// act
 			oComboBox.open();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the open animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the open animation is completed
 
 			// assert
 			assert.ok(oPicker.getShowHeader());
-			assert.strictEqual(oPicker.getTitle(), sExpectedTitle);
+			assert.strictEqual(oComboBox.getPickerTitle().getText(), sExpectedTitle);
 
 			// cleanup
 			oComboBox.destroy();
 			oLabel.destroy();
 		});
 
-		QUnit.test("it should hide the header if the label reference is destroyed", function(assert) {
+		QUnit.test("it should update the header title if the label reference is destroyed", function(assert) {
 
 			this.stub(sap.ui.Device, "system", {
 				desktop: false,
@@ -2882,17 +2925,18 @@
 			sap.ui.getCore().applyChanges();
 			oComboBox.focus();
 			oComboBox.open();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the open animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the open animation is completed
 			oComboBox.close();
 			oLabel.destroy();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the close animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the close animation is completed
 
 			// act
 			oComboBox.open();
 			this.clock.tick(1000); // tick the clock ahead 1 second, after the close animation is completed
 
 			// assert
-			assert.strictEqual(oPicker.getShowHeader(), false);
+			assert.strictEqual(oPicker.getShowHeader(), true);
+			assert.strictEqual(oComboBox.getPickerTitle().getText(), "Select");
 
 			// cleanup
 			oComboBox.destroy();
@@ -3107,7 +3151,7 @@
 		QUnit.module("setSelectedIndex()");
 
 		var setSelectedIndexTestCase = function(sTestName, mOptions) {
-			QUnit.test("setSelectedIndex()", function() {
+			QUnit.test("setSelectedIndex()", function(assert) {
 
 				// system under test
 				var oComboBox = mOptions.control;
@@ -3458,9 +3502,26 @@
 
 			// assert
 			assert.ok(oComboBox.aMessageQueue === null);
+			assert.ok(oComboBox._oSelectedItemBeforeOpen === null);
+		});
 
-			// cleanup
+		QUnit.test("it should not throw errors when methods are called after the control is destroyed", function(assert) {
+
+			// arrange
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				phone: true,
+				tablet: false
+			});
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox();
+
+			// act
 			oComboBox.destroy();
+
+			// assert
+			assert.ok(oComboBox.getPickerTitle() === null);
 		});
 
 		QUnit.module("setValue()");
@@ -3532,7 +3593,7 @@
 			oErrorComboBox.focus();
 			this.clock.tick(500);
 			assert.ok(jQuery.sap.domById("errorcombobox-message"), "error message popup is open when focusin");
-			equal(oErrorComboBox.getValueStateText(), "Error Message", "error message is correct");
+			assert.equal(oErrorComboBox.getValueStateText(), "Error Message", "error message is correct");
 
 			oErrorComboBox.getFocusDomRef().blur();
 			this.clock.tick(500);
@@ -3540,6 +3601,25 @@
 
 			// cleanup
 			oErrorComboBox.destroy();
+		});
+
+		QUnit.test("in 'None' valueState don't showValueState message ", function(assert) {
+			var oComboBox = new sap.m.ComboBox("errorcombobox", {
+				valueState: "Error",
+				showValueStateMessage: true,
+				valueStateText: "Error Message"
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			var fnShowValueStateTextSpy = this.spy(oComboBox, "_showValueStateText");
+			oComboBox.setValueState("None");
+			assert.ok(fnShowValueStateTextSpy.calledWith(false));
+
+			// cleanup
+			oComboBox.destroy();
 		});
 
 		// BCP 1570763824
@@ -3561,6 +3641,113 @@
 
 			// cleanup
 			oComboBox.destroy();
+		});
+
+		QUnit.test("it should render the picker value state message", function(assert) {
+
+			// System under test
+			var oErrorComboBox = new sap.m.ComboBox({
+				valueState: "Error",
+				items: [
+					new sap.ui.core.Item({
+						key: "DZ",
+						text: "Algeria"
+					}),
+					new sap.ui.core.Item({
+						key: "GER",
+						text: "Germany"
+					}),
+					new sap.ui.core.Item({
+						key: "CU",
+						text: "Cuba"
+					})
+				]
+			});
+
+			// Arrange
+			oErrorComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// Assert
+			assert.ok(oErrorComboBox.getPicker().getShowHeader(), "Header should be shown");
+			assert.ok(oErrorComboBox._getPickerCustomHeader().hasStyleClass(oErrorComboBox.getRenderer().CSS_CLASS_COMBOBOXBASE + "PickerValueState"), "Header has value state class");
+			assert.ok(oErrorComboBox._getPickerCustomHeader().hasStyleClass(oErrorComboBox.getRenderer().CSS_CLASS_COMBOBOXBASE + "PickerErrorState"), "Header has error value state class");
+
+			// Cleanup
+			oErrorComboBox.destroy();
+		});
+
+		QUnit.test("it should not render the dropdown list header if the valuestate property is set to none", function(assert) {
+
+			// System under test
+			var oErrorComboBox = new sap.m.ComboBox({
+				valueState: "None",
+				items: [
+					new sap.ui.core.Item({
+						key: "DZ",
+						text: "Algeria"
+					})
+				]
+			});
+
+			// Arrange
+			oErrorComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// Assert
+			assert.notOk(oErrorComboBox.getPicker().getCustomHeader().getVisible(), "Header should not be visible");
+
+			// Cleanup
+			oErrorComboBox.destroy();
+		});
+
+		QUnit.test("it should not render the dropdown list header if the property showValueStateMessage is set to false", function(assert) {
+
+			// System under test
+			var oErrorComboBox = new sap.m.ComboBox({
+				showValueStateMessage: false,
+				items: [
+					new sap.ui.core.Item({
+						key: "DZ",
+						text: "Algeria"
+					})
+				]
+			});
+
+			// Arrange
+			oErrorComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// Assert
+			assert.notOk(oErrorComboBox.getPicker().getCustomHeader().getVisible(), "Header should not be visible");
+
+			// Cleanup
+			oErrorComboBox.destroy();
+		});
+
+		QUnit.test("it should set custom text for valueState", function(assert) {
+
+			// System under test
+			var oErrorComboBox = new sap.m.ComboBox({
+				valueState: "Error",
+				valueStateText: "custom",
+				items: [
+					new sap.ui.core.Item({
+						key: "DZ",
+						text: "Algeria"
+					})
+				]
+			});
+
+			// Arrange
+			oErrorComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// Assert
+			assert.strictEqual(oErrorComboBox.getPicker().getCustomHeader().getContentLeft()[0].getText(), "custom", "text should be custom");
+
+			// Cleanup
+			oErrorComboBox.destroy();
 		});
 
 		QUnit.module("destroy()");
@@ -4401,7 +4588,7 @@
 
 		QUnit.module("setEditable()");
 
-		// BSP: 1570011983
+		// BSP 1570011983
 		QUnit.test("it should set the display of the combobox arrow button to none", function(assert) {
 
 			// system under test
@@ -4414,7 +4601,31 @@
 			sap.ui.getCore().applyChanges();
 
 			// assert
-			assert.strictEqual(jQuery(oComboBox.getDomRef("arrow")).css("display"), "none");
+			assert.strictEqual(getComputedStyle(oComboBox.getDomRef("arrow")).getPropertyValue("display"), "none");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.module("disabled");
+
+		// BSP 1670516606
+		QUnit.test("it should show the default mouse pointer when disabled", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBoxTextField({
+				enabled: false
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// assert
+			assert.strictEqual(getComputedStyle(oComboBox.getDomRef("arrow")).getPropertyValue("cursor"), "default");
+
+			// cleanup
+			oComboBox.destroy();
 		});
 
 		QUnit.module("loadItems");
@@ -4894,74 +5105,6 @@
 
 			// cleanup
 			oComboBox.destroy();
-		});
-
-		QUnit.module("setBusy()");
-
-		QUnit.test("Check Busy State", function(assert) {
-			var done = assert.async();
-			assert.expect(9);
-
-			var oComboBox = new sap.m.ComboBox("busyCheck", {
-				busyIndicatorDelay : 0,
-				items: [
-					new sap.ui.core.Item({
-						key: "0",
-						text: "item 0"
-					}),
-
-					new sap.ui.core.Item({
-						key: "1",
-						text: "item 1",
-						enabled: false
-					}),
-
-					new sap.ui.core.Item({
-						key: "2",
-						text: "item 2"
-					})
-				]
-			}).placeAt("content");
-			sap.ui.getCore().applyChanges();
-
-			window._setTimeout(function() {
-				var $Box = oComboBox.$();
-				var $Input = oComboBox.$("inner");
-				var $Arrow = oComboBox.$("arrow");
-
-				// there should be no tabindex for the root DOM-ref and the input field
-				// for the arrow there is a tabindex=-1 per default
-				equal($Box.attr("tabindex"), undefined, "No tabindex at root DOM-ref");
-				equal($Input.attr("tabindex"), undefined, "No tabindex for Input field");
-				equal($Arrow.attr("tabindex"), -1, "Tabindex set for Arrow");
-
-				oComboBox.setBusy(true);
-
-				window._setTimeout(function() {
-					// check whether all element do have a tabindex now
-					equal($Box.attr("tabindex"), -1, "Tabindex set to -1 at root DOM-ref");
-					equal($Input.attr("tabindex"), -1, "Tabindex set to -1 for Input field");
-					equal($Arrow.attr("tabindex"), -1, "Still tabindex set for Arrow");
-
-					oComboBox.setBusy(false);
-
-					window._setTimeout(function() {
-						// check whether all element have their default tabindex value
-						equal($Box.attr("tabindex"), undefined, "Tabindex removed from root DOM-ref");
-						equal($Input.attr("tabindex"), undefined, "Tabindex removed from Input field");
-						equal($Arrow.attr("tabindex"), -1, "Still Tabindex set for Arrow");
-
-						done();
-
-						// cleanup
-						oComboBox.destroy();
-					}, 10)
-				}, 10);
-
-			}, 10);
-
-			// cleanup
-			//oComboBox.destroy();
 		});
 
 		QUnit.module("touchstart");
@@ -5714,6 +5857,43 @@
 			oMockServer.destroy();
 			oComboBox.destroy();
 			oModel.destroy();
+		});
+
+		QUnit.test("it should open the dropdown list and preselect first item if there is such", function(assert) {
+			// arrange
+			var oItem = new sap.ui.core.Item({
+					text: "Example"
+				}),
+				oComboBox = new sap.m.ComboBox({
+					items: [oItem]
+				}), oFakeEvent = {
+					setMarked: function () {},
+					keyCode: 111 // dummy code (not F4 - 115)
+				},
+				oSelectionChangeSpy = this.spy(oComboBox, "fireSelectionChange"),
+				oSelectionSpy = this.spy(oComboBox, "setSelection"),
+				oDomUpdateSpy = this.spy(oComboBox, "updateDomValue"),
+				oSelectTextSpy = this.spy(oComboBox, "selectText");
+
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// act
+			oComboBox.onsapshow(oFakeEvent);
+			this.clock.tick(300);
+
+			// assert
+			assert.ok(oSelectionChangeSpy.called, "Selection should be triggered");
+			assert.ok(oSelectionSpy.calledWith(oItem), "First item should be selected");
+			assert.ok(oDomUpdateSpy.calledWith("Example"), "Dom value should be updated with first item's text");
+			assert.ok(oSelectTextSpy.calledWith(0, 7), "Text selection should be performed for the first 7 symbols");
+
+			// cleanup
+			oComboBox.destroy();
+			oSelectionChangeSpy.restore();
+			oSelectionSpy.restore();
+			oDomUpdateSpy.restore();
+			oSelectTextSpy.restore();
 		});
 
 		QUnit.module("onsaphide");
@@ -7128,7 +7308,7 @@
 				items: [
 					new sap.ui.core.Item({
 						key: "0",
-						text: "item 0 is selected",
+						text: "item 0 is selected"
 					}),
 
 					new sap.ui.core.Item({
@@ -8429,6 +8609,150 @@
 			oComboBox.destroy();
 		});
 
+		QUnit.test("oninput search in both columns if 'filterSecondaryValues' is true", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "GER",
+						text: "Germany",
+						additionalText: "GER"
+					}),
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DZ",
+						text: "Algeria",
+						additionalText: "DZ"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DK",
+						text: "Denmark",
+						additionalText: "DK"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "D";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+
+			// assert
+			assert.ok(oComboBox.getSelectedItem().getText() === "Denmark");
+			assert.strictEqual(oComboBox.getSelectedKey(), "DK");
+			assert.strictEqual(oComboBox.isFiltered(), true);
+			assert.strictEqual(oComboBox.getValue(), "Denmark");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("oninput the value should be propperly displayed when search in both columns is activated test case 1", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "GER",
+						text: "Germany",
+						additionalText: "GER"
+					}),
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DZ",
+						text: "Algeria",
+						additionalText: "DZ"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DK",
+						text: "Denmark",
+						additionalText: "DK"
+					}),
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "dk";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+
+			// assert
+			assert.ok(oComboBox.getSelectedItem().getText() === "Denmark");
+			assert.strictEqual(oComboBox.getSelectedKey(), "DK");
+			assert.strictEqual(oComboBox.isFiltered(), true);
+			assert.strictEqual(oComboBox.getValue(), "DK");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("oninput the value should be propperly displayed when search in both columns is activated test case 2", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "GER",
+						text: "Germany",
+						additionalText: "GER"
+					}),
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DZ",
+						text: "Algeria",
+						additionalText: "DZ"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DK",
+						text: "Denmark",
+						additionalText: "DK"
+					}),
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "dz";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+
+			// assert
+			assert.ok(oComboBox.getSelectedItem().getText() === "Algeria");
+			assert.strictEqual(oComboBox.getSelectedKey(), "DZ");
+			assert.strictEqual(oComboBox.isFiltered(), true);
+			assert.strictEqual(oComboBox.getValue(), "DZ");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
 		// BCP 1580015527
 		QUnit.test("it should not open the picker pop-up", function(assert) {
 
@@ -8580,7 +8904,7 @@
 			sap.ui.getCore().applyChanges();
 			oComboBox.focus();
 			oComboBox.open();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the open animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the open animation is completed
 			var oPickerTextField = oComboBox.getPickerTextField();
 			oPickerTextField.focus();
 			var oPickerTextFieldDomRef = oPickerTextField.getFocusDomRef();
@@ -8674,7 +8998,7 @@
 			oComboBox.focus();
 
 			// act
-			sap.ui.test.qunit.triggerKeyboardEvent(oComboBox.getFocusDomRef(), jQuery.sap.KeyCodes.ARROW_DOWN, false, true);
+			sap.ui.test.qunit.triggerKeydown(oComboBox.getFocusDomRef(), jQuery.sap.KeyCodes.ARROW_DOWN, false, true);
 			this.clock.tick(500);
 
 			// act
@@ -8684,6 +9008,75 @@
 
 			// assert
 			assert.ok(oComboBox.isOpen());
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("it should not close the dropdown during typing if it was opened by keyboard", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+					new sap.ui.core.Item({
+						text: "lorem ipsum"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			sap.ui.test.qunit.triggerKeydown(oComboBox.getFocusDomRef(), jQuery.sap.KeyCodes.F4);	// open the dropdown list
+			this.clock.tick(1000);	// wait 1s after the open animation is completed
+
+			// act
+			oComboBox.getFocusDomRef().value = "x";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+			this.clock.tick(1000);
+
+			// assert
+			assert.ok(oComboBox.isOpen());
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		// BCP 1680329042
+		QUnit.test("it should clear the selection when the backspace/delete keyboard key is pressed and the remaining text doesn't match any items", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+					new sap.ui.core.Item({
+						text: "lorem ipsum"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+			var oFocusDomRef = oComboBox.getFocusDomRef();
+
+			// act (type something in the text field input)
+			oFocusDomRef.value = "lo";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oFocusDomRef, { value: "lo" });
+
+			// wait for the word completion feature
+			this.clock.tick(0);
+
+			// remove the autocompleted text ("rem ipsum" by pressing the backspace keyboard key
+			sap.ui.qunit.QUnitUtils.triggerKeydown(oFocusDomRef, jQuery.sap.KeyCodes.BACKSPACE);
+			oFocusDomRef.value = "lo";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oFocusDomRef, { value: "lo" });
+
+			// assert
+			assert.ok(oComboBox.getSelectedItem() === null);
 
 			// cleanup
 			oComboBox.destroy();
@@ -8877,6 +9270,171 @@
 
 			// cleanup
 			oComboBox.destroy();
+		});
+
+		QUnit.test("onAfterOpen test case 3 - selected item position", function(assert) {
+
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+						new sap.ui.core.Item({
+							key: "DZ",
+							text: "Algeria",
+							enabled: false
+						}),
+
+						new sap.ui.core.Item({
+							key: "AR",
+							text: "Argentina"
+						}),
+
+						new sap.ui.core.Item({
+							key: "AU",
+							text: "Australia"
+						}),
+
+						new sap.ui.core.Item({
+							key: "AT",
+							text: "Austria"
+						}),
+
+						new sap.ui.core.Item({
+							key: "BH",
+							text: "Bahrain"
+						}),
+
+						new sap.ui.core.Item({
+							key: "BE",
+							text: "Belgium"
+						}),
+
+						new sap.ui.core.Item({
+							key: "BA",
+							text: "Bosnia and Herzegovina"
+						}),
+
+						new sap.ui.core.Item({
+							key: "BR",
+							text: "Brazil"
+						}),
+
+						new sap.ui.core.Item({
+							key: "BG",
+							text: "Bulgaria"
+						}),
+
+						new sap.ui.core.Item({
+							key: "CA",
+							text: "Canada"
+						}),
+
+						new sap.ui.core.Item({
+							key: "CL",
+							text: "Chile"
+						}),
+
+						new sap.ui.core.Item({
+							key: "CO",
+							text: "Colombia"
+						}),
+
+						new sap.ui.core.Item({
+							key: "HR",
+							text: "Croatia"
+						}),
+
+						new sap.ui.core.Item({
+							key: "CU",
+							text: "Cuba"
+						}),
+
+						new sap.ui.core.Item({
+							key: "CZ",
+							text: "Czech Republic"
+						}),
+
+						new sap.ui.core.Item({
+							key: "DK",
+							text: "Denmark"
+						}),
+
+						new sap.ui.core.Item({
+							key: "EG",
+							text: "Egypt"
+						}),
+
+						new sap.ui.core.Item({
+							key: "EE",
+							text: "Estonia"
+						}),
+
+						new sap.ui.core.Item({
+							key: "FI",
+							text: "Finland"
+						}),
+
+						new sap.ui.core.Item({
+							key: "FR",
+							text: "France"
+						}),
+
+						new sap.ui.core.Item({
+							key: "GH",
+							text: "Ghana"
+						}),
+
+						new sap.ui.core.Item({
+							key: "DZ",
+							text: "Algeria"
+						}),
+
+						new sap.ui.core.Item({
+							key: "TN",
+							text: "Tunisia"
+						}),
+
+						new sap.ui.core.Item({
+							key: "TR",
+							text: "Turkey"
+						}),
+
+						new sap.ui.core.Item({
+							key: "UG",
+							text: "Uganda"
+						}),
+
+						new sap.ui.core.Item({
+							key: "AE",
+							text: "United Arab Emirates"
+						}),
+
+						new sap.ui.core.Item({
+							key: "GB",
+							text: "United Kingdom"
+						}),
+
+						new sap.ui.core.Item({
+							key: "YE",
+							text: "Yemen"
+						})
+
+					],
+
+					selectedKey: "AR"
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+			oComboBox.open();
+			this.clock.tick(1000);
+
+			// asserts
+			assert.ok(oComboBox.getPicker().getDomRef("cont").scrollTop < oComboBox.getSelectedItem().getDomRef().offsetTop);
+
+			// cleanup
+			oComboBox.destroy();
+
 		});
 
 		QUnit.module("onAfterClose");
@@ -9515,7 +10073,7 @@
 			sap.ui.getCore().applyChanges();
 			oComboBox.focus();
 			oComboBox.open();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the open animation is completed
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the open animation is completed
 			var oPickerTextField = oComboBox.getPickerTextField();
 			oPickerTextField.focus();
 			var oPickerTextFieldDomRef = oPickerTextField.getFocusDomRef();
@@ -9524,8 +10082,8 @@
 			// act
 			oPickerTextField.getFocusDomRef().value = "lorem ipsum";
 			sap.ui.qunit.QUnitUtils.triggerEvent("input", oPickerTextFieldDomRef);
-			oComboBox.close();
-			this.clock.tick(1000); // tick the clock ahead some 1 second, after the close animation is completed
+			oComboBox.getPicker().getButtons()[0].firePress();
+			this.clock.tick(1000); // tick the clock ahead 1 second, after the close animation is completed
 
 			// assert
 			assert.strictEqual(fnChangeSpy.callCount, 1, "The change event was fired");
@@ -9553,7 +10111,7 @@
 			oComboBox.focus();
 			oComboBox.open();
 
-			// tick the clock ahead some 1 second, after the open animation is completed
+			// tick the clock ahead 1 second, after the open animation is completed
 			this.clock.tick(1000);
 			var oPickerTextField = oComboBox.getPickerTextField();
 			oPickerTextField.focus();
@@ -9574,6 +10132,83 @@
 
 			// cleanup
 			oComboBox.destroy();
+		});
+
+		// BCP 1680061025
+		QUnit.test("it should fire the change event after the selection is updated on mobile devices", function(assert) {
+			var done = assert.async();
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				phone: true,
+				tablet: false
+			});
+
+			// system under test
+			var oItem = new sap.ui.core.Item({
+				key: "li",
+				text: "lorem ipsum"
+			});
+
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+					oItem
+				],
+				change: function() {
+
+					// assert
+					assert.strictEqual(oComboBox.getSelectedKey(), "li");
+
+					// cleanup
+					oComboBox.destroy();
+					done();
+				}
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+			oComboBox.open();
+
+			// tick the clock ahead 1 second, after the open animation is completed
+			this.clock.tick(1000);
+
+			var oListDomRef = oComboBox.getList().getDomRef();
+			var oTouches = {
+				0: {
+					pageX: 1,
+					pageY: 1,
+					identifier: 0,
+					target: oItem.getDomRef()
+				},
+
+				length: 1
+			};
+
+			sap.ui.test.qunit.triggerTouchEvent("touchstart", oListDomRef, {
+				srcControl: oItem,
+				touches: oTouches,
+				targetTouches: oTouches
+			});
+
+			sap.ui.test.qunit.triggerTouchEvent("touchend", oListDomRef, {
+				srcControl: oItem,
+				changedTouches: oTouches,
+				touches: {
+					length: 0
+				}
+			});
+
+			sap.ui.test.qunit.triggerTouchEvent("tap", oListDomRef, {
+				srcControl: oItem,
+				changedTouches: oTouches,
+				touches: {
+					length: 0
+				}
+			});
+
+			// tick the clock ahead 1 second, after the close animation is completed
+			this.clock.tick(1000);
 		});
 
 		QUnit.test("it should close the dialog when the close button is pressed", function(assert) {
@@ -9627,6 +10262,211 @@
 			oComboBox.destroy();
 		});
 
+		QUnit.test("onChange it should update the value of the comboBox as expected when search in both columns is enabled test case 1", function(assert) {
+
+			// system under test
+			var sExpectedValue = "Denmark";
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "GER",
+						text: "Germany",
+						additionalText: "GER"
+					}),
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DZ",
+						text: "Algeria",
+						additionalText: "DZ"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DK",
+						text: "Denmark",
+						additionalText: "DK"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "D";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+			oComboBox.getFocusDomRef().blur();
+			this.clock.tick(0);	// when a blur event occurs the "sapfocusleave" is fired async
+
+			// assert
+			assert.strictEqual(oComboBox.getValue(), sExpectedValue);
+			assert.strictEqual(oComboBox.getProperty("value"), sExpectedValue);
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("onChange it should update the value of the comboBox as expected when search in both columns is enabled test case 2", function(assert) {
+
+			// system under test
+			var sExpectedValue = "Algeria";
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "GER",
+						text: "Germany",
+						additionalText: "GER"
+					}),
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DZ",
+						text: "Algeria",
+						additionalText: "DZ"
+					}),
+					new sap.ui.core.ListItem({
+						key: "DK",
+						text: "Denmark",
+						additionalText: "DK"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "D";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+			sap.ui.test.qunit.triggerKeydown(oComboBox.getFocusDomRef(), jQuery.sap.KeyCodes.ARROW_UP);
+			oComboBox.getFocusDomRef().blur();
+			this.clock.tick(0);	// when a blur event occurs the "sapfocusleave" is fired async
+
+			// assert
+			assert.strictEqual(oComboBox.getValue(), sExpectedValue);
+			assert.strictEqual(oComboBox.getProperty("value"), sExpectedValue);
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("onChange should leave the Input value as is if no match is found", function(assert) {
+
+			// system under test
+			var sExpectedValue = "Default";
+			var oComboBox = new sap.m.ComboBox({
+				filterSecondaryValues: true,
+				items: [
+					new sap.ui.core.ListItem({
+						key: "BG",
+						text: "Bulgaria",
+						additionalText: "BG"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.getFocusDomRef().value = "Default";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+			oComboBox.getFocusDomRef().blur();
+			this.clock.tick(0);	// when a blur event occurs the "sapfocusleave" is fired async
+
+			// assert
+			assert.strictEqual(oComboBox.getValue(), sExpectedValue);
+			assert.strictEqual(oComboBox.getProperty("value"), sExpectedValue);
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test('onSelectionChange should pass in the "itemPressed" parameter to the change event handle', function(assert) {
+
+			// system under test
+			var oItem;
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+					oItem = new sap.ui.core.ListItem({
+						text: "lorem ipsum"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+			var fnFireChangeSpy = this.spy(oComboBox, "fireChange");
+			oComboBox.updateDomValue("change the value");
+			var oControlEvent = new sap.ui.base.Event("selectionChange", oComboBox.getList(), {
+				selectedItem: oItem
+			});
+
+			// act
+			oComboBox.onSelectionChange(oControlEvent);
+
+			// assert
+			assert.strictEqual(fnFireChangeSpy.args[0][0].itemPressed, true);
+
+			// cleanup
+			oComboBox.destroy();
+			oControlEvent.destroy();
+		});
+
+		QUnit.module("onItemPress");
+
+		QUnit.test("onItemPress should fire change when the first filtered item is clicked.", function(assert) {
+
+			// system under test
+			var oComboBox = new sap.m.ComboBox({
+				items: [
+					new sap.ui.core.Item({
+						text: "Algeria"
+					}),
+
+					new sap.ui.core.Item({
+						text: "Argentina"
+					}),
+
+					new sap.ui.core.Item({
+						text: "Germany"
+					})
+				]
+			}), fnFireChangeSpy = this.spy(oComboBox, "fireChange");
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// act
+			oComboBox.focus();
+			oComboBox.open();
+			this.clock.tick(1000);
+			oComboBox.getFocusDomRef().value = "A";
+			sap.ui.qunit.QUnitUtils.triggerEvent("input", oComboBox.getFocusDomRef());
+			oComboBox._oList.fireItemPress({item: oComboBox.getItems()[0]});
+
+			// assert
+			assert.strictEqual(fnFireChangeSpy.callCount, 1, 'The "change" event is fired when the first filtered item is pressed');
+
+			// cleanup
+			oComboBox.destroy();
+		});
 
 		QUnit.module("onPropertyChange");
 
@@ -9798,9 +10638,27 @@
 			oComboBox.destroy();
 		});
 
+		QUnit.test("It should add a hidden text to the Picker ", function(assert) {
+			var oItem = new sap.ui.core.Item({
+				key: "li",
+				text: "lorem ipsum"
+			}), oComboBox = new sap.m.ComboBox({
+					items: [
+						oItem
+					]
+			}), oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("COMBOBOX_AVAILABLE_OPTIONS");
+
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			assert.equal(sap.ui.getCore().byId(oComboBox.getPickerInvisibleTextId()).getText(), oResourceBundle, 'popup ariaLabelledBy is set');
+
+			oComboBox.destroy();
+		});
+
 		QUnit.module("Integration");
 
-		QUnit.test("Keep selected value on parent re-render", function () {
+		QUnit.test("Keep selected value on parent re-render", function (assert) {
 			var oComboBox = new sap.m.ComboBox({
 				items: [
 					new sap.ui.core.Item({key: "A", text: "Amount"}),
@@ -9827,8 +10685,8 @@
 			oComboBox._oList.fireItemPress({item: oComboBox.getItems()[1]});
 			oComboBox._oList.fireSelectionChange({selectedItem: oComboBox.getItems()[1]});
 
-			ok(oComboBox.getValue(), "ComboBox value to be filled in");
-			strictEqual(oComboBox.getValue(), oComboBox.getItems()[1].getText(), "ComboBox value to be the same as the selected element");
+			assert.ok(oComboBox.getValue(), "ComboBox value to be filled in");
+			assert.strictEqual(oComboBox.getValue(), oComboBox.getItems()[1].getText(), "ComboBox value to be the same as the selected element");
 
 			oForm.destroy();
 			oForm = null;
@@ -9842,7 +10700,6 @@
 				tablet: true,
 				combi: false
 			});
-			this.stub(sap.ui.core.Popup.prototype, "restoreFocus", false);
 
 			var oCB = new sap.m.ComboBox();
 			var aValues = ["00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30", "04:00"];
@@ -9856,19 +10713,310 @@
 			oCB.placeAt('content');
 			sap.ui.getCore().applyChanges();
 
+			oCB.focus();
+
 			oCB.open();
 			this.clock.tick(500);
-
-			var spy = this.spy(document.activeElement, "blur");
 
 			oCB.close();
 			this.clock.tick(500);
 
-			assert.ok(!spy.callCount, "Blur shouldn't be called");
+			assert.ok(jQuery.sap.containsOrEquals(oCB.getDomRef(), document.activeElement), "Focus is still inside the ComboBox after open and close");
 
-			spy.restore();
 			oCB.destroy();
 		});
+
+		QUnit.test("Changing models resets the selection if item is not there", function (assert) {
+			//Setup
+			var oData = {list: [{id: "1", text: "1"}]},
+				oModel = new sap.ui.model.json.JSONModel(oData),
+				oItemsTemplate = new sap.ui.core.Item({key: "{id}", text: "{text}"}),
+				oComboBox = new sap.m.ComboBox({
+					items: {
+						path: "/list",
+						template: oItemsTemplate
+					}
+				});
+
+			oComboBox.setModel(oModel);
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(!oComboBox.getSelectedItem(), "No item is currently selected");
+			assert.ok(!oComboBox.getSelectedKey(), "No item is currently selected");
+
+			//Act
+			oComboBox.setSelectedKey("1");
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(oComboBox.getSelectedKey(), "Item is selected");
+			assert.strictEqual(oComboBox.getSelectedItem().getKey(), "1", "Item 1 is selected");
+
+			//Act
+			oComboBox.getModel().setProperty("/list", [{id: "2", text: "2"}]);
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(!oComboBox.getSelectedItem(), "No item is currently selected");
+			assert.ok(!oComboBox.getSelectedKey(), "No item is currently selected");
+
+			//Cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("Changing models keeps the selection if item is there", function (assert) {
+			//Setup
+			var oData = {list: [{id: "1", text: "1"}, {id: "2", text: "2"}]},
+				oModel = new sap.ui.model.json.JSONModel(oData),
+				oItemsTemplate = new sap.ui.core.Item({key: "{id}", text: "{text}"}),
+				oComboBox = new sap.m.ComboBox({
+					items: {
+						path: "/list",
+						template: oItemsTemplate
+					}
+				});
+
+			//Act
+			oComboBox.setModel(oModel);
+			oComboBox.placeAt("content");
+			oComboBox.setSelectedKey("2");
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(oComboBox.getSelectedKey(), "Item is selected");
+			assert.strictEqual(oComboBox.getSelectedItem().getKey(), "2", "Item 2 is selected");
+
+			//Act
+			oComboBox.getModel().setProperty("/list", [{id: "2", text: "2"}, {id: "33", text: "33"}]);
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(oComboBox.getSelectedKey(), "Item is still selected");
+			assert.strictEqual(oComboBox.getSelectedItem().getKey(), "2", "Item 2 is still selected");
+
+			//Cleanup
+			oComboBox.destroy();
+		});
+
+
+		QUnit.test("Changing models reflects on bound selectedKey property", function (assert) {
+			//Setup
+			var oData = {
+				list: [{id: "1", text: "1"}, {id: "2", text: "2"}],
+				selectedKey: "2"
+			},
+					oModel = new sap.ui.model.json.JSONModel(oData),
+					oItemsTemplate = new sap.ui.core.Item({key: "{id}", text: "{text}"}),
+					oComboBox = new sap.m.ComboBox({
+						selectedKey: "{/selectedKey}",
+						items: {
+							path: "/list",
+							template: oItemsTemplate
+						}
+					});
+
+			//Act
+			oComboBox.setModel(oModel);
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.ok(oComboBox.getSelectedKey(), "Item is selected");
+			assert.strictEqual(oComboBox.getSelectedItem().getKey(), "2", "Item 2 is selected");
+
+			//Act
+			oComboBox.getModel().setProperty("/list", [{id: "2", text: "2"}, {id: "3", text: "3"}]);
+			oComboBox.getModel().setProperty("/selectedKey", "3");
+
+			sap.ui.getCore().applyChanges();
+			this.clock.tick(100);
+
+			//Assert
+			assert.strictEqual(oComboBox.getSelectedItem().getKey(), "3", "Item 3 is selected");
+
+			//Cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.module("Tablet focus handling");
+
+		QUnit.test("it should not set the focus to the input", function(assert) {
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				tablet: true,
+				phone: false
+			});
+
+			var oComboBox = new sap.m.ComboBox(),
+				oComboBoxPicker = oComboBox.getPicker(),
+				oFakeEvent = null,
+				oFocusinStub = this.stub(oComboBox, "focus");
+
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			oFakeEvent = { target: oComboBox.getDomRef("arrow") };
+
+			oComboBox.onfocusin(oFakeEvent);
+
+			assert.strictEqual(oFocusinStub.callCount, 0, "Focus should not be called");
+
+			oComboBox.destroy();
+		});
+
+		QUnit.test("it should has initial focus set to the input", function(assert) {
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				tablet: true,
+				phone: false
+			});
+
+			var oComboBox = new sap.m.ComboBox();
+
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			assert.strictEqual(oComboBox.getPicker().getInitialFocus(), oComboBox.getId());
+
+			oComboBox.destroy();
+		});
+
+		QUnit.test("it should initially focus the picker", function(assert) {
+			this.stub(sap.ui.Device, "system", {
+				desktop: false,
+				tablet: true,
+				phone: false
+			});
+
+			var oComboBox = new sap.m.ComboBox(),
+				oFakeEvent;
+
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			oFakeEvent = {
+				target: oComboBox.getFocusDomRef(),
+				setMarked: function () {
+				},
+				srcControl: oComboBox
+			};
+
+			oComboBox.ontap(oFakeEvent);
+
+			assert.strictEqual(oComboBox.getPicker().getInitialFocus(), oComboBox.getId());
+
+			oComboBox.destroy();
+		});
+
+		QUnit.module("highlighting");
+
+		QUnit.test("_boldItemRef should return a bold string", function(assert) {
+			var oFunctionRef = sap.m.ComboBox.prototype._boldItemRef;
+
+			assert.strictEqual(oFunctionRef("Test", /^t/i, 1), "<b>T</b>est");
+			assert.strictEqual(oFunctionRef("Test", /^Test/i, 4), "<b>Test</b>");
+			assert.strictEqual(oFunctionRef("Test", /^/i, 0), "Test");
+			assert.strictEqual(oFunctionRef("Test (TE)", /^Test/i, 4), "<b>Test</b>&#x20;&#x28;TE&#x29;");
+
+		});
+
+		QUnit.test("_highlightList should call _boldItemRef on items", function(assert) {
+			// arrange
+			var oComboBox = new sap.m.ComboBox(),
+				oFakeDom = document.createElement("li"),
+				oItem = new sap.ui.core.Item({
+					text: "test"
+				}),
+				oGetVisibleItemsStub = this.stub(oComboBox, "getVisibleItems"),
+				оItemRefStub = this.stub(oItem, "getDomRef");
+
+			// act
+			oFakeDom.innerHTML = "Test";
+			oGetVisibleItemsStub.withArgs().returns([oItem]);
+			оItemRefStub.withArgs().returns(oFakeDom);
+			oComboBox._highlightList("T");
+
+			// assert
+			assert.strictEqual(oFakeDom.innerHTML, "<b>t</b>est", "highlighting should be dont on the dom ref");
+
+			// cleanup
+			oGetVisibleItemsStub.restore();
+			оItemRefStub.restore();
+			oComboBox.destroy();
+			oItem.destroy();
+			oFakeDom = null;
+		});
+
+
+		QUnit.test("_highlightList doesn't throw an error when showSecondaryValues=true and sap.ui.core.Item is set", function(assert) {
+
+			// system under test
+			var fnOnAfterOpenSpy = this.spy(sap.m.ComboBox.prototype, "onAfterOpen");
+			var oComboBox = new sap.m.ComboBox({
+				showSecondaryValues: true,
+				items: [
+					new sap.ui.core.Item({
+						key: "GER",
+						text: "Germany"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox.focus();
+
+			// act
+			oComboBox.open();
+			this.clock.tick(1000);
+
+			// assert
+			assert.strictEqual(fnOnAfterOpenSpy.callCount, 1, "onAfterOpen() called exactly once");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+		QUnit.test("_highlightList doesn't throw an error when combobox's value contains special characters", function(assert) {
+
+			// system under test
+			var fnOnAfterOpenSpy = this.spy(sap.m.ComboBox.prototype, "onAfterOpen");
+			var oComboBox = new sap.m.ComboBox({
+				showSecondaryValues: true,
+				items: [
+					new sap.ui.core.Item({
+						key: "GER",
+						text: "Germany"
+					})
+				]
+			});
+
+			// arrange
+			oComboBox.placeAt("content");
+			sap.ui.getCore().applyChanges();
+			oComboBox._highlightList("(T");
+
+			// act
+			oComboBox.open();
+			this.clock.tick(1000);
+
+			// assert
+			assert.strictEqual(fnOnAfterOpenSpy.callCount, 1, "onAfterOpen() called exactly once");
+
+			// cleanup
+			oComboBox.destroy();
+		});
+
+
 		</script>
 	</head>
 	<body id="body" class="sapUiBody">

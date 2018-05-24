@@ -2,12 +2,12 @@
 <html>
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>qUnit Page for sap.ui.core.routing.Route</title>
+	<title>QUnit Page for sap.ui.core.routing.Route</title>
 
-	<script id="sap-ui-bootstrap" type="text/javascript"
+	<script src="../../../shared-config.js"></script>
+	<script id="sap-ui-bootstrap"
 			src="../../../../../../../resources/sap-ui-core.js"
 			data-sap-ui-libs="sap.m, sap.ui.ux3"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-resourceroots='{"qunit.routing":".", "qunit.view":"../../testdata/routing"}'>
 	</script>
 
@@ -32,6 +32,7 @@
 						this.oRouterStub = {
 							fireRouteMatched : function () {},
 							fireRoutePatternMatched : function () {},
+							fireBeforeRouteMatched : function () {},
 							_oTargets: new Targets({
 								targets: {
 									async1: {
@@ -88,6 +89,24 @@
 					}
 				}));
 
+				QUnit.test("Should fired beforeMatched before matched", function(assert) {
+					var fnBeforeMatchedSpy = this.spy(function() {
+							assert.notOk(fnMatchedSpy.called, "the matched event shouldn't be fired yet");
+						}),
+						fnMatchedSpy = this.spy();
+
+					this.oRoute.attachBeforeMatched(fnBeforeMatchedSpy);
+					this.oRoute.attachMatched(fnMatchedSpy);
+
+					// Act
+					var oSequencePromise = this.oRoute._routeMatched({}, Promise.resolve());
+					return oSequencePromise.then(function() {
+						// Assert
+						assert.strictEqual(fnBeforeMatchedSpy.callCount, 1, "did fire the beforeMatched event");
+						assert.strictEqual(fnMatchedSpy.callCount, 1, "did fire the matched event");
+					});
+				});
+
 				QUnit.test("Should not call pattern matched only matched", function(assert) {
 					var fnMatchedSpy = this.spy(),
 						fnPatternMatchedSpy = this.spy();
@@ -122,15 +141,15 @@
 
 
 				function fnRouteEventsTestCase (sTestName, sEventName) {
-					QUnit.test(sTestName, function() {
+					QUnit.test(sTestName, function(assert) {
 						// Arrange
 						var sName = "testRoute",
 							aTargetNames = ["async1", "async2", "async3"],
 							oRoute = new sap.ui.core.routing.Route(this.oRouterStub, { name : sName, target : aTargetNames }),
 							fnEventSpy = this.spy(function(oEvent, oActualData) {
-								strictEqual(oActualData, oData, "the data is correct");
-								strictEqual(oEvent.getParameters().name, sName, "the name is correct");
-								strictEqual(this, oListener, "the this pointer is correct");
+								assert.strictEqual(oActualData, oData, "the data is correct");
+								assert.strictEqual(oEvent.getParameters().name, sName, "the name is correct");
+								assert.strictEqual(this, oListener, "the this pointer is correct");
 							}),
 							oListener = {},
 							oData = {some: "data"},
@@ -141,17 +160,18 @@
 
 						return oSequencePromise.then(function(aValues) {
 							// Assert
-							strictEqual(fnEventSpy.callCount, 1, "did call the attach spy for the event " + sEventName);
-							strictEqual(oAttachReturnValue, oRoute, "did return this for chaining for the event " + sEventName);
+							assert.strictEqual(fnEventSpy.callCount, 1, "did call the attach spy for the event " + sEventName);
+							assert.strictEqual(oAttachReturnValue, oRoute, "did return this for chaining for the event " + sEventName);
 						});
 					});
 				}
 
+				fnRouteEventsTestCase("Should attach to the beforeMatched event", "BeforeMatched");
 				fnRouteEventsTestCase("Should attach to the matched event", "Matched");
 				fnRouteEventsTestCase("Should attach to the patternMatched event", "PatternMatched");
 
 				function fnDetachRouteEventTestCase(sTestName, sEventName) {
-					QUnit.test(sTestName, function() {
+					QUnit.test(sTestName, function(assert) {
 						// Arrange
 						var sName = "testRoute",
 							aTargetNames = ["async1", "async2", "async3"],
@@ -160,7 +180,7 @@
 							oListener = {};
 
 						this.oRouterStub.fireRouteMatched = fnRouteMatchedSpy;
-						this.oRouterStub.fireRoutePatternMatched = fnRouteMatchedSpy
+						this.oRouterStub.fireRoutePatternMatched = fnRouteMatchedSpy;
 
 						var oRoute = new sap.ui.core.routing.Route(this.oRouterStub,
 							{ name : sName, target : aTargetNames });
@@ -177,12 +197,13 @@
 
 						// Assert
 						return oSequencePromise.then(function(aValues) {
-							strictEqual(fnEventSpy.callCount, 0, "did not call the spy since it was detached");
-							strictEqual(oDetachedReturnValue, oRoute, "did return this for chaining");
+							assert.strictEqual(fnEventSpy.callCount, 0, "did not call the spy since it was detached");
+							assert.strictEqual(oDetachedReturnValue, oRoute, "did return this for chaining");
 						});
 					});
 				}
 
+				fnDetachRouteEventTestCase("Should detach the beforeMatched event", "BeforeMatched");
 				fnDetachRouteEventTestCase("Should detach the matched event", "Matched");
 				fnDetachRouteEventTestCase("Should detach the patternMatched event", "PatternMatched");
 
@@ -268,13 +289,13 @@
 					}
 				});
 
-				test("Route with prefixed pattern is added to router", function(assert) {
+				QUnit.test("Route with prefixed pattern is added to router", function(assert) {
 					assert.strictEqual(this.oSpy.callCount, 2, "Two patterns are added to the router");
 					assert.strictEqual(this.oSpy.args[0][0], "parent", "Pattern of parent route is added to router");
 					assert.strictEqual(this.oSpy.args[1][0], "parent/child", "Pattern of child route is prefixed with the parent route and added to router");
 				});
 
-				test("Route with prefixed pattern matches for nested components", function(assert) {
+				QUnit.test("Route with prefixed pattern matches for nested components", function(assert) {
 					var oParentRouter = this.oParentComponent.getRouter();
 					assert.strictEqual(this.oGetParentRouteSpy.callCount, 1, "getParentRoute is called once on the child route");
 					assert.strictEqual(this.oGetParentRouteSpy.args[0][0], "parent.component:category", "parameter is correctly given");
@@ -285,7 +306,7 @@
 	</script>
 </head>
 <body>
-<h1 id="qunit-header">qUnit Page for sap.ui.core.routing.Route</h1>
+<h1 id="qunit-header">QUnit Page for sap.ui.core.routing.Route</h1>
 <h2 id="qunit-banner"></h2>
 <h2 id="qunit-userAgent"></h2>
 <div id="qunit-testrunner-toolbar"></div>

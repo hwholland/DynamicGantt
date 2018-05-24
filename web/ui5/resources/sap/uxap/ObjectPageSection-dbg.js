@@ -1,31 +1,49 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.uxap.ObjectPageSection.
 sap.ui.define([
-	"jquery.sap.global",
-	"sap/ui/core/InvisibleText",
-	"./ObjectPageSectionBase",
-	"sap/ui/Device",
-	"sap/m/Button",
-	"sap/ui/core/StashedControlSupport",
-	"./library"
-], function (jQuery, InvisibleText, ObjectPageSectionBase, Device, Button, StashedControlSupport, library) {
+    "sap/ui/core/InvisibleText",
+    "./ObjectPageSectionBase",
+    "sap/ui/Device",
+    "sap/m/Button",
+    "sap/ui/core/StashedControlSupport",
+    "./ObjectPageSubSection",
+    "./library",
+    "sap/m/library",
+    "./ObjectPageSectionRenderer"
+], function(
+    InvisibleText,
+	ObjectPageSectionBase,
+	Device,
+	Button,
+	StashedControlSupport,
+	ObjectPageSubSection,
+	library,
+	mobileLibrary,
+	ObjectPageSectionRenderer
+) {
 	"use strict";
 
+	// shortcut for sap.m.ButtonType
+	var ButtonType = mobileLibrary.ButtonType;
+
 	/**
-	 * Constructor for a new ObjectPageSection.
+	 * Constructor for a new <code>ObjectPageSection</code>.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
+	 * Top-level information container of an {@link sap.uxap.ObjectPageLayout}.
 	 *
-	 * An ObjectPageSection is the top-level information container of an Object page. Its purpose is to aggregate Subsections.
-	 * Disclaimer: This control is intended to be used only as part of the Object page layout
+	 * The <code>ObjectPageSection</code>'s purpose is to aggregate subsections.
+	 *
+	 * <b>Note:</b> This control is intended to be used only as part of the <code>ObjectPageLayout</code>.
+	 *
 	 * @extends sap.uxap.ObjectPageSectionBase
 	 *
 	 * @constructor
@@ -71,11 +89,23 @@ sap.ui.define([
 				 * The most recently selected Subsection by the user.
 				 */
 				selectedSubSection: {type: "sap.uxap.ObjectPageSubSection", multiple: false}
-			}
+			},
+			designtime: "sap/uxap/designtime/ObjectPageSection.designtime"
 		}
 	});
 
 	ObjectPageSection.MEDIA_RANGE = Device.media.RANGESETS.SAP_STANDARD;
+
+	/**
+	 * Returns the closest ObjectPageSection
+	 * @param  {sap.uxap.ObjectPageSectionBase} oSectionBase
+	 * @returns {sap.uxap.ObjectPageSection}
+	 * @private
+	 */
+	ObjectPageSection._getClosestSection = function (vSectionBase) {
+		var oSectionBase = (typeof vSectionBase === "string" && sap.ui.getCore().byId(vSectionBase)) || vSectionBase;
+		return (oSectionBase instanceof ObjectPageSubSection) ? oSectionBase.getParent() : oSectionBase;
+	};
 
 	ObjectPageSection.prototype._expandSection = function () {
 		ObjectPageSectionBase.prototype._expandSection.call(this)
@@ -85,16 +115,15 @@ sap.ui.define([
 	ObjectPageSection.prototype.init = function () {
 		ObjectPageSectionBase.prototype.init.call(this);
 		this._sContainerSelector = ".sapUxAPObjectPageSectionContainer";
-		Device.media.attachHandler(this._updateImportance, this, ObjectPageSection.MEDIA_RANGE);
 	};
 
 	ObjectPageSection.prototype.exit = function () {
-		Device.media.detachHandler(this._updateImportance, this, ObjectPageSection.MEDIA_RANGE);
+		this._detachMediaContainerWidthChange(this._updateImportance, this);
 	};
 
 	ObjectPageSection.prototype._getImportanceLevelToHide = function (oCurrentMedia) {
 		var oObjectPage = this._getObjectPageLayout(),
-			oMedia = oCurrentMedia || Device.media.getCurrentRange(ObjectPageSection.MEDIA_RANGE),
+			oMedia = oCurrentMedia || this._getCurrentMediaContainerRange(),
 			bShowOnlyHighImportance = oObjectPage && oObjectPage.getShowOnlyHighImportance();
 
 		return this._determineTheLowestLevelOfImportanceToShow(oMedia.name, bShowOnlyHighImportance);
@@ -112,7 +141,7 @@ sap.ui.define([
 		this._updateShowHideAllButton(false);
 
 		if (oObjectPage && this.getDomRef()) {
-			oObjectPage._adjustLayout();
+			oObjectPage._requestAdjustLayout();
 		}
 	};
 
@@ -146,7 +175,13 @@ sap.ui.define([
 			this.setAggregation(sAriaLabeledBy, this._getAriaLabelledBy(), true); // this is called onBeforeRendering, so suppress invalidate
 		}
 
+		this._detachMediaContainerWidthChange(this._updateImportance, this);
+
 		this._updateImportance();
+	};
+
+	ObjectPageSection.prototype.onAfterRendering = function () {
+		this._attachMediaContainerWidthChange(this._updateImportance, this);
 	};
 
 	/**
@@ -156,8 +191,17 @@ sap.ui.define([
 	 */
 	ObjectPageSection.prototype._getAriaLabelledBy = function () {
 		return new InvisibleText({
-			text: this._getInternalTitle() || this.getTitle()
+			text: this._getTitle()
 		}).toStatic();
+	};
+
+	/**
+	 * Determines if the <code>ObjectPageSection</code> title is visible.
+	 * @private
+	 * @returns {Boolean}
+	 */
+	ObjectPageSection.prototype._isTitleVisible = function () {
+		return this.getShowTitle() && this._getInternalTitleVisible();
 	};
 
 	/**
@@ -256,7 +300,7 @@ sap.ui.define([
 				visible: this._getShouldDisplayShowHideAllButton(),
 				text: this._getShowHideAllButtonText(!this._thereAreHiddenSubSections()),
 				press: this._showHideContentAllContent.bind(this),
-				type: sap.m.ButtonType.Transparent
+				type: ButtonType.Transparent
 			}).addStyleClass("sapUxAPSectionShowHideButton"), true); // this is called from the renderer, so suppress invalidate
 		}
 
@@ -283,7 +327,7 @@ sap.ui.define([
 				visible: this._shouldBeHidden(),
 				text: this._getShowHideButtonText(!this._getIsHidden()),
 				press: this._showHideContent.bind(this),
-				type: sap.m.ButtonType.Transparent
+				type: ButtonType.Transparent
 			}).addStyleClass("sapUxAPSectionShowHideButton"), true); // this is called from the renderer, so suppress invalidate
 		}
 

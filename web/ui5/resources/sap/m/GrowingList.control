@@ -3,7 +3,7 @@
     <name>GrowingList</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>sap.m.GrowingList control is the container for all list items and inherits from sap.m.List control. Everything like the selection, deletion, unread states and inset style are also maintained here. In addition the control provides a loading mechanism to request data from the model and append the list items to the list. The request is started manually by tapping on the trigger at the end of the list.</documentation>
+    <documentation>&lt;code&gt;sap.m.GrowingList&lt;/code&gt; control is the container for all list items and inherits from sap.m.List control. Everything like the selection, deletion, unread states and inset style are also maintained here. In addition the control provides a loading mechanism to request data from the model and append the list items to the list. The request is started manually by tapping on the trigger at the end of the list.</documentation>
     <deprecation since="1.16">Instead use "List" or "Table" control with setting "growing" property to "true"</deprecation>
     <baseType>sap.m/List</baseType>
     <properties>

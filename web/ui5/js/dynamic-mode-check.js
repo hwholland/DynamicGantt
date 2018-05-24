@@ -1,1 +1,1 @@
-function isDynamicInstallation() { return true; }
+function isDynamicInstallation() { return false; }

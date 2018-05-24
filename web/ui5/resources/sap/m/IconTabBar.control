@@ -3,12 +3,56 @@
     <name>IconTabBar</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The IconTabBar control represents a collection of tabs with associated content.
+    <documentation>The IconTabBar represents a collection of tabs with associated content.
+&lt;h3&gt;Overview&lt;/h3&gt;
+The IconTabBar can be used for navigation within an object, or as a filter. Different types of IconTabBar are used based on the contents.
+&lt;ul&gt;
+&lt;li&gt;Filter - There is only one main content for all tabs. The main content can be filtered, based on the selected tab.&lt;/li&gt;
+&lt;li&gt;Normal tab bar - The contents of each tab are independent from each other.&lt;/li&gt;
+&lt;li&gt;Combination of the above - There can be both filtered and independent contents.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Structure&lt;/h3&gt;
+The IconTabBar can hold two types of entities {@link sap.m.IconTabFilter sap.m.IconTabFilter} and {@link sap.m.IconTabSeparator sap.m.IconTabSeparator}
 
-IconTabBar covers the following use cases:
-- Filter – There is only one main content for all tabs. The main content can be filtered, based on the selected tab.
-- Normal tab bar - The contents of each tab are independent from each other.
-- Combination of the above - There can be both filtered and independent contents.</documentation>
+The IconTabBarFilter holds all information on an item - text, icon and count.
+
+The IconTabBarSeparator holds an icon that can be used to show a process that runs from item to item.
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;Text only&lt;/h4&gt;
+Uses text labels as tabs with optional counter
+&lt;ul&gt;
+&lt;li&gt;Used when there are no suitable icons for all items.&lt;/li&gt;
+&lt;li&gt;Used when longer labels are needed.&lt;/li&gt;
+&lt;li&gt;If &lt;code&gt;headerMode&lt;/code&gt; property is set to &lt;code&gt;Inline&lt;/code&gt; the text and the count are displayed in one line.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UpperCase&lt;/code&gt; is disabled.&lt;/li&gt;
+&lt;li&gt;Use title case.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Icon Tabs&lt;/h4&gt;
+Round tabs with optional counter and label
+&lt;ul&gt;
+&lt;li&gt;Used when there are unique icons for all items.&lt;/li&gt;
+&lt;li&gt;Only shorter labels are possible.&lt;/li&gt;
+&lt;li&gt;Provide labels for all icons or for none. Do not mix these.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Tabs as filters&lt;/h4&gt;
+Tabs with filtered content from the same set of items
+&lt;ul&gt;
+&lt;li&gt;Provide an &lt;i&gt;"All"&lt;/i&gt; tab to show all items without filtering.&lt;/li&gt;
+&lt;li&gt;Use counters to show the number of items in each filter.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Tabs as process steps&lt;/h4&gt;
+Tabs show a single step in a process
+&lt;ul&gt;
+&lt;li&gt;Use an arrow (e.g. triple-chevron) as a separator to connect the steps.&lt;/li&gt;
+&lt;li&gt;Use counters to show the number of items in each filter.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Text-only tabs are never truncated.&lt;/li&gt;
+&lt;li&gt;Use the &lt;code&gt;expandable&lt;/code&gt; property to specify whether users can collapse the tab container (default = true).&lt;/li&gt;
+&lt;li&gt;On desktop, tabs can be dragged and dropped (property &lt;code&gt;enableTabReordering&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;If you have a large number of tabs, you can scroll through them with the arrows. Additionally all tabs are available in an overflow button (property &lt;code&gt;showOverflowSelectList&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="showSelection" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
@@ -43,7 +87,28 @@ The paddings are removed if it's set to false.</documentation>
             <documentation>Specifies the background color of the IconTabBar.
 
 Depending on the theme, you can change the state of
-the background color to "Solid", "Translucent", or "Transparent".</documentation>
+the background color to "Solid", "Translucent", or "Transparent".
+Default is "Solid".</documentation>
+        </property>
+        <property name="headerMode" type="sap.m/IconTabHeaderMode" defaultValue="Standard" group="Appearance" since="1.40">
+            <documentation>Specifies the header mode.
+&lt;b&gt;Note:&lt;/b&gt; The Inline mode works only if no icons are set.</documentation>
+        </property>
+        <property name="showOverflowSelectList" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.42">
+            <documentation>Specifies if the overflow select list is displayed.
+
+The overflow select list represents a list, where all tab filters are displayed,
+so the user can select specific tab filter easier.</documentation>
+        </property>
+        <property name="headerBackgroundDesign" type="sap.m/BackgroundDesign" defaultValue="Solid" group="Appearance" since="1.44">
+            <documentation>Specifies the background color of the header.
+
+Depending on the theme, you can change the state of
+the background color to "Solid", "Translucent", or "Transparent".
+Default is "Solid".</documentation>
+        </property>
+        <property name="enableTabReordering" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.46">
+            <documentation>Specifies whether tab reordering is enabled. Relevant only for desktop devices.</documentation>
         </property>
     </properties>
     <events>

@@ -10,10 +10,20 @@ xhr.addFilter(function(method, url) {
 });
 xhr.onCreate = function(request) {
 	request.onSend = function() {
+		var mMetaDataHeaders = {
+			"Content-Type": "application/xml;charset=utf-8",
+			"DataServiceVersion": "1.0;"
+		};
+		var mXMLHeaders = 	{
+			"Content-Type": "application/atom+xml;charset=utf-8",
+			"DataServiceVersion": "2.0;"
+		};
+
 		// Default request answer values:
 		var iStatus = 200;
 		var mHeaders = mXMLHeaders;
 		var sAnswer = "This should never be received as an answer!";
+		var bLastModified = true;
 
 		switch (request.url) {
 
@@ -37,13 +47,13 @@ xhr.onCreate = function(request) {
 				sAnswer = sNorthwindMetadataAnnotated;
 				break;
 
-			case "fakeService://testdata/odata/NOT_EXISTANT/$metadata":
+			case "fakeService://testdata/odata/NOT_EXISTENT/$metadata":
 				iStatus = 404;
 				mHeaders = mMetaDataHeaders;
 				sAnswer = "Sorry, not found...";
 				break;
 
-			case "fakeService://testdata/odata/NOT_EXISTANT":
+			case "fakeService://testdata/odata/NOT_EXISTENT":
 				iStatus = 404;
 				sAnswer = "Sorry, not found...";
 				break;
@@ -59,6 +69,16 @@ xhr.onCreate = function(request) {
 				sAnswer = sMetadataWithEntityContainers;
 				break;
 
+			case "fakeService://testdata/odata/sapdata02/":
+				mHeaders = mMetaDataHeaders;
+				sAnswer = sMetadataWithEntityContainers;
+				break;
+
+			case "fakeService://testdata/odata/sapdata02/$metadata":
+				mHeaders = mMetaDataHeaders;
+				sAnswer = sMetadataWithEntityContainers;
+				bLastModified = false;
+				break;
 
 			case "fakeService://testdata/odata/northwind-annotations-normal.xml":
 				sAnswer = sNorthwindAnnotations;
@@ -169,30 +189,39 @@ xhr.onCreate = function(request) {
 				break;
 
 			case "fakeService://testdata/odata/valuelists/$metadata":
+				var sMetadataString = sNorthwindMetadataWithValueListPlaceholder.replace("{{ValueLists}}", "");
+				mHeaders = mMetaDataHeaders;
+				sAnswer = sMetadataString;
+				break;
+
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test":
 				sMetadataString = sNorthwindMetadataWithValueListPlaceholder.replace("{{ValueLists}}", "");
 				mHeaders = mMetaDataHeaders;
 				sAnswer = sMetadataString;
 				break;
+
 			case "fakeService://testdata/odata/valuelists/$metadata?sap-value-list=none":
 			case "fakeService://testdata/odata/valuelists/$metadata?sap-value-list=all":
 			case "fakeService://testdata/odata/valuelists/$metadata?sap-value-list=1":
 			case "fakeService://testdata/odata/valuelists/$metadata?sap-value-list=2":
 			case "fakeService://testdata/odata/valuelists/$metadata?sap-value-list=3":
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test&sap-value-list=none":
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test&sap-value-list=all":
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test&sap-value-list=1":
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test&sap-value-list=2":
+			case "fakeService://testdata/odata/valuelists/$metadata?testToken=test&sap-value-list=3":
 				var sValueList = request.url.replace(/^.*?sap-value-list=(.*)$/, "$1");
 				var sAnnotations = "";
 				switch (sValueList) {
 					case "all":
 						sAnnotations = aValueListStrings.join("\n");
 						break;
-
 					case "1":
 						sAnnotations = aValueListStrings[0];
 						break;
-
 					case "2":
 						sAnnotations = aValueListStrings[1];
 						break;
-
 					case "3":
 						sAnnotations = aValueListStrings[2];
 						break;
@@ -225,8 +254,11 @@ xhr.onCreate = function(request) {
 
 			default:
 				// You used the wrong URL, dummy!
-				debugger;
 				break;
+		}
+
+		if (bLastModified) {
+			mHeaders["Last-Modified"] = "Wed, 15 Nov 1995 04:58:08 GMT";
 		}
 
 		if (request.async === true) {
@@ -263,15 +295,6 @@ function createHeaderAnnotations(request) {
 	return sAnnotations;
 }
 
-
-var mMetaDataHeaders = {
-	"Content-Type": "application/xml;charset=utf-8",
-	"DataServiceVersion": "1.0;"
-};
-var mXMLHeaders = 	{
-	"Content-Type": "application/atom+xml;charset=utf-8",
-	"DataServiceVersion": "2.0;"
-};
 //var mJSONHeaders = 	{
 //	"Content-Type": "application/json;charset=utf-8",
 //	"DataServiceVersion": "2.0;"
@@ -3998,7 +4021,7 @@ var sUrlRefTest = '\
 
 var sMultipleTest01 = '\
 <?xml version="1.0" encoding="utf-8"?>\
-<edm:Edm xmlns:edm="http://docs.oasis-open.org/odata/ns/edm" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"  Version="4.0">\
+<edm:Edm xmlns:edm="http://docs.oasis-open.org/odata/ns/edm" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" xmlns:xml="http://www.w3.org/XML/1998/namespace" Version="4.0">\
 	<edmx:Reference Uri="/some/path/Test.xml">\
 		<edmx:Include Alias="Test" Namespace="internal.ui5.test"/>\
 	</edmx:Reference>\

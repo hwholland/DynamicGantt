@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>PopinDisplay</name>
     <derived/>
-    <documentation>Defines the display of table pop-ins</documentation>
+    <documentation>Defines the display of table pop-ins.</documentation>
     <since>1.13.2</since>
     <enumeration>
         <value name="Block">

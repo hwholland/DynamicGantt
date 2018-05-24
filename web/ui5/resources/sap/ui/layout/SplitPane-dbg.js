@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.SplitPane.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define(['./library', 'sap/ui/core/Element'],
+	function(library, Element) {
 	"use strict";
 
 	/**
@@ -16,12 +16,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * SplitPane is a container of a single control.
-	 * Could be used as an aggregation of a PaneContainer.
+	 * SplitPane is a container of a single control in a responsive splitter.
+	 * Could be used as an aggregation of a {@link sap.ui.layout.PaneContainer PaneContainer}.
+	 *
+	 * The behavior of the Split Panes is handled by the following properties:
+	 * <ul>
+	 * <li><code>requiredParentWidth</code> - determines the minimum width of the parent container (in pixels). When it is reached, the pane will be hidden from the screen.</li>
+	 * <li><code>demandPane</code> - determines if the pane is reachable via the pagination bar after it has been hidden from the screen.</li>
+	 * </ul
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -41,7 +47,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 			/**
 			 * Determines the minimum width of the ResponsiveSplitter(in pixels). When it is reached the pane will be hidden from the screen.
 			*/
-			requiredParentWidth: { type : "int", defaultValue : '800'}
+			requiredParentWidth: { type : "int", defaultValue : 800}
 		},
 		defaultAggregation : "content",
 		aggregations : {
@@ -74,4 +80,4 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 
 	return SplitPane;
 
-}, /* bExport= */ true);
+});

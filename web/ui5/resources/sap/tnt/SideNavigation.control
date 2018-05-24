@@ -3,10 +3,12 @@
     <name>SideNavigation</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The SideNavigation control is a container, which consists of flexible and fixed parts on top of each other. The flexible part adapts its size to the fixed one.
-The flexible part has a scrollbar when the content is larger than the available space.
-Whenever the height of the whole control is less than 256 pixels, the scrollbar becomes joint for the two parts.
-
+    <documentation>The SideNavigation control is a container, which consists of flexible and fixed parts on top of each other.
+&lt;h4&gt;Responsive Behavior&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The flexible part adapts its size to the fixed one.&lt;/li&gt;
+&lt;li&gt;The flexible part has a scrollbar when the content is larger than the available space.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;b&gt;Note:&lt;/b&gt; In order for the SideNavigation to stretch properly, its parent layout control should only be the sap.tnt.ToolPage.</documentation>
     <since>1.34</since>
     <baseType>sap.ui.core/Control</baseType>
@@ -42,4 +44,9 @@ Whenever the height of the whole control is less than 256 pixels, the scrollbar 
             <documentation>The bottom arrow, used for scrolling throw items when SideNavigation is collapsed.</documentation>
         </aggregation>
     </aggregations>
+    <associations>
+        <association name="selectedItem" type="sap.tnt/NavigationListItem" cardinality="0..1" since="1.52.0">
+            <documentation>The selected &lt;code&gt;NavigationListItem&lt;/code&gt;.</documentation>
+        </association>
+    </associations>
 </control>

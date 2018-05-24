@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Aggregation support is required to allow nested controls for layout containers and/or add elements to a control, for example, for ComboBox."/>
 <meta name="description" content="Aggregation support is required to allow nested controls for layout containers and/or add elements to a control, for example, for ComboBox."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=36050742850401585"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=2588709432641195"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2588709432641195"/>
 <title>Declarative Support: Aggregations</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio91f136c76f4d1014b6dd926db0e91070">
 <div id="wrapper"><div id="container">
@@ -33,13 +19,13 @@
 
 	<div class="body"><p class="shortdesc">Aggregation support is required to allow nested controls for layout containers and/or
 		add elements to a control, for example, for <samp class="ph codeph">ComboBox</samp>.</p>
-<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> uses the control's default aggregation as
+<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> uses the control's default aggregation as
 		default. If, for example, the panel control has the default aggregation
 		content, all child elements of the 
 		<samp class="ph codeph">data-sap-ui-type="sap.ui.commons.Panel"</samp> element are
 		added to this aggregation: 
 	 </p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.Panel"&gt;
     &lt;div data-sap-ui-type="sap.ui.commons.Button" data-text="My Button 1"&gt;&lt;/div&gt;
     &lt;div data-sap-ui-type="sap.ui.commons.Button" data-text="My Button 2"&gt;&lt;/div&gt;
@@ -57,7 +43,7 @@
 		adds four buttons explicitly to the "content" aggregation of the declared
 		panel: 
 	 </p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.Panel"&gt;
   &lt;div data-sap-ui-aggregation="content"&gt;
     &lt;div data-sap-ui-type="sap.ui.commons.Button" data-text="My Button 1"&gt;&lt;/div&gt;
@@ -71,7 +57,7 @@
 				<samp class="ph codeph">"data-sap-ui-aggregation"</samp> attribute can be written directly to the
 			control tag:  </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.Panel"&gt;
   &lt;div data-sap-ui-aggregation="title" div data-sap-ui-type="sap.ui.commons.Title" data-text="My Panel"&gt;&lt;/div&gt;
 &lt;/div&gt;</pre></div>
@@ -88,7 +74,7 @@
 				<samp class="ph codeph">data-sap-ui-aggregation</samp> meta tag are added to the default
 			aggregation. This is shown in the following example: </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.Panel" data-sap-ui-default-aggregation="title"&gt;
   &lt;div data-sap-ui-type="sap.ui.commons.Title" text="My Panel"&gt;&lt;/div&gt;
   &lt;div data-sap-ui-default-aggregation="content"&gt;
@@ -100,7 +86,7 @@
 		<p class="p">You can now apply this to the <samp class="ph codeph">MatrixLayout</samp> as follows: </p>
 
 		<div class="p">
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.layout.MatrixLayout" data-layout-fixed="false"&gt;
   &lt;div data-sap-ui-type="sap.ui.commons.layout.MatrixLayoutRow"&gt;
     &lt;div data-sap-ui-type="sap.ui.commons.layout.MatrixLayoutCell"&gt;
@@ -115,7 +101,7 @@
 		</div>
 
 		<div class="p">Or you can add <samp class="ph codeph">ListItems</samp> to a <samp class="ph codeph">ComboBox</samp>:
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div data-sap-ui-type="sap.ui.commons.ComboBox" data-value="Item 1"&gt;
   &lt;div data-sap-ui-type="sap.ui.core.ListItem" data-text="Item 1"&gt;&lt;/div&gt;
   &lt;div data-sap-ui-type="sap.ui.core.ListItem" data-text="Item 2"&gt;&lt;/div&gt;
@@ -128,19 +114,5 @@
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Declarative Support: Aggregations";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

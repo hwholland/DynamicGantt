@@ -13,5 +13,8 @@
             <documentation>Type of the item.
 If not set the type is automatically determined from the order of the items in the CalendarLegend.</documentation>
         </property>
+        <property name="color" type="sap.ui.core/CSSColor" group="Appearance" since="1.46.0">
+            <documentation>Overrides the color derived from the &lt;code&gt;type&lt;/code&gt; property.</documentation>
+        </property>
     </properties>
 </control>

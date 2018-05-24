@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -45,9 +45,9 @@ sap.ui.define(['jquery.sap.global'],
 		rm.write(">");
 		NavigationBarRenderer.renderItems(rm, oControl);
 		rm.write("</ul>");
-		rm.write("<a id='" + sId + "-ofb' role='presentation' class='sapUiUx3NavBarBack' href='javascript:void(0)'>");
-		rm.write("<a id='" + sId + "-off' role='presentation' class='sapUiUx3NavBarForward' href='javascript:void(0)'>");
-		rm.write("<a id='" + sId + "-ofl' role='presentation' class='sapUiUx3NavBarOverflowBtn' href='javascript:void(0)'>");
+		rm.write("<a id='" + sId + "-ofb' role='presentation' class='sapUiUx3NavBarBack' href='#'></a>");
+		rm.write("<a id='" + sId + "-off' role='presentation' class='sapUiUx3NavBarForward' href='#'></a>");
+		rm.write("<a id='" + sId + "-ofl' role='presentation' class='sapUiUx3NavBarOverflowBtn' href='#'>");
 		rm.writeIcon("sap-icon://overflow", [], { id : sId + "-oflt" });
 		rm.write("</a>");
 		rm.write("</nav>");
@@ -96,9 +96,7 @@ sap.ui.define(['jquery.sap.global'],
 				// TL;DR: Not correct, won't fix - because it works and things might depend on the DOM
 				//        being this way.
 				oRm.writeElementData(item);
-				/* eslint-disable no-script-url */
-				oRm.writeAttributeEscaped("href", item.getHref() || "javascript:void(0);");
-				/* eslint-enable no-script-url */
+				oRm.writeAttributeEscaped("href", item.getHref() || '#');
 				oRm.write(" aria-setsize='" + iNoOfItems + "' aria-posinset='" + (i + 1) + "' role='menuitemradio' class='sapUiUx3NavBarItem'");
 				if (bIsSelected) {
 					oRm.write(" tabindex='0'");

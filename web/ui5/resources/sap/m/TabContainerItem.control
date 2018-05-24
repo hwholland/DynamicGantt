@@ -27,7 +27,7 @@
                 <parameter name="propertyKey" type="sap.ui.core/string">
                     <documentation>The key of the property.</documentation>
                 </parameter>
-                <parameter name="propertyValue" type="any">
+                <parameter name="propertyValue" type="sap.ui.core/any">
                     <documentation>The value of the property.</documentation>
                 </parameter>
             </parameters>

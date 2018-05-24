@@ -5,7 +5,11 @@ sap.ui.define([
 
 	return UIComponent.extend("sap.ui.table.sample.Sorting.Component", {
 		metadata : {
-			rootView : "sap.ui.table.sample.Sorting.View",
+			rootView : {
+				"viewName": "sap.ui.table.sample.Sorting.View",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.ui.table",
@@ -19,8 +23,7 @@ sap.ui.define([
 					stretch : true,
 					files : [
 						"View.view.xml",
-						"Controller.controller.js",
-						"../TableExampleUtils.js"
+						"Controller.controller.js"
 					]
 				}
 			}

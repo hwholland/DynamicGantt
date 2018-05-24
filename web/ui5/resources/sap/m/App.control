@@ -3,8 +3,20 @@
     <name>App</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>App is the root element of a UI5 mobile application. It inherits from NavContainer and thus provides its navigation capabilities.
-It also adds certain header tags to the HTML page which are considered useful for mobile apps.</documentation>
+    <documentation>The root element of a UI5 mobile app.
+
+&lt;h3&gt;Overview&lt;/h3&gt;
+
+The &lt;code&gt;App&lt;/code&gt; inherits from {@link sap.m.NavContainer} and thus provides its navigation capabilities.
+It adds certain header tags to the HTML page which are considered useful for mobile apps.
+
+&lt;h3&gt;Usage&lt;/h3&gt;
+
+You can configure the home icon of the &lt;code&gt;App&lt;/code&gt;. For more information,
+see the &lt;code&gt;homeIcon&lt;/code&gt; property.
+
+There are options for setting the background color and a background image with the use of the
+&lt;code&gt;backgroundColor&lt;/code&gt; and &lt;code&gt;backgroundImage&lt;/code&gt; properties.</documentation>
     <baseType>sap.m/NavContainer</baseType>
     <properties>
         <property name="homeIcon" type="sap.ui.core/any" group="Misc">

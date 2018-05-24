@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Business applications also require language-specific (translatable) texts used as labels and descriptions on the user interface."/>
 <meta name="description" content="Business applications also require language-specific (translatable) texts used as labels and descriptions on the user interface."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14485909625570692"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=4647126259537988"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4647126259537988"/>
 <title>Step 6: Resource Models</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio9790d9aa686e4f818f2ad99057adb7ee">
 <div id="wrapper"><div id="container">
@@ -54,14 +40,14 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.databinding.06/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.databinding.06/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.databinding.06/preview">Data Binding - Step 6</a></span>.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/index.html</div><div type="webapp/index.html">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...
     &lt;script&gt;
       var oModel = new sap.ui.model.json.JSONModel({
         firstName : "Harry",
@@ -99,7 +85,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties (New)</div><div type="webapp/i18n/i18n.properties (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp><span class="ph emphasis emphasis"># Field labels
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"><span class="ph emphasis emphasis"># Field labels
 firstName=First Name
 lastName=Last Name
 enabled=Enabled
@@ -122,7 +108,7 @@ panelHeaderText=Data Binding Basics</span></pre></div>
 
 		<div class="section"><div class="section_title">webapp/view/App.view.xml</div><div type="webapp/view/App.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
   &lt;Panel headerText="{<span class="ph emphasis emphasis">i18n&gt;</span>panelHeaderText}" class="sapUiResponsiveMargin" width="auto"&gt;
     &lt;content&gt;
       &lt;Label text="<span class="ph emphasis emphasis">{i18n&gt;firstName}</span>" class="sapUiSmallMargin" /&gt;
@@ -155,7 +141,7 @@ panelHeaderText=Data Binding Basics</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in SAPUI5.">Data Binding</a><br/>
+<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in OpenUI5.">Data Binding</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="88756c08fe144ba08ff1762ad92fc07c.html" title="In contrast to the two-way binding behavior shown above, one-way data binding is also possible. Here, data is transported in one direction only: from the model, through the binding instance to the consumer (usually the property of a control), but never in the other direction. In this example, we will change the previous example to use one-way data binding. This will illustrate how the flow of data from the user interface back to the model can be switched off if required.">Step 5: One-Way Data Binding</a><br/>
@@ -165,24 +151,10 @@ panelHeaderText=Data Binding Basics</span></pre></div>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f122a36f4d1014b6dd926db0e91070.html" title="The resource model is used as a wrapper for resource bundles. In data binding you use the resource model instance, for example, to bind texts of a control to language-dependent resource bundle properties.">Resource Model</a></div>
+<div><a class="link" href="91f122a36f4d1014b6dd926db0e91070.html#loio91f122a36f4d1014b6dd926db0e91070" title="The resource model is used as a wrapper for resource bundles. In data binding you use the resource model instance, for example, to bind texts of a control to language-dependent resource bundle properties.">Resource Model</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 6: Resource Models";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

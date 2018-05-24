@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>FeederType</name>
     <derived/>
-    <documentation>Type of an Feeder.</documentation>
+    <documentation>Type of a Feeder.</documentation>
     <developmentState state="experimental" since="1.2">The whole Feed/Feeder API is still under discussion, significant changes are likely. Especially text presentation (e.g. @-references and formatted text) is not final. Also the Feed model topic is still open.</developmentState>
     <enumeration>
         <value name="Large">

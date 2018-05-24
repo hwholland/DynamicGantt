@@ -1,12 +1,32 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.ux3.Feed.
-sap.ui.define(['jquery.sap.global', 'sap/ui/commons/DropdownBox', 'sap/ui/commons/MenuButton', 'sap/ui/commons/SearchField', 'sap/ui/commons/ToggleButton', 'sap/ui/core/Control', './Feeder', './library'],
-	function(jQuery, DropdownBox, MenuButton, SearchField, ToggleButton, Control, Feeder, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/commons/DropdownBox',
+    'sap/ui/commons/MenuButton',
+    'sap/ui/commons/SearchField',
+    'sap/ui/commons/ToggleButton',
+    'sap/ui/core/Control',
+    './Feeder',
+    './library',
+    "./FeedRenderer"
+],
+	function(
+	    jQuery,
+		DropdownBox,
+		MenuButton,
+		SearchField,
+		ToggleButton,
+		Control,
+		Feeder,
+		library,
+		FeedRenderer
+	) {
 	"use strict";
 
 
@@ -22,7 +42,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/DropdownBox', 'sap/ui/common
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -195,8 +215,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/DropdownBox', 'sap/ui/common
 			}).setParent(this);
 			this.oToolsButton.attachEvent('itemSelected', this.handleLtoolsButtonSelected, this); // attach event this way to have the right this-reference in handler
 
-			var sIcon = sap.ui.core.theming.Parameters._getThemeImage('sapUiFeedToolsIconUrl');
-			var sIconHover = sap.ui.core.theming.Parameters._getThemeImage('sapUiFeedToolsIconHoverUrl');
+			var sIcon = sap.ui.core.theming.Parameters._getThemeImage('_sap_ui_ux3_Feed_ToolsIconUrl');
+			var sIconHover = sap.ui.core.theming.Parameters._getThemeImage('_sap_ui_ux3_Feed_ToolsIconHoverUrl');
 			if (sIcon) {
 				this.oToolsButton.setProperty('icon', sIcon, true);
 			}
@@ -241,7 +261,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/DropdownBox', 'sap/ui/common
 	Feed.prototype.handleFeederSubmit = function(oEvent){
 
 		var oDate = new Date();
-	//	var sDate = String(oDate.getFullYear()) + String(oDate.getMonth()) + String(oDate.getDate()) + String(oDate.getHours()) + String(oDate.getMinutes()) + String(oDate.getSeconds());
 		var sDate = String(oDate);
 
 		var oNewChunk = new sap.ui.ux3.FeedChunk(this.getId() + '-new-' + this.getChunks().length, {
@@ -257,19 +276,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/DropdownBox', 'sap/ui/common
 		this.insertChunk(oNewChunk, 0);
 		this.fireChunkAdded({chunk: oNewChunk});
 
-	};
-
-	/*
-	 * overwrite of setLive
-	 */
-	Feed.prototype.setLive = function(bLive) {
-		this.setProperty("live", bLive, true); //no re-rendering because only ToggleButton is changed
-
-		if (this.oLiveButton) {
-			// update ToggleButton
-			this.oLiveButton.setPressed(bLive);
-		}
-		return this;
 	};
 
 	/**

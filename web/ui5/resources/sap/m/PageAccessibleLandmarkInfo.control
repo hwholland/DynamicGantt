@@ -40,7 +40,7 @@ If set to &lt;code&gt;sap.ui.core.AccessibleLandmarkRole.None&lt;/code&gt;, no l
 If not set (and a landmark different than &lt;code&gt;sap.ui.core.AccessibleLandmarkRole.None&lt;/code&gt; is defined), a predefined text
 is used.</documentation>
         </property>
-        <property name="subHeaderRole" type="sap.ui.core/AccessibleLandmarkRole">
+        <property name="subHeaderRole" type="sap.ui.core/AccessibleLandmarkRole" defaultValue="None">
             <documentation>Landmark role of the subheader container of the corresponding &lt;code&gt;sap.m.Page&lt;/code&gt; control.
 
 If set to &lt;code&gt;sap.ui.core.AccessibleLandmarkRole.None&lt;/code&gt;, no landmark will be added to the container.</documentation>

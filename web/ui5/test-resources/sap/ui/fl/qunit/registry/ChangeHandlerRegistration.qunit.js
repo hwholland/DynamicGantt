@@ -1,7 +1,4 @@
-/*globals QUnit*/
-if(!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit,sinon*/
 
 jQuery.sap.require("sap.ui.fl.registry.ChangeHandlerRegistration");
 jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");

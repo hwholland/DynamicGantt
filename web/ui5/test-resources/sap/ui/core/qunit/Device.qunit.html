@@ -8,20 +8,19 @@
 
 		<title>Test Page for sap.ui.Device</title>
 
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="">
 		</script>
 
 		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
-		<script type="text/javascript">
+		<script>
 		var BROWSER = {
 			"INTERNET_EXPLORER": "ie",
 			"FIREFOX": "ff",
@@ -452,7 +451,7 @@
 
 		var fnUATest =  function(i, oUserAgentAndResult) {
 
-			test(oUserAgentAndResult.name, function() {
+			QUnit.test(oUserAgentAndResult.name, function(assert) {
 
 				var currentTest = oUserAgentAndResult;
 				var actualResult = sap.ui.Device._testUserAgent(currentTest.ua, currentTest.nav);
@@ -467,7 +466,7 @@
 				}
 
 				for (var prop in currentTest.expected) {
-					strictEqual(actualResult[prop] , currentTest.expected[prop], currentTest.name + ": browser detection property 'browser." + prop + "' should match for " + currentTest.ua);
+					assert.strictEqual(actualResult[prop] , currentTest.expected[prop], currentTest.name + ": browser detection property 'browser." + prop + "' should match for " + currentTest.ua);
 				}
 
 				if (currentTest.system || currentTest.os) {
@@ -487,13 +486,13 @@
 						var oSystem = sap.ui.Device._getSystem(false, currentTest.ua);
 
 						for (prop in currentTest.system) {
-							strictEqual(!!oSystem[prop], currentTest.system[prop], currentTest.name + ": browser detection property 'system." + prop + "' should match for " + currentTest.ua);
+							assert.strictEqual(!!oSystem[prop], currentTest.system[prop], currentTest.name + ": browser detection property 'system." + prop + "' should match for " + currentTest.ua);
 						}
 					}
 
 					if (currentTest.os) {
 						for (prop in currentTest.os) {
-							strictEqual(sap.ui.Device.os[prop], currentTest.os[prop], currentTest.name + ": browser detection property 'os." + prop + "' should match for " + currentTest.ua);
+							assert.strictEqual(sap.ui.Device.os[prop], currentTest.os[prop], currentTest.name + ": browser detection property 'os." + prop + "' should match for " + currentTest.ua);
 						}
 					}
 
@@ -503,7 +502,7 @@
 			});
 		};
 
-		module("Test user agents");
+		QUnit.module("Test user agents");
 
 		jQuery.sap.each(aUserAgentsAndResults, fnUATest);
 

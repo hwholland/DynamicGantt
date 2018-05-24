@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,20 +9,14 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support'],
 	function(jQuery, Plugin, Support) {
 	"use strict";
 
-
-
-
-
 		/**
 		 * Creates an instance of sap.ui.core.support.plugins.MessageTest.
 		 * @class This class represents the plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * This class is only for testing purposes for support tool communication.
 		 *
-		 * @abstract
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.38.33
-		 * @constructor
+		 * @version 1.54.5
 		 * @private
 		 * @alias sap.ui.core.support.plugins.MessageTest
 		 */
@@ -34,7 +28,6 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support'],
 				this._bFirstTime = true;
 			}
 		});
-
 
 		/**
 		 * Handler for sapUiSupportMessageTestMsg event
@@ -59,8 +52,8 @@ sap.ui.define(['jquery.sap.global', '../Plugin', '../Support'],
 
 			var rm = sap.ui.getCore().createRenderManager();
 			rm.write("<div class='sapUiSupportToolbar'>");
-			rm.write("<input type='text' id='" + this.getId() + "-input' class='sapUiSupportTxtFld'></input>");
-			rm.write("<button id='" + this.getId() + "-send' class='sapUiSupportBtn'>Send</button>");
+			rm.write("<input type='text' id='" + this.getId() + "-input' class='sapUiSupportTxtFld'/>");
+			rm.write("<button id='" + this.getId() + "-send' class='sapUiSupportRoundedButton'>Send</button>");
 			rm.write("</div><div class='sapUiSupportMessageCntnt'></div>");
 			rm.flush(this.$().get(0));
 			rm.destroy();

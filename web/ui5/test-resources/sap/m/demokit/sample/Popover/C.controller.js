@@ -24,17 +24,13 @@ sap.ui.define([
 		handlePopoverPress: function (oEvent) {
 
 			// create popover
-			if (! this._oPopover) {
+			if (!this._oPopover) {
 				this._oPopover = sap.ui.xmlfragment("sap.m.sample.Popover.Popover", this);
 				this.getView().addDependent(this._oPopover);
 				this._oPopover.bindElement("/ProductCollection/0");
 			}
 
-			// delay because addDependent will do a async rerendering and the actionSheet will immediately close without it.
-			var oButton = oEvent.getSource();
-			jQuery.sap.delayedCall(0, this, function () {
-				this._oPopover.openBy(oButton);
-			});
+			this._oPopover.openBy(oEvent.getSource());
 		},
 
 		handleEmailPress: function (oEvent) {

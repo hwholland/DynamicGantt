@@ -1,13 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides control sap.m.PlanningCalendarView.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './StandardListItem', './StandardListItemRenderer', 'sap/ui/core/Renderer', './library', 'sap/ui/unified/library'],
-		function(jQuery, Element, StandardListItem, StandardListItemRenderer, Renderer, library, unifiedLibrary) {
+sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/unified/library'],
+		function(Element, library, unifiedLibrary) {
 	"use strict";
+
+	// shortcut for sap.ui.unified.CalendarIntervalType
+	var CalendarIntervalType = unifiedLibrary.CalendarIntervalType;
 
 	/**
 	 * Constructor for a new <code>PlanningCalendarView</code>.
@@ -16,12 +19,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './StandardListItem',
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * View of the <code>PlanningCalendar</code>.
+	 * View of the {@link sap.m.PlanningCalendar}.
 	 *
-	 * The <code>PlanningCalendarView</code> defines the granularity of the output. It defines what type of intervals (hours, days or months)
-	 * and how many intervals are shown.
+	 * The <code>PlanningCalendarView</code> defines the type of the intervals (hours, days, months)
+	 * and how many intervals are displayed.
 	 * @extends sap.ui.core.Element
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -35,49 +38,47 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './StandardListItem',
 		properties : {
 
 			/**
-			 * Key of the view. This must be set to identify the used view in the <code>PlanningCalendar</code>
+			 * Defines the key of the view. This must be set to identify the used view in the
+			 * {@link sap.m.PlanningCalendar}.
 			 */
 			key : {type : "string", group : "Data", defaultValue : null},
 
 			/**
-			 * Type of the intervals of the row. Default is Hour.
+			 * Determines the type of the intervals of the row.
+			 *
+			 * <b>Note:</b> Not all predefined interval types are supported for this property. For more information, see the
+			 * descriptions in the {@link sap.ui.unified.CalendarIntervalType CalendarIntervalType} enumeration.
 			 */
-			intervalType : {type : "sap.ui.unified.CalendarIntervalType", group : "Appearance", defaultValue : sap.ui.unified.CalendarIntervalType.Hour},
+			intervalType : {type : "sap.ui.unified.CalendarIntervalType", group : "Appearance", defaultValue : CalendarIntervalType.Hour},
 
 			/**
-			 * Description of the <code>PlanningCalendarView</code>
+			 * Defines the description of the <code>PlanningCalendarView</code>.
 			 */
 			description : {type : "string", group : "Data"},
 
 			/**
-			 * Number of intervals (defined with <code>intervalType</code>) that are displayed on small size (phones).
-			 *
-			 * <b>Note:</b> It is not only the screen size which is used to determine the available space, the size of the <code>PlanningCalendar</code> is used as well.
+			 * Defines the number of intervals that are displayed for a {@link sap.m.PlanningCalendar} that is less than 600 pixels wide.
 			 */
 			intervalsS : {type : "int", group : "Appearance", defaultValue : 6},
 
 			/**
-			 * Number of intervals (defined with <code>intervalType</code>) that are displayed on medium size (tablet)
-			 *
-			 * <b>Note:</b> It is not only the screen size which is used to determine the available space, the size of the <code>PlanningCalendar</code> is used as well.
+			 * Defines the number of intervals that are displayed for a {@link sap.m.PlanningCalendar} that is between 600 and 1024 pixels wide.
 			 */
 			intervalsM : {type : "int", group : "Appearance", defaultValue : 8},
 
 			/**
-			 * Number of intervals (defined with <code>intervalType</code>) that are displayed on large size (desktop)
-			 *
-			 * <b>Note:</b> It is not only the screen size which is used to determine the available space, the size of the <code>PlanningCalendar</code> is used as well.
+			 * Defines the number of intervals that are displayed for a {@link sap.m.PlanningCalendar} that is more than 1024 pixels wide.
 			 */
 			intervalsL : {type : "int", group : "Appearance", defaultValue : 12},
 
 			/**
-			 * If set subintervals are shown.
+			 * If set, subintervals are displayed as lines in the rows.
 			 *
-			 * If the interval type is <code>Hour</code>, quarter hours are shown.
-			 *
-			 * If the interval type is <code>Day</code>, hours are shown.
-			 *
-			 * If the interval type is <code>Month</code>, days are shown.
+			 * <ul>
+			 * <li>Quarter hour subintervals for interval type <code>Hour</code>.</li>
+			 * <li>Hour subintervals for interval types <code>Day</code>, <code>Week</code> and <code>OneMonth</code>.</li>
+			 * <li>Day subintervals for interval type <code>Month</code>.</li>
+			 * </ul>
 			 */
 			showSubIntervals : {type : "boolean", group : "Appearance", defaultValue : false}
 
@@ -86,4 +87,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './StandardListItem',
 
 	return PlanningCalendarView;
 
-}, /* bExport= */ true);
+});

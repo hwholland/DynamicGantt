@@ -1,3 +1,5 @@
+/*global QUnit,sinon*/
+
 (function ($, QUnit, sinon) {
 	"use strict";
 
@@ -22,10 +24,10 @@
 		};
 
 	QUnit.module("sap.m.PagingButton API", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPagingButton = helpers.getPagingButton();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPagingButton.destroy();
 		}
 	});
@@ -77,11 +79,11 @@
 	});
 
 	QUnit.module("sap.m.PagingButton Rendering", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPagingButton = helpers.getPagingButton(10);
 			helpers.renderObject(this.oPagingButton);
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPagingButton.destroy();
 		}
 	});
@@ -91,7 +93,7 @@
 	});
 
 	QUnit.module("sap.m.PagingButton Events", {
-		setup: function () {
+		beforeEach: function () {
 			var that = this;
 
 			this.oSpies = {};
@@ -106,7 +108,7 @@
 
 			helpers.renderObject(this.oPagingButton);
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPagingButton.destroy();
 			this.oPagingButton = null;
 		}

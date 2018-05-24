@@ -10,19 +10,18 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<!-- legacy meta tag for IE9 compatibility -->
 	<meta charset="utf-8">
-	<title>qUnit Page for jquery.sap.unicode</title>
+	<title>QUnit Page for jquery.sap.unicode</title>
 
+	<script src="../shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-		type="text/javascript"
 		src="../../../../../resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-noConflict="true">
 	</script>
 
 	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
 	<script>
 		jQuery.sap.require("jquery.sap.unicode");
@@ -53,11 +52,11 @@
 
 		QUnit.module("UNorm");
 
-		QUnit.test("test dependencies", function() {
-			ok(sap.ui.Device, "Device API loaded");
+		QUnit.test("test dependencies", function(assert) {
+			assert.ok(sap.ui.Device, "Device API loaded");
 		});
 
-		QUnit.test("conditional polyfill", function() {
+		QUnit.test("conditional polyfill", function(assert) {
 			UNorm = window.UNorm;
 			if (UNorm) {
 				assert.ok(UNorm, "unorm is loaded");
@@ -75,7 +74,7 @@
 		});
 
 		if (UNorm) {
-			QUnit.test("reference data", function() {
+			QUnit.test("reference data", function(assert) {
 				assert.expect(8);
 				jQuery.each(aData, function(i, o) {
 					assert.equal(toCharCodes(o.string), o.representation, "\"" + o.form + "\"" + " string is valid");
@@ -91,7 +90,7 @@
 				});
 
 				// ref: http://unicode.org/reports/tr15/#Design_Goals
-				QUnit.test("chaining", function() {
+				QUnit.test("chaining", function(assert) {
 					o.compatible ? assert.expect(6) : assert.expect(2);
 					// primitive value of the normalized string as reference
 					var sRef = this.s.normalize(o.form).valueOf();
@@ -128,7 +127,7 @@
 				afterEach: function() {}
 			});
 
-			QUnit.test("verify test string", function() {
+			QUnit.test("verify test string", function(assert) {
 				assert.equal(this.sBlind, this.sBlind.normalize("NFC"), "NFC verified");
 				assert.equal(this.sSomething, this.sSomething.normalize("NFC"), "NFC verified");
 				assert.equal(this.sNFC, this.sNFC.normalize("NFC"), "NFC verified");
@@ -145,7 +144,7 @@
 				assert.equal(this.sNFKD + this.sNFKD + this.sNFKD + this.sNFKD, this.s.normalize("NFKD"), "NFKD concatenation verified");
 			});
 
-			QUnit.test("isStringNFC", function() {
+			QUnit.test("isStringNFC", function(assert) {
 				assert.ok(jQuery.sap.isStringNFC("ABC"), "NFC is NFC");
 				assert.ok(jQuery.sap.isStringNFC("Améliè"), "NFC is NFC");
 				assert.ok(!jQuery.sap.isStringNFC(this.sNFC) || jQuery.sap.isStringNFC(this.sNFC), "NFC maybe NFC");
@@ -160,7 +159,7 @@
 </head>
 
 <body>
-	<h1 id="qunit-header">qUnit Page for jquery.sap.unicode</h1>
+	<h1 id="qunit-header">QUnit Page for jquery.sap.unicode</h1>
 	<h2 id="qunit-banner"></h2>
 	<h2 id="qunit-userAgent"></h2>
 	<ol id="qunit-tests"></ol>

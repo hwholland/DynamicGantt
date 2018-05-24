@@ -1,12 +1,15 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 // Provides control sap.m.TabStripItem.
-sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", 'sap/ui/core/IconPool', './AccButton'],
-	function(jQuery, library, Item, ManagedObject, IconPool, AccButton) {
+sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sap/ui/core/IconPool", "./AccButton"],
+	function(library, Item, ManagedObject, IconPool, AccButton) {
 		"use strict";
+
+		// shortcut for sap.m.ButtonType
+		var ButtonType = library.ButtonType;
 
 		/**
 		 * Constructor for a new <code>TabStripItem</code>.
@@ -19,7 +22,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 		 * @extends sap.ui.core.Item
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @private
@@ -53,7 +56,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 						parameters: {
 
 							/**
-							 * Tab ID of the tab to be closed.
+							 * The <code>TabStripItem</code> to be closed.
 							 */
 							item: {type: "sap.m.TabStripItem"}
 						}
@@ -79,7 +82,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 							/**
 							 * The new property value.
 							 */
-							propertyValue:  {type: "mixed"}
+							propertyValue:  {type: "any"}
 						}
 					}
 				}
@@ -163,7 +166,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 		 */
 		TabStripItem.prototype.init = function () {
 			var oButton = new AccButton({
-				type: sap.m.ButtonType.Transparent,
+				type: ButtonType.Transparent,
 				icon: IconPool.getIconURI("decline"),
 				tabIndex: "-1",
 				ariaHidden: "true"
@@ -175,9 +178,9 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 		 * Overrides the <code>setProperty</code> method in order to avoid unnecessary re-rendering.
 		 *
 		 * @override
-		 * @param sName {string} The name of the property
-		 * @param vValue {boolean | string | object} The value of the property
-		 * @param bSupressInvalidation {boolean} Whether to suppress invalidation
+		 * @param {string} sName The name of the property
+		 * @param {boolean | string | object} vValue The value of the property
+		 * @param {boolean} bSupressInvalidation Whether to suppress invalidation
 		 */
 		TabStripItem.prototype.setProperty = function (sName, vValue, bSupressInvalidation) {
 			if (sName === 'modified') {
@@ -202,4 +205,4 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Item", "sap/ui/bas
 
 		return TabStripItem;
 
-	}, /* bExport= */ false);
+	});

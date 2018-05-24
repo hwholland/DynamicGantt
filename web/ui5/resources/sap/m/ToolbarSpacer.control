@@ -3,8 +3,9 @@
     <name>ToolbarSpacer</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>This control can be used to add horizontal space between toolbar items.
-Note: ToolbarLayoutData should not be used with this control.</documentation>
+    <documentation>Adds horizontal space between the items used within a {@link sap.m.Toolbar}.
+
+&lt;b&gt;Note:&lt;/b&gt; &lt;code&gt;ToolbarSpacer&lt;/code&gt; should not be used together with {@link sap.m.ToolbarLayoutData}.</documentation>
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>

@@ -1,29 +1,43 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ScrollContainer
-sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/core/delegate/ScrollEnablement"],
-	function (jQuery, library, Control, ScrollEnablement) {
+sap.ui.define([
+	"jquery.sap.global",
+	"./library",
+	"sap/ui/core/Control",
+	"sap/ui/core/delegate/ScrollEnablement",
+	"sap/ui/core/Element",
+	"./ScrollContainerRenderer"
+],
+	function(
+		jQuery,
+		library,
+		Control,
+		ScrollEnablement,
+		Element,
+		ScrollContainerRenderer
+	) {
 		"use strict";
 
 
 		/**
 		 * Constructor for a new ScrollContainer.
 		 *
-		 * @param {string} [sId] id for the new control, generated automatically if no id is given
-		 * @param {object} [mSettings] initial settings for the new control
+		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+		 * @param {object} [mSettings] Initial settings for the new control
 		 *
 		 * @class
-		 * The ScrollContainer is a control that can display arbitrary content within a limited screen area and provides touch scrolling to make all content accessible.
-		 *
-		 * Note that it is not recommended to have nested scrolling areas that scroll into the same direction (e.g. a ScrollContainer that scrolls vertically inside a Page control with scrolling enabled). This is currently not considered a valid use-case of a good UI and the behavior will feel wrong.
+		 * The ScrollContainer is a control that can display arbitrary content within a limited screen area and provides scrolling to make all content accessible.
+		 * <h3>When not to use</h3>
+		 * Do not nest scrolling areas that scroll in the same direction (e.g. a ScrollContainer that scrolls vertically inside a Page control with scrolling enabled).
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @public
@@ -76,7 +90,8 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/
 					 * The content of the ScrollContainer.
 					 */
 					content: {type: "sap.ui.core.Control", multiple: true, singularName: "content"}
-				}
+				},
+				designtime: "sap/m/designtime/ScrollContainer.designtime"
 			}
 		});
 
@@ -107,7 +122,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/
 
 		/**
 		 * Returns the sap.ui.core.ScrollEnablement delegate which is used with this control.
-		 *
+		 * @rerurns {sap.ui.core.ScrollEnablementDelegate} The scroll delegate instance
 		 * @private
 		 */
 		ScrollContainer.prototype.getScrollDelegate = function () {
@@ -132,7 +147,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/
 		 * @param {int} time
 		 *         The duration of animated scrolling.
 		 *         To scroll immediately without animation, give 0 as value. 0 is also the default value, when this optional parameter is omitted.
-		 * @type sap.m.ScrollContainer
+		 * @returns {sap.m.ScrollContainer} <code>this</code> to facilitate method chaining
 		 * @public
 		 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 		 */
@@ -164,7 +179,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/
 		 * @public
 		 */
 		ScrollContainer.prototype.scrollToElement = function (element, time) {
-			if (element instanceof sap.ui.core.Element) {
+			if (element instanceof Element) {
 				element = element.getDomRef();
 			}
 
@@ -176,14 +191,14 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/
 
 		ScrollContainer.prototype.setHorizontal = function (horizontal) {
 			this._oScroller.setHorizontal(horizontal);
-			this.setProperty("horizontal", horizontal, true);
+			return this.setProperty("horizontal", horizontal, true);
 		};
 
 		ScrollContainer.prototype.setVertical = function (vertical) {
 			this._oScroller.setVertical(vertical);
-			this.setProperty("vertical", vertical, true);
+			return this.setProperty("vertical", vertical, true);
 		};
 
 		return ScrollContainer;
 
-	}, /* bExport= */ true);
+	});

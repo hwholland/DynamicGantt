@@ -8,10 +8,12 @@ sap.ui.define([
 
 	var PageController = Controller.extend("sap.ui.layout.sample.SimpleForm480.Page", {
 
-		onInit: function (oEvent) {
-
+		onInit: function () {
 			// set explored app's demo model on this sample
 			var oModel = new JSONModel(jQuery.sap.getModulePath("sap.ui.demo.mock", "/supplier.json"));
+			oModel.attachRequestCompleted(function() {
+				this.byId('edit').setEnabled(true);
+			}.bind(this));
 			this.getView().setModel(oModel);
 
 			this.getView().bindElement("/SupplierCollection/0");
@@ -21,8 +23,8 @@ sap.ui.define([
 		},
 
 		onExit : function () {
-			for(var sPropertyName in this._formFragments) {
-				if(!this._formFragments.hasOwnProperty(sPropertyName)) {
+			for (var sPropertyName in this._formFragments) {
+				if (!this._formFragments.hasOwnProperty(sPropertyName)) {
 					return;
 				}
 
@@ -81,11 +83,12 @@ sap.ui.define([
 
 			oFormFragment = sap.ui.xmlfragment(this.getView().getId(), "sap.ui.layout.sample.SimpleForm480." + sFragmentName);
 
-			return this._formFragments[sFragmentName] = oFormFragment;
+			this._formFragments[sFragmentName] = oFormFragment;
+			return this._formFragments[sFragmentName];
 		},
 
 		_showFormFragment : function (sFragmentName) {
-			var oPage = this.getView().byId("page");
+			var oPage = this.byId("page");
 
 			oPage.removeAllContent();
 			oPage.insertContent(this._getFormFragment(sFragmentName));

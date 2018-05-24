@@ -5,7 +5,11 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 	var Component = UIComponent.extend("sap.ui.layout.sample.Form354.Component", {
 
 		metadata : {
-			rootView : "sap.ui.layout.sample.Form354.Page",
+			rootView : {
+				"viewName": "sap.ui.layout.sample.Form354.Page",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.m",
@@ -20,7 +24,7 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 						"Page.controller.js",
 						"Change.fragment.xml",
 						"Display.fragment.xml",
-						"style.css"
+						"test/FormSampleJourney.qunit.html"
 					]
 				}
 			}

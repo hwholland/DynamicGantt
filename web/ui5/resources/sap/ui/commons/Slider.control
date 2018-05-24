@@ -5,7 +5,7 @@
     <author>SAP SE</author>
     <documentation>The interactive control is displayed either as a horizontal or a vertical line with a pointer and units of measurement.
 Users can move the pointer along the line to change values with graphical support.</documentation>
-    <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.Slider&lt;/code&gt; control.</deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Slider}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Dimension">
@@ -55,7 +55,7 @@ Users can move the pointer along the line to change values with graphical suppor
     </properties>
     <events>
         <event name="change" allowPreventDefault="false">
-            <documentation>Value was changed. This event is fired if the value has changed by an user action.</documentation>
+            <documentation>Value was changed. This event is fired if the value has changed by a user action.</documentation>
             <parameters>
                 <parameter name="value" type="sap.ui.core/float">
                     <documentation>Current value of the slider after a change.</documentation>

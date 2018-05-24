@@ -1,12 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.ux3.CollectionInspector.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate/ItemNavigation', './library'],
-	function(jQuery, Control, ItemNavigation, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    'sap/ui/core/delegate/ItemNavigation',
+    './library',
+    "./CollectionInspectorRenderer"
+],
+	function(jQuery, Control, ItemNavigation, library, CollectionInspectorRenderer) {
 	"use strict";
 
 
@@ -20,7 +26,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate
 	 * @class
 	 * CollectionInspector
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -269,8 +275,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate
 	/**
 	 * rerender the content if different collection or collection item is selected
 	 *
-	 * @param int Index of the collection that should be rendered
-	 *
 	 * @private
 	 */
 	CollectionInspector.prototype.rerenderContent = function() {
@@ -402,7 +406,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate
 	};
 
 	/**
-	 * Removes an collection from the aggregation named <code>collections</code>.
+	 * Removes a collection from the aggregation named <code>collections</code>.
 	 *
 	 * @param {int | string | sap.ui.ux3.Collection} vCollection the collection to remove or its index or id
 	 * @return {sap.ui.ux3.Collection} the removed collection or null
@@ -498,7 +502,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate
 	};
 
 	/**
-	 * Removes an content from the aggregation named <code>content</code>.
+	 * Removes a content from the aggregation named <code>content</code>.
 	 *
 	 * @param {int | string | sap.ui.core.Control} vContent the content to remove or its index or id
 	 * @return {sap.ui.core.Control} the removed content or null
@@ -588,7 +592,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/delegate
 	/**
 	 * Updates the css classes for the selected items
 	 *
-	 * @param {jQuery.Event} oEvent
 	 * @private
 	 */
 	CollectionInspector.prototype.refreshSelectionHighlighting = function() {

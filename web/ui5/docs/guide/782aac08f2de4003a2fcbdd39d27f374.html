@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, we'll create a second button on the home page, with which we can navigate to a simple list of employees. This example illustrates how to navigate to a route that has a hard-coded pattern."/>
 <meta name="description" content="In this step, we'll create a second button on the home page, with which we can navigate to a simple list of employees. This example illustrates how to navigate to a route that has a hard-coded pattern."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7700489965392603"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9164870707908443"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9164870707908443"/>
 <title>Step 6: Navigate to Routes with Hard-Coded Patterns</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio782aac08f2de4003a2fcbdd39d27f374">
 <div id="wrapper"><div id="container">
@@ -40,20 +26,20 @@
 			
 			<div class="fig fignone" id="loio782aac08f2de4003a2fcbdd39d27f374__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loio782aac08f2de4003a2fcbdd39d27f374__image_p1m_v13_ns" src="loiof0f4fd7d2626458aa1632467eaf964a0_HiRes.png"/>
+				<img class="image" id="loio782aac08f2de4003a2fcbdd39d27f374__image_p1m_v13_ns" src="loiof0f4fd7d2626458aa1632467eaf964a0_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Show Employee List</span> button on the <span class="ph uicontrol">Home</span>
 					page</div></div></div>
 
 			<div class="fig fignone" id="loio782aac08f2de4003a2fcbdd39d27f374__fig_xm1_t13_ns"><div class="figcontainer">
 				
-				<img class="image" id="loio782aac08f2de4003a2fcbdd39d27f374__image_wvn_x13_ns" src="loiof45ee74f28bb4a5da522150e10e92185_HiRes.png"/>
+				<img class="image" id="loio782aac08f2de4003a2fcbdd39d27f374__image_wvn_x13_ns" src="loiof45ee74f28bb4a5da522150e10e92185_LowRes.png"/>
 			<div class="figcap">Employee list with <span class="ph uicontrol">Back</span> button</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.06/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.06/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.06/preview">Routing and Navigation - Step
 					6</a></span>.</p>
 
@@ -64,7 +50,7 @@
 
 		</div></div>
 
-		<div class="section"><div class="section_title">webapp/view/Home.view.xml</div><div type="webapp/view/Home.view.xml"><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+		<div class="section"><div class="section_title">webapp/view/Home.view.xml</div><div type="webapp/view/Home.view.xml"><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.Home"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -82,7 +68,7 @@ First,
 
 		<div class="section"><div class="section_title">webapp/controller/Home.controller.js</div><div type="webapp/controller/Home.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -109,8 +95,8 @@ First,
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -142,14 +128,17 @@ First,
 			}</span>],
 			"targets": {
 				"home": {
+					"viewId": "home",
 					"viewName": "Home",
 					"viewLevel" : 1
 				},
 				"notFound": {
+					"viewId": "notFound",
 					"viewName": "NotFound",
 					"transition": "show"
 				}<span class="ph emphasis emphasis">,
 				"employees": {
+					"viewId": "employeeList",
 					"viewPath": "sap.ui.demo.nav.view.employee",
 					"viewName": "EmployeeList",
 					"viewLevel" : 2
@@ -192,7 +181,7 @@ First,
 
 		<div class="section"><div class="section_title">webapp/view/employee/EmployeeList.view.xml (New)</div><div type="webapp/view/employee/EmployeeList.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.EmployeeList"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -230,7 +219,7 @@ First,
 
 		<div class="section"><div class="section_title">webapp/controller/employee/EmployeeList.controller.js (New)</div><div type="webapp/controller/employee/EmployeeList.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -246,7 +235,7 @@ First,
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp><span class="ph emphasis emphasis">...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"><span class="ph emphasis emphasis">...
 ShowEmployeeList=Show Employee List
 EmployeeList=Employee List
 ListOfAllEmployees=List of all employees</span></pre></div>
@@ -265,7 +254,7 @@ ListOfAllEmployees=List of all employees</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="d9efab307ecc42b180b12cc8956e22d7.html" title="In this step, you will learn more about targets and how to display a target from the routing configuration manually.">Step 5: Display a Target Without Changing the Hash</a><br/>
@@ -275,25 +264,11 @@ ListOfAllEmployees=List of all employees</span></pre></div>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="516e477e7e0b4e188b19a406e7528c1e.html" title="SAPUI5 provides a method and events for navigation.">Method and Events for Navigation</a></div>
+<div><a class="link" href="516e477e7e0b4e188b19a406e7528c1e.html" title="OpenUI5 provides a method and events for navigation.">Methods and Events for Navigation</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.routing.Route.html" alt="../../docs/api/symbols/sap.ui.core.routing.Route.html" title="../../docs/api/symbols/sap.ui.core.routing.Route.html">API Reference: <samp class="ph codeph">sap.ui.core.routing.Route</samp></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 6: Navigate to Routes with Hard-Coded Patterns";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

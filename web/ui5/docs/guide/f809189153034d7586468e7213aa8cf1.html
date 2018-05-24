@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="You can use the following best practices when implementing search, sorting, filtering and grouping functions for a master list in your Master-Detail apps."/>
 <meta name="description" content="You can use the following best practices when implementing search, sorting, filtering and grouping functions for a master list in your Master-Detail apps."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6504482951076273"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=5638713958848142"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5638713958848142"/>
 <title>Master List Filtering</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiof809189153034d7586468e7213aa8cf1">
 <div id="wrapper"><div id="container">
@@ -51,7 +37,7 @@
 				This means that the search has to be triggered explicitly by pressing enter or the
 				search button, and the results are always fetched from the server.</p>
 
-			<p class="p">The search function is implemented using the standard <span class="ph"><span class="ph pname">SAPUI5</span></span>
+			<p class="p">The search function is implemented using the standard <span class="ph"><span class="ph pname">OpenUI5</span></span>
 				<samp class="ph codeph">sap.ui.model.Filter</samp> objects. The options are added to an internal
 				state object of the controller and applied together with the filters that can be
 				selected in the filter options. The type of these filters is "Application", and
@@ -108,24 +94,10 @@
 
 	<div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="https://experience.sap.com/fiori-design/floorplans/master-list-2/" alt="https://experience.sap.com/fiori-design/floorplans/master-list-2/" title="https://experience.sap.com/fiori-design/floorplans/master-list-2/">SAP Fiori Design Guidelines: Master List</a></div>
+<div><a class="link" href="https://experience.sap.com/fiori-design/floorplans/master-list/" alt="https://experience.sap.com/fiori-design/floorplans/master-list/" title="https://experience.sap.com/fiori-design/floorplans/master-list/">SAP Fiori Design Guidelines: Master List</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Master List Filtering";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

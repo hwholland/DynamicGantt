@@ -1,7 +1,4 @@
-/*globals QUnit, sinon*/
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit, sinon*/
 (function() {
 	'use strict';
 
@@ -29,7 +26,12 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		}, '{ "localonly":false, "transports":[{"transportId":"4711","owner":"TESTUSER","description":"test transport1"}] }']);
 		this.oServer.autoRespond = true;
 
-		oObject = {package: "testpackage", name: "testname", namespace: "namespace", type: "variant"};
+		oObject = {
+			"package": "testpackage",
+			name: "testname",
+			namespace: "namespace",
+			type: "variant"
+		};
 
 		return this.oTransports.getTransports(oObject).then(function(oResult) {
 			assert.equal(oResult.transports[0].transportId, '4711');

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, you will learn more about targets and how to display a target from the routing configuration manually."/>
 <meta name="description" content="In this step, you will learn more about targets and how to display a target from the routing configuration manually."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3206661135754273"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=7035697646490445"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7035697646490445"/>
 <title>Step 5: Display a Target Without Changing the Hash</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiod9efab307ecc42b180b12cc8956e22d7">
 <div id="wrapper"><div id="container">
@@ -51,14 +37,14 @@
 			
 			<div class="fig fignone" id="loiod9efab307ecc42b180b12cc8956e22d7__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loiod9efab307ecc42b180b12cc8956e22d7__image_fgl_3vh_ns" src="loio64fc7de39bed41d48d01e08244f201ab_HiRes.png"/>
+				<img class="image" id="loiod9efab307ecc42b180b12cc8956e22d7__image_fgl_3vh_ns" src="loio64fc7de39bed41d48d01e08244f201ab_LowRes.png"/>
 			<div class="figcap">The new <span class="ph uicontrol">Home</span> page with a navigation button</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo
 				-kit <span class="ph">at
 						<a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.05/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.05/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.05/preview">Routing and Navigation - Step
 					5</a></span>.</p>
@@ -67,7 +53,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/Home.view.xml</div><div type="webapp/view/Home.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.Home"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -85,7 +71,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/Home.controller.js</div><div type="webapp/controller/Home.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -139,7 +125,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/Home.controller.js (Changed Again)</div><div type="webapp/controller/Home.controller.js (Changed Again)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -164,7 +150,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/NotFound.controller.js</div><div type="webapp/controller/NotFound.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -179,7 +165,6 @@
 		}<span class="ph emphasis emphasis">,
 		// override the parent's onNavBack (inherited from BaseController)
 		onNavBack : function (oEvent){
-			var oHistory, sPreviousHash, oRouter;
 			// in some cases we could display a certain target when the back button is pressed
 			if (this._oData &amp;&amp; this._oData.fromTarget) {
 				this.getRouter().getTargets().display(this._oData.fromTarget);
@@ -202,7 +187,7 @@
 				target. Each target configuration will create a runtime object that can be accessed
 				through the router. </p>
 
-			<p class="p">Similar to <span class="ph"><span class="ph pname">SAPUI5</span></span> controls, targets define API methods and events that can be attached. We
+			<p class="p">Similar to <span class="ph"><span class="ph pname">OpenUI5</span></span> controls, targets define API methods and events that can be attached. We
 				attach a display event handler and save the data that was received as the event parameter <samp class="ph codeph">data</samp> in an internal controller
 				variable <samp class="ph codeph">_oData</samp>. This data also includes the <samp class="ph codeph">fromTarget</samp> information in case the caller passed it on. However,
 				we now have to override the base controller’s <samp class="ph codeph">onNavBack</samp> implementation to change the behavior a bit. We add a special case for
@@ -214,7 +199,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">...
 DisplayNotFound=Display Not Found</pre></div>
 
 			<p class="p">Add the new property to the <samp class="ph codeph">i18n.properties</samp> file.</p>
@@ -248,7 +233,7 @@ DisplayNotFound=Display Not Found</pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="66670b0aab3948469d5cc8276113e9ea.html" title="When we are on the Not Found page because of an invalid hash, we want to get back to our app to select another page. Therefore, we will add a Back button to the Not Found view and make sure that the user gets redirected to either the previous page or the overview page when the Back button is pressed.">Step 4: Add a Back Button to Not Found Page</a><br/>
@@ -265,19 +250,5 @@ DisplayNotFound=Display Not Found</pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 5: Display a Target Without Changing the Hash";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

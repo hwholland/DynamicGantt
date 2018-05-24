@@ -16,31 +16,32 @@ sap.ui.define([
 			};
 			var oModel = new JSONModel(oData);
 			var oView = this.getView();
-			oView.setModel(oModel)
+			oView.setModel(oModel);
 		},
 
-		handleConfirmMessageBoxPress_InitialFocus: function(oEvent) {
+		handleConfirmMessageBoxPressInitialFocus: function(oEvent) {
 			var bCompact = !!this.getView().$().closest(".sapUiSizeCompact").length;
-			MessageBox.confirm(
+			MessageBox.warning(
 					"Initial button focus is set by attribute \n initialFocus: sap.m.MessageBox.Action.CANCEL",
 					{
-						icon: MessageBox.Icon.INFORMATION,
+						icon: MessageBox.Icon.WARNING,
 						title: "Focus on a Button",
-						styleClass: bCompact? "sapUiSizeCompact" : "",
+						actions: [sap.m.MessageBox.Action.OK, sap.m.MessageBox.Action.CANCEL],
+						styleClass: bCompact ? "sapUiSizeCompact" : "",
 						initialFocus: MessageBox.Action.CANCEL
 					}
 			);
 		},
 
-		handleShowMessageBoxPress_InitialFocus: function(oEvent) {
+		handleShowMessageBoxPressInitialFocus: function(oEvent) {
 			var bCompact = !!this.getView().$().closest(".sapUiSizeCompact").length;
 			MessageBox.show(
 					'Initial button focus is set by attribute \n initialFocus: \"Custom button\" \n Note: The name is not case sensitive',
 					{
-						icon: MessageBox.Icon.INFORMATION,
+						icon: MessageBox.Icon.WARNING,
 						title: "Focus on a Custom Button",
 						actions: [MessageBox.Action.YES, MessageBox.Action.NO, "Custom Button"],
-						styleClass: bCompact? "sapUiSizeCompact" : "",
+						styleClass: bCompact ? "sapUiSizeCompact" : "",
 						initialFocus: "Custom Button"
 					}
 			);

@@ -11,11 +11,11 @@
 			height: 100%;
 		}
 	</style>
+	<script src="shared-config.js"></script>
 	<script
 			src="../../../resources/sap-ui-core.js"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.tnt, sap.m"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.tnt, sap.m">
 	</script>
 	<script>
 		var model = new sap.ui.model.json.JSONModel();
@@ -28,14 +28,14 @@
 					title: 'Child Item 1',
 					key: 'page1'
 				}, {
-					title: 'Child Item 2',
+					title: 'Child Item 2 (Disabled)',
 					enabled: false
 				}, {
 					title: 'Child Item 3',
 					key: 'page2'
 				}]
 			}, {
-				title: 'Root Item',
+				title: 'Root Item (Disabled)',
 				icon: 'sap-icon://building',
 				enabled: false
 			}, {
@@ -452,16 +452,6 @@
 				new sap.m.Button({
 					type: sap.m.ButtonType.Transparent,
 					text: "User Name",
-					press: function() {
-
-					},
-					layoutData: new sap.m.OverflowToolbarLayoutData({
-						priority: sap.m.OverflowToolbarPriority.NeverOverflow
-					})
-				}),
-				new sap.m.Button({
-					type: sap.m.ButtonType.Transparent,
-					icon: "sap-icon://log",
 					press: function() {
 
 					},

@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -86,20 +86,25 @@ sap.ui.define([
 	 *   integer values between 0 and 12 are valid.
 	 */
 	function setConstraints(oType, oConstraints) {
-		var vNullable = oConstraints && oConstraints.nullable,
-			vPrecision = oConstraints && oConstraints.precision;
+		var vNullable,
+			vPrecision;
 
 		oType.oConstraints = undefined;
-		if (vNullable === false) {
-			oType.oConstraints = {nullable : false};
-		} else if (vNullable !== undefined && vNullable !== true) {
-			jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
-		}
-		if (vPrecision === Math.floor(vPrecision) && vPrecision > 0 && vPrecision <= 12) {
-			oType.oConstraints = oType.oConstraints || {};
-			oType.oConstraints.precision = vPrecision;
-		} else if (vPrecision !== undefined && vPrecision !== 0) {
-			jQuery.sap.log.warning("Illegal precision: " + vPrecision, null, oType.getName());
+		if (oConstraints) {
+			vNullable = oConstraints.nullable;
+			vPrecision = oConstraints.precision;
+			// "true" and "false" not allowed here, because in V4 they are never sent as string
+			if (vNullable === false) {
+				oType.oConstraints = {nullable : false};
+			} else if (vNullable !== undefined && vNullable !== true) {
+				jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+			}
+			if (vPrecision === Math.floor(vPrecision) && vPrecision > 0 && vPrecision <= 12) {
+				oType.oConstraints = oType.oConstraints || {};
+				oType.oConstraints.precision = vPrecision;
+			} else if (vPrecision !== undefined && vPrecision !== 0) {
+				jQuery.sap.log.warning("Illegal precision: " + vPrecision, null, oType.getName());
+			}
 		}
 	}
 
@@ -127,7 +132,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 * @public
 	 * @since 1.37.0
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 */
 	var TimeOfDay = ODataType.extend("sap.ui.model.odata.type.TimeOfDay", {
 			constructor : function (oFormatOptions, oConstraints) {
@@ -156,8 +161,9 @@ sap.ui.define([
 	 * @param {string} sValue
 	 *   The value to be formatted, which is represented as a string in the model
 	 * @param {string} sTargetType
-	 *   The target type, may be "any" or "string"; see {@link sap.ui.model.odata.type} for more
-	 *   information
+	 *   The target type, may be "any", "string", or a type with one of these types as its
+	 *   {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
+	 *   See {@link sap.ui.model.odata.type} for more information
 	 * @returns {string}
 	 *   The formatted output value in the target type; <code>undefined</code> or <code>null</code>
 	 *   are formatted to <code>null</code>
@@ -176,7 +182,7 @@ sap.ui.define([
 			return null;
 		}
 
-		switch (sTargetType) {
+		switch (this.getPrimitiveType(sTargetType)) {
 		case "any":
 			return sValue;
 		case "string":
@@ -193,6 +199,21 @@ sap.ui.define([
 			throw new FormatException("Don't know how to format " + this.getName() + " to "
 				+ sTargetType);
 		}
+	};
+
+	/**
+	 * Returns a formatter that converts between the model format and a Javascript Date. It has two
+	 * methods: <code>format</code> takes a Date and returns a date as a String in the format
+	 * expected by the model, <code>parse</code> converts from the String to a Date.
+	 *
+	 * @returns {sap.ui.core.format.DateFormat}
+	 *   The formatter
+	 *
+	 * @override
+	 * @protected
+	 */
+	TimeOfDay.prototype.getModelFormat = function() {
+		return getModelFormat(this);
 	};
 
 	/**
@@ -215,8 +236,9 @@ sap.ui.define([
 	 * @param {string} sValue
 	 *   The value to be parsed, maps <code>""</code> to <code>null</code>
 	 * @param {string} sSourceType
-	 *   The source type (the expected type of <code>sValue</code>), must be "string"; see
-	 *   {@link sap.ui.model.odata.type} for more information.
+	 *   The source type (the expected type of <code>sValue</code>), must be "string", or a type
+	 *   with "string" as its {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
+	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {string}
 	 *   The parsed value
 	 * @throws {sap.ui.model.ParseException}
@@ -233,7 +255,7 @@ sap.ui.define([
 			return null;
 		}
 
-		if (sSourceType !== "string") {
+		if (this.getPrimitiveType(sSourceType) !== "string") {
 			throw new ParseException("Don't know how to parse " + this.getName() + " from "
 				+ sSourceType);
 		}

@@ -7,11 +7,11 @@
 
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>qUnit Page for sap.ui.ux3.ThingViewer</title>
+	<title>QUnit Page for sap.ui.ux3.ThingViewer</title>
 
-	<script id="sap-ui-bootstrap" type="text/javascript"
-			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal" data-sap-ui-noConflict="true"
+	<script src="../shared-config.js"></script>
+	<script id="sap-ui-bootstrap"
+			src="../../../../../resources/sap-ui-core.js" data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.ui.ux3,sap.ui.commons">
 
 	</script>
@@ -19,16 +19,16 @@
 	<link rel="stylesheet"
 		  href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css"
 		  media="screen" />
-	<script type="text/javascript"
+	<script
 			src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
-	<script type="text/javascript"
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script
 			src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript"
+	<script
 			src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
-	<script type="text/javascript">
+	<script>
 		var c = sap.ui.commons; /* shorthand */
 
 		// helper function to create a row with label and text
@@ -58,9 +58,9 @@
 
 		//event handler for facet event, action and standard action events, for close and open event
 		function facetSelectedEventHandler(oEvent) {
-			ok(true, "facet select event handler has been executed."); // this test tests by just being counted in the respective test
+			assert.ok(true, "facet select event handler has been executed."); // this test tests by just being counted in the respective test
 			var id = oEvent.getParameter("id");
-			equal(id, facet, facet + " Facet should be selected");
+			assert.equal(id, facet, facet + " Facet should be selected");
 			var oTG1 = new sap.ui.ux3.ThingGroup({
 				title : "Block1"
 			});
@@ -70,19 +70,19 @@
 			oThingViewer.addFacetContent(oTG1);
 		}
 		function actionSelectedEventHandler(oEvent) {
-			ok(true, "action select event handler has been executed."); // this test tests by just being counted in the respective test
+			assert.ok(true, "action select event handler has been executed."); // this test tests by just being counted in the respective test
 			var id = oEvent.getParameter("id");
-			equal(id, action, action + " Action should be selected");
+			assert.equal(id, action, action + " Action should be selected");
 		}
 		function feedSubmitEventHandler(oEvent) {
-			ok(true, "feed submit event handler has been executed."); // this test tests by just being counted in the respective test
+			assert.ok(true, "feed submit event handler has been executed."); // this test tests by just being counted in the respective test
 			var text = oEvent.getParameter("text");
-			equal(text, "my feed entry", "Feed text should be 'my feed entry'");
+			assert.equal(text, "my feed entry", "Feed text should be 'my feed entry'");
 		}
 	</script>
 
 	<!-- Control initialization -->
-	<script type="text/javascript">
+	<script>
 		var oActionBar, oThingViewer, oOverlayContainer;
 		oOverlayContainer = new sap.ui.ux3.OverlayContainer();
 		oActionBar = new sap.ui.ux3.ActionBar( { businessActions : [ // add some actions
@@ -143,81 +143,82 @@
 	</script>
 
 	<!-- Test functions -->
-	<script type="text/javascript">
-		module("Appearance");
+	<script>
+		QUnit.module("Appearance");
 
 		var action;
 		var facet;
 
-		test("ThingViewer exists", function() {
+		QUnit.test("ThingViewer exists", function(assert) {
 			oOverlayContainer.open();
 			var oDomRef = jQuery.sap.domById(oThingViewer.getId());
-			ok(oDomRef, "Rendered ThingViewer should exist in the page");
-			equal(oDomRef.className, "sapUiUx3TV", "Rendered ThingViewer should have the class 'sapUiUx3TV'");
+			assert.ok(oDomRef, "Rendered ThingViewer should exist in the page");
+			assert.equal(oDomRef.className, "sapUiUx3TV", "Rendered ThingViewer should have the class 'sapUiUx3TV'");
 		});
 
-		test("Swatch", function() {
+		QUnit.test("Swatch", function(assert) {
 			var oSwatch = jQuery.sap.domById(oThingViewer.getId() + "-swatch");
-			ok(oSwatch, "Rendered Swatch should exist in the page");
-			equal(oSwatch.className, "sapUiUx3TVIcon", "Rendered Swatch should have the class 'sapUiUx3TVIcon'");
+			assert.ok(oSwatch, "Rendered Swatch should exist in the page");
+			assert.equal(oSwatch.className, "sapUiUx3TVIcon", "Rendered Swatch should have the class 'sapUiUx3TVIcon'");
 		});
 
-		test("Facets", function() {
+		QUnit.test("Facets", function(assert) {
 			//number of navigation items must be the same as number of facets
 			var facets = oThingViewer.getFacets();
 			var $facets = jQuery(".sapUiUx3TVFacetBar");
 			for ( var i = 0; i < facets.length; i++) {
-				ok(jQuery.sap.domById(facets[i].sId), "Rendered ThingViewer Facet " + facets[i].sId + " should exist in the page");
+				assert.ok(jQuery.sap.domById(facets[i].sId), "Rendered ThingViewer Facet " + facets[i].sId + " should exist in the page");
 			}
 		});
 
-		test("Toolbar",	function() {
+		QUnit.test("Toolbar",	function(assert) {
 			var oActionBar = oThingViewer.getActionBar();
-			ok(oActionBar, "ActionBar should exist");
-			ok(jQuery(".sapUiUx3ActionBar")[0], "ActionBar rendering ok");
+			assert.ok(oActionBar, "ActionBar should exist");
+			assert.ok(jQuery(".sapUiUx3ActionBar")[0], "ActionBar rendering ok");
 			oThingViewer.setActionBar();
 			sap.ui.getCore().applyChanges();
-			ok(!jQuery(".sapUiUx3ActionBar")[0], "ActionBar should be destroyed");
+			assert.ok(!jQuery(".sapUiUx3ActionBar")[0], "ActionBar should be destroyed");
 			oThingViewer.setActionBar(oActionBar);
 		});
 
-		module("Behaviour");
+		QUnit.module("Behaviour");
 
-		asyncTest("FacetSelected Event", function() {
-			expect(3);
+		QUnit.test("FacetSelected Event", function(assert) {
+			var done = assert.async();
+			assert.expect(3);
 			facet = "activities";
 			qutils.triggerMouseEvent(jQuery.sap.domById("activities"), "click", 1, 1, 1, 1);
 			setTimeout(
 					function() {
-						start();
-						ok(jQuery.sap.domById(oThingViewer.getId() + facet + "FacetButton"), "Rendered Facet Content for facet " + facet
+						assert.ok(jQuery.sap.domById(oThingViewer.getId() + facet + "FacetButton"), "Rendered Facet Content for facet " + facet
 						+ " should exist in the page");
+						done();
 					}, 500);
 		});
 
-		test("Destroy and remove control", function() {
+		QUnit.test("Destroy and remove control", function(assert) {
 			oThingViewer.destroy();
 			oOverlayContainer.close();
 			sap.ui.getCore().applyChanges();
 			var oDomRef = jQuery.sap.domById(oThingViewer.getId());
-			ok(!oDomRef, "Rendered ThingViewer should not exist in the page after destruction");
+			assert.ok(!oDomRef, "Rendered ThingViewer should not exist in the page after destruction");
 		});
 
 		QUnit.module("Aggregation overrides", {
-			setup : function () {
+			beforeEach : function () {
 				this.oTV = new sap.ui.ux3.ThingViewer({
 
 				});
 				this.oTV.placeAt("qunit-fixture");
 				sap.ui.getCore().applyChanges();
 			},
-			teardown : function () {
+			afterEach : function () {
 				this.oTV.destroy();
 				this.oTV = null;
 			}
 		});
 
-		QUnit.test("setSubtitle ",function(assert){
+		QUnit.test("setSubtitle ",function(assert) {
 			sinon.spy(this.oTV, "_rerenderHeader");
 			this.oTV.setSubtitle("title");
 
@@ -226,7 +227,7 @@
 			this.oTV._rerenderHeader.restore();
 		});
 
-		QUnit.test("insertFacet",function(assert){
+		QUnit.test("insertFacet",function(assert) {
 
 			var facet1 = new sap.ui.ux3.NavigationItem("overview1", {
 				key: "overview",
@@ -246,7 +247,7 @@
 
 		});
 
-		QUnit.test("removeFacet",function(assert){
+		QUnit.test("removeFacet",function(assert) {
 
 			var facet1 = new sap.ui.ux3.NavigationItem("overview3", {
 				key: "overview",
@@ -261,7 +262,7 @@
 
 		});
 
-		QUnit.test("removeAllFacets",function(assert){
+		QUnit.test("removeAllFacets",function(assert) {
 
 			var facet1 = new sap.ui.ux3.NavigationItem("overview4", {
 				key: "overview",
@@ -279,7 +280,7 @@
 			assert.strictEqual(this.oTV.getFacets().length, 0, "all facets are removed");
 		});
 
-		QUnit.test("destroyFacets",function(assert){
+		QUnit.test("destroyFacets",function(assert) {
 
 			var facet1 = new sap.ui.ux3.NavigationItem("overview6", {
 				key: "overview",
@@ -297,12 +298,12 @@
 			assert.strictEqual(this.oTV.getFacets().length, 0, "all facets are destroyed");
 		});
 
-		QUnit.test("setIcon",function(assert){
+		QUnit.test("setIcon",function(assert) {
 			this.oTV.setIcon("sap-icon://home");
 			assert.strictEqual(this.oTV.getIcon(), "sap-icon://home", "icon is set correctly");
 		});
 
-		QUnit.test("insertFacetContent",function(assert){
+		QUnit.test("insertFacetContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview8", {
 				text: "Overview"
@@ -318,7 +319,7 @@
 			assert.strictEqual(this.oTV.getFacetContent()[1], facet2, "the content is inserted");
 		});
 
-		QUnit.test("addFacetContent",function(assert){
+		QUnit.test("addFacetContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview10", {
 				text: "Overview"
@@ -328,7 +329,7 @@
 			assert.strictEqual(this.oTV.getFacetContent()[0], facet1, "the content is added");
 		});
 
-		QUnit.test("removeFacetContent",function(assert){
+		QUnit.test("removeFacetContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview11", {
 				text: "Overview"
@@ -341,7 +342,7 @@
 			assert.strictEqual(this.oTV.getFacetContent().indexOf(facet1), -1, "the facet content is removed");
 		});
 
-		QUnit.test("removeAllFacetContent",function(assert){
+		QUnit.test("removeAllFacetContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview12", {
 				text: "Overview"
@@ -358,7 +359,7 @@
 			assert.strictEqual(this.oTV.getFacetContent().length, 0, "all facets are removed");
 		});
 
-		QUnit.test("destroyFacetContent",function(assert){
+		QUnit.test("destroyFacetContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview14", {
 				text: "Overview"
@@ -371,7 +372,7 @@
 			assert.strictEqual(this.oTV.getFacetContent().indexOf(facet1), -1, "the facet content is destroyed");
 		});
 
-		QUnit.test("insertHeaderContent",function(assert){
+		QUnit.test("insertHeaderContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview15", {
 				text: "Overview"
@@ -387,7 +388,7 @@
 			assert.strictEqual(this.oTV.getHeaderContent()[1], facet2, "the header content is inserted");
 		});
 
-		QUnit.test("removeHeaderContent ",function(assert){
+		QUnit.test("removeHeaderContent ",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview17", {
 				text: "Overview"
@@ -400,7 +401,7 @@
 			assert.strictEqual(this.oTV.getHeaderContent ().indexOf(facet1), -1, "the header content is removed");
 		});
 
-		QUnit.test("removeAllHeaderContent",function(assert){
+		QUnit.test("removeAllHeaderContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview18", {
 				text: "Overview"
@@ -417,7 +418,7 @@
 			assert.strictEqual(this.oTV.getHeaderContent().length, 0, "all header content is removed");
 		});
 
-		QUnit.test("destroyHeaderContent",function(assert){
+		QUnit.test("destroyHeaderContent",function(assert) {
 
 			var facet1 = new sap.ui.ux3.ThingGroup("overview20", {
 				text: "Overview"
@@ -433,7 +434,7 @@
 	</script>
 </head>
 <body>
-<h1 id="qunit-header">qUnit Page for sap.ui.ux3.ThingInspector</h1>
+<h1 id="qunit-header">QUnit Page for sap.ui.ux3.ThingInspector</h1>
 <h2 id="qunit-banner"></h2>
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>

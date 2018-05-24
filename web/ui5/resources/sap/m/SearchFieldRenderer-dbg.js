@@ -1,11 +1,11 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define(["sap/ui/Device", "sap/ui/core/InvisibleText"],
+	function(Device, InvisibleText) {
 	"use strict";
 
 
@@ -51,16 +51,11 @@ sap.ui.define(['jquery.sap.global'],
 		}
 
 		rm.writeClasses();
-		var sTooltip = oSF.getTooltip_AsString();
-		if (sTooltip) {
-			rm.writeAttributeEscaped("title", sTooltip);
-		}
 		rm.write(">");
 
 			// 1. Input type="search".
 			//    Enclose input into a <form> to show a correct keyboard
-			//    method="post" to prevent unneeded "?" at the end of URL
-			rm.write('<form method="post" action="javascript:void(0);"');
+			rm.write('<form');
 			rm.writeAttribute("id", sId + "-F");
 			rm.addClass('sapMSFF');
 			if (!bShowSearchBtn) {
@@ -84,18 +79,30 @@ sap.ui.define(['jquery.sap.global'],
 				rm.write("</label>");
 			}
 
-			rm.write('<input type="search" autocorrect="off" autocomplete="off"');
+			rm.write('<input');
+			rm.writeAttribute("type", "search");
+			rm.writeAttribute("autocomplete", "off");
+
+			if (Device.browser.safari) {
+				rm.writeAttribute("autocorrect", "off");
+			}
+
 			rm.writeAttribute("id", oSF.getId() + "-I");
+
+			var sTooltip = oSF.getTooltip_AsString();
+			if (sTooltip) {
+				rm.writeAttributeEscaped("title", sTooltip);
+			}
 
 			rm.addClass("sapMSFI");
 
-			if (sap.ui.Device.os.android && sap.ui.Device.os.version >= 4 && sap.ui.Device.os.version < 4.1 ) {
+			if (Device.os.android && Device.os.version >= 4 && Device.os.version < 4.1 ) {
 				rm.addClass("sapMSFIA4"); // specific CSS layout for Android 4.0x
 			}
 
 			rm.writeClasses();
 
-			if (oSF.getEnableSuggestions() && sap.ui.Device.system.phone) {
+			if (oSF.getEnableSuggestions() && Device.system.phone) {
 				// Always open a dialog on a phone if suggestions are on.
 				// To avoid soft keyboard flickering, set the readonly attribute.
 				rm.writeAttribute("readonly", "readonly");
@@ -106,11 +113,14 @@ sap.ui.define(['jquery.sap.global'],
 			if (sValue) { rm.writeAttributeEscaped("value", sValue); }
 
 			//ARIA attributes
-			if (oSF.getEnabled() && bShowRefreshButton && oSF._sAriaF5Label) {
-				oAccAttributes.describedby = {
-					value: oSF._sAriaF5Label.getId(),
-					append: true
-				};
+			if (oSF.getEnabled() && bShowRefreshButton) {
+				var sAriaF5LabelId = InvisibleText.getStaticId("sap.m", "SEARCHFIELD_ARIA_F5");
+				if ( sAriaF5LabelId ) {
+					oAccAttributes.describedby = {
+						value: sAriaF5LabelId,
+						append: true
+					};
+				}
 			}
 			rm.writeAccessibilityState(oSF, oAccAttributes);
 
@@ -122,7 +132,7 @@ sap.ui.define(['jquery.sap.global'],
 				rm.writeAttribute("id", oSF.getId() + "-reset");
 				rm.addClass("sapMSFR"); // reset
 				rm.addClass("sapMSFB"); // button
-				if (sap.ui.Device.browser.firefox) {
+				if (Device.browser.firefox) {
 					rm.addClass("sapMSFBF"); // firefox, active state by peventDefault
 				}
 				if (!bShowSearchBtn) {
@@ -137,7 +147,7 @@ sap.ui.define(['jquery.sap.global'],
 					rm.writeAttribute("id", oSF.getId() + "-search");
 					rm.addClass("sapMSFS"); // search
 					rm.addClass("sapMSFB"); // button
-					if (sap.ui.Device.browser.firefox) {
+					if (Device.browser.firefox) {
 						rm.addClass("sapMSFBF"); // firefox, active state by peventDefault
 					}
 					rm.writeClasses();

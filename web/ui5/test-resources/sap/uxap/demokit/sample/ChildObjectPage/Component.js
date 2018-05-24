@@ -1,7 +1,13 @@
 sap.ui.define(["sap/ui/core/UIComponent"], function (UIComponent) {
+	"use strict";
+
 	return UIComponent.extend("sap.uxap.sample.ChildObjectPage.Component", {
 		metadata: {
-			rootView: "sap.uxap.sample.ChildObjectPage.ChildObjectPage",
+			rootView: {
+				"viewName": "sap.uxap.sample.ChildObjectPage.ChildObjectPage",
+				"type": "XML",
+				"async": true
+			},
 			dependencies: {
 				libs: [
 					"sap.m",

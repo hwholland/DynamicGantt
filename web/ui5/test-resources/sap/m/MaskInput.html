@@ -5,13 +5,12 @@
 	<meta charset="utf-8">
 	<title>sap.m.MaskInput Testsuite example</title>
 
+	<script src="shared-config.js"></script>
 	<script src="../../../resources/sap-ui-core.js"
-			type="text/javascript"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.m, sap.ui.layout"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.m, sap.ui.layout">
 	</script>
-	<script type="text/javascript">
+	<script>
 		var ruleCollection = [
 			{name: "allCharactersRule", rule: new sap.m.MaskInputRule("allCharactersRule", { maskFormatSymbol: "~", regex: "[^_]"})},
 			{name: "defaultRule", rule: new sap.m.MaskInputRule("defaultRule")},
@@ -64,8 +63,8 @@
 													titleStyle: sap.ui.core.TitleLevel.H2
 												}),
 												addMask("Any character", "~~~~~~~~~~", "Enter text", "_", [ruleCollection[0].rule]),
-												addMask("Latin characters (case insensitive) and numbers", "aaaaaaaa", "Enter text", "_"),
-												addMask("Latin characters (case sensitive) and numbers", "CCCCCCCC", "Enter text", "_", [ruleCollection[4].rule]),
+												addMask("Latin characters (case insensitive)", "aaaaaaaa", "Enter text", "_"),
+												addMask("Latin characters (case sensitive, only capital letters allowed) and numbers", "CCCCCCCC", "Enter text", "_", [ruleCollection[4].rule]),
 												addMask("Numeric only", "999999", "Enter a six digit number", "_", [ruleCollection[2].rule])
 											]
 										})

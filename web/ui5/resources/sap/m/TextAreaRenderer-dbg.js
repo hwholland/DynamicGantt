@@ -1,12 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer'],
-	function(jQuery, Renderer, InputBaseRenderer) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer', 'sap/ui/Device', 'sap/ui/core/library'],
+	function(jQuery, Renderer, InputBaseRenderer, Device, coreLibrary) {
 	"use strict";
+
+
+	// shortcut for sap.ui.core.Wrapping
+	var Wrapping = coreLibrary.Wrapping;
 
 
 	/**
@@ -27,12 +31,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 	// Adds control specific class
 	TextAreaRenderer.addOuterClasses = function(oRm, oControl) {
 		oRm.addClass("sapMTextArea");
+
+		if (oControl.getShowExceededText()) {
+			oRm.addClass("sapMTextAreaWithCounter");
+		}
+		if (oControl.getHeight()) {
+			oRm.addClass("sapMTextAreaWithHeight");
+		}
 	};
 
 	// Add extra styles to Container
 	TextAreaRenderer.addOuterStyles = function(oRm, oControl) {
 		oControl.getHeight() && oRm.addStyle("height", oControl.getHeight());
 	};
+
+	// Write the counter of the TextArea.
+	TextAreaRenderer.writeDecorations = function(oRm, oControl) {
+		var oCounter = oControl.getAggregation("_counter");
+		oRm.renderControl(oCounter);
+	};
+
 
 	// Write the opening tag name of the TextArea
 	TextAreaRenderer.openInputTag = function(oRm, oControl) {
@@ -55,10 +73,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 
 		// Convert the new line HTML entity rather than displaying it as a text.
 		//Normalize the /n and /r to /r/n - Carriage Return and Line Feed
-		if (sap.ui.Device.browser.msie && sap.ui.Device.browser.version < 11) {
+		if (Device.browser.msie && Device.browser.version < 11) {
 			sValue = sValue.replace(/&#xd;&#xa;|&#xd;|&#xa;/g, "&#13;");
-		} else {
-			sValue = sValue.replace(/&#xd;&#xa;|&#xd;|&#xa;/g, "&#13;&#10;");
 		}
 		oRm.write(sValue);
 	};
@@ -78,17 +94,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 
 	// Add extra attributes to TextArea
 	TextAreaRenderer.writeInnerAttributes = function(oRm, oControl) {
-		if (oControl.getWrapping() != sap.ui.core.Wrapping.None) {
+		if (oControl.getWrapping() != Wrapping.None) {
 			oRm.writeAttribute("wrap", oControl.getWrapping());
 		}
 
 		oRm.writeAttribute("rows", oControl.getRows());
 		oRm.writeAttribute("cols", oControl.getCols());
-
-		//Chrome doesn't set the width properly on this stage
-		if (oControl.getWidth()) {
-			oRm.addStyle("width", oControl.getWidth());
-		}
 	};
 
 	return TextAreaRenderer;

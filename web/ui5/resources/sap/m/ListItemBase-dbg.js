@@ -1,14 +1,52 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ListItemBase.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/IconPool', 'sap/ui/core/Icon'],
-	function(jQuery, library, Control, IconPool, Icon) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/IconPool',
+	'sap/ui/core/Icon',
+	'sap/m/Button',
+	'sap/ui/model/BindingMode',
+	'sap/ui/Device',
+	'sap/m/CheckBox',
+	'./ListItemBaseRenderer',
+	'jquery.sap.keycodes'
+],
+function(
+	jQuery,
+	library,
+	Control,
+	IconPool,
+	Icon,
+	Button,
+	BindingMode,
+	Device,
+	CheckBox,
+	ListItemBaseRenderer
+) {
 	"use strict";
 
+
+
+	// shortcut for sap.m.ListKeyboardMode
+	var ListKeyboardMode = library.ListKeyboardMode;
+
+	// shortcut for sap.m.ListMode
+	var ListMode = library.ListMode;
+
+	// shortcut for sap.m.ListType
+	var ListType = library.ListType;
+
+
+
+	// shortcut for sap.m.ButtonType
+	var ButtonType = library.ButtonType;
 
 
 	/**
@@ -19,10 +57,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 *
 	 * @class
 	 * ListItemBase contains the base features of all specific list items.
+	 * <b>Note:</b> If not mentioned otherwise in the individual subclasses, list items must only be used in the <code>items</code> aggregation of <code>sap.m.ListBase</code> controls.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -37,7 +76,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			/**
 			 * Defines the visual indication and behavior of the list items, e.g. <code>Active</code>, <code>Navigation</code>, <code>Detail</code>.
 			 */
-			type : {type : "sap.m.ListType", group : "Misc", defaultValue : sap.m.ListType.Inactive},
+			type : {type : "sap.m.ListType", group : "Misc", defaultValue : ListType.Inactive},
 
 			/**
 			 * Whether the control should be visible on the screen. If set to false, a placeholder is rendered instead of the real control.
@@ -59,7 +98,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			/**
 			 * Defines the counter value of the list items.
 			 */
-			counter : {type : "int", group : "Misc", defaultValue : null}
+			counter : {type : "int", group : "Misc", defaultValue : null},
+
+			/**
+			 * Defines the highlight state of the list items.
+			 * @since 1.44.0
+			 */
+			highlight : {type : "sap.ui.core.MessageType", group : "Appearance", defaultValue : "None"}
 		},
 		associations: {
 
@@ -95,22 +140,114 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			 * Fires when the user clicks on the detail button of the control.
 			 */
 			detailPress : {}
-		}
+		},
+		designtime: "sap/m/designtime/ListItemBase.designtime"
 	}});
+
+	ListItemBase.getAccessibilityText = function(oControl, bDetectEmpty) {
+		if (!oControl || !oControl.getVisible || !oControl.getVisible()) {
+			return "";
+		}
+
+		var oAccInfo;
+		if (oControl.getAccessibilityInfo) {
+			oAccInfo = oControl.getAccessibilityInfo();
+		}
+		if (!oAccInfo || !oControl.getAccessibilityInfo) {
+			oAccInfo = this.getDefaultAccessibilityInfo(oControl.getDomRef());
+		}
+
+		oAccInfo = jQuery.extend({
+			type: "",
+			description: "",
+			children: []
+		}, oAccInfo);
+
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
+			sText = oAccInfo.type + " " + oAccInfo.description + " ",
+			sTooltip = oControl.getTooltip_AsString();
+
+		if (oAccInfo.enabled === false) {
+			sText += oBundle.getText("CONTROL_DISABLED") + " ";
+		}
+		if (oAccInfo.editable === false) {
+			sText += oBundle.getText("CONTROL_READONLY") + " ";
+		}
+		if (!oAccInfo.type && sTooltip && sText.indexOf(sTooltip) == -1) {
+			sText = sTooltip + " " + sText;
+		}
+
+		oAccInfo.children.forEach(function(oChild) {
+			sText += ListItemBase.getAccessibilityText(oChild) + " ";
+		});
+
+		sText = sText.trim();
+		if (bDetectEmpty && !sText) {
+			sText = oBundle.getText("CONTROL_EMPTY");
+		}
+
+		return sText;
+	};
+
+	ListItemBase.getDefaultAccessibilityInfo = function(oDomRef) {
+		if (!oDomRef) {
+			return null;
+		}
+
+		var Node = window.Node,
+			NodeFilter = window.NodeFilter,
+			oTreeWalker = document.createTreeWalker(oDomRef, NodeFilter.SHOW_TEXT + NodeFilter.SHOW_ELEMENT, function(oNode) {
+				if (oNode.type === Node.ELEMENT_NODE) {
+					if (oNode.classList.contains("sapUiInvisibleText")) {
+						return NodeFilter.FILTER_SKIP;
+					}
+
+					if (oNode.getAttribute("aria-hidden") == "true" ||
+						oNode.style.visibility == "hidden" ||
+						oNode.style.display == "none") {
+						return NodeFilter.FILTER_REJECT;
+					}
+
+					return NodeFilter.FILTER_SKIP;
+				}
+
+				return NodeFilter.FILTER_ACCEPT;
+			}, false);
+
+		var aText = [];
+		while (oTreeWalker.nextNode()) {
+			var oNode = oTreeWalker.currentNode;
+			if (oNode.nodeType === Node.TEXT_NODE) {
+				var sText = (oNode.nodeValue || "").trim();
+				if (sText) {
+					aText.push(sText);
+				}
+			}
+		}
+
+		return {
+			description: aText.join(" ")
+		};
+	};
 
 	// icon URI configuration
 	ListItemBase.prototype.DetailIconURI = IconPool.getIconURI("edit");
 	ListItemBase.prototype.DeleteIconURI = IconPool.getIconURI("sys-cancel");
 	ListItemBase.prototype.NavigationIconURI = IconPool.getIconURI("slim-arrow-right");
 
+	// defines the root tag name for rendering purposes
+	ListItemBase.prototype.TagName = "li";
+
 	// internal active state of the listitem
 	ListItemBase.prototype.init = function() {
 		this._active = false;
 		this._bGroupHeader = false;
+		this._bNeedsHighlight = false;
 	};
 
 	ListItemBase.prototype.onAfterRendering = function() {
 		this.informList("DOMUpdate", true);
+		this._checkHighlight();
 	};
 
 	/*
@@ -137,7 +274,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ListItemBase.prototype.isSelectedBoundTwoWay = function() {
 		var oBinding = this.getBinding("selected");
-		if (oBinding && oBinding.getBindingMode() == sap.ui.model.BindingMode.TwoWay) {
+		if (oBinding && oBinding.getBindingMode() == BindingMode.TwoWay) {
 			return true;
 		}
 	};
@@ -201,6 +338,81 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 	};
 
+	ListItemBase.prototype.getAccessibilityType = function(oBundle) {
+		return oBundle.getText("ACC_CTR_TYPE_OPTION");
+	};
+
+	ListItemBase.prototype.getGroupAnnouncement = function() {
+		return this.$().prevAll(".sapMGHLI:first").text();
+	};
+
+	ListItemBase.prototype.getAccessibilityDescription = function(oBundle) {
+		var aOutput = [],
+			mType = ListType,
+			sType = this.getType(),
+			sHighlight = this.getHighlight(),
+			sTooltip = this.getTooltip_AsString();
+
+		if (this.getSelected()) {
+			aOutput.push(oBundle.getText("LIST_ITEM_SELECTED"));
+		}
+
+		if (sHighlight != "None") {
+			aOutput.push(oBundle.getText("LIST_ITEM_STATE_" + sHighlight.toUpperCase()));
+		}
+
+		if (this.getUnread() && this.getListProperty("showUnread")) {
+			aOutput.push(oBundle.getText("LIST_ITEM_UNREAD"));
+		}
+
+		if (this.getCounter()) {
+			aOutput.push(oBundle.getText("LIST_ITEM_COUNTER", this.getCounter()));
+		}
+
+		if (sType == mType.Navigation) {
+			aOutput.push(oBundle.getText("LIST_ITEM_NAVIGATION"));
+		} else {
+			if (sType == mType.Detail || sType == mType.DetailAndActive) {
+				aOutput.push(oBundle.getText("LIST_ITEM_DETAIL"));
+			}
+			if (sType == mType.Active || sType == mType.DetailAndActive) {
+				aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
+			}
+		}
+
+		aOutput.push(this.getGroupAnnouncement() || "");
+
+		if (this.getContentAnnouncement) {
+			aOutput.push((this.getContentAnnouncement(oBundle) || "").trim());
+		}
+
+		if (sTooltip) {
+			aOutput.push(sTooltip);
+		}
+
+		return aOutput.join(" ");
+	};
+
+	ListItemBase.prototype.getAccessibilityInfo = function() {
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		return {
+			type: this.getAccessibilityType(oBundle),
+			description: this.getAccessibilityDescription(oBundle),
+			focusable: true
+		};
+	};
+
+	/**
+	 * Returns the accessibility announcement for the content.
+	 *
+	 * Hook for the subclasses.
+	 *
+	 * @returns {string}
+	 * @protected
+	 * @name sap.m.ListItemBase.prototype.getContentAnnouncement
+	 * @function
+	 */
+
 	/*
 	 * Returns the mode of the current item according to list mode
 	 * Subclasses can overwrite this if item should not have any mode
@@ -243,14 +455,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return this._oDeleteControl;
 		}
 
-		this._oDeleteControl = new Icon({
+		this._oDeleteControl = new Button({
 			id: this.getId() + "-imgDel",
-			src: this.DeleteIconURI,
-			useIconTooltip: false,
-			noTabStop: true
-		}).setParent(this, null, true).addStyleClass("sapMLIBIconDel").attachPress(function(oEvent) {
+			icon: this.DeleteIconURI,
+			type: ButtonType.Transparent,
+			tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("LIST_ITEM_DELETE")
+		}).addStyleClass("sapMLIBIconDel sapMLIBSelectD").setParent(this, null, true).attachPress(function(oEvent) {
 			this.informList("Delete");
 		}, this);
+
+		this._oDeleteControl._bExcludeFromTabChain = true;
 
 		return this._oDeleteControl;
 	};
@@ -266,15 +480,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return this._oDetailControl;
 		}
 
-		this._oDetailControl = new Icon({
+		this._oDetailControl = new Button({
 			id: this.getId() + "-imgDet",
-			src: this.DetailIconURI,
-			useIconTooltip: false,
-			noTabStop: true
-		}).setParent(this, null, true).attachPress(function() {
+			icon: this.DetailIconURI,
+			type: ButtonType.Transparent,
+			tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("LIST_ITEM_EDIT")
+		}).addStyleClass("sapMLIBType sapMLIBIconDet").setParent(this, null, true).attachPress(function() {
 			this.fireDetailTap();
 			this.fireDetailPress();
-		}, this).addStyleClass("sapMLIBType sapMLIBIconDet");
+		}, this);
+
+		this._oDetailControl._bExcludeFromTabChain = true;
 
 		return this._oDetailControl;
 	};
@@ -316,11 +532,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			groupName : this.getListProperty("id") + "_selectGroup",
 			activeHandling : false,
 			selected : this.getSelected()
-		}).setParent(this, null, true).setTabIndex(-1).attachSelect(function(oEvent) {
-			var bSelected = oEvent.getParameter("selected");
-			this.setSelected(bSelected);
-			this.informList("Select", bSelected);
-		}, this);
+		}).addStyleClass("sapMLIBSelectS").setParent(this, null, true).setTabIndex(-1).attachSelect(function(oEvent) {
+				var bSelected = oEvent.getParameter("selected");
+				this.setSelected(bSelected);
+				this.informList("Select", bSelected);
+			}, this);
 
 		return this._oSingleSelectControl;
 	};
@@ -336,11 +552,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return this._oMultiSelectControl;
 		}
 
-		this._oMultiSelectControl = new sap.m.CheckBox({
+		this._oMultiSelectControl = new CheckBox({
 			id : this.getId() + "-selectMulti",
 			activeHandling : false,
 			selected : this.getSelected()
-		}).setParent(this, null, true).setTabIndex(-1).attachSelect(function(oEvent) {
+		}).addStyleClass("sapMLIBSelectM").setParent(this, null, true).setTabIndex(-1).attachSelect(function(oEvent) {
 			var bSelected = oEvent.getParameter("selected");
 			this.setSelected(bSelected);
 			this.informList("Select", bSelected);
@@ -357,7 +573,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ListItemBase.prototype.getModeControl = function(bUpdate) {
 		var sMode = this.getMode(),
-			mListMode = sap.m.ListMode;
+			mListMode = ListMode;
 
 		if (!sMode || sMode == mListMode.None) {
 			return;
@@ -389,7 +605,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ListItemBase.prototype.getTypeControl = function() {
 		var sType = this.getType(),
-			mType = sap.m.ListType;
+			mType = ListType;
 
 		if (sType == mType.Detail || sType == mType.DetailAndActive) {
 			return this.getDetailControl();
@@ -421,15 +637,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	ListItemBase.prototype.isActionable = function() {
-		return	this.getListProperty("includeItemInSelection") ||
-				this.getMode() == sap.m.ListMode.SingleSelectMaster || (
-					this.getType() != sap.m.ListType.Inactive &&
-					this.getType() != sap.m.ListType.Detail
+		return this.getListProperty("includeItemInSelection") ||
+				this.getMode() == ListMode.SingleSelectMaster || (
+					this.getType() != ListType.Inactive &&
+					this.getType() != ListType.Detail
 				);
 	};
 
 	ListItemBase.prototype.exit = function() {
 		this._oLastFocused = null;
+		this._checkHighlight(false);
 		this.setActive(false);
 		this.destroyControls([
 			"Delete",
@@ -450,7 +667,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ListItemBase.prototype.isSelectable = function() {
 		var sMode = this.getMode();
-		return !(sMode == sap.m.ListMode.None || sMode == sap.m.ListMode.Delete);
+		return !(sMode == ListMode.None || sMode == ListMode.Delete);
 	};
 
 	ListItemBase.prototype.getSelected = function() {
@@ -538,7 +755,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ListItemBase.prototype.isIncludedIntoSelection = function() {
 		var sMode = this.getMode(),
-			mMode = sap.m.ListMode;
+			mMode = ListMode;
 
 		return (sMode == mMode.SingleSelectMaster || (
 				 this.getListProperty("includeItemInSelection") && (
@@ -548,13 +765,25 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				));
 	};
 
+	// informs the list when item's highlight is changed
+	ListItemBase.prototype._checkHighlight = function(bNeedsHighlight) {
+		if (bNeedsHighlight == undefined) {
+			bNeedsHighlight = (this.getVisible() && this.getHighlight() != "None");
+		}
+
+		if (this._bNeedsHighlight != bNeedsHighlight) {
+			this._bNeedsHighlight = bNeedsHighlight;
+			this.informList("HighlightChange", bNeedsHighlight);
+		}
+	};
+
 	/**
 	 * Determines whether item needs icon to render type or not
 	 *
 	 * @return {Boolean}
 	 */
 	ListItemBase.prototype.hasActiveType = function() {
-		var mType = sap.m.ListType,
+		var mType = ListType,
 			sType = this.getType();
 
 		return (sType == mType.Active ||
@@ -575,7 +804,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		this._active = bActive;
 		this._activeHandling($This);
 
-		if (this.getType() == sap.m.ListType.Navigation) {
+		if (this.getType() == ListType.Navigation) {
 			this._activeHandlingNav($This);
 		}
 
@@ -595,12 +824,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return;
 		}
 
+		// do not handle in case of text selection
+		var sTextSelection = window.getSelection().toString().replace("\n", "");
+		if (sTextSelection) {
+			return;
+		}
+
 		// if includeItemInSelection all tap events will be used for the mode select and delete
 		// SingleSelectMaster always behaves like includeItemInSelection is set
 		if (this.isIncludedIntoSelection()) {
 
 			// update selected property
-			if (this.getMode() == sap.m.ListMode.MultiSelect) {
+			if (this.getMode() == ListMode.MultiSelect) {
 				this.setSelected(!this.getSelected());
 				this.informList("Select", this.getSelected());
 			} else if (!this.getSelected()) {
@@ -615,6 +850,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 			// active feedback
 			this.setActive(true);
+
+			// even though the tabindex=-1, list items are not focusable on iPhone
+			if (Device.os.ios) {
+				this.focus();
+			}
 
 			jQuery.sap.delayedCall(180, this, function() {
 				this.setActive(false);
@@ -648,7 +888,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		// timeout regarding active state when scrolling
 		this._timeoutIdStart = jQuery.sap.delayedCall(100, this, function() {
 			this.setActive(true);
-			oEvent.setMarked();
 		});
 	};
 
@@ -692,7 +931,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ListItemBase.prototype._activeHandling = function($This) {
 		$This.toggleClass("sapMLIBActive", this._active);
 
-		if (this.isActionable()) {
+		if (Device.system.Desktop && this.isActionable()) {
 			$This.toggleClass("sapMLIBHoverable", !this._active);
 		}
 	};
@@ -714,7 +953,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		// update selected property
-		if (this.getMode() == sap.m.ListMode.MultiSelect) {
+		if (this.getMode() == ListMode.MultiSelect) {
 			this.setSelected(!this.getSelected());
 			this.informList("Select", this.getSelected());
 		} else if (!this.getSelected()) {
@@ -733,7 +972,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		// exit from edit mode
-		var mKeyboardMode = sap.m.ListKeyboardMode;
+		var mKeyboardMode = ListKeyboardMode;
 		if (oEvent.srcControl !== this && oList.getKeyboardMode() == mKeyboardMode.Edit) {
 			oList.setKeyboardMode(mKeyboardMode.Navigation);
 			this._switchFocus(oEvent);
@@ -775,7 +1014,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ListItemBase.prototype.onsapdelete = function(oEvent) {
 		if (oEvent.isMarked() ||
 			oEvent.srcControl !== this ||
-			this.getMode() != sap.m.ListMode.Delete) {
+			this.getMode() != ListMode.Delete) {
 			return;
 		}
 
@@ -831,7 +1070,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				var oList = this.getList();
 				if (oList) {
 					this.$().prop("tabIndex", -1);
-					var mKeyboardMode = sap.m.ListKeyboardMode;
+					var mKeyboardMode = ListKeyboardMode;
 					oList.setKeyboardMode(oList.getKeyboardMode() == mKeyboardMode.Edit ? mKeyboardMode.Navigation : mKeyboardMode.Edit);
 					this._switchFocus(oEvent);
 				}
@@ -854,7 +1093,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ListItemBase.prototype.onsaptabnext = function(oEvent) {
 		// check whether event is marked or not
 		var oList = this.getList();
-		if (!oList || oEvent.isMarked() || oList.getKeyboardMode() == sap.m.ListKeyboardMode.Edit) {
+		if (!oList || oEvent.isMarked() || oList.getKeyboardMode() == ListKeyboardMode.Edit) {
 			return;
 		}
 
@@ -870,7 +1109,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	// handle the SHIFT-TAB key
 	ListItemBase.prototype.onsaptabprevious = function(oEvent) {
 		var oList = this.getList();
-		if (!oList || oEvent.isMarked() || oList.getKeyboardMode() == sap.m.ListKeyboardMode.Edit) {
+		if (!oList || oEvent.isMarked() || oList.getKeyboardMode() == ListKeyboardMode.Edit) {
 			return;
 		}
 
@@ -885,10 +1124,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	// handle propagated focus to make the item row focusable
 	ListItemBase.prototype.onfocusin = function(oEvent) {
 		var oList = this.getList();
-		if (!oList ||
-			oEvent.isMarked() ||
-			oList.getKeyboardMode() == sap.m.ListKeyboardMode.Edit ||
-			oEvent.srcControl === this ||
+		if (!oList || oEvent.isMarked()) {
+			return;
+		}
+
+		if (oEvent.srcControl === this) {
+			oList.onItemFocusIn(this);
+			return;
+		}
+
+		if (oList.getKeyboardMode() == ListKeyboardMode.Edit ||
 			!jQuery(oEvent.target).is(":sapFocusable")) {
 			return;
 		}
@@ -902,11 +1147,29 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ListItemBase.prototype.onsapup = function(oEvent) {
 		if (oEvent.isMarked() ||
 			oEvent.srcControl === this ||
-			this.getListProperty("keyboardMode") === sap.m.ListKeyboardMode.Navigation) {
+			this.getListProperty("keyboardMode") === ListKeyboardMode.Navigation) {
 			return;
 		}
 
 		this.informList("ArrowUpDown", oEvent);
+	};
+
+	ListItemBase.prototype.oncontextmenu = function(oEvent) {
+		// context menu is not required on the group header.
+		if (this._bGroupHeader) {
+			return;
+		}
+
+		// do not handle already handled events
+		// allow the context menu to open on the SingleSelect or MultiSelect control
+		// is(":focusable") check is required as IE sets activeElement also  to text controls
+		if (jQuery(document.activeElement).is(":focusable") &&
+			document.activeElement !== this.getDomRef() &&
+			oEvent.srcControl !== this.getModeControl()) {
+			return;
+		}
+
+		this.informList("ContextMenu", oEvent);
 	};
 
 	// inform the list for the vertical navigation
@@ -914,4 +1177,4 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 	return ListItemBase;
 
-}, /* bExport= */ true);
+});

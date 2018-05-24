@@ -7,10 +7,10 @@
 
 	<title>Localization/Formatting - sap.ui.core</title>
 
+	<script src="shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_goldreflection"
+			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-xx-bindingSyntax="complex" >
 	</script>
 
@@ -57,6 +57,7 @@
 		"en_ZA",
 		"es_MX",
 		"es_ES",
+		"fa_IR",
 		"fr_FR",
 		"fr_CA",
 		"fr_BE",
@@ -183,7 +184,6 @@
 			text: "{key}",
 			tooltip : "{caption}",
 			helpId : "{key}", // misuse of help id
-			href :"javascript:void(0)",
 			press: function() {
 				var sLocale = this.getHelpId(),
 					bRTL = sLocale == "he_IL" || sLocale == "ar_SA";

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Detailed description of the steps needed to create a descriptor V2 for applications file for an existing transactional app created by the customer based on SAP Fiori."/>
 <meta name="description" content="Detailed description of the steps needed to create a descriptor V2 for applications file for an existing transactional app created by the customer based on SAP Fiori."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7796578182047765"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=06442042124855363"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=06442042124855363"/>
 <title>Creating a Descriptor File for Existing Apps</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio3a9babace121497abea8f0ea66e156d9">
 <div id="wrapper"><div id="container">
@@ -48,7 +34,7 @@
                         (<samp class="ph codeph">&lt;...&gt;</samp>) according to the instructions below.</p>
 
                 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint json">
 {
     "_version": "1.1.0",
 	
@@ -94,7 +80,7 @@
         },
         "supportedThemes": [
             "sap_hcb",
-            "sap_bluecrystal"
+            "sap_belize"
         ]
     },
     "sap.ui5": {
@@ -178,8 +164,7 @@
                     URL is shipped, remove the <samp class="ph codeph">"start_url"</samp> section in the
                         <samp class="ph codeph">manifest.json</samp> file.</p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-{
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
     "start_url": "index.html",
     ...
 }</pre></div>
@@ -202,8 +187,7 @@
                 <p class="p">To fill the ID and version information, open the <samp class="ph codeph">Component.js</samp>
                     file of your app and add the ID / namespace and version information:</p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 <span class="ph">jQuery.sap.declare("cust.emp.myleaverequests.Component");</span>
 ... 
     metadata :  {
@@ -235,8 +219,7 @@
                             <samp class="ph codeph">sap.app/applicationVersion/version</samp> in the
                             <samp class="ph codeph">manifest.json</samp> file</span>:</p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.app": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.app": {
     "_version": "1.1.0",
     ...
 <span class="ph">    "id": "cust.emp.myleaverequests",</span>
@@ -257,8 +240,7 @@
                     and under <samp class="ph codeph">titleResource</samp> for the <samp class="ph codeph">title</samp>
                     attribute:</p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">&lt;codeph ui_deliveryplatform="ui_demokit ui_opensource"&gt;#!js&lt;/codeph&gt;
-"config" : {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"config" : {
     "titleResource": "app.Identity",
     "resourceBundle": "i18n/i18n.properties",
 </pre></div>
@@ -287,8 +269,7 @@
                             <samp class="ph codeph">sap.app/title</samp> in the <samp class="ph codeph">manifest.json</samp>
                         file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.app": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.app": {
     "_version": "1.1.0",
     ...
     "i18n": "i18n/i18n.properties",
@@ -311,8 +292,7 @@
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">sap.app/tags/keywords</samp> in the
                             <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.app": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.app": {
     "_version": "1.1.0",
     ... 
     "tags": {
@@ -339,8 +319,7 @@
                                 <samp class="ph codeph">name</samp>, <samp class="ph codeph">serviceUrl</samp> and mock data URL
                             in <samp class="ph codeph">Component.js</samp>:</p>
 
-                        <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-metadata : {
+                        <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">metadata : {
     ...
     "config" : {
         ...           
@@ -390,8 +369,7 @@ init : function() {
                             <samp class="ph codeph">sap.app</samp> namespace of the <samp class="ph codeph">manifest.json</samp>
                         file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.app": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.app": {
     "_version": "1.1.0",
     ...       
     "dataSources": {
@@ -416,8 +394,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">icons</samp> in the <samp class="ph codeph">Component.js</samp>
                         file:</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"config" : {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"config" : {
     ...
     "icon": "sap-icon://Fiori2/F0394",
     "favIcon": "./resources/sap/ca/ui/themes/base/img/favicon/My_Leave_Requests.ico",
@@ -455,8 +432,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">icons</samp> in the <samp class="ph codeph">sap.ui</samp>
                         namespace of the <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui": {
     "_version": "1.1.0",
     ...
     "icons": {
@@ -487,8 +463,7 @@ init : function() {
                             <samp class="ph codeph">supportedThemes</samp> in the <samp class="ph codeph">sap.ui</samp>
                         namespace in the <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui": {
     "_version": "1.1.0",
     ...       
     "deviceTypes": {
@@ -498,7 +473,7 @@ init : function() {
     },
     "supportedThemes": [
         "sap_hcb",
-        "sap_bluecrystal"
+        "sap_belize"
     ]</pre></div>
 
             </li>
@@ -513,8 +488,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">includes</samp> in the <samp class="ph codeph">Component.js</samp>
                         file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"includes": ["css/shopStyles.css", "myfile.js"],</pre></div>
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"includes": ["css/shopStyles.css", "myfile.js"],</pre></div>
 
                 <p class="p">Return to the <samp class="ph codeph">manifest.json</samp> file:</p>
 
@@ -543,8 +517,7 @@ init : function() {
                             <samp class="ph codeph">sap.ui</samp> namespace in the <samp class="ph codeph">manifest.json</samp>
                         file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...
     "resources": {
@@ -567,7 +540,7 @@ init : function() {
 
             <li class="li">
                 <p class="p">Fill the <samp class="ph codeph">dependecies</samp> attribute of the <samp class="ph codeph">sap.ui5</samp>
-                    namespace with the <span class="ph"><span class="ph pname">SAPUI5</span></span> dependencies that are used.</p>
+                    namespace with the <span class="ph"><span class="ph pname">OpenUI5</span></span> dependencies that are used.</p>
 
                 <p class="p">Open the <samp class="ph codeph">Component.js</samp> file of your app to see the dependencies
                     for the <samp class="ph codeph">ui5</samp> libs and components.</p>
@@ -575,8 +548,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">dependencies</samp> in the
                             <samp class="ph codeph">Component.js</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"dependencies": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"dependencies": {
     "libs": [
         "sap.m",
         "sap.me"
@@ -586,14 +558,14 @@ init : function() {
 
                 <p class="p">Return to the <samp class="ph codeph">manifest.json</samp> file and fill the corresponding
                     entries in the <samp class="ph codeph">manifest.json</samp>. Enter a value for the minimum
-                    <span class="ph"><span class="ph pname">SAPUI5</span></span> version in the <samp class="ph codeph">&lt;ui5Version&gt;</samp> placeholder.</p>
+                    <span class="ph"><span class="ph pname">OpenUI5</span></span> version in the <samp class="ph codeph">&lt;ui5Version&gt;</samp> placeholder.</p>
 
                 
                 <div class="note caution"><span class="cautiontitle">Caution</span> 
                     <p class="p">The format in the <samp class="ph codeph">Component.js</samp> file is an array, whereas the
                         format in the <samp class="ph codeph">manifest.json</samp> file is a map. Ensure that
-                        <span class="ph emphasis emphasis">all</span> of the <span class="ph"><span class="ph pname">SAPUI5</span></span> libraries used by your app are
-                        mentioned under libs. Also make sure that all of the <span class="ph"><span class="ph pname">SAPUI5</span></span> components used
+                        <span class="ph emphasis emphasis">all</span> of the <span class="ph"><span class="ph pname">OpenUI5</span></span> libraries used by your app are
+                        mentioned under libs. Also make sure that all of the <span class="ph"><span class="ph pname">OpenUI5</span></span> components used
                         by your app are mentioned under <samp class="ph codeph">components</samp>. If there are no
                         dependent components, remove the <samp class="ph codeph">components</samp> entry.</p>
 
@@ -602,8 +574,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">dependencies</samp> in the <samp class="ph codeph">sap.ui5</samp>
                         namespace in the <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...
     "dependencies": {
@@ -638,14 +609,13 @@ init : function() {
                 
                 
                 <p class="p">If a <samp class="ph codeph">model</samp> is entered in <samp class="ph codeph">sap.ui5/models</samp> in the
-                    <samp class="ph codeph">manifest.json</samp> file, <span class="ph"><span class="ph pname">SAPUI5</span></span> creates the model automatically
+                    <samp class="ph codeph">manifest.json</samp> file, <span class="ph"><span class="ph pname">OpenUI5</span></span> creates the model automatically
                     and the coding for model creation inside the app can be removed.</p>
 
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">model</samp> creation in
                             <samp class="ph codeph">Component.js</samp>:</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-init : function() {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">init : function() {
     ...
     // set i18n model
     var i18nModel = new sap.ui.model.resource.ResourceModel({
@@ -654,7 +624,7 @@ init : function() {
     this.setModel(i18nModel, "i18n");
      
     // set data model
-    var m = new sap.ui.model.odata.ODataModel(sServiceUrl, {json: true,loadMetadataAsync: true});
+    var m = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
     this.setModel(m);</pre></div>
 
                 <p class="p">Return to the <samp class="ph codeph">manifest.json</samp> file:</p>
@@ -680,7 +650,7 @@ init : function() {
                             example "leave" or "" for the default model. Enter a reference to a data
                             source from <samp class="ph codeph">sap.app/dataSource</samp> in the
                                 <samp class="ph codeph">&lt;dataSourceAlias&gt;</samp> placeholder; if needed,
-                            enhance it with more settings for <span class="ph"><span class="ph pname">SAPUI5</span></span>.</p>
+                            enhance it with more settings for <span class="ph"><span class="ph pname">OpenUI5</span></span>.</p>
 
                     </li>
 
@@ -689,8 +659,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: Models in the <samp class="ph codeph">sap.ui5</samp> namespace in the
                             <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...
     "models": {
@@ -722,8 +691,7 @@ init : function() {
                             <samp class="ph codeph">sap.ui5</samp> namespace of the <samp class="ph codeph">manifest.json</samp>
                         file:</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-    ...
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">    ...
     "rootView": "myRootView",
     "handleValidation": true,
     "config": {
@@ -752,8 +720,7 @@ init : function() {
                             <samp class="ph codeph">sap.ui5</samp> namespace of the <samp class="ph codeph">manifest.json</samp>
                         file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...
     "rootView": "myRootView",
@@ -777,8 +744,7 @@ init : function() {
                 <p class="p">Open the <samp class="ph codeph">Component.js</samp> file of your app to see the component
                     which your app extends:</p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 <span class="ph">hcm.emp.myleaverequests.Component.extend("cust.emp.myleaverequests.Component", {</span></pre></div>
 
                 <p class="p">Return to the <samp class="ph codeph">manifest.json</samp> file and enter the value from the
@@ -788,8 +754,7 @@ init : function() {
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">extends/component</samp> in <samp class="ph codeph">sap.ui5</samp>
                         namespace in <samp class="ph codeph">manifest.json</samp> file</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...
     "extends": {
@@ -799,7 +764,7 @@ init : function() {
 
                 <p class="p">If your app requires a minimum version of a component, specify the version under
                         <samp class="ph codeph">minVersion</samp> for information purposes, otherwise remove the
-                    attribute. If your app uses the <span class="ph"><span class="ph pname">SAPUI5</span></span> extension concept with a
+                    attribute. If your app uses the <span class="ph"><span class="ph pname">OpenUI5</span></span> extension concept with a
                         <samp class="ph codeph">customizing</samp> entry under component metadata in the
                         <samp class="ph codeph">Component.js</samp> file, move the content of that entry to
                         <samp class="ph codeph">sap.ui5/extends/extensions</samp> in the
@@ -819,13 +784,12 @@ init : function() {
                         <samp class="ph codeph">cozy</samp> attributes (<samp class="ph codeph">true</samp> or
                         <samp class="ph codeph">false</samp>) under <samp class="ph codeph">contentDensities</samp> in the
                         <samp class="ph codeph">manifest.json</samp> file. The attributes specify the content
-                    density modes that your app supports, see <a class="xref" href="e54f729da8e3405fae5e4fe8ae7784c1.html" title="The devices used to run apps that are developed with SAPUI5 run on various different operating systems and have very different screen sizes. SAPUI5 contains different content densities for certain controls that allow your app to adapt to the device in question, allowing you to display larger controls for touch-enabled devices and a smaller, more compact design for devices that are operated by mouse.">Content Densities</a>.</p>
+                    density modes that your app supports, see <a class="xref" href="e54f729da8e3405fae5e4fe8ae7784c1.html" title="The devices used to run apps that are developed with OpenUI5 run on various different operating systems and have very different screen sizes. OpenUI5 contains different content densities for certain controls that allow your app to adapt to the device in question, allowing you to display larger controls for touch-enabled devices and a smaller, more compact design for devices that are operated by mouse.">Content Densities</a>.</p>
 
                 <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">contentDensities</samp> in <samp class="ph codeph">sap.ui5</samp>
                         namespace of the <samp class="ph codeph">manifest.json</samp> file:</span></p>
 
-                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-"sap.ui5": {
+                <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">"sap.ui5": {
     "_version": "1.1.0",
     ...       
     "contentDensities": {
@@ -857,8 +821,7 @@ init : function() {
                     <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">Component.js</samp> before making
                             changes</span></p>
 
-                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-
+                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 <span class="ph">jQuery.sap.declare("cust.emp.myleaverequests.Component");</span>
 
 <span class="ph">jQuery.sap.require("cust.emp.myleaverequests.Configuration");</span>
@@ -961,8 +924,7 @@ init : function() {
                     <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">Component.js</samp> after making
                             changes</span></p>
 
-                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-
+                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 <span class="ph">jQuery.sap.declare("cust.emp.myleaverequests.Component");
 //jQuery.sap.require("cust.emp.myleaverequests.Configuration");</span>
  
@@ -981,8 +943,7 @@ init : function() {
                     <p class="p"><span class="ph emphasis emphasis">Example: Data source reference in <samp class="ph codeph">Component.js</samp>
                             file before making changes</span></p>
 
-                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-metadata : {
+                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">metadata : {
     ...
     "config" : {
         ...           
@@ -1031,8 +992,7 @@ init : function() {
                     <p class="p"><span class="ph emphasis emphasis">Example: Data source reference in <samp class="ph codeph">Component.js</samp>
                             file after making changes</span></p>
 
-                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-metadata : {
+                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">metadata : {
     "manifest": "json",
     ...           
  
@@ -1051,15 +1011,14 @@ init : function() {
                 </li>
 
                 <li class="li">
-                    <p class="p">Remove the <span class="ph"><span class="ph pname">SAPUI5</span></span> model creation in the <samp class="ph codeph">Component.js</samp>
+                    <p class="p">Remove the <span class="ph"><span class="ph pname">OpenUI5</span></span> model creation in the <samp class="ph codeph">Component.js</samp>
                         file.</p>
 
                     
                     <p class="p"><span class="ph emphasis emphasis">Example: <samp class="ph codeph">Component.js</samp> file before making
                             changes</span></p>
 
-                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-init : function() {
+                    <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">init : function() {
     ...
     // set i18n model
     var i18nModel = new sap.ui.model.resource.ResourceModel({
@@ -1068,7 +1027,7 @@ init : function() {
     this.setModel(i18nModel, "i18n");
      
     // set data model
-    var m = new sap.ui.model.odata.ODataModel(sServiceUrl, {json: true,loadMetadataAsync: true});
+    var m = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
     this.setModel(m);</pre></div>
 
                     <p class="p">Apply the following changes:</p>
@@ -1128,19 +1087,5 @@ init : function() {
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Creating a Descriptor File for Existing Apps";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

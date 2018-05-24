@@ -1,13 +1,13 @@
 sap.ui.define([
-	"myCompany/myApp/controller/BaseController",
+	"mycompany/myapp/controller/BaseController",
 	"sap/ui/model/json/JSONModel",
-	"myCompany/myApp/model/formatter",
+	"mycompany/myapp/model/formatter",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator"
 ], function(BaseController, JSONModel, formatter, Filter, FilterOperator) {
 	"use strict";
 
-	return BaseController.extend("myCompany.myApp.controller.Worklist", {
+	return BaseController.extend("mycompany.myapp.controller.Worklist", {
 
 		formatter: formatter,
 
@@ -197,6 +197,7 @@ sap.ui.define([
 
 		/**
 		 * Internal helper method to apply both filter and search state together on the list binding
+		 * @param {array} oTableSearchState an array of filters for the search
 		 * @private
 		 */
 		_applySearch: function(oTableSearchState) {

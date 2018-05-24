@@ -1,18 +1,19 @@
-(function ($, QUnit) {
+/*global QUnit*/
 
-	var core = sap.ui.getCore();
+(function ($, QUnit) {
+	"use strict";
 
 	jQuery.sap.registerModulePath("view", "view");
 
 
 
-	module("API", {
-    	beforeEach: function () {
-    		this.contentView = sap.ui.xmlview("UxAP-ObjectPageHeaderContent", {
-    			viewName: "view.UxAP-ObjectPageHeaderContent"
-    		});
-    		this.contentView.placeAt('qunit-fixture');
-		    sap.ui.getCore().applyChanges();
+	QUnit.module("API", {
+		beforeEach: function () {
+			this.contentView = sap.ui.xmlview("UxAP-ObjectPageHeaderContent", {
+				viewName: "view.UxAP-ObjectPageHeaderContent"
+			});
+			this.contentView.placeAt('qunit-fixture');
+			sap.ui.getCore().applyChanges();
 		},
 		afterEach: function () {
 			this.contentView.destroy();
@@ -42,13 +43,13 @@
 		assert.ok(aEditHeaderBtn.length === 1, "button is rendered inside the HeaderContent after rerender");
 	});
 
-	module("ObjectPageHeaderContent integration inside ObjectPageLayout", {
-    	beforeEach: function () {
-    		this.contentView = sap.ui.xmlview("UxAP-ObjectPageHeaderContent", {
-    			viewName: "view.UxAP-ObjectPageHeaderContent"
-    		});
-    		this.contentView.placeAt('qunit-fixture');
-		    sap.ui.getCore().applyChanges();
+	QUnit.module("ObjectPageHeaderContent integration inside ObjectPageLayout", {
+		beforeEach: function () {
+			this.contentView = sap.ui.xmlview("UxAP-ObjectPageHeaderContent", {
+				viewName: "view.UxAP-ObjectPageHeaderContent"
+			});
+			this.contentView.placeAt('qunit-fixture');
+			sap.ui.getCore().applyChanges();
 		},
 		afterEach: function () {
 			this.contentView.destroy();
@@ -104,6 +105,83 @@
 		sap.ui.getCore().applyChanges();
 
 		assert.equal(this.contentView.byId("ObjectPageLayout").getHeaderContent().length, 0, "contents length is 0 after destroying HeaderContent");
+	});
+
+	QUnit.module("Dynamic Header State Preserved On Scroll", {
+		beforeEach: function () {
+			this.oObjectPageWithPreserveHeaderStateOnScroll = new sap.uxap.ObjectPageLayout({
+				preserveHeaderStateOnScroll: true
+			});
+			this.oObjectPageWithPreserveHeaderStateOnScroll.setHeaderTitle(new sap.uxap.ObjectPageDynamicHeaderTitle());
+			this.oObjectPageWithPreserveHeaderStateOnScroll.addHeaderContent(new sap.m.Text({text: "test"}));
+			this.oObjectPageWithPreserveHeaderStateOnScroll.placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+		},
+		afterEach: function () {
+			this.oObjectPageWithPreserveHeaderStateOnScroll.destroy();
+			this.oObjectPageWithPreserveHeaderStateOnScroll = null;
+		}
+	});
+
+	QUnit.test("Dynamic Header rendered within Header Wrapper", function (assert) {
+		var $headerWrapper = this.oObjectPageWithPreserveHeaderStateOnScroll.$("headerTitle"),
+			sHeaderId = this.oObjectPageWithPreserveHeaderStateOnScroll._getHeaderContent().getId();
+
+		assert.equal($headerWrapper.find("#" + sHeaderId).length, 1, "The Header is in the Header Title Wrapper");
+	});
+
+	QUnit.test("Dynamic Pin button is hidden", function (assert) {
+		var $pinButtonDom = this.oObjectPageWithPreserveHeaderStateOnScroll._getHeaderContent().getAggregation("_pinButton").getDomRef();
+
+		assert.equal($pinButtonDom, null, "The Dynamic Header Pin Button not rendered");
+	});
+
+	QUnit.module("Header content initialization");
+
+	QUnit.test("setShowHeaderContent before rendering", function (assert) {
+
+		var oObjectPage = new sap.uxap.ObjectPageLayout({
+			showHeaderContent: false
+		});
+
+		assert.equal(oObjectPage.getShowHeaderContent(), false, "The value is applied");
+
+		oObjectPage.destroy();
+	});
+
+	QUnit.module("ObjectPageLayout content resize");
+
+	QUnit.test("addHeaderContent", function (assert) {
+		var contentView = sap.ui.xmlview("UxAP-ObjectPageHeaderContent", {
+			viewName: "view.UxAP-ObjectPageHeaderContent"
+		}),
+		oObjectPageLayout = contentView.byId("ObjectPageLayout"),
+		oResizableControl = new sap.ui.core.HTML({content: "<div style='height:100px'></div>"}),
+		done = assert.async(),
+		bResizeListenerCalled = false;
+
+		oObjectPageLayout.addHeaderContent(oResizableControl);
+
+		// proxy the resize listener to check if called
+		var fnOrig = oObjectPageLayout._onUpdateContentSize;
+		oObjectPageLayout._onUpdateContentSize = function() {
+			bResizeListenerCalled = true;
+			fnOrig.apply(this, arguments);
+		};
+
+		// wait for the point where the listener is internally attached
+		oObjectPageLayout.attachEventOnce("onAfterRenderingDOMReady", function() {
+			// act
+			oResizableControl.getDomRef().style.height = "10px"; //decrease height of content
+			setTimeout(function() {
+				// check
+				assert.ok(bResizeListenerCalled, "_onUpdateContentSize method is called");
+				contentView.destroy();
+				done();
+			}, 500 /* wait for resizeHandler to be triggered */);
+		});
+
+		contentView.placeAt('qunit-fixture');
 	});
 
 }(jQuery, QUnit));

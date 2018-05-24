@@ -2,7 +2,7 @@
 <control xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>CalendarRow</name>
     <derived/>
-    <documentation>A calendar row with an header and appointments. The Appointments will be placed in the defined interval.</documentation>
+    <documentation>A calendar row with a header and appointments. The Appointments will be placed in the defined interval.</documentation>
     <since>1.34.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
@@ -70,11 +70,23 @@ If a lot of &lt;code&gt;CalendarRow&lt;/code&gt; controls are used in one contai
 the periodic update should be triggered only by this container control. Then the container control should
 call &lt;code&gt;updateCurrentTimeVisualization&lt;/code&gt; of the &lt;code&gt;CalendarRow&lt;/code&gt; to update the visualization.</documentation>
         </property>
+        <property name="groupAppointmentsMode" type="sap.ui.unified/GroupAppointmentsMode" defaultValue="Collapsed" group="Appearance">
+            <documentation>Defines the mode in which the overlapping appointments are displayed.
+
+&lt;b&gt;Note:&lt;/b&gt; This property takes effect, only if the &lt;code&gt;intervalType&lt;/code&gt; of the current calendar view
+is set to &lt;code&gt;sap.ui.unified.CalendarIntervalType.Month&lt;/code&gt;. On phone devices this property is ignored,
+and the default value is applied.</documentation>
+        </property>
         <property name="appointmentsReducedHeight" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.38.0">
             <documentation>If set the appointments without text (only title) are rendered with a smaller height.
 
 &lt;b&gt;Note:&lt;/b&gt; On phone devices this property is ignored, appointments are always rendered in full height
 to allow touching.</documentation>
+        </property>
+        <property name="appointmentsVisualization" type="sap.ui.unified/CalendarAppointmentVisualization" defaultValue="Standard" group="Appearance" since="1.40.0">
+            <documentation>Defines the visualization of the &lt;code&gt;CalendarAppoinment&lt;/code&gt;
+
+&lt;b&gt;Note:&lt;/b&gt; The real visualization depends on the used theme.</documentation>
         </property>
     </properties>
     <events>
@@ -90,6 +102,9 @@ to allow touching.</documentation>
                 <parameter name="multiSelect" type="sap.ui.core/boolean">
                     <documentation>If set, the appointment was selected by multiple selection (e.g. shift + mouse click).
 So more than the current appointment could be selected.</documentation>
+                </parameter>
+                <parameter name="domRefId" type="sap.ui.core/string" since="1.50">
+                    <documentation>Gives the ID of the DOM element of the clicked appointment</documentation>
                 </parameter>
             </parameters>
         </event>
@@ -137,10 +152,18 @@ The &lt;code&gt;intervalHeaders&lt;/code&gt; always fill whole intervals. If the
 &lt;b&gt;Note:&lt;/b&gt; For performance reasons, only appointments in the visible time range or nearby should be assigned.</documentation>
         </aggregation>
         <aggregation name="groupAppointments" type="sap.ui.unified/CalendarAppointment" cardinality="0..n" visibility="hidden"/>
+        <aggregation name="_nonWorkingDates" type="sap.ui.unified/DateRange" cardinality="0..n" visibility="hidden"/>
     </aggregations>
     <associations>
         <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
-            <documentation>Association to controls / IDs which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
+            <documentation>Association to controls / IDs which label this control (see WAI-ARIA attribute aria-labelledby).
+
+&lt;b&gt;Note&lt;/b&gt; These labels are also assigned to the appointments.</documentation>
+        </association>
+        <association name="legend" type="sap.ui.unified/CalendarLegend" cardinality="0..1" since="1.40.0">
+            <documentation>Association to the &lt;code&gt;CalendarLegend&lt;/code&gt; explaining the colors of the &lt;code&gt;Appointments&lt;/code&gt;.
+
+&lt;b&gt;Note&lt;/b&gt; The legend does not have to be rendered but must exist, and all required types must be assigned.</documentation>
         </association>
     </associations>
 </control>

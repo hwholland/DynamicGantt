@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -20,7 +20,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	 * and provides getters for accessing properties or lists.
 	 *
 	 * @param {sap.ui.model.Model} oModel the model
-	 * @param {String} sPath the path
+	 * @param {string} sPath the path
 	 * @param {sap.ui.model.Context} oContext the context object
 	 * @param {object} [mParameters]
 	 * @abstract
@@ -64,47 +64,73 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	 *
 	 * @name sap.ui.model.Binding#dataRequested
 	 * @event
-	 * @param {sap.ui.base.Event} oEvent
-	 * @param {sap.ui.base.EventProvider} oEvent.getSource
-	 * @param {object} oEvent.getParameters
-
+	 * @param {sap.ui.base.Event} oEvent The event object
+	 * @param {sap.ui.base.EventProvider} oEvent.getSource The object on which the Event initially occurred
+	 * @param {object} oEvent.getParameters Object containing all event parameters
 	 * @public
 	 */
 
-	 /**
- 	 * The 'dataReceived' event is fired, when data was received from a backend. This event may also be fired when an error occured.
- 	 *
- 	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
- 	 *
- 	 * @name sap.ui.model.Binding#dataReceived
- 	 * @event
- 	 * @param {sap.ui.base.Event} oEvent
- 	 * @param {sap.ui.base.EventProvider} oEvent.getSource
- 	 * @param {object} oEvent.getParameters
+	/**
+	 * The 'dataReceived' event is fired, when data was received from a backend. This event may also be fired when an error occurred.
+	 *
+	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
+	 *
+	 * @name sap.ui.model.Binding#dataReceived
+	 * @event
+	 * @param {sap.ui.base.Event} oEvent The event object
+	 * @param {sap.ui.base.EventProvider} oEvent.getSource The object on which the Event initially occurred
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {string} [oEvent.getParameters.data] The data received. In error cases it will be undefined.
+	 * @public
+	 */
 
- 	 * @param {string} [oEvent.getParameters.data] The data received. In error cases it will be undefined.
- 	 * @public
- 	 */
+	/**
+	 * The 'change' event is fired, when the data of the Binding is changed from the model.
+	 * The reason parameter of the event provides a hint where the change came from.
+	 *
+	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
+	 *
+	 * @name sap.ui.model.Binding#change
+	 * @event
+	 * @param {sap.ui.base.Event} oEvent The event object
+	 * @param {sap.ui.base.EventProvider} oEvent.getSource The object on which the Event initially occurred
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {string} [oEvent.getParameters.reason] A string stating the reason for the data change. Can be any string and new values can be added in the future.
+	 * @public
+	 */
 
-	 /**
- 	 * The 'change' event is fired, when the data of the Binding is changed from the model. The reason parameter of the event provides a hint where the change came from.
- 	 *
- 	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
- 	 *
- 	 * @name sap.ui.model.Binding#change
- 	 * @event
- 	 * @param {sap.ui.base.Event} oEvent
- 	 * @param {sap.ui.base.EventProvider} oEvent.getSource
- 	 * @param {object} oEvent.getParameters
+	/**
+	 * The 'DataStateChange' event is fired, when the DataState of the Binding has changed.
+	 *
+	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
+	 *
+	 * @name sap.ui.model.Binding#DataStateChange
+	 * @event
+	 * @param {sap.ui.base.Event} oEvent The event object
+	 * @param {sap.ui.base.EventProvider} oEvent.getSource The object on which the Event initially occurred
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {sap.ui.model.DataState} [oEvent.getParameters.dataState] The DataState object of the binding.
+	 * @protected
+	 */
 
- 	 * @param {string} [oEvent.getParameters.reason] A string stating the reason for the data change. Can be any string and new values can be added in the future.
- 	 * @public
- 	 */
+	/**
+	 * The 'AggregatedDataStateChange' event is fired asynchronously when all 'datastateChanges' within the actual stack are done.
+	 *
+	 * Note: Subclasses might add additional parameters to the event object. Optional parameters can be omitted.
+	 *
+	 * @name sap.ui.model.Binding#AggregatedDataStateChange
+	 * @event
+	 * @param {sap.ui.base.Event} oEvent The event object
+	 * @param {sap.ui.base.EventProvider} oEvent.getSource The object on which the Event initially occurred
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {sap.ui.model.DataState} [oEvent.getParameters.dataState] The DataState object of the binding.
+	 * @protected
+	 */
 
 	// Getter
 	/**
 	 * Getter for path
-	 * @return {String} the binding path
+	 * @return {string} the binding path
 	 */
 	Binding.prototype.getPath = function() {
 		return this.sPath;
@@ -152,7 +178,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 
 	/**
 	 * Getter for model
-	 * @return {sap.ui.core.Model} the model
+	 * @return {sap.ui.model.Model} the model
 	 */
 	Binding.prototype.getModel = function() {
 		return this.oModel;
@@ -186,8 +212,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	};
 
 	/**
-	 * Fire event dataStateChange to attached listeners.
-
+	 * Fire event DataStateChange to attached listeners.
 	 * @param {Map}
 	 *         mArguments the arguments to pass along with the event.
 	 * @private
@@ -197,52 +222,51 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	};
 
 	/**
-	* Attach event-handler <code>fnFunction</code> to the 'DataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
-	* @param {function} fnFunction The function to call, when the event occurs.
-	* @param {object} [oListener] object on which to call the given function.
-	* @protected
-	*/
+	 * Attach event-handler <code>fnFunction</code> to the 'DataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
+	 * @param {function} fnFunction The function to call, when the event occurs.
+	 * @param {object} [oListener] object on which to call the given function.
+	 * @protected
+	 */
 	Binding.prototype.attachDataStateChange = function(fnFunction, oListener) {
 		this.attachEvent("DataStateChange", fnFunction, oListener);
 	};
 
 	/**
-	* Detach event-handler <code>fnFunction</code> from the 'DataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
-	* @param {function} fnFunction The function to call, when the event occurs.
-	* @param {object} [oListener] object on which to call the given function.
-	* @protected
-	*/
+	 * Detach event-handler <code>fnFunction</code> from the 'DataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
+	 * @param {function} fnFunction The function to call, when the event occurs.
+	 * @param {object} [oListener] object on which to call the given function.
+	 * @protected
+	 */
 	Binding.prototype.detachDataStateChange = function(fnFunction, oListener) {
 		this.detachEvent("DataStateChange", fnFunction, oListener);
 	};
 
 	/**
-	* Attach event-handler <code>fnFunction</code> to the 'AggregatedDataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
-	* @param {function} fnFunction The function to call, when the event occurs.
-	* @param {object} [oListener] object on which to call the given function.
-	* @protected
-	*/
+	 * Attach event-handler <code>fnFunction</code> to the 'AggregatedDataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
+	 * @param {function} fnFunction The function to call, when the event occurs.
+	 * @param {object} [oListener] object on which to call the given function.
+	 * @protected
+	 */
 	Binding.prototype.attachAggregatedDataStateChange = function(fnFunction, oListener) {
 		this.attachEvent("AggregatedDataStateChange", fnFunction, oListener);
 	};
 
 	/**
-	* Detach event-handler <code>fnFunction</code> from the 'AggregatedDataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
-	* @param {function} fnFunction The function to call, when the event occurs.
-	* @param {object} [oListener] object on which to call the given function.
-	* @protected
-	*/
+	 * Detach event-handler <code>fnFunction</code> from the 'AggregatedDataStateChange' event of this <code>sap.ui.model.Binding</code>.<br/>
+	 * @param {function} fnFunction The function to call, when the event occurs.
+	 * @param {object} [oListener] object on which to call the given function.
+	 * @protected
+	 */
 	Binding.prototype.detachAggregatedDataStateChange = function(fnFunction, oListener) {
 		this.detachEvent("AggregatedDataStateChange", fnFunction, oListener);
 	};
 
 	/**
-	* Fire event change to attached listeners.
-
-	* @param {Map}
-	*         mArguments the arguments to pass along with the event.
-	* @private
-	*/
+	 * Fire event change to attached listeners.
+	 * @param {Map}
+	 *         mArguments the arguments to pass along with the event.
+	 * @private
+	 */
 	Binding.prototype._fireChange = function(mArguments) {
 		this.fireEvent("change", mArguments);
 	};
@@ -269,7 +293,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 
 	/**
 	 * Fire event dataRequested to attached listeners.
-
 	 * @param {Map} mArguments the arguments to pass along with the event.
 	 * @protected
 	 */
@@ -299,7 +322,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 
 	/**
 	 * Fire event dataReceived to attached listeners. This event may also be fired when an error occured.
-
 	 * @param {Map} mArguments the arguments to pass along with the event.
 	 * @param {object} [mArguments.data] the data received. In error cases it will be undefined.
 	 * @protected
@@ -379,8 +401,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	 * _refresh for compatibility
 	 * @private
 	 */
-	Binding.prototype._refresh = function() {
-		this.refresh();
+	Binding.prototype._refresh = function(bForceUpdate) {
+		this.refresh(bForceUpdate);
 	};
 
 	/**
@@ -415,7 +437,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	/**
 	 * Attach multiple events.
 	 *
-	 * @param {object} oEvents
+	 * @param {Object.<string, function>} oEvents
 	 * @protected
 	 */
 	Binding.prototype.attachEvents = function(oEvents) {
@@ -435,9 +457,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	};
 
 	/**
-	 * Detach multiple events-
+	 * Detach multiple events.
 	 *
-	 * @param {object} oEvents
+	 * @param {Object.<string, function>} oEvents
 	 * @protected
 	 */
 	Binding.prototype.detachEvents = function(oEvents) {
@@ -526,10 +548,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './ChangeReason
 	 *
 	 * @public
 	 */
-	sap.ui.model.Binding.prototype.destroy = function() {
+	Binding.prototype.destroy = function() {
 		this.bIsBeingDestroyed = true;
 		sap.ui.getCore().getMessageManager().removeMessages(this.getDataState().getControlMessages(), true);
-		sap.ui.base.EventProvider.prototype.destroy.apply(this, arguments);
+		EventProvider.prototype.destroy.apply(this, arguments);
 		this.bIsBeingDestroyed = false;
 	};
 

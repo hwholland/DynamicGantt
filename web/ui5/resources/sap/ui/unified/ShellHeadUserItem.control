@@ -5,6 +5,7 @@
     <author>SAP SE</author>
     <documentation>User Header Action Item of the Shell.</documentation>
     <since>1.22.0</since>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
         <property name="username" type="sap.ui.core/string" defaultValue="" group="Appearance">
@@ -15,7 +16,7 @@
 If this property is set to true an indicator for such a popup mechanismn is shown in the item.</documentation>
         </property>
         <property name="image" type="sap.ui.core/URI" group="Appearance">
-            <documentation>An image of the user, normally an URI to a image but also an icon from the sap.ui.core.IconPool is possible.</documentation>
+            <documentation>An image of the user, normally a URI to an image but also an icon from the sap.ui.core.IconPool is possible.</documentation>
         </property>
     </properties>
     <events>

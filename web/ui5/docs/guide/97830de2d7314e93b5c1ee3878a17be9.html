@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Aggregation binding (or &#34;list binding&#34;) allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls."/>
+<meta name="description" content="Aggregation binding (or &#34;list binding&#34;) allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls."/>
 
-
-
-
-
-<meta name="abstract" content="Aggregation binding allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls."/>
-<meta name="description" content="Aggregation binding allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7993492574125983"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=14398374503274447"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14398374503274447"/>
 <title>Step 12: Aggregation Binding Using Templates</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio97830de2d7314e93b5c1ee3878a17be9">
 <div id="wrapper"><div id="container">
@@ -33,8 +19,8 @@
 	<h1 class="title topictitle1">Step 12: Aggregation Binding Using Templates</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">Aggregation binding allows a control to be bound to a list within the model data and
-    allows relative binding to the list entries by its child controls.  </p>
+	<div class="body conbody"><p class="shortdesc">Aggregation binding (or "list binding") allows a control to be bound to a list within
+		the model data and allows relative binding to the list entries by its child controls. </p>
 
 		<div class="p">It will automatically create as many child controls as are needed to display the data in the
       model using one of the following two approaches:<ul class="ul" id="loio97830de2d7314e93b5c1ee3878a17be9__ul_l1c_xxr_vs">
@@ -63,14 +49,14 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">			
 			
-		  <p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo
+		  <p class="p">You can view and download all files in the Demo
         Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.databinding.12/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.databinding.12/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.databinding.12/preview">Data Binding - Step 12</a></span>.</p>
 
 		</div></div>
 
     <div class="section"><div class="section_title">webapp/index.html</div><div type="webapp/index.html">
       
-      <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>...
+      <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...
 	&lt;script&gt;
 		// Attach an anonymous function to the SAPUI5 'init' event
 		sap.ui.getCore().attachInit(function () {
@@ -97,43 +83,44 @@
 
     <div class="section"><div class="section_title">webapp/view/App.view.xml</div><div type="webapp/view/App.view.xml">
       
-      <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>...				&lt;Input width="200px" enabled="{/enabled}" description="{/currencyCode}"
-						value="{ parts: [{path: '/salesToDate'}, {path: '/currencyCode'}], type: 'sap.ui.model.type.Currency', formatOptions: {showMeasure: false } }"/&gt;
-			&lt;/l:VerticalLayout&gt;
-		&lt;/content&gt;
-	&lt;/Panel&gt;
-	<span class="ph emphasis emphasis">&lt;Panel headerText="{i18n&gt;panel3HeaderText}" class="sapUiResponsiveMargin" width="auto"&gt;
-		&lt;content&gt;
-			&lt;List headerText="{i18n&gt;productListTitle}" items="{products&gt;/Products}"&gt;
-				&lt;items&gt;
-					&lt;ObjectListItem title="{products&gt;ProductName}"
-									number="{	parts:
-													[
-														{path: 'products&gt;UnitPrice'},
-														{path: '/currencyCode'}
-													],
-												type: 'sap.ui.model.type.Currency',
-												formatOptions: { showMeasure: false }
-											}"
-									numberUnit="{/currencyCode}"&gt;
-						&lt;attributes&gt;
-							&lt;ObjectAttribute text="{products&gt;QuantityPerUnit}"/&gt;
-							&lt;ObjectAttribute title="{i18n&gt;stockValue}"
-											 text="{	parts: [
-											 					{path: 'products&gt;UnitPrice'},
-											 					{path: 'products&gt;UnitsInStock'},
-											 					{path: '/currencyCode'}
-											 					],
-														formatter: '.formatStockValue'
-													}" /&gt;
-						&lt;/attributes&gt;
-					&lt;/ObjectListItem&gt;
-				&lt;/items&gt;
-			&lt;/List&gt;
-		&lt;/content&gt;
-	&lt;/Panel&gt;
-</span>
-&lt;/mvc:View&gt;</pre></div>
+      <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...			&lt;Input width="200px" enabled="{/enabled}" description="{/currencyCode}"
+					value="{ parts: [{path: '/salesToDate'}, {path: '/currencyCode'}], 
+					type: 'sap.ui.model.type.Currency', 
+					formatOptions: {showMeasure: false } }"/&gt;
+		&lt;/l:VerticalLayout&gt;
+	&lt;/content&gt;
+&lt;/Panel&gt;
+<span class="ph emphasis emphasis">&lt;Panel headerText="{i18n&gt;panel3HeaderText}" class="sapUiResponsiveMargin" width="auto"&gt;
+	&lt;content&gt;
+		&lt;List headerText="{i18n&gt;productListTitle}" items="{products&gt;/Products}"&gt;
+			&lt;items&gt;
+				&lt;ObjectListItem title="{products&gt;ProductName}"
+								number="{	parts:
+												[
+													{path: 'products&gt;UnitPrice'},
+													{path: '/currencyCode'}
+												],
+											type: 'sap.ui.model.type.Currency',
+											formatOptions: { showMeasure: false }
+										}"
+								numberUnit="{/currencyCode}"&gt;
+					&lt;attributes&gt;
+						&lt;ObjectAttribute text="{products&gt;QuantityPerUnit}"/&gt;
+						&lt;ObjectAttribute title="{i18n&gt;stockValue}"
+										 text="{parts: [
+										 			{path: 'products&gt;UnitPrice'},
+										 			{path: 'products&gt;UnitsInStock'},
+										 			{path: '/currencyCode'}
+										 			],
+												formatter: '.formatStockValue'
+												}" /&gt;
+					&lt;/attributes&gt;
+				&lt;/ObjectListItem&gt;
+			&lt;/items&gt;
+		&lt;/List&gt;
+	&lt;/content&gt;
+&lt;/Panel&gt;</span>
+...</pre></div>
 
       <p class="p">We add a new panel to the view.</p>
 
@@ -141,9 +128,11 @@
 
 		<div class="section"><div class="section_title">webapp/controller/App.controller.js</div><div type="webapp/controller/App.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define(["sap/ui/core/mvc/Controller"<span class="ph emphasis emphasis">,"sap/ui/model/type/Currency"</span>],
-	function (Controller, Currency) {
-		"use strict";
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
+	"sap/ui/core/mvc/Controller"<span class="ph emphasis emphasis">,
+	"sap/ui/model/type/Currency"</span>
+], function (Controller<span class="ph emphasis emphasis">, Currency</span>) {
+	"use strict";
  
 	return Controller.extend("sap.ui.demo.db.controller.App", {
 		formatMail: function(sFirstName, sLastName) {
@@ -168,7 +157,7 @@
 
 		<div class="section"><div class="section_title">webapp/model/Products.json (New)</div><div type="webapp/model/Products.json (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">{ "Products": [ {
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">{ "Products": [ {
      "ProductID": 1,
      "ProductName": "Chai",
      "SupplierID": 1,
@@ -232,7 +221,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>... 
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">... 
 # Screen titles
 panel1HeaderText=Data Binding Basics
 panel2HeaderText=Adress Details
@@ -252,7 +241,7 @@ stockValue=Current Stock Value</span></pre></div>
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n_de.properties</div><div type="webapp/i18n/i18n_de.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">...
 # Screen titles
 panel1HeaderText=Data Binding Basics
 panel2HeaderText=Adressdetails
@@ -278,34 +267,20 @@ stockValue=Lagerbestand Wert</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in SAPUI5.">Data Binding</a><br/>
+<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in OpenUI5.">Data Binding</a><br/>
 </div>
 <div class="previouslink"><br/>
-<strong>Previous: </strong><a class="link" href="b8c4e534cdb440e9a5bbff86f9572bd6.html" title="So far, we have created a currency field that can format itself correctly. The currency data type also has the ability to validate that user input adheres to to the requirements of a currency; however, data type validation functions are managed by SAPUI5, which of itself has no mechanism for reporting error messages back to the UI; therefore, we need a mechanism for reporting error messages raised by validation functions back to the user. In this step, we will connect the entire view to a feature known as the &#34;Message Manager&#34;. Once this connection is established, any validation error messages generated based on the user input will be passed to the message manager which in turn will connect them to the appropriate view and control that caused the error.">Step 11: Validation Using the Message Manager</a><br/>
+<strong>Previous: </strong><a class="link" href="b8c4e534cdb440e9a5bbff86f9572bd6.html" title="So far, we have created a currency field that can format itself correctly. The currency data type also has the ability to validate that user input adheres to to the requirements of a currency; however, data type validation functions are managed by OpenUI5, which of itself has no mechanism for reporting error messages back to the UI; therefore, we need a mechanism for reporting error messages raised by validation functions back to the user. In this step, we will connect the entire view to a feature known as the &#34;Message Manager&#34;. Once this connection is established, any validation error messages generated based on the user input will be passed to the message manager which in turn will connect them to the appropriate view and control that caused the error.">Step 11: Validation Using the Message Manager</a><br/>
 </div>
 <div class="nextlink"><br/>
 <strong>Next: </strong><a class="link" href="6c7c5c266b534e7ea9a28f861dc515f5.html" title="Now we want to do something with that newly generated list. In most cases you will use a list to allow the selection of an item and then show the details of that item elsewhere. In order to achieve this, we use a form with relatively bound controls and bind it to the selected entity via element binding.">Step 13: Element Binding</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f057786f4d1014b6dd926db0e91070.html" title="Aggregation binding is used to automatically create child controls according to model data.">Aggregation Binding</a></div>
+<div><a class="link" href="91f057786f4d1014b6dd926db0e91070.html" title="List binding (or aggregation binding) is used to automatically create child controls according to model data.">List Binding (Aggregation Binding)</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 12: Aggregation Binding Using Templates";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

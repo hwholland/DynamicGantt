@@ -1,18 +1,18 @@
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit,sinon*/
+
 jQuery.sap.require("sap.ui.fl.registry.ChangeRegistryItem");
 
 (function(ChangeRegistryItem) {
+	"use strict";
 
-	module("sap.ui.fl.registry.ChangeRegistryItem", {
-		setup: function() {
+	QUnit.module("sap.ui.fl.registry.ChangeRegistryItem", {
+		beforeEach: function() {
 		},
-		teardown: function() {
+		afterEach: function() {
 		}
 	});
 
-	test("constructor - required params and their getter", function() {
+	QUnit.test("constructor - required params and their getter", function(assert) {
 		//Arrange
 		var oMetadataObject = {name: "myChangeTypeMetadata"};
 		var mParam = {
@@ -24,24 +24,26 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistryItem");
 		var instance = new ChangeRegistryItem(mParam);
 
 		//Assert
-		deepEqual(instance.getChangeTypeMetadata(), oMetadataObject);
-		equal(instance.getControlType(), "sap.ui.fl.DummyControl");
+		assert.deepEqual(instance.getChangeTypeMetadata(), oMetadataObject);
+		assert.equal(instance.getControlType(), "sap.ui.fl.DummyControl");
 
 	});
 
-	test("constructor - exception on required params missing", function() {
+	QUnit.test("constructor - exception on required params missing", function(assert) {
 		//Arrange
 		var errorLogSpy = sinon.spy(jQuery.sap.log, "error");
 
 		//Act
-		var instance = new ChangeRegistryItem({});
+		/*eslint-disable no-new*/
+		new ChangeRegistryItem({});
+		/*eslint-enable no-new*/
 
 		//Assert
-		ok(errorLogSpy.calledTwice);
+		assert.ok(errorLogSpy.calledTwice);
 
 	});
 
-	test("constructor - all params and their getter", function() {
+	QUnit.test("constructor - all params and their getter", function(assert) {
 		//Arrange
 		var mParam = {
 			changeTypeMetadata: {name: "myChangeTypeMetadata"},
@@ -57,10 +59,10 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistryItem");
 		var instance = new ChangeRegistryItem(mParam);
 
 		//Assert
-		deepEqual(instance.getChangeTypeMetadata(), mParam.changeTypeMetadata);
-		equal(instance.getControlType(), mParam.controlType);
-		deepEqual(instance.getPermittedRoles(), mParam.permittedRoles);
-		deepEqual(instance.getDragTargets(), mParam.dragTargets);
+		assert.deepEqual(instance.getChangeTypeMetadata(), mParam.changeTypeMetadata);
+		assert.equal(instance.getControlType(), mParam.controlType);
+		assert.deepEqual(instance.getPermittedRoles(), mParam.permittedRoles);
+		assert.deepEqual(instance.getDragTargets(), mParam.dragTargets);
 	});
 
 }(sap.ui.fl.registry.ChangeRegistryItem));

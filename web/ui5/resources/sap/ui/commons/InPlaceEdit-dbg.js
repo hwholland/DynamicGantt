@@ -1,12 +1,30 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.InPlaceEdit.
-sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 'sap/ui/core/Control', 'sap/ui/core/ValueStateSupport', 'sap/ui/core/theming/Parameters'],
-	function(jQuery, TextField, TextView, library, Control, ValueStateSupport, Parameters) {
+sap.ui.define([
+    'jquery.sap.global',
+    './TextField',
+    './TextView',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/ValueStateSupport',
+    'sap/ui/core/theming/Parameters',
+    "./InPlaceEditRenderer"
+],
+	function(
+	    jQuery,
+		TextField,
+		TextView,
+		library,
+		Control,
+		ValueStateSupport,
+		Parameters,
+		InPlaceEditRenderer
+	) {
 	"use strict";
 
 	/**
@@ -18,12 +36,12 @@ sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 's
 	 * @class
 	 * The InPlaceEdit is a functionality to have text in display mode that can be changed in place.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.8.0
-	 * @deprecated Since version 1.38.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.Input}
 	 * @alias sap.ui.commons.InPlaceEdit
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -34,7 +52,7 @@ sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 's
 
 			/**
 			 * Visualizes warnings or errors related to the InPlaceEdit. Possible values: Warning, Error, Success.
-			 * If the content control has a own valueState property this will be used.
+			 * If the content control has an own valueState property this will be used.
 			 */
 			valueState : {type : "sap.ui.core.ValueState", group : "Data", defaultValue : sap.ui.core.ValueState.None},
 
@@ -610,7 +628,8 @@ sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 's
 
 
 		/**
-		 * @see {sap.ui.core.Control#getAccessibilityInfo}
+		 * @see sap.ui.core.Control#getAccessibilityInfo
+		 * @returns {Object} Current accessibility state of the control.
 		 * @protected
 		 */
 		InPlaceEdit.prototype.getAccessibilityInfo = function() {
@@ -807,8 +826,8 @@ sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 's
 		function iconForUndoButton(oInPlaceEdit){
 
 			if (oInPlaceEdit._oUndoButton) {
-				var sIcon = Parameters._getThemeImage('sapUiIpeUndoImageURL');
-				var sIconHovered = Parameters._getThemeImage('sapUiIpeUndoImageDownURL');
+				var sIcon = Parameters._getThemeImage('_sap_ui_commons_InPlaceEdit_UndoImageURL');
+				var sIconHovered = Parameters._getThemeImage('_sap_ui_commons_InPlaceEdit_UndoImageDownURL');
 				if (!sIcon) {
 					sIcon = "sap-icon://decline";
 				}
@@ -880,8 +899,8 @@ sap.ui.define(['jquery.sap.global', './TextField', './TextView', './library', 's
 		function iconForEditButton(oInPlaceEdit){
 
 			if (oInPlaceEdit._oEditButton) {
-				var sIcon = Parameters._getThemeImage('sapUiIpeEditImageURL');
-				var sIconHovered = Parameters._getThemeImage('sapUiIpeEditImageDownURL');
+				var sIcon = Parameters._getThemeImage('_sap_ui_commons_InPlaceEdit_EditImageURL');
+				var sIconHovered = Parameters._getThemeImage('_sap_ui_commons_InPlaceEdit_EditImageDownURL');
 				if (!sIcon) {
 					sIcon = "sap-icon://edit";
 				}

@@ -1,13 +1,24 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.unified.SplitContainer.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/Parameters', './library'],
-	function(jQuery, Control, Parameters, library) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/core/Control',
+	'sap/ui/core/theming/Parameters',
+	'./library',
+	'sap/ui/core/library',
+	"./SplitContainerRenderer"
+], function(jQuery, Control, Parameters, library, coreLibrary, SplitContainerRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.core.Orientation
+	var Orientation = coreLibrary.Orientation;
 
 
 
@@ -22,13 +33,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.15.0
 	 * @experimental Since version 1.15.0.
 	 * API is not yet finished and might change completely
+	 * @deprecated Since version 1.44.0.
 	 * @alias sap.ui.unified.SplitContainer
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -59,7 +71,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 			 * Whether to show the secondary content on the left ("Horizontal", default) or on the top ("Vertical").
 			 * @since 1.22.0
 			 */
-			orientation : {type : "sap.ui.core.Orientation", group : "Appearance", defaultValue : sap.ui.core.Orientation.Horizontal}
+			orientation : {type : "sap.ui.core.Orientation", group : "Appearance", defaultValue : Orientation.Horizontal}
 		},
 		defaultAggregation : "content",
 		aggregations : {
@@ -84,8 +96,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 	SplitContainer.prototype.init = function(){
 		this.bRtl  = sap.ui.getCore().getConfiguration().getRTL();
 
-		this._paneRenderer = new sap.ui.unified._ContentRenderer(this, this.getId() + "-panecntnt", "secondaryContent");
-		this._canvasRenderer = new sap.ui.unified._ContentRenderer(this, this.getId() + "-canvascntnt", "content");
+		this._paneRenderer = new library._ContentRenderer(this, this.getId() + "-panecntnt", "secondaryContent");
+		this._canvasRenderer = new library._ContentRenderer(this, this.getId() + "-canvascntnt", "content");
 
 	// Design decided that content does not need to be handled differently depending on device - remove
 	// comments if needed again...
@@ -170,7 +182,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 	SplitContainer.prototype._applySecondaryContentSize = function(){
 		// Only set if rendered...
 		if (this.getDomRef()) {
-			var bVertical = this.getOrientation() == sap.ui.core.Orientation.Vertical;
+			var bVertical = this.getOrientation() == Orientation.Vertical;
 			var sSize, sOtherSize;
 			var sDir, sOtherDir;
 			var sSizeValue = this.getSecondaryContentSize();
@@ -212,7 +224,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 				// ignored by parseInt.
 				// TODO: Cache the value.
 				var iHideDelay = parseInt(
-					Parameters.get("sapUiUfdSplitContAnimationDuration"),
+					Parameters.get("_sap_ui_unified_SplitContainer_AnimationDuration"),
 					10
 				);
 				// Maybe we could also allow "s"-values and then multiply everything below 20 with 1000...?
@@ -251,7 +263,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 
 	//////////////////////////////////////// Overridden Methods ////////////////////////////////////////
 
-	    //////////////////////////// Property "showSecondaryContent" ///////////////////////////////
+		//////////////////////////// Property "showSecondaryContent" ///////////////////////////////
 
 	SplitContainer.prototype.setShowSecondaryContent = function(bShow){
 		var bRendered = this.getDomRef();
@@ -319,7 +331,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 	};
 
 
-	    ////////////////////////////// Aggregation "secondaryContent" //////////////////////////////
+		////////////////////////////// Aggregation "secondaryContent" //////////////////////////////
 
 	SplitContainer.prototype.insertSecondaryContent = function(oContent, iIndex) {
 		return this._mod(function(bRendered){
@@ -353,4 +365,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 
 	return SplitContainer;
 
-}, /* bExport= */ true);
+});

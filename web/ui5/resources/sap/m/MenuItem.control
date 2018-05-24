@@ -10,7 +10,7 @@ It is derived from a core &lt;code&gt;sap.ui.core.Item&lt;/code&gt;.</documentat
     <properties>
         <property name="icon" type="sap.ui.core/string" group="Appearance">
             <documentation>Defines the icon, which belongs to the item.
-This can be an URI to an image or an icon font URI.</documentation>
+This can be a URI to an image or an icon font URI.</documentation>
         </property>
         <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>Defines whether the item should be visible on the screen. If set to &lt;code&gt;false&lt;/code&gt;,
@@ -31,7 +31,7 @@ a placeholder is rendered instead of the real item.</documentation>
                 <parameter name="propertyKey" type="sap.ui.core/string">
                     <documentation>The property name to be changed.</documentation>
                 </parameter>
-                <parameter name="propertyValue" type="any">
+                <parameter name="propertyValue" type="sap.ui.core/any">
                     <documentation>The new property value.</documentation>
                 </parameter>
             </parameters>

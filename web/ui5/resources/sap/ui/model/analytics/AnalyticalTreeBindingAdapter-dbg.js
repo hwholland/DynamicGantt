@@ -1,11 +1,11 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.model.odata.ODataAnnotations
-sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBinding', 'sap/ui/table/TreeAutoExpandMode', 'sap/ui/model/ChangeReason', 'sap/ui/model/odata/ODataTreeBindingAdapter', 'sap/ui/model/TreeBindingAdapter', 'sap/ui/model/TreeBindingUtils'],
+sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBinding', 'sap/ui/model/TreeAutoExpandMode', 'sap/ui/model/ChangeReason', 'sap/ui/model/odata/ODataTreeBindingAdapter', 'sap/ui/model/TreeBindingAdapter', 'sap/ui/model/TreeBindingUtils'],
 	function(jQuery, TreeBinding, AnalyticalBinding, TreeAutoExpandMode, ChangeReason, ODataTreeBindingAdapter, TreeBindingAdapter, TreeBindingUtils) {
 	"use strict";
 
@@ -399,7 +399,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBin
 				iRequestedLength = Math.min(oCurrentSection.length, iMaxGroupSize - oCurrentSection.startIndex);
 			}
 
-			//if we are in the autoexpand mode "bundled", supress additional requests during the tree traversal
+			//if we are in the autoexpand mode "bundled", suppress additional requests during the tree traversal
 			//paging is handled differently
 			var bSupressRequest = false;
 			if (oNode.autoExpand >= 0 && this._isRunningInAutoExpand(TreeAutoExpandMode.Bundled)) {
@@ -491,7 +491,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBin
 				if ((oChildNode.autoExpand >= 0 || oChildNode.nodeState.expanded) && this.isGrouped()) {
 					if (!this._mTreeState.collapsed[oChildNode.groupID]) {
 
-						// propagate teh selectAllMode to the childNode, but only if the parent node is flagged and we are still autoexpanding
+						// propagate the selectAllMode to the childNode, but only if the parent node is flagged and we are still autoexpanding
 						if (oChildNode.autoExpand >= 0 && oChildNode.parent.nodeState.selectAllMode && !this._mTreeState.deselected[oChildNode.groupID]) {
 							if (oChildNode.nodeState.selectAllMode === undefined) {
 								oChildNode.nodeState.selectAllMode = true;
@@ -639,13 +639,38 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBin
 				}
 			});
 
+			var aDeselectedNodeIds = [];
 			// also remove selections from child nodes of the collapsed node
 			jQuery.each(this._mTreeState.selected, function (sGroupID, oNodeState) {
 				if (jQuery.sap.startsWith(sGroupID, sGroupIDforCollapsingNode)) {
 					oNodeState.selectAllMode = false;
 					that.setNodeSelection(oNodeState, false);
+					aDeselectedNodeIds.push(sGroupID);
 				}
 			});
+			if (aDeselectedNodeIds.length) {
+				var selectionChangeParams = {
+					rowIndices: []
+				};
+				// Collect the changed indices
+				var iNodeCounter = 0;
+				this._map(this._oRootNode, function (oNode) {
+					if (!oNode || !oNode.isArtificial) {
+						iNodeCounter++;
+					}
+
+					if (oNode && aDeselectedNodeIds.indexOf(oNode.groupID) !== -1) {
+						if (oNode.groupID === this._sLeadSelectionGroupID) {
+							// Lead selection got deselected
+							selectionChangeParams.oldIndex = iNodeCounter;
+							selectionChangeParams.leadIndex = -1;
+						}
+						selectionChangeParams.rowIndices.push(iNodeCounter);
+					}
+				});
+
+				this._publishSelectionChanges(selectionChangeParams);
+			}
 		}
 
 		// only fire change if no autoexpand request is triggered:
@@ -792,7 +817,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', './AnalyticalBin
 	/**
 	 * Overrides the default from the TBA.
 	 * Returns the maximum number of currently selectable nodes, in this case the total number of leaves.
-	 * @returns
+	 * @returns {int} Maximum number of currently selectable node
 	 */
 	AnalyticalTreeBindingAdapter.prototype._getSelectableNodesCount = function (oNode) {
 		if (oNode) {

@@ -37,10 +37,24 @@ The following tags are supported:
 &lt;/ul&gt;
 &lt;p&gt;&lt;code&gt;class, style,&lt;/code&gt; and &lt;code&gt;target&lt;/code&gt; attributes are allowed.
 If &lt;code&gt;target&lt;/code&gt; is not set, links open in a new window by default.
-&lt;p&gt;Only safe &lt;code&gt;href&lt;/code&gt; attributes can be used. See {@link jQuery.sap.validateUrl}.</documentation>
+&lt;p&gt;Only safe &lt;code&gt;href&lt;/code&gt; attributes can be used. See {@link jQuery.sap.validateUrl}.
+
+&lt;b&gt;Note:&lt;/b&gt; Keep in mind that not supported HTML tags and
+the content nested inside them are both not rendered by the control.</documentation>
         </property>
         <property name="width" type="sap.ui.core/CSSSize" group="Appearance">
             <documentation>Optional width of the control in CSS units.</documentation>
+        </property>
+        <property name="convertLinksToAnchorTags" type="sap.m/LinkConversion" defaultValue="None" group="Behavior" since="1.45.5">
+            <documentation>Determines whether strings that appear to be links will be converted to HTML anchor tags,
+and what are the criteria for recognizing them.</documentation>
+        </property>
+        <property name="convertedLinksDefaultTarget" type="sap.ui.core/string" defaultValue="_blank" group="Behavior" since="1.45.5">
+            <documentation>Determines the &lt;code&gt;target&lt;/code&gt; attribute of the generated HTML anchor tags.
+
+&lt;b&gt;Note:&lt;/b&gt; Applicable only if &lt;code&gt;ConvertLinksToAnchorTags&lt;/code&gt; property is used with a value other than &lt;code&gt;sap.m.LinkConversion.None&lt;/code&gt;.
+Options are the standard values for the &lt;code&gt;target&lt;/code&gt; attribute of the HTML anchor tag:
+&lt;code&gt;_self&lt;/code&gt;, &lt;code&gt;_top&lt;/code&gt;, &lt;code&gt;_blank&lt;/code&gt;, &lt;code&gt;_parent&lt;/code&gt;, &lt;code&gt;_search&lt;/code&gt;.</documentation>
         </property>
         <property name="height" type="sap.ui.core/CSSSize" group="Appearance">
             <documentation>Optional height of the control in CSS units.</documentation>

@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.core.date.UniversalDate
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleData'],
-	function(jQuery, BaseObject, LocaleData) {
+sap.ui.define(['sap/ui/base/Object', 'sap/ui/core/LocaleData'],
+	function(BaseObject, LocaleData) {
 	"use strict";
 
 
@@ -58,8 +58,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 	 * Returns an instance of Date, based on the calendar type from the configuration, or as explicitly
 	 * defined by parameter. The object provides all methods also known on the JavaScript Date object.
 	 *
-	 * @param [Date] oDate the JavaScript Date object
-	 * @param [sap.ui.core.CalendarType] sCalendarType the type of the used calendar
+	 * @param {Date} oDate A JavaScript date object
+	 * @param {sap.ui.core.CalendarType} sCalendarType A calendar type
+	 * @returns {sap.ui.core.date.UniversalDate} A date instance
 	 * @public
 	 */
 	UniversalDate.getInstance = function(oDate, sCalendarType) {
@@ -71,7 +72,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 			sCalendarType = sap.ui.getCore().getConfiguration().getCalendarType();
 		}
 		clDate = UniversalDate.getClass(sCalendarType);
-		oInstance = jQuery.sap.newObject(clDate.prototype);
+		oInstance = Object.create(clDate.prototype);
 		oInstance.oDate = oDate;
 		oInstance.sCalendarType = sCalendarType;
 		return oInstance;
@@ -81,40 +82,35 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 	 * Returns a specific Date class, based on the calendar type from the configuration, or as explicitly
 	 * defined by parameter. The object provides all methods also known on the JavaScript Date object.
 	 *
-	 * @param [sap.ui.core.CalendarType] sCalendarType the type of the used calendar
+	 * @param {sap.ui.core.CalendarType} sCalendarType the type of the used calendar
 	 * @public
 	 */
 	UniversalDate.getClass = function(sCalendarType) {
-		var sClassName, clDate;
 		if (!sCalendarType) {
 			sCalendarType = sap.ui.getCore().getConfiguration().getCalendarType();
 		}
-		sClassName = "sap.ui.core.date." + sCalendarType;
-		jQuery.sap.require(sClassName);
-		clDate = jQuery.sap.getObject(sClassName);
-		return clDate;
+		return sap.ui.requireSync("sap/ui/core/date/" + sCalendarType);
 	};
 
 	/*
 	 * Loop through the Date class and create delegates of all Date API methods
 	 */
-	var aMethods = [
+	[
 		"getDate", "getMonth", "getFullYear", "getYear", "getDay", "getHours", "getMinutes", "getSeconds", "getMilliseconds",
 		"getUTCDate", "getUTCMonth", "getUTCFullYear", "getUTCDay", "getUTCHours", "getUTCMinutes", "getUTCSeconds", "getUTCMilliseconds",
 		"getTime", "valueOf", "getTimezoneOffset", "toString", "toDateString",
 		"setDate", "setFullYear", "setYear", "setMonth", "setHours", "setMinutes", "setSeconds", "setMilliseconds",
 		"setUTCDate", "setUTCFullYear", "setUTCMonth", "setUTCHours", "setUTCMinutes", "setUTCSeconds", "setUTCMilliseconds"
-    ];
-	jQuery.each(aMethods, function(iIndex, sName) {
+	].forEach(function(sName) {
 		UniversalDate.prototype[sName] = function() {
 			return this.oDate[sName].apply(this.oDate, arguments);
 		};
 	});
 
 	/**
-	 * Returns the JS date object representing the current calendar date value
+	 * Returns the JS date object representing the current calendar date value.
 	 *
-	 * @return {Date}
+	 * @returns {Date} The JS date object representing the current calendar date value
 	 * @public
 	 */
 	UniversalDate.prototype.getJSDate = function() {
@@ -122,9 +118,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 	};
 
 	/**
-	 * Returns the calendar type of the current instance of a UniversalDate
+	 * Returns the calendar type of the current instance of a UniversalDate.
 	 *
-	 * @return [string] the calendar type
+	 * @returns {sap.ui.core.CalendarType} The calendar type of the date
 	 */
 	UniversalDate.prototype.getCalendarType = function() {
 		return this.sCalendarType;
@@ -158,6 +154,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 	UniversalDate.prototype.setUTCWeek = function(oWeek) {
 		var oDate = UniversalDate.getFirstDateOfWeek(this.sCalendarType, oWeek.year || this.getFullYear(), oWeek.week);
 		this.setUTCFullYear(oDate.year, oDate.month, oDate.day);
+	};
+	UniversalDate.prototype.getQuarter = function() {
+		return Math.floor((this.getMonth() / 3));
+	};
+	UniversalDate.prototype.getUTCQuarter = function() {
+		return Math.floor((this.getUTCMonth() / 3));
+	};
+	UniversalDate.prototype.getDayPeriod = function() {
+		if (this.getHours() < 12) {
+			return 0;
+		} else {
+			return 1;
+		}
+	};
+	UniversalDate.prototype.getUTCDayPeriod = function() {
+		if (this.getUTCHours() < 12) {
+			return 0;
+		} else {
+			return 1;
+		}
 	};
 
 
@@ -243,7 +259,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleDat
 			oFirstDay.setUTCDate(oFirstDay.getUTCDate() - 1);
 			iDayCount--;
 		}
-		// If less then min days are left, first week is one week later
+		// If less than min days are left, first week is one week later
 		if (iDayCount < iMinDays) {
 			oFirstDay.setUTCDate(oFirstDay.getUTCDate() + 7);
 		}

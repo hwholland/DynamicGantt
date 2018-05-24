@@ -4,8 +4,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>sap.m.Table</title>
 
+<script src="shared-config.js"></script>
 <script src="../../../resources/sap-ui-core.js" data-sap-ui-xx-bindingSyntax="complex"
-	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m" data-sap-ui-theme="sap_bluecrystal">
+	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m">
 </script>
 
 <script>
@@ -147,7 +148,8 @@
 	}
 
 	var oSalaryFooter = new sap.m.Label({
-		text : "9.470.095 EUR"
+		text : "9.470.095 EUR",
+		tooltip: "Sum"
 	});
 
 	var oModel = new sap.ui.model.json.JSONModel();
@@ -162,7 +164,7 @@
 
 	var oModes = new sap.m.Select({
 		tooltip: "Mode",
-		width: "10rem",
+		width: "11rem",
 		items: aModes,
 		change: function(oEvent) {
 			var sMode = oEvent.getParameter("selectedItem").getKey();
@@ -179,7 +181,7 @@
 
 	var oTypes = new sap.m.Select({
 		tooltip: "Item Type",
-		width: "10rem",
+		width: "11rem",
 		items: aTypes,
 		change: function(oEvent) {
 			var sType = oEvent.getParameter("selectedItem").getKey();
@@ -260,7 +262,9 @@
 			}),
 			new sap.m.ToolbarSpacer(),
 			new sap.ui.core.Icon({
-				src : "sap-icon://add-filter"
+				src : "sap-icon://add-filter",
+				decorative: false,
+				press: function() {}
 			})
 		]
 	});
@@ -366,7 +370,9 @@
 				text: "{linkText}"
 			}),
 			new sap.ui.core.Icon({
-				src : "sap-icon://{src}"
+				src : "sap-icon://{src}",
+				decorative: false,
+				press: function() {}
 			}),
 			new sap.m.RatingIndicator({
 				value: "{rating}"

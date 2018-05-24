@@ -1,29 +1,56 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.RatingIndicator.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/IconPool', 'sap/ui/core/theming/Parameters'],
-	function(jQuery, library, Control, IconPool, Parameters) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/theming/Parameters',
+	'./RatingIndicatorRenderer',
+	'jquery.sap.keycodes'
+],
+	function(jQuery, library, Control, Parameters, RatingIndicatorRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.m.RatingIndicatorVisualMode
+	var RatingIndicatorVisualMode = library.RatingIndicatorVisualMode;
 
 
 
 	/**
 	 * Constructor for a new RatingIndicator.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
-	 *
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
+	 * Enables users to rate an item on a numeric scale.
 	 * @class
-	 * Is used to rate content. The amount of rating symbols can be specified, as well as the URIs to the
-	 * image icons which shall be used as rating symbols. When the user performs a rating, an event is fired.
+	 * The rating indicator is used to display a specific number of icons that are used to rate an item. Additionally it is also used to display the average over all ratings.
+	 * <h3>Structure</h3>
+	 * <ul>
+	 * <li>The rating indicator can use different icons (default: stars) which are defined as URIs in the properties <code>iconHovered</code>, <code>iconSelected</code> and <code>iconUnselected</code>.</li>
+	 * <li>The rating indicator can display half-values ({@link sap.m.RatingIndicatorVisualMode visualMode} = Half) when it is used to show the average. Half-values can't be selected by the user.</li>
+	 * </ul>
+	 * <h3>Usage</h3>
+	 * The preferred number of icons is between 5 (default) and 7.
+	 * <h3>Responsive Behavior</h3>
+	 * You can display icons in 4 recommended sizes:
+	 * <ul>
+	 * <li>large - 32px</li>
+	 * <li>medium(default) - 22px</li>
+	 * <li>small - 16px</li>
+	 * <li>XS - 12px</li>
+	 * </ul>
+	 * <b>Note:</b> If no icon size is set, the rating indicator will set it according to the content density.</h4>
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -31,106 +58,103 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @alias sap.m.RatingIndicator
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
-	var RatingIndicator = Control.extend("sap.m.RatingIndicator", /** @lends sap.m.RatingIndicator.prototype */ { metadata : {
+	var RatingIndicator = Control.extend("sap.m.RatingIndicator", /** @lends sap.m.RatingIndicator.prototype */ { metadata: {
 
-		library : "sap.m",
-		properties : {
+		interfaces: ["sap.ui.core.IFormContent"],
+		library: "sap.m",
+		properties: {
 			/**
 			 * Value "true" is required to let the user rate with this control. It is recommended to set this parameter to "false" for the "Small" size which is meant for indicating a value only
 			 */
-			enabled : {type : "boolean", group : "Behavior", defaultValue : true},
+			enabled: {type: "boolean", group: "Behavior", defaultValue: true},
 
 			/**
 			 * The number of displayed rating symbols
 			 */
-			maxValue : {type : "int", group : "Behavior", defaultValue : 5},
+			maxValue: {type: "int", group: "Behavior", defaultValue: 5},
 
 			/**
 			 * The indicated value of the rating
 			 */
-			value : {type : "float", group : "Behavior", defaultValue : 0, bindable : "bindable"},
+			value: {type: "float", group: "Behavior", defaultValue: 0, bindable: "bindable"},
 
 			/**
 			 * The Size of the image or icon to be displayed. The default value depends on the theme. Please be sure that the size is corresponding to a full pixel value as some browsers don't support subpixel calculations. Recommended size is 1.375rem (22px) for normal, 1rem (16px) for small, and 2rem (32px) for large icons correspondingly.
 			 */
-			iconSize : {type : "sap.ui.core.CSSSize", group : "Behavior", defaultValue : null},
+			iconSize: {type: "sap.ui.core.CSSSize", group: "Behavior", defaultValue: null},
 
 			/**
 			 * The URI to the icon font icon or image that will be displayed for selected rating symbols. A star icon will be used if the property is not set
 			 */
-			iconSelected : {type : "sap.ui.core.URI", group : "Behavior", defaultValue : null},
+			iconSelected: {type: "sap.ui.core.URI", group: "Behavior", defaultValue: null},
 
 			/**
 			 * The URI to the icon font icon or image that will be displayed for all unselected rating symbols. A star icon will be used if the property is not set
 			 */
-			iconUnselected : {type : "sap.ui.core.URI", group : "Behavior", defaultValue : null},
+			iconUnselected: {type: "sap.ui.core.URI", group: "Behavior", defaultValue: null},
 
 			/**
 			 * The URI to the icon font icon or image that will be displayed for hovered rating symbols. A star icon will be used if the property is not set
 			 */
-			iconHovered : {type : "sap.ui.core.URI", group : "Behavior", defaultValue : null},
+			iconHovered: {type: "sap.ui.core.URI", group: "Behavior", defaultValue: null},
 
 			/**
 			 * Defines how float values are visualized: Full, Half (see enumeration RatingIndicatorVisualMode)
 			 */
-			visualMode : {type : "sap.m.RatingIndicatorVisualMode", group : "Behavior", defaultValue : sap.m.RatingIndicatorVisualMode.Half}
+			visualMode: {type: "sap.m.RatingIndicatorVisualMode", group: "Behavior", defaultValue: RatingIndicatorVisualMode.Half},
+
+			/**
+			 * The RatingIndicator in displayOnly mode is not interactive, not editable, not focusable, and not in the tab chain. This setting is used for forms in review mode.
+			 * @since 1.50.0
+			 */
+			displayOnly : {type : "boolean", group : "Behavior", defaultValue : false},
+
+			/**
+			 * Defines whether the user is allowed to edit the RatingIndicator. If editable is false the control is focusable, and in the tab chain but not interactive.
+			 * @since 1.52.0
+			 */
+			editable : {type : "boolean", group : "Behavior", defaultValue : true}
 		},
-		aggregations : {
-
-			/**
-			 * The internal selected rating icons are managed in this aggregation
-			 */
-			_iconsSelected : {type : "sap.ui.core.Control", multiple : true, singularName : "_iconsSelected", visibility : "hidden"},
-
-			/**
-			 * The internal unselected rating icons are managed in this aggregation
-			 */
-			_iconsUnselected : {type : "sap.ui.core.Control", multiple : true, singularName : "_iconsUnselected", visibility : "hidden"},
-
-			/**
-			 * The internal hovered rating icons are managed in this aggregation
-			 */
-			_iconsHovered : {type : "sap.ui.core.Control", multiple : true, singularName : "_iconsHovered", visibility : "hidden"}
-		},
-		associations : {
+		associations: {
 			/**
 			 * Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).
 			 */
-			ariaDescribedBy : { type: "sap.ui.core.Control", multiple: true, singularName: "ariaDescribedBy" },
+			ariaDescribedBy: {type: "sap.ui.core.Control", multiple: true, singularName: "ariaDescribedBy"},
 
 			/**
 			 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).
 			 */
-			ariaLabelledBy : { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
+			ariaLabelledBy: {type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy"}
 		},
-		events : {
+		events: {
 
 			/**
 			 * The event is fired when the user has done a rating.
 			 */
-			change : {
-				parameters : {
+			change: {
+				parameters: {
 
 					/**
 					 * The rated value
 					 */
-					value : {type : "int"}
+					value: {type: "int"}
 				}
 			},
 
 			/**
 			 * This event is triggered during the dragging period, each time the rating value changes.
 			 */
-			liveChange : {
-				parameters : {
+			liveChange: {
+				parameters: {
 
 					/**
 					 * The current value of the rating after a live change event.
 					 */
-					value : {type : "float"}
+					value: {type: "float"}
 				}
 			}
-		}
+		},
+		designtime: "sap/m/designtime/RatingIndicator.designtime"
 	}});
 
 	///**
@@ -159,10 +183,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		this._fHoverValue = 0;
 
 		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
-
-		if (RatingIndicator._pxCalculations === undefined) {
-			RatingIndicator._pxCalculations = [];
-		}
 	};
 
 	/**
@@ -206,9 +226,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * Sets the icon size value. The method is automatically updating the UI components if the control has been rendered before.
+	 * Sets the icon size value. The method automatically updates the UI components if the control has been rendered before.
 	 *
-	 * @param {sap.ui.core.CSSSize} sIconSize
+	 * @param {sap.ui.core.CSSSize} sIconSize The size of the icon
 	 * @returns {sap.m.RatingIndicator} Returns <code>this</code> to facilitate method chaining.
 	 * @override
 	 * @public
@@ -226,93 +246,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * Sets the selected icon without rerendering the control.
-	 *
-	 * @param {sap.ui.core.URI} sURI
-	 * @returns {sap.m.RatingIndicator} Returns <code>this</code> to facilitate method chaining.
-	 * @override
-	 * @public
-	 */
-	RatingIndicator.prototype.setIconSelected = function (sURI) {
-		if (sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb") {
-			this.setProperty("iconSelected", sURI, true);
-			return;
-		}
-
-		var oItems = this.getAggregation("_iconsSelected"),
-			i = 0;
-
-		if (oItems) {
-			for (; i < oItems.length; i++) {
-				oItems[i].setSrc(sURI);
-			}
-		}
-
-		this.setProperty("iconSelected", sURI, true);
-		return this;
-	};
-
-	/**
 	 * Handler for theme changing
 	 *
-	 * @param oEvent {jQuery.Event} oEvent The event object passed to the event handler.
+	 * @param {jQuery.Event} oEvent The event object passed to the event handler.
 	 */
-	RatingIndicator.prototype.onThemeChanged = function (oEvent){
+	RatingIndicator.prototype.onThemeChanged = function (oEvent) {
 		this.invalidate(); // triggers a re-rendering
-	};
-
-	/**
-	 * Sets the unselected icon without rerendering the control.
-	 *
-	 * @param {sap.ui.core.URI} sURI
-	 * @returns {sap.m.RatingIndicator} Returns <code>this</code> to facilitate method chaining.
-	 * @override
-	 * @public
-	 */
-	RatingIndicator.prototype.setIconUnselected = function (sURI) {
-		if (sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb") {
-			this.setProperty("iconUnselected", sURI, true);
-			return;
-		}
-
-		var oItems = this.getAggregation("_iconsUnselected"),
-			i = 0;
-
-		if (oItems) {
-			for (; i < oItems.length; i++) {
-				oItems[i].setSrc(sURI);
-			}
-		}
-
-		this.setProperty("iconUnselected", sURI, true);
-		return this;
-	};
-
-	/**
-	 * Sets the hovered icon without rerendering the control.
-	 *
-	 * @param {sap.ui.core.URI} sURI
-	 * @returns {sap.m.RatingIndicator} Returns <code>this</code> to facilitate method chaining.
-	 * @override
-	 * @public
-	 */
-	RatingIndicator.prototype.setIconHovered = function (sURI) {
-		if (sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb") {
-			this.setProperty("iconHovered", sURI, true);
-			return;
-		}
-
-		var oItems = this.getAggregation("_iconsHovered"),
-			i = 0;
-
-		if (oItems) {
-			for (; i < oItems.length; i++) {
-				oItems[i].setSrc(sURI);
-			}
-		}
-
-		this.setProperty("iconHovered", sURI, true);
-		return this;
 	};
 
 	/**
@@ -322,7 +261,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	RatingIndicator.prototype.onBeforeRendering = function () {
 		var fVal = this.getValue(),
-			iMVal = this.getMaxValue();
+			iMVal = this.getMaxValue(),
+			sIconSizeLessParameter;
 
 		if (fVal > iMVal) {
 			this.setValue(iMVal);
@@ -332,8 +272,20 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			jQuery.sap.log.warning("Set value to 0 because value is < 0 (" + fVal + " < 0).");
 		}
 
-		this._iPxIconSize = this._toPx(this.getIconSize()) || 16;
-		this._iPxPaddingSize = this._toPx(Parameters.get("sapUiRIIconPadding")) || 4;
+		if (this.getIconSize()) {
+			this._iPxIconSize = this._toPx(this.getIconSize());
+			sIconSizeLessParameter = "sapUiRIIconPadding" + this._getIconSizeLabel(this._iPxIconSize);
+			this._iPxPaddingSize = this._toPx(Parameters.get(sIconSizeLessParameter));
+		} else {
+			if (this.getDisplayOnly()) {
+				this._iPxIconSize = this._toPx(Parameters.get("sapUiRIIconSizeDisplayOnly"));
+				this._iPxPaddingSize = this._toPx(Parameters.get("sapUiRIIconPaddingDisplayOnly"));
+			} else {
+				var sDensityMode = this._getDensityMode();
+				this._iPxIconSize = this._toPx(Parameters.get("sapUiRIIconSize" + sDensityMode));
+				this._iPxPaddingSize = this._toPx(Parameters.get("sapUiRIIconPadding" + sDensityMode));
+			}
+		}
 	};
 
 	/**
@@ -341,7 +293,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 *
 	 * @private
 	 */
-	RatingIndicator.prototype.onAfterRendering = function() {
+	RatingIndicator.prototype.onAfterRendering = function () {
 		this._updateAriaValues();
 	};
 
@@ -351,13 +303,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	RatingIndicator.prototype.exit = function () {
-		delete this._iIconCounter;
-		delete this._fStartValue;
-		delete this._iPxIconSize;
-		delete this._iPxPaddingSize;
-		delete this._fHoverValue;
+		this._iIconCounter = null;
+		this._fStartValue = null;
+		this._iPxIconSize = null;
+		this._iPxPaddingSize = null;
+		this._fHoverValue = null;
 
-		delete this._oResourceBundle;
+		this._oResourceBundle = null;
 	};
 
 	/* =========================================================== */
@@ -368,24 +320,62 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/*           begin: internal methods and properties            */
 	/* =========================================================== */
 
+	/**
+	 * get the form factor (Cozy/Compact/Condensed)
+	 * @returns {string} The form factor
+	 * @private
+	 */
+	RatingIndicator.prototype._getDensityMode = function () {
+		var aDensityModes = [
+			{name: "Cozy", style: "sapUiSizeCozy"},
+			{name: "Compact", style: "sapUiSizeCompact"},
+			{name: "Condensed", style: "sapUiSizeCondensed"}
+		],
+		sDensityClass, sDensityMode, i;
+		for (i in aDensityModes) {
+			sDensityClass = aDensityModes[i].style;
+			if (jQuery("html").hasClass(sDensityClass) || jQuery("." + sDensityClass).length > 0) {
+				sDensityMode = aDensityModes[i].name;
+			}
+		}
+		return sDensityMode || aDensityModes[0].name;
+	};
+
+	/**
+	 * Get icon size label
+	 * @param {number} iPxIconSize The size of the icon in pixels
+	 * @returns {string} The icon size
+	 * @private
+	 */
+	RatingIndicator.prototype._getIconSizeLabel = function (iPxIconSize) {
+		switch (true) {
+			case (iPxIconSize >= 32):
+				return "L";
+			case (this._iPxIconSize >= 22):
+				return "M";
+			case (this._iPxIconSize >= 16):
+				return "S";
+			case (this._iPxIconSize >= 12):
+				return "XS";
+			default:
+				return "M";
+		}
+	};
+
 	RatingIndicator.prototype._toPx = function (cssSize) {
-		cssSize = cssSize || 0;
-		var scopeVal = RatingIndicator._pxCalculations[cssSize],
+		var scopeVal = Math.round(cssSize),
 			scopeTest;
 
-		if (scopeVal === undefined) {
-			if (cssSize) {
+		if (isNaN(scopeVal)) {
+			if (RegExp("^(auto|0)$|^[+-]?[0-9].?([0-9]+)?(px|em|rem|ex|%|in|cm|mm|pt|pc)$").test(cssSize)) {
 				scopeTest = jQuery('<div style="display: none; width: ' + cssSize + '; margin: 0; padding:0; height: auto; line-height: 1; font-size: 1; border:0; overflow: hidden">&nbsp;</div>').appendTo(sap.ui.getCore().getStaticAreaRef());
 				scopeVal = scopeTest.width();
+				scopeTest.remove();
 			} else {
-				scopeTest = jQuery('<div style="height: 1.375rem; overflow: hidden;">&nbsp;</div>').appendTo(sap.ui.getCore().getStaticAreaRef());
-				scopeVal = scopeTest.height();
+				return false;
 			}
-			scopeTest.remove();
 		}
-
-		RatingIndicator._pxCalculations[cssSize] = Math.round(scopeVal);
-		return RatingIndicator._pxCalculations[cssSize];
+		return Math.round(scopeVal);
 	};
 
 	/**
@@ -402,13 +392,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			$UnselectedContainerDiv = this.$("unsel-wrapper"),
 			$HoveredDiv = this.$("hov"),
 
-			// calculate padding, size, and measurement
+		// calculate padding, size, and measurement
 			fIconSize = this._iPxIconSize,
 			fIconPadding = this._iPxPaddingSize,
 			sIconSizeMeasure = "px",
 			iSymbolCount = this.getMaxValue(),
 
-			// calculate the width for the selected elements and the complete width
+		// calculate the width for the selected elements and the complete width
 			iSelectedWidth = fValue * fIconSize + (Math.round(fValue) - 1) * fIconPadding,
 
 			iWidth = iSymbolCount * (fIconSize + fIconPadding) - fIconPadding;
@@ -441,7 +431,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 	/**
 	 * Updates the ARIA values.
-	 *
+	 * @param {string} newValue The new ARIA value
 	 * @private
 	 */
 	RatingIndicator.prototype._updateAriaValues = function (newValue) {
@@ -461,76 +451,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		var sValueText = this._oResourceBundle.getText("RATING_VALUEARIATEXT", [fValue, fMaxValue]);
 		$this.attr("aria-valuetext", sValueText);
-	};
-
-	/**
-	 * Load the icons/images of the rating for the different rating states.
-	 *
-	 * @param {int} iState The icon to be returned (0 = {@link #getIconSelected iconSelected},  1 = {@link #getIconUnselected  iconUnselected}, 2 = {@link #getIconHovered iconHovered}
-	 * @returns {object} either an sap.m.Image or an sap.m.Icon depending on the URI of the control parameters
-	 * @private
-	 */
-	RatingIndicator.prototype._getIcon = function (iState) {
-
-		// single initialization
-		var oImage = null,
-			sURI = null;
-
-		if (sap.ui.getCore().getConfiguration().getTheme() !== "sap_hcb") {
-			// preset the variables based on the state requested
-			switch (iState) {
-				case 1: // unselected
-					sURI = this.getIconUnselected() || IconPool.getIconURI("favorite");
-					break;
-				case 2: // Hovered
-					sURI = this.getIconHovered() || IconPool.getIconURI("favorite");
-					break;
-				case 0: // Selected
-					sURI = this.getIconSelected() || IconPool.getIconURI("favorite");
-					break;
-			}
-		} else {
-			// preset the variables based on the state requested
-			switch (iState) {
-				case 1: // unselected
-					if (this.getEnabled() === false) {
-						sURI = IconPool.getIconURI("favorite");
-					} else {
-						sURI = IconPool.getIconURI("unfavorite");
-					}
-					break;
-				case 2: // Hovered
-					sURI = IconPool.getIconURI("favorite");
-					break;
-				case 0: // Selected
-					sURI = IconPool.getIconURI("favorite");
-					break;
-			}
-		}
-
-
-		if (sURI) {
-			oImage = IconPool.createControlByURI({
-				id: this.getId() + "__icon" + this._iIconCounter++,
-				src: sURI,
-				useIconTooltip: false
-			}, sap.m.Image);
-
-			// store the icons in the corresponding internal aggregation
-			switch (iState) {
-			case 1: // unselected
-				this.addAggregation("_iconsUnselected", oImage, true);
-				break;
-			case 2: // Hovered
-				this.addAggregation("_iconsHovered", oImage, true);
-				break;
-			case 0: // Selected
-				this.addAggregation("_iconsSelected", oImage, true);
-				break;
-			}
-		}
-
-		return oImage;
 	};
 
 	/**
@@ -571,7 +491,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		// check if event is happening inside of the control area (minus padding of the control)
 		if (oEventPosition.pageX < oControlRoot.offset().left) {
 			selectedValue = 0;
-		} else if ((oEventPosition.pageX - oControlRoot.offset().left) >  oControlRoot.innerWidth() - fControlPadding) {
+		} else if ((oEventPosition.pageX - oControlRoot.offset().left) > oControlRoot.innerWidth() - fControlPadding) {
 			selectedValue = this.getMaxValue();
 		} else {
 
@@ -608,14 +528,76 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			}
 			fValue = Math.round(fValue);
 		} else { // for display we round to the correct behavior
-			if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Full) {
+			if (this.getVisualMode() === RatingIndicatorVisualMode.Full) {
 				fValue = Math.round(fValue);
-			} else if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Half) {
+			} else if (this.getVisualMode() === RatingIndicatorVisualMode.Half) {
 				fValue = Math.round(fValue * 2) / 2;
 			}
 		}
 
 		return parseFloat(fValue);
+	};
+
+	/**
+	 * Gets the new value after a single value increase.
+	 *
+	 * @returns {float} The increased rating value.
+	 * @private
+	 */
+	RatingIndicator.prototype._getIncreasedValue = function () {
+		var iMaxValue = this.getMaxValue(),
+			fValue = this.getValue() + this._getValueChangeStep();
+
+		if (fValue > iMaxValue) {
+			fValue = iMaxValue;
+		}
+
+		return fValue;
+	};
+
+	/**
+	 * Gets the new value after a single value decrease.
+	 *
+	 * @returns {float} The decreased rating value.
+	 * @private
+	 */
+	RatingIndicator.prototype._getDecreasedValue = function () {
+		var fValue = this.getValue() - this._getValueChangeStep();
+
+		if (fValue < 0) {
+			fValue = 0;
+		}
+
+		return fValue;
+	};
+
+	/**
+	 * Gets the step that should be used for single keyboard value change operation.
+	 *
+	 * @returns {float} The value change step.
+	 * @private
+	 */
+	RatingIndicator.prototype._getValueChangeStep = function () {
+		var sVisualMode = this.getVisualMode(),
+			fStep;
+
+		switch (sVisualMode) {
+			case RatingIndicatorVisualMode.Full:
+				fStep = 1;
+				break;
+			case RatingIndicatorVisualMode.Half:
+				// If the value is half, we return 0.5 in order to allow/force only full value selection via keyboard.
+				if (this.getValue() % 1 === 0.5) {
+					fStep = 0.5;
+				} else {
+					fStep = 1;
+				}
+				break;
+			default:
+				jQuery.sap.log.warning("VisualMode not supported", sVisualMode);
+		}
+
+		return fStep;
 	};
 
 	/* =========================================================== */
@@ -634,33 +616,33 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	RatingIndicator.prototype.ontouchstart = function (oEvent) {
+		if (oEvent.which == 2 || oEvent.which == 3 || !this.getEnabled() || this.getDisplayOnly()  || !this.getEditable()) {
+			return;
+		}
 
-		if (this.getEnabled()) {
+		// mark the event for components that needs to know if the event was handled by this Control
+		oEvent.setMarked();
 
-			// mark the event for components that needs to know if the event was handled by this Control
-			oEvent.setMarked();
+		if (!this._touchEndProxy) {
+			this._touchEndProxy = jQuery.proxy(this._ontouchend, this);
+		}
 
-			if (!this._touchEndProxy) {
-				this._touchEndProxy = jQuery.proxy(this._ontouchend, this);
-			}
+		if (!this._touchMoveProxy) {
+			this._touchMoveProxy = jQuery.proxy(this._ontouchmove, this);
+		}
 
-			if (!this._touchMoveProxy) {
-				this._touchMoveProxy = jQuery.proxy(this._ontouchmove, this);
-			}
+		// here also bound to the mouseup mousemove event to enable it working in
+		// desktop browsers
+		jQuery(document).on("touchend.sapMRI touchcancel.sapMRI mouseup.sapMRI", this._touchEndProxy);
+		jQuery(document).on("touchmove.sapMRI mousemove.sapMRI", this._touchMoveProxy);
 
-			// here also bound to the mouseup mousemove event to enable it working in
-			// desktop browsers
-			jQuery(document).on("touchend touchcancel mouseup", this._touchEndProxy);
-			jQuery(document).on("touchmove mousemove", this._touchMoveProxy);
+		this._fStartValue = this.getValue();
+		var fValue = this._calculateSelectedValue(oEvent);
 
-			this._fStartValue = this.getValue();
-			var fValue = this._calculateSelectedValue(oEvent);
-
-			if (fValue >= 0 && fValue <= this.getMaxValue()) {
-				this._updateUI(fValue, true);
-				if (this._fStartValue !== fValue) {	// if the value if not the same
-					this.fireLiveChange({ value: fValue });
-				}
+		if (fValue >= 0 && fValue <= this.getMaxValue()) {
+			this._updateUI(fValue, true);
+			if (this._fStartValue !== fValue) {	// if the value if not the same
+				this.fireLiveChange({value: fValue});
 			}
 		}
 	};
@@ -708,16 +690,22 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		if (this.getEnabled()) {
 			var fValue = this._calculateSelectedValue(oEvent);
+
+			// When the value is 1 and the first star is pressed we should toggle to 0
+			if (this.getValue() === 1 && fValue === 1) {
+				fValue = 0;
+			}
+
 			this.setProperty("value", fValue, true);
 			this._updateUI(fValue, false);
 
 			if (this._fStartValue !== fValue) {	// if the value if not the same
-				this.fireLiveChange({ value: fValue });
-				this.fireChange({ value: fValue });
+				this.fireLiveChange({value: fValue});
+				this.fireChange({value: fValue});
 			}
 
-			jQuery(document).off("touchend touchcancel mouseup", this._touchEndProxy);
-			jQuery(document).off("touchmove mousemove", this._touchMoveProxy);
+			jQuery(document).off("touchend.sapMRI touchcancel.sapMRI mouseup.sapMRI", this._touchEndProxy);
+			jQuery(document).off("touchmove.sapMRI mousemove.sapMRI", this._touchMoveProxy);
 
 			// remove unused properties
 			delete this._fStartValue;
@@ -739,36 +727,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	RatingIndicator.prototype.onsapincrease = function (oEvent) {
-		var fValue = this.getValue(),
-			fOldValue = this.getValue(),
-			iMaxValue = this.getMaxValue();
-
-		if (!this.getEnabled()) {
-			return false;
-		}
-
-		if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Full) {
-			fValue += 1;
-		} else if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Half) {
-			fValue += 0.5;
-		}
-
-		if (fValue > iMaxValue) {
-			fValue = iMaxValue;
-		}
-
-		this.setValue(fValue);
-
-		if (fValue !== fOldValue) {
-			this.fireLiveChange({ value: fValue });
-			this.fireChange({ value: fValue });
-		}
-
-		// stop browsers default behavior
-		if (oEvent) {
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
-		}
+		var fValue = this._getIncreasedValue();
+		this._handleKeyboardValueChange(oEvent, fValue);
 	};
 
 	/**
@@ -778,91 +738,30 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	RatingIndicator.prototype.onsapdecrease = function (oEvent) {
-		var fValue = this.getValue(),
-			fOldValue = this.getValue();
-
-		if (!this.getEnabled()) {
-			return false;
-		}
-
-		if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Full) {
-			fValue -= 1;
-		} else if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Half) {
-			fValue -= 0.5;
-		}
-
-		if (fValue < 0) {
-			fValue = 0;
-		}
-
-		this.setValue(fValue);
-
-		if (fValue !== fOldValue) {
-			this.fireLiveChange({ value: fValue });
-			this.fireChange({ value: fValue });
-		}
-
-		// stop browsers default behavior
-		if (oEvent) {
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
-		}
+		var fValue = this._getDecreasedValue();
+		this._handleKeyboardValueChange(oEvent, fValue);
 	};
 
 	/**
-	* Keyboard navigation event when the user presses Home.
-	*
-	* @param {jQuery.Event} oEvent
-	* @private
-	*/
+	 * Keyboard navigation event when the user presses Home.
+	 *
+	 * @param {jQuery.Event} oEvent oEvent The event object.
+	 * @private
+	 */
 	RatingIndicator.prototype.onsaphome = function (oEvent) {
-		var fValue =  0,
-			fOldValue = this.getValue();
-
-		if (!this.getEnabled()) {
-			return false;
-		}
-
-		this.setValue(fValue);
-
-		if (fValue !== fOldValue) {
-			this.fireLiveChange({ value: fValue });
-			this.fireChange({ value: fValue });
-		}
-
-		// stop browsers default behavior
-		if (oEvent) {
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
-		}
+		var fValue = 0;
+		this._handleKeyboardValueChange(oEvent, fValue);
 	};
 
 	/**
 	 * Keyboard navigation event when the user presses End.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent oEvent The event object.
 	 * @private
 	 */
 	RatingIndicator.prototype.onsapend = function (oEvent) {
-		var fValue =  this.getMaxValue(),
-			fOldValue = this.getValue();
-
-		if (!this.getEnabled()) {
-			return false;
-		}
-
-		this.setValue(fValue);
-
-		if (fValue !== fOldValue) {
-			this.fireLiveChange({ value: fValue });
-			this.fireChange({ value: fValue });
-		}
-
-		// stop browsers default behavior
-		if (oEvent) {
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
-		}
+		var fValue = this.getMaxValue();
+		this._handleKeyboardValueChange(oEvent, fValue);
 	};
 
 	/**
@@ -872,31 +771,91 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	RatingIndicator.prototype.onsapselect = function (oEvent) {
-		var fValue = this.getValue(),
-			iMaxValue = this.getMaxValue(),
-			fOldValue = this.getValue();
+		var fValue;
 
-		if (!this.getEnabled()) {
+		if (this.getValue() === this.getMaxValue()) { // if the max value is reached, set to 0
+			fValue = 0;
+		} else {
+			fValue = this._getIncreasedValue();
+		}
+
+		this._handleKeyboardValueChange(oEvent, fValue);
+	};
+
+	/**
+	 * Keyboard handling event when the user presses number keys.
+	 *
+	 * @param {jQuery.Event} oEvent oEvent The event object.
+	 * @returns {boolean} False, if the control is in read-only mode
+	 * @private
+	 */
+	RatingIndicator.prototype.onkeyup = function (oEvent) {
+		var iMaxValue = this.getMaxValue();
+
+		if (!this.getEnabled() || this.getDisplayOnly() || !this.getEditable()) {
 			return false;
 		}
 
-		if (fValue === iMaxValue) {
-			fValue = 0; // start with 0 if we are at maximum
-		} else if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Full) {
-			fValue += 1;
-		} else if (this.getVisualMode() === sap.m.RatingIndicatorVisualMode.Half) {
-			fValue += 0.5;
+		switch (oEvent.which) {
+			case jQuery.sap.KeyCodes.DIGIT_0:
+			case jQuery.sap.KeyCodes.NUMPAD_0:
+				this.setValue(0);
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_1:
+			case jQuery.sap.KeyCodes.NUMPAD_1:
+				this.setValue(1);
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_2:
+			case jQuery.sap.KeyCodes.NUMPAD_2:
+				this.setValue(Math.min(2, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_3:
+			case jQuery.sap.KeyCodes.NUMPAD_3:
+				this.setValue(Math.min(3, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_4:
+			case jQuery.sap.KeyCodes.NUMPAD_4:
+				this.setValue(Math.min(4, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_5:
+			case jQuery.sap.KeyCodes.NUMPAD_5:
+				this.setValue(Math.min(5, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_6:
+			case jQuery.sap.KeyCodes.NUMPAD_6:
+				this.setValue(Math.min(6, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_7:
+			case jQuery.sap.KeyCodes.NUMPAD_7:
+				this.setValue(Math.min(7, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_8:
+			case jQuery.sap.KeyCodes.NUMPAD_8:
+				this.setValue(Math.min(8, iMaxValue));
+				break;
+			case jQuery.sap.KeyCodes.DIGIT_9:
+			case jQuery.sap.KeyCodes.NUMPAD_9:
+				this.setValue(Math.min(9, iMaxValue));
+				break;
+		}
+	};
+
+	/**
+	 * Handle the event and set the new value.
+	 *
+	 * @param {jQuery.Event} oEvent The event object.
+	 * @param {float} fValue The new value that should be set.
+	 * @private
+	 */
+	RatingIndicator.prototype._handleKeyboardValueChange = function (oEvent, fValue) {
+		if (!this.getEnabled() || this.getDisplayOnly() || !this.getEditable()) {
+			return;
 		}
 
-		if (fValue > iMaxValue) {
-			fValue = iMaxValue;
-		}
-
-		this.setValue(fValue);
-
-		if (fValue !== fOldValue) {
-			this.fireLiveChange({ value: fValue });
-			this.fireChange({ value: fValue });
+		if (fValue !== this.getValue()) {
+			this.setValue(fValue);
+			this.fireLiveChange({value: fValue});
+			this.fireChange({value: fValue});
 		}
 
 		// stop browsers default behavior
@@ -906,70 +865,27 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 	};
 
-	/**
-	* Keyboard handling event when the user presses number keys.
-	*
-	* @param {jQuery.Event} oEvent
-	* @private
-	*/
-	RatingIndicator.prototype.onkeyup = function(oEvent) {
-		var iMaxValue = this.getMaxValue();
-
-		if (!this.getEnabled()) {
-			return false;
-		}
-
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_0 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_0) {
-			this.setValue(0);
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_1 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_1) {
-			this.setValue(1);
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_2 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_2) {
-			this.setValue(Math.min(2, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_3 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_3) {
-			this.setValue(Math.min(3, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_4 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_4) {
-			this.setValue(Math.min(4, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_5 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_5) {
-			this.setValue(Math.min(5, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_6 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_6) {
-			this.setValue(Math.min(6, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_7 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_7) {
-			this.setValue(Math.min(7, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_8 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_8) {
-			this.setValue(Math.min(8, iMaxValue));
-		}
-		if (oEvent.which === jQuery.sap.KeyCodes.DIGIT_9 || oEvent.which === jQuery.sap.KeyCodes.NUMPAD_9) {
-			this.setValue(Math.min(9, iMaxValue));
-		}
-	};
-
 	/* =========================================================== */
 	/*           end: event handlers                               */
 	/* =========================================================== */
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+ 	 * @returns {sap.m.RatingIndicator} this instance for method chaining
+	 * @see sap.ui.core.Control#getAccessibilityInfo
 	 * @protected
 	 */
-	RatingIndicator.prototype.getAccessibilityInfo = function() {
+	RatingIndicator.prototype.getAccessibilityInfo = function () {
 		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		return {
 			role: "slider",
 			type: oBundle.getText("ACC_CTR_TYPE_RATING"),
 			description: oBundle.getText("ACC_CTR_STATE_RATING", [this.getValue(), this.getMaxValue()]),
-			focusable: this.getEnabled(),
-			enabled: this.getEnabled()
+			focusable: this.getEnabled() && !this.getDisplayOnly(),
+			enabled: this.getEnabled(),
+			editable: this.getEditable()
 		};
 	};
 
 	return RatingIndicator;
 
-}, /* bExport= */ true);
+});

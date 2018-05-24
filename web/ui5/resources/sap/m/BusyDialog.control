@@ -3,7 +3,30 @@
     <name>BusyDialog</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>BusyDialog is used to indicate that the system is busy and the user has to wait.</documentation>
+    <documentation>BusyDialog is used to indicate that the system is busy.
+&lt;h3&gt;Overview&lt;/h3&gt;
+When the busy dialog is displayed, the whole application is blocked.
+&lt;h3&gt;Structure&lt;/h3&gt;
+The busy dialog can hold several elements, most of which are optional.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;title&lt;/code&gt; - A title for the dialog. By default, there is no title.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;text&lt;/code&gt; - A text displayed above the busy animation.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;showCancelButton&lt;/code&gt; - An optional Cancel button to stop the execution.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;customIcon&lt;/code&gt; - An optional alternative icon to use as a busy animation.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The operation lasts more than one second.&lt;/li&gt;
+&lt;li&gt;You want to indicate loading in a page-to-page navigation (lightweight version).&lt;/li&gt;
+&lt;li&gt;Offer a Cancel button if you expect the process to run more than 10 seconds.&lt;/li&gt;
+&lt;li&gt; If you do not show a title or text, use the {@link sap.ui.core.InvisibleText invisible text} control to provide the reason for users with assistive technologies.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The screen is not supposed to be blocked. Use a {@link sap.m.BusyIndicator} for the specific application part.&lt;/li&gt;
+&lt;li&gt;Do not use the title of the busy dialog. Provide a precise text describing the operation in &lt;code&gt;text&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" defaultValue="" group="Appearance">

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, we want to illustrate how to navigate to a page with a custom transition animation. Both forward and backward navigation will use the “flip” transition but with a different direction. We will create a simple link on the Employee view that triggers a flip navigation to a page that displays the resume data of a certain employee. Pressing the Back button will navigate back to the Employee view with a reversed flip transition."/>
 <meta name="description" content="In this step, we want to illustrate how to navigate to a page with a custom transition animation. Both forward and backward navigation will use the “flip” transition but with a different direction. We will create a simple link on the Employee view that triggers a flip navigation to a page that displays the resume data of a certain employee. Pressing the Back button will navigate back to the Employee view with a reversed flip transition."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=08272377035804124"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=7757277409655238"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7757277409655238"/>
 <title>Step 8: Navigate with Flip Transition</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio3e5f6f3e163f46ecaef376950258e5e4">
 <div id="wrapper"><div id="container">
@@ -44,25 +30,25 @@
 			
 			<div class="fig fignone" id="loio3e5f6f3e163f46ecaef376950258e5e4__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_hvx_trn_ns" src="loioe56a3f094dbd4b01b8f6a1e57e9366d5_HiRes.png"/>
+				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_hvx_trn_ns" src="loioe56a3f094dbd4b01b8f6a1e57e9366d5_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Employee Details</span> page with <span class="ph uicontrol">Flip to Resume</span>
 					link</div></div></div>
 
 			<div class="fig fignone" id="loio3e5f6f3e163f46ecaef376950258e5e4__fig_kpz_tqn_ns"><div class="figcontainer">
 				
-				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_egj_5rn_ns" src="loio6ab9122f07db475c892926ed86ece7f7_HiRes.png"/>
+				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_egj_5rn_ns" src="loio6ab9122f07db475c892926ed86ece7f7_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Resume</span> page with multiple tabs</div></div></div>
 
 			<div class="fig fignone" id="loio3e5f6f3e163f46ecaef376950258e5e4__fig_lh1_5qn_ns"><div class="figcontainer">
 				
-				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_tzx_5rn_ns" src="loio36aff02e6b6e48f2aa097afa29f16cb4_HiRes.png"/>
+				<img class="image" id="loio3e5f6f3e163f46ecaef376950258e5e4__image_tzx_5rn_ns" src="loio36aff02e6b6e48f2aa097afa29f16cb4_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Not Found</span> page for resume</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.08/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.08/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.08/preview">Routing and Navigation - Step
 					8</a></span>.</p>
 
@@ -76,7 +62,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/Employee.view.xml</div><div type="webapp/view/employee/Employee.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.Employee"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
@@ -116,7 +102,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/Employee.controller.js</div><div type="webapp/controller/employee/Employee.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -153,8 +139,8 @@
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -194,23 +180,28 @@
 			}</span>],
 			"targets": {
 				"home": {
+					"viewId": "home",
 					"viewName": "Home",
 					"viewLevel" : 1
 				},
 				"notFound": {
+					"viewId": "notFound",
 					"viewName": "NotFound",
 					"transition": "show"
 				},
 				"employees": {
+					"viewId": "employees",
 					"viewPath": "sap.ui.demo.nav.view.employee",
 					"viewName": "EmployeeList",
 					"viewLevel" : 2
 				},
 				"employee": {
+					"viewId": "employee",
 					"viewName": "employee.Employee",
 					"viewLevel" : 3
 				}<span class="ph emphasis emphasis">,
 				"employeeResume": {
+					"viewId": "resume",
 					"viewName": "employee.Resume",
 					"viewLevel" : 4,
 					"transition": "flip"
@@ -264,7 +255,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/Resume.view.xml (New)</div><div type="webapp/view/employee/Resume.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.Resume"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
@@ -306,14 +297,14 @@
 			<p class="p">In the <samp class="ph codeph">IconTabBar</samp> we display four tabs. Three of them simply use a
 					<samp class="ph codeph">Text</samp> control to display the data from the service. The
 					<span class="ph uicontrol">Projects</span> tab uses a nested XML view to display the
-				projects of the employee. <span class="ph"><span class="ph pname">SAPUI5</span></span> takes care of loading the XML view automatically
+				projects of the employee. <span class="ph"><span class="ph pname">OpenUI5</span></span> takes care of loading the XML view automatically
 				when the user navigates to the <span class="ph uicontrol">Resume</span> page. </p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/controller/employee/Resume.controller.js (New)</div><div type="webapp/controller/employee/Resume.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -357,17 +348,17 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/ResumeProjects.view.xml (New)</div><div type="webapp/view/employee/ResumeProjects.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">
 <span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
 	&lt;Text text="{Projects}" /&gt;
 &lt;/mvc:View&gt;</span></pre></div>
 
 			<div class="p">Create a file <samp class="ph codeph">ResumeProjects.view.xml</samp> in the <samp class="ph codeph">webapp/view/employee</samp> folder. This view does not have a controller as we
 				don’t need it. It just displays a <samp class="ph codeph">Text</samp> control with the projects text of the selected employee. It illustrates that using
-				nested views works just fine in combination with navigation and routing in <span class="ph"><span class="ph pname">SAPUI5</span></span>. <div class="note note"><span class="notetitle">Note</span> 
+				nested views works just fine in combination with navigation and routing in <span class="ph"><span class="ph pname">OpenUI5</span></span>. <div class="note note"><span class="notetitle">Note</span> 
 					<p class="p">For more complex applications, the performance is significantly increased if parts of the UI are only loaded when the user is actively
 						selecting it. In this example, the view is always loaded even though the user never decided to display the project information. In the
-						next steps, we will extend the UI so that the content is loaded <span class="q">“lazy”</span> by <span class="ph"><span class="ph pname">SAPUI5</span></span> only when the filter item is clicked. The back-end service will
+						next steps, we will extend the UI so that the content is loaded <span class="q">“lazy”</span> by <span class="ph"><span class="ph pname">OpenUI5</span></span> only when the filter item is clicked. The back-end service will
 						fetch the data only on request and the UI will only have to be updated with the selected data instead of loading all data.</p>
 
 				</div>
@@ -377,7 +368,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp><span class="ph emphasis emphasis">...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"><span class="ph emphasis emphasis">...
 ResumeOf=Resume of
 Info=Info
 Projects=Projects
@@ -404,7 +395,7 @@ FlipToResume.tooltip=See the resume of this employee</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="f96d2522a5ca4382a274ae3c6d002ca0.html" title="In this step, we implement a feature that allows the user to click on an employee in the list to see additional details of the employee. A route pattern can have one or more mandatory parameters to identify objects in an app.">Step 7: Navigate to Routes with Mandatory Parameters</a><br/>
@@ -422,19 +413,5 @@ FlipToResume.tooltip=See the resume of this employee</span></pre></div>
 	
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 8: Navigate with Flip Transition";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

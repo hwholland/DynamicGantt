@@ -1,11 +1,11 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define([],
+	function() {
 		"use strict";
 
 		/**
@@ -35,6 +35,12 @@ sap.ui.define(['jquery.sap.global'],
 			oRm.addClass("sapMTPColumn");
 			if (oControl.getIsExpanded()) {
 				oRm.addClass("sapMTPSliderExpanded");
+			}
+			if (!oControl.getIsCyclic()) {
+				oRm.addClass("sapMTimePickerSliderShort");
+			}
+			if (!oControl._getEnabled()) {
+				oRm.addClass("sapMTPDisabled");
 			}
 			oRm.writeClasses();
 
@@ -77,9 +83,11 @@ sap.ui.define(['jquery.sap.global'],
 
 			oRm.write("<div");
 			oRm.addClass("sapMTimePickerSlider");
+			TimePickerSliderRenderer.addItemValuesCssClass(oRm, oControl);
+			oRm.writeClasses();
+
 			oRm.writeAttribute("unselectable", "on");
 			oRm.writeStyles();
-			oRm.writeClasses();
 			oRm.write(">");
 
 			//render selection frame, same height - border height
@@ -93,11 +101,20 @@ sap.ui.define(['jquery.sap.global'],
 			for (iRepetition = 1; iRepetition <= nContentRepetitions; iRepetition++) {
 				for (iIndex = 0; iIndex < aItems.length; iIndex++) {
 					//unselectable for IE9
-					oRm.write("<li class=\"sapMTimePickerItem\" unselectable=\"on\"");
+					oRm.write("<li");
+
+					oRm.addClass("sapMTimePickerItem");
+					if (!aItems[iIndex].getVisible()) {
+						oRm.addClass("TPSliderItemHidden");
+					}
+					oRm.writeClasses();
+
 					//WAI-ARIA region
 					oRm.writeAccessibilityState(oControl, {
 						role: "listitem"
 					});
+					oRm.writeAttribute("unselectable", "on");
+
 					oRm.write(">");
 					oRm.writeEscaped(aItems[iIndex].getText());
 					oRm.write("</li>");
@@ -113,6 +130,23 @@ sap.ui.define(['jquery.sap.global'],
 			oRm.write("</div>");
 
 			oRm.write("</div>");
+		};
+
+		/**
+		 * Adds a class to the current element in the RenderManager's buffer based on the number of visible items in the slider.
+		 *
+		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+		 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered
+		 * @protected
+		 */
+		TimePickerSliderRenderer.addItemValuesCssClass = function(oRm, oControl) {
+			var iVisibleItemsLength = oControl.getItems().filter(function(item) {
+				return item.getVisible();
+			}).length;
+
+			if (iVisibleItemsLength > 2 && iVisibleItemsLength < 13) {
+				oRm.addClass("SliderValues" + iVisibleItemsLength.toString());
+			}
 		};
 
 		return TimePickerSliderRenderer;

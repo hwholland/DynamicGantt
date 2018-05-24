@@ -1,11 +1,11 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides the history handler sap.ui.core.History
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'jquery.sap.storage'],
 	function(jQuery, BaseObject) {
 	"use strict";
 
@@ -22,8 +22,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.38.33
-	 * @constructor
+	 * @version 1.54.5
 	 * @alias sap.ui.core.History
 	 * @protected
 	 */
@@ -40,7 +39,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 			this._iMaxHistory = mSettings.max ? mSettings.max : 100;
 			this._sHistoryId = sHistoryPrefix + sId;
 
-			jQuery.sap.require("jquery.sap.storage");
 			this._oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local);
 
 			this._fFilter = mSettings.filter ? mSettings.filter : function(sHistoryValue, sValue) {

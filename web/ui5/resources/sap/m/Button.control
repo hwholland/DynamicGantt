@@ -3,26 +3,46 @@
     <name>Button</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Enables users to trigger actions. For the button UI, you can define some text or an icon, or both.</documentation>
+    <documentation>Enables users to trigger actions.
+
+&lt;h3&gt;Overview&lt;/h3&gt;
+
+The user triggers an action by clicking or tapping the &lt;code&gt;Button&lt;/code&gt; or by pressing
+certain keyboard keys, such as Enter.
+
+&lt;h3&gt;Usage&lt;/h3&gt;
+
+For the &lt;code&gt;Button&lt;/code&gt; UI, you can define text, icon, or both. You can also specify
+whether the text or the icon is displayed first.
+
+You can choose from a set of predefined {@link sap.m.ButtonType ButtonTypes} that offer
+different styling to correspond to the triggered action.
+
+You can set the &lt;code&gt;Button&lt;/code&gt; as enabled or disabled. An enabled &lt;code&gt;Button&lt;/code&gt; can be
+pressed by clicking or tapping it and it changes its style to provide visual feedback to the user
+that it is pressed or hovered over with the mouse cursor. A disabled &lt;code&gt;Button&lt;/code&gt; appears
+inactive and cannot be pressed.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" group="Misc">
-            <documentation>Button text</documentation>
+            <documentation>Determines the text of the &lt;code&gt;Button&lt;/code&gt;.</documentation>
         </property>
         <property name="type" type="sap.m/ButtonType" defaultValue="Default" group="Appearance">
-            <documentation>Type of a button (e.g. Default, Accept, Reject, Back, etc.)</documentation>
+            <documentation>Defines the &lt;code&gt;Button&lt;/code&gt; type.</documentation>
         </property>
         <property name="width" type="sap.ui.core/CSSSize" group="Misc">
-            <documentation>Defines the width of the button.</documentation>
+            <documentation>Defines the &lt;code&gt;Button&lt;/code&gt; width.</documentation>
         </property>
         <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
-            <documentation>Boolean property to enable the control (default is true). Buttons that are disabled have other colors than enabled ones, depending on custom settings</documentation>
+            <documentation>Determines whether the &lt;code&gt;Button&lt;/code&gt; is enabled (default is set to &lt;code&gt;true&lt;/code&gt;).
+A disabled &lt;code&gt;Button&lt;/code&gt; has different colors depending on the {@link sap.m.ButtonType ButtonType}.</documentation>
         </property>
         <property name="icon" type="sap.ui.core/URI" group="Appearance">
-            <documentation>Icon to be displayed as graphical element within the button. This can be an image or an icon from the icon font.</documentation>
+            <documentation>Defines the icon to be displayed as graphical element within the &lt;code&gt;Button&lt;/code&gt;.
+It can be an image or an icon from the icon font.</documentation>
         </property>
         <property name="iconFirst" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
-            <documentation>If set to true (default), the display sequence is 1. icon 2. control text</documentation>
+            <documentation>Determines whether the icon is displayed before the text.</documentation>
         </property>
         <property name="activeIcon" type="sap.ui.core/URI" group="Misc">
             <documentation>The source property of an alternative icon for the active (depressed) state of the button.
@@ -40,11 +60,11 @@ If only one version of image is provided, set this value to false to avoid the a
     </properties>
     <events>
         <event name="tap" allowPreventDefault="false">
-            <documentation>Event is fired when the user taps the control.</documentation>
-            <deprecation since="1.20.0">This event is deprecated, use the press event instead.</deprecation>
+            <documentation>Fired when the user taps the control.</documentation>
+            <deprecation since="1.20">replaced by &lt;code&gt;press&lt;/code&gt; event</deprecation>
         </event>
         <event name="press" allowPreventDefault="false">
-            <documentation>Event is fired when the user clicks on the control.</documentation>
+            <documentation>Fired when the user clicks or taps on the control.</documentation>
         </event>
     </events>
     <associations>

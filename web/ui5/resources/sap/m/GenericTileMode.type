@@ -11,5 +11,11 @@
         <value name="HeaderMode">
             <documentation>Header mode (Four lines for the header and one line for the subtitle).</documentation>
         </value>
+        <value name="LineMode" since="1.44.0">
+            <documentation>Line mode (Implemented for both, cozy and compact densities. Generic Tile is displayed as in-line element, header and subheader are displayed in one line.
+In case the texts need more than one line, the representation depends on the used density.
+&lt;b&gt;Cozy:&lt;/b&gt; The text will be truncated and the full text is shown in a tooltip as soon as the tile is hovered (desktop only).
+&lt;b&gt;Compact:&lt;/b&gt; Header and subheader are rendered continuously spanning multiple lines, no tooltip is provided).</documentation>
+        </value>
     </enumeration>
 </simple-type>

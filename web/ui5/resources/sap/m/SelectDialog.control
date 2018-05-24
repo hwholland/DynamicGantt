@@ -3,15 +3,50 @@
     <name>SelectDialog</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A SelectDialog is a dialog containing a list, search functionality to filter it and a confirmation/cancel button. The control can be used when the user should select one or multiple items out of many.
-
-The list used in the SelectDialog is a growing list and can be filled with a any kind of list item. The search field triggers the events "search" and "liveChange" where a filter function can be applied to the list binding.
-
-After selecting an item in single selection mode or after confirming in multi selection mode, the dialog will be closed and the event "confirm" is fired with the items that have been selected. By default, the selection will also be reset to allow for a new selection when opening the dialog again.
-
-When cancelling the selection, the event "change" will be fired and the selection is restored to the state when the dialog was opened.
-
-NOTE: The growing functionality of the list does not support two-way Binding, so if you use this control with a JSON model make sure the binding mode is set to "OneWay" and that you update the selection model manually with the items passed in the "confirm" event.</documentation>
+    <documentation>&lt;h3&gt;Overview&lt;/h3&gt;
+A SelectDialog is a dialog containing a list, search functionality to filter it and a confirmation/cancel button.
+The list used in the dialog is a growing list and can be filled with any kind of list item.
+&lt;h3&gt;Structure&lt;/h3&gt;
+&lt;h4&gt;Dialog structure&lt;/h4&gt;
+The select dialog has the following components:
+&lt;ul&gt;
+&lt;li&gt;Header - title of the dialog&lt;/li&gt;
+&lt;li&gt;Search field - input field to enter search terms&lt;/li&gt;
+&lt;li&gt;Info toolbar (only in multi-select) - displays the number of currently selected items&lt;/li&gt;
+&lt;li&gt;Content - {@link sap.m.StandardListItem  standard list items}, {@link sap.m.DisplayListItem
+display list items} or {@link sap.m.FeedListItem feed list items}&lt;/li&gt;
+&lt;li&gt;Button toolbar - for confirmation/cancellation buttons &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;List structure &amp; selection&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt; The search field triggers the events &lt;code&gt;search&lt;/code&gt; and &lt;code&gt;liveChange&lt;/code&gt;
+where a filter function can be applied to the list binding. &lt;/li&gt;
+&lt;li&gt; The growing functionality of the list does not support two-way Binding, so if you use this control with a JSON model
+make sure the binding mode is set to &lt;code&gt;OneWay&lt;/code&gt; and that you update the selection model manually with
+the items passed in the &lt;code&gt;confirm&lt;/code&gt; event. &lt;/li&gt;
+&lt;li&gt; In the multi-select mode of the select dialog, checkboxes are provided for choosing multiple entries. &lt;/li&gt;
+&lt;li&gt; You can set &lt;code&gt;rememberSelections&lt;/code&gt; to true to store the current selection and load this state
+when the dialog is opened again. &lt;/li&gt;
+&lt;li&gt; When cancelling the selection, the event &lt;code&gt;change&lt;/code&gt; will be fired and the selection is restored
+to the state when the dialog was opened. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You  need to select one or more entries from a comprehensive list that contains multiple attributes or values. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt; You need to pick one item from a predefined set of options. Use {@link sap.m.Select select}
+or {@link sap.m.ComboBox combobox} instead. &lt;/li&gt;
+&lt;li&gt; You need to select a range of item. Use {@link sap.ui.comp.valuehelpdialog.ValueHelpDialog value help dialog instead. &lt;/li&gt;
+&lt;li&gt; You need to be able to add your own values to an existing list. Use a {@link sap.m.Dialog dialog} instead. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt; On phones, the select dialog takes up the whole screen. &lt;/li&gt;
+&lt;li&gt; On desktop and tablet devices, the select dialog appears as a popover. &lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Appearance">
@@ -30,7 +65,9 @@ NOTE: The growing functionality of the list does not support two-way Binding, so
             <documentation>Determines the content width of the inner dialog. For more information, see the dialog documentation.</documentation>
         </property>
         <property name="rememberSelections" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.18">
-            <documentation>This flag controls whether the dialog clears the selection after the confirm event has been fired. If the dialog needs to be opened multiple times in the same context to allow for corrections of previous user inputs, set this flag to "true".</documentation>
+            <documentation>This flag controls whether the dialog clears the selection after the confirm event has been fired. If the dialog needs to be opened multiple times in the same context to allow for corrections of previous user inputs, set this flag to "true".
+
+&lt;b&gt;Note:&lt;/b&gt; The sap.m.SelectDialog uses {@link sap.m.ListBase#rememberSelections this} property of the ListBase and therefore its limitations also apply here.</documentation>
         </property>
         <property name="contentHeight" type="sap.ui.core/CSSSize" group="Dimension">
             <documentation>Determines the content height of the inner dialog. For more information, see the dialog documentation.</documentation>

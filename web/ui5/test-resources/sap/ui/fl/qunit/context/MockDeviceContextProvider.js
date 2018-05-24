@@ -1,7 +1,5 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * ${copyright}
  */
 sap.ui.define(['sap/ui/fl/context/BaseContextProvider'], function(BaseContextProvider) {
 	"use strict";
@@ -13,7 +11,7 @@ sap.ui.define(['sap/ui/fl/context/BaseContextProvider'], function(BaseContextPro
 	 * @extends sap.ui.fl.context.BaseContextProvider
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version ${version}
 	 *
 	 * @constructor
 	 * @private

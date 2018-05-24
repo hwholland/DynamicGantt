@@ -17,6 +17,9 @@ It can provide sub items.</documentation>
         <property name="hasExpander" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
             <documentation>Specifies if the item has an expander.</documentation>
         </property>
+        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.52">
+            <documentation>Specifies if the item should be shown.</documentation>
+        </property>
     </properties>
     <events>
         <event name="select" allowPreventDefault="false">

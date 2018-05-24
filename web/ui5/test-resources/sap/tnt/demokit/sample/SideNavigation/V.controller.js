@@ -1,26 +1,23 @@
 sap.ui.define([
 		'jquery.sap.global',
-		'sap/ui/core/mvc/Controller',
-		'sap/m/Popover',
-		'sap/m/Button'
-	], function(jQuery, Controller, Popover, Button) {
+		'sap/ui/core/mvc/Controller'
+	], function(jQuery, Controller) {
 	"use strict";
 
-	var Controller = Controller.extend("sap.tnt.sample.SideNavigation.V", {
+	return Controller.extend("sap.tnt.sample.SideNavigation.V", {
 
-		onInit: function () {
+		onCollapseExpandPress: function () {
+			var oSideNavigation = this.byId('sideNavigation');
+			var bExpanded = oSideNavigation.getExpanded();
 
+			oSideNavigation.setExpanded(!bExpanded);
 		},
 
-		onCollapseExapandPress: function (event) {
-			var sideNavigation = this.getView().byId('sideNavigation');
-			var expanded = !sideNavigation.getExpanded();
+		onHideShowSubItemPress: function () {
+			var navListItem = this.byId('subItemThree');
 
-			sideNavigation.setExpanded(expanded);
+			navListItem.setVisible(!navListItem.getVisible());
 		}
 	});
-
-
-	return Controller;
 
 });

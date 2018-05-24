@@ -1,18 +1,18 @@
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit,sinon */
+
 jQuery.sap.require("sap.ui.fl.registry.ChangeTypeMetadata");
 
 (function(ChangeTypeMetadata) {
+	"use strict";
 
-	module("sap.ui.fl.registry.ChangeTypeMetadata", {
-		setup: function() {
+	QUnit.module("sap.ui.fl.registry.ChangeTypeMetadata", {
+		beforeEach: function() {
 		},
-		teardown: function() {
+		afterEach: function() {
 		}
 	});
 
-	test("constructor - required params and their getter", function() {
+	QUnit.test("constructor - required params and their getter", function(assert) {
 		//Arrange
 		var mParam = {
 			name: "ABC",
@@ -23,23 +23,25 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeTypeMetadata");
 		var instance = new ChangeTypeMetadata(mParam);
 
 		//Assert
-		equal(instance.getName(), "ABC");
-		equal(instance.getChangeHandler(), "myChangeHandler");
+		assert.equal(instance.getName(), "ABC");
+		assert.equal(instance.getChangeHandler(), "myChangeHandler");
 	});
 
-	test("constructor - shall log error messages for missing mandatory parameters", function() {
+	QUnit.test("constructor - shall log error messages for missing mandatory parameters", function(assert) {
 		//Arrange
 		var errorLogStub = sinon.stub(jQuery.sap.log, "error");
 
 		//Act
-		var instance = new ChangeTypeMetadata({});
+		/*eslint-disable no-new*/
+		new ChangeTypeMetadata({});
+		/*eslint-enable no-new*/
 
 		//Assert
 		sinon.assert.calledTwice(errorLogStub);
 		errorLogStub.restore();
 	});
 
-	test("constructor - all params and their getter", function() {
+	QUnit.test("constructor - all params and their getter", function(assert) {
 		//Arrange
 		var mParam = {
 			name: "ABC",
@@ -54,12 +56,12 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeTypeMetadata");
 		var instance = new ChangeTypeMetadata(mParam);
 
 		//Assert
-		equal(instance.getName(), "ABC");
-		equal(instance.getChangeHandler(), "myChangeHandler");
-		equal(instance.getLabel(), "myLabelKey");
-		equal(instance.getTooltip(), "myTooltipKey");
-		equal(instance.getIcon(), "myIconKey");
-		equal(instance.getSortIndex(), 5);
+		assert.equal(instance.getName(), "ABC");
+		assert.equal(instance.getChangeHandler(), "myChangeHandler");
+		assert.equal(instance.getLabel(), "myLabelKey");
+		assert.equal(instance.getTooltip(), "myTooltipKey");
+		assert.equal(instance.getIcon(), "myIconKey");
+		assert.equal(instance.getSortIndex(), 5);
 	});
 
 }(sap.ui.fl.registry.ChangeTypeMetadata));

@@ -8,11 +8,11 @@
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta charset="utf-8">
-		<title>qUnit Page for jquery.sap.script</title>
+		<title>QUnit Page for jquery.sap.script</title>
 
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
 			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true">
 		</script>
 
@@ -193,7 +193,8 @@
 
 			QUnit.module("jQuery.sap.getUriParameters");
 
-			QUnit.test("empty query string", 0, function(assert) {
+			QUnit.test("empty query string", function(assert) {
+				assert.expect(0);
 				var oParams = jQuery.sap.getUriParameters("/service");
 				// TODO how to check ? assert.ok(jQuery.isEmptyObject(oParams));
 			});
@@ -248,6 +249,27 @@
 			QUnit.test("basic test", function(assert) {
 				var myid = jQuery.sap.uid();
 				assert.ok(myid);
+			});
+
+			// -------------------------------------------------------------------------------
+			// hashCode
+			// -------------------------------------------------------------------------------
+
+			QUnit.module("hashCode");
+
+			QUnit.test("empty string", function(assert) {
+				var s = "";
+				assert.equal(jQuery.sap.hashCode(s), 0, "empty string hash-code is 0");
+			});
+
+			QUnit.test("equality", function(assert) {
+				var s = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...";
+				assert.strictEqual(jQuery.sap.hashCode(s), jQuery.sap.hashCode(s), "same string - same hash-code");
+			});
+
+			QUnit.test("inequality", function(assert) {
+				var s = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...";
+				assert.notEqual(jQuery.sap.hashCode(s), jQuery.sap.hashCode(s + "."), "different string - different hash-code");
 			});
 
 			// -------------------------------------------------------------------------------
@@ -345,6 +367,11 @@
 				assert.equal(jQuery.sap.equal([1, 2], []), false, "[1, 2], []");
 				assert.equal(jQuery.sap.equal([], []), true, "[], []");
 				assert.equal(jQuery.sap.equal([1, 2], {1:1, 2:2, length:2}), false, "[1, 2], {1:1, 2:2, length:2}");
+				assert.equal(jQuery.sap.equal([undefined], [undefined]), true, "[undefined], [undefined]");
+
+
+				assert.equal(jQuery.sap.equal([1, 2], [1, 2, 3], true), true, "[1, 2], [1, 2, 3], true");
+				assert.equal(jQuery.sap.equal([1, 2, 3], [1, 2], true), false, "[1, 2, 3], [1, 2], true");
 			});
 
 			QUnit.test("object", function(assert) {
@@ -357,6 +384,10 @@
 				assert.equal(jQuery.sap.equal({}, {}), true, "{}, {}");
 				assert.equal(jQuery.sap.equal({1:1}, [1]), false, "{1:1}, [1]");
 				assert.equal(jQuery.sap.equal({}, null), false, "{}, null");
+				assert.equal(jQuery.sap.equal({a: undefined}, {a: undefined}), true, "{a: undefined}, {a: undefined}");
+
+				assert.equal(jQuery.sap.equal({a:1, b:2}, {a:1, b:2, c:3}, true), true, "{a:1, b:2}, {a:1, b:2, c:3}, true");
+				assert.equal(jQuery.sap.equal({a:1, b:2, c:3}, {a:1, b:2}, true), false, "{a:1, b:2, c:3}, {a:1, b:2}, true");
 			});
 
 			QUnit.test("recursion", function(assert) {
@@ -375,6 +406,27 @@
 				b = {a:{a:{a:{a:{a:{a:{a:{a:{a:{a:{a:0}}}}}}}}}}};
 				assert.equal(jQuery.sap.equal(a, b), false, "deep object");
 				assert.equal(jQuery.sap.equal(a, b, 100), true, "deep object");
+			});
+
+			QUnit.test("DOM node", function(assert) {
+				assert.equal(jQuery.sap.equal(document.createElement("div"), document.createElement("div")), true, "div, div");
+				assert.equal(jQuery.sap.equal(document.createElement("div"), document.createElement("span")), false, "div, span");
+				assert.equal(jQuery.sap.equal(document.createElement("div"), { nodeName: true, namespaceURI: true }), false, "div, fake node");
+				assert.equal(jQuery.sap.equal(document.createElement("div"), true), false, "div, true");
+				assert.equal(jQuery.sap.equal(document.createElement("div"), 1), false, "div, 1");
+				assert.equal(jQuery.sap.equal(document.createElement("div"), "div"), false, "div, \"div\"");
+
+				function createDivWithSpan(spanText) {
+					var div = document.createElement("div");
+					var span = document.createElement("span");
+					span.innerText = spanText;
+					div.appendChild(span);
+					return div;
+				}
+
+				assert.equal(jQuery.sap.equal(createDivWithSpan("foo"), createDivWithSpan("foo")), true, "div (/w span), div (/w span)");
+				assert.equal(jQuery.sap.equal(createDivWithSpan("foo"), createDivWithSpan("bar")), false, "div (/w span), div (/w span)");
+				assert.equal(jQuery.sap.equal(createDivWithSpan("foo"), document.createElement("div")), false, "div (/w span), div");
 			});
 
 			// -------------------------------------------------------------------------------
@@ -1249,7 +1301,7 @@
 				assert.strictEqual(oTokenizer.getIndex(), 7, "index after setIndex");
 				assert.strictEqual(oTokenizer.getCh(), "}");
 
-				throws(function() {
+				assert.throws(function() {
 					oTokenizer.setIndex(0);
 				}, /Must not set index 0 before previous index 7/, "setIndex must not go back in text");
 				oTokenizer.setIndex(42);

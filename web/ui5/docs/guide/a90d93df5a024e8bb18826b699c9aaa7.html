@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="UI messages reference a control. They are handled and processed by the control message processor and are propagated to the message manager."/>
 <meta name="description" content="UI messages reference a control. They are handled and processed by the control message processor and are propagated to the message manager."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=40207103697754676"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=4501102736214829"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4501102736214829"/>
 <title>UI Messages</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioa90d93df5a024e8bb18826b699c9aaa7">
 <div id="wrapper"><div id="container">
@@ -88,7 +74,9 @@ sap.ui.getCore().getMessageManager().registerObject(oInput, true);</pre></div>
 
 				<div class="note note"><span class="notetitle">Note</span> 
 					<p class="p">If you don't set the second attribute of <samp class="ph codeph">registerObject</samp> to
-							<samp class="ph codeph">true</samp>, the event is canceled without any message.</p>
+						<samp class="ph codeph">true</samp>, the event is canceled without any message. 
+						<span class="ph">For more information, see the <a class="xref" href="https://ui5.sap.com/sdk/#/api/sap.ui.core.message.MessageManager/methods/registerObject" alt="https://ui5.sap.com/sdk/#/api/sap.ui.core.message.MessageManager/methods/registerObject" title="https://ui5.sap.com/sdk/#/api/sap.ui.core.message.MessageManager/methods/registerObject">API Reference: <samp class="ph codeph">sap.ui.core.message.MessageManager.registerObject</samp></a>.</span>
+						</p>
 
 				</div>
 
@@ -99,10 +87,10 @@ sap.ui.getCore().getMessageManager().registerObject(oInput, true);</pre></div>
 		<div class="section"><div class="section_title">Creating UI Messages</div><div type="Creating UI Messages">
 			
 			<p class="p">You can also create UI messages manually and add them to the message manager. If you add the
-				message to a control property that is also validated, your message is deleted when
-				new validation results for that property come in. You can override this behavior by
-				setting the <samp class="ph codeph">persistent</samp> property of the message to
-					<samp class="ph codeph">true</samp>.</p>
+				message to a control property that is bound and validated by a databinding type,
+				your message gets deleted when new validation results from the type comes in. You
+				can override this behavior by setting the <samp class="ph codeph">persistent</samp> property of
+				the message to <samp class="ph codeph">true</samp>.</p>
 
 			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">var oMessageProcessor = new sap.ui.core.message.ControlMessageProcessor();
 var oMessageManager  = sap.ui.getCore().getMessageManager();
@@ -147,19 +135,5 @@ oMessageManager.addMessages(
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="UI Messages";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

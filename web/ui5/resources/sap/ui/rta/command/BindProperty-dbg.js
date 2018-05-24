@@ -1,10 +1,15 @@
-/*
- * ! SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+/*!
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/PropertyBindingChange", "sap/ui/rta/Utils"], function(FlexCommand,
-		PropertyBindingChangeHandler, Utils) {
+sap.ui.define([
+	'sap/ui/rta/command/FlexCommand',
+	"sap/ui/rta/Utils"
+], function(
+	FlexCommand,
+	Utils
+) {
 	"use strict";
 
 	/**
@@ -23,7 +28,7 @@ sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/Proper
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @constructor
 	 * @private
 	 * @since 1.38
@@ -39,15 +44,6 @@ sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/Proper
 					type : "string"
 				},
 				newBinding : {
-					type : "string",
-					bindable : false
-				},
-				//optional - command can derive it from the element
-				oldValue : {
-					type : "any"
-				},
-				//optional - command can derive it from the element
-				oldBinding : {
 					type : "string"
 				},
 				changeType : {
@@ -60,14 +56,6 @@ sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/Proper
 		}
 	});
 
-
-	BindProperty.prototype.init = function() {
-		this.setChangeHandler(PropertyBindingChangeHandler);
-	};
-
-	BindProperty.FORWARD = true;
-	BindProperty.BACKWARD = false;
-
 	/**
 	 * @override to suppress the binding strings to be used as
 	 */
@@ -75,36 +63,11 @@ sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/Proper
 		if (sName === "newBinding"){
 			return this.setNewBinding(oBindingInfo.bindingString);
 		}
-		if (sName === "oldBinding"){
-			return this.setOldBinding(oBindingInfo.bindingString);
-		}
 		return FlexCommand.prototype.bindProperty.apply(this, arguments);
 	};
 
-	BindProperty.prototype._ensureOld = function(){
-		if ((this.getOldValue() === undefined) && (this.getOldBinding() === undefined)){
-			var oElement = this._getElement();
-			var oBindingInfo = oElement.getBindingInfo(this.getPropertyName());
-			if (oBindingInfo && oBindingInfo.bindingString) {
-				this.setOldBinding(oBindingInfo.bindingString);
-			} else {
-				var vOldValue = Utils.getPropertyValue(oElement, this.getPropertyName());
-				this.setOldValue(vOldValue);
-			}
-		}
-	};
-
-	BindProperty.prototype._getOld = function(){
-		if ( this.getOldValue() === "undefined" ){
-			return this.getOldValue();
-		} else {
-			return this.getOldBinding();
-		}
-	};
-
-	BindProperty.prototype._getSpecificChangeInfo = function(bForward) {
-		var oElement = this._getElement();
-		this._ensureOld();
+	BindProperty.prototype._getChangeSpecificData = function() {
+		var oElement = this.getElement();
 		// general format
 		var mSpecificChangeInfo = {
 			changeType : this.getChangeType(),
@@ -114,50 +77,12 @@ sap.ui.define(['sap/ui/rta/command/FlexCommand', "sap/ui/fl/changeHandler/Proper
 			},
 			content : {
 				property : this.getPropertyName(),
-				newBinding : bForward ? this.getNewBinding() : this._getOld()
+				newBinding : this.getNewBinding()
 			}
 		};
-		if (bForward && typeof this.getOldValue() !== "undefined"){
-			mSpecificChangeInfo.content.oldValue = this.getOldValue();
-		} else {
-			mSpecificChangeInfo.content.oldBinding = bForward ? this.getOldBinding() : this.getNewBinding();
-		}
 
 		return mSpecificChangeInfo;
 	};
-
-	BindProperty.prototype._getFlexChange = function(bForward) {
-		var mSpecificChangeInfo = this._getSpecificChangeInfo(bForward);
-
-		var oChange = this._completeChangeContent(mSpecificChangeInfo);
-
-		return {
-			change : oChange,
-			selectorElement : this._getElement()
-		};
-	};
-
-	/**
-	 * @override
-	 */
-	BindProperty.prototype._getForwardFlexChange = function(oElement) {
-		return this._getFlexChange(BindProperty.FORWARD);
-	};
-
-	/**
-	 * @override
-	 */
-	BindProperty.prototype._getBackwardFlexChange = function(oElement) {
-		return this._getFlexChange(BindProperty.BACKWARD);
-	};
-
-	/**
-	 * @override
-	 */
-	BindProperty.prototype.serialize = function() {
-		return this._getSpecificChangeInfo(BindProperty.FORWARD);
-	};
-
 
 	return BindProperty;
 

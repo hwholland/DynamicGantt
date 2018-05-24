@@ -1,10 +1,13 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/base/ManagedObject'], function (fnManagedObject) {
+sap.ui.define([
+	"sap/ui/test/_OpaLogger",
+	"sap/ui/base/ManagedObject"
+], function (_OpaLogger, ManagedObject) {
 	"use strict";
 
 	/**
@@ -16,14 +19,19 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function (fnManagedObject) {
 	 * @author SAP SE
 	 * @since 1.23
 	 */
-	return fnManagedObject.extend("sap.ui.test.matchers.Matcher", {
+	var Matcher = ManagedObject.extend("sap.ui.test.matchers.Matcher", {
 
 		metadata : {
 			publicMethods : [ "isMatching" ]
 		},
 
+		constructor: function () {
+			this._oLogger = _OpaLogger.getLogger(this.getMetadata().getName());
+			return ManagedObject.prototype.constructor.apply(this, arguments);
+		},
+
 		/**
-		 * Checks if the matcher is matching - will get an instance of sap.ui.Control as parameter.
+		 * Checks if the matcher is matching - will get an instance of sap.ui.core.Control as parameter.
 		 *
 		 * Should be overwritten by subclasses
 		 *
@@ -35,9 +43,8 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function (fnManagedObject) {
 		 */
 		isMatching : function (oControl) {
 			return true;
-		},
-
-		_sLogPrefix : "Opa5 matcher"
+		}
 	});
 
-}, /* bExport= */ true);
+	return Matcher;
+});

@@ -15,15 +15,15 @@ sap.ui.define([
 		},
 
 		handleEditPress : function (evt) {
-			var oTileContainer = this.getView().byId("container");
-			var newValue = ! oTileContainer.getEditable();
+			var oTileContainer = this.byId("container");
+			var newValue = !oTileContainer.getEditable();
 			oTileContainer.setEditable(newValue);
 			evt.getSource().setText(newValue ? "Done" : "Edit");
 		},
 
 		handleBusyPress : function (evt) {
-			var oTileContainer = this.getView().byId("container");
-			var newValue = ! oTileContainer.getBusy();
+			var oTileContainer = this.byId("container");
+			var newValue = !oTileContainer.getBusy();
 			oTileContainer.setBusy(newValue);
 			evt.getSource().setText(newValue ? "Done" : "Busy state");
 		},

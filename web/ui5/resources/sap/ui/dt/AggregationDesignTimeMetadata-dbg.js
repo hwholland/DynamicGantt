@@ -1,17 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides class sap.ui.dt.AggregationDesignTimeMetadata.
 sap.ui.define([
-	'jquery.sap.global',
 	'sap/ui/dt/DesignTimeMetadata'
 ],
-function(jQuery, DesignTimeMetadata) {
+function (
+	DesignTimeMetadata
+) {
 	"use strict";
-
 
 	/**
 	 * Constructor for a new AggregationDesignTimeMetadata.
@@ -24,7 +23,7 @@ function(jQuery, DesignTimeMetadata) {
 	 * @extends sap.ui.core.DesignTimeMetadata
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @private
@@ -33,11 +32,8 @@ function(jQuery, DesignTimeMetadata) {
 	 * @experimental Since 1.30. This class is experimental and provides only limited functionality. Also the API might be changed in future.
 	 */
 	var AggregationDesignTimeMetadata = DesignTimeMetadata.extend("sap.ui.dt.AggregationDesignTimeMetadata", /** @lends sap.ui.dt.AggregationDesignTimeMetadata.prototype */ {
-		metadata : {
-			// ---- object ----
-
-			// ---- control specific ----
-			library : "sap.ui.dt"
+		metadata: {
+			library: "sap.ui.dt"
 		}
 	});
 

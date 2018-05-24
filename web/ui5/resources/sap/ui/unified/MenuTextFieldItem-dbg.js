@@ -1,13 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.unified.MenuTextFieldItem.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItemBase', './library'],
-	function(jQuery, ValueStateSupport, MenuItemBase, library) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItemBase', './library', 'sap/ui/core/library', 'sap/ui/Device', 'jquery.sap.events'],
+	function(jQuery, ValueStateSupport, MenuItemBase, library, coreLibrary, Device) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.core.ValueState
+	var ValueState = coreLibrary.ValueState;
 
 
 
@@ -23,7 +28,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -54,7 +59,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 			/**
 			 * Defines the value state of the text field of the item. This allows you to visualize e.g. warnings or errors.
 			 */
-			valueState : {type : "sap.ui.core.ValueState", group : "Appearance", defaultValue : sap.ui.core.ValueState.None}
+			valueState : {type : "sap.ui.core.ValueState", group : "Appearance", defaultValue : ValueState.None}
 		}
 	}});
 
@@ -123,7 +128,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 				labelledby: {value: /*oMenu.getId() + "-label " + */itemId + "-lbl", append: true}
 			});
 		}
-		rm.write("></input></div></div>");
+		rm.write("/></div></div>");
 
 		// Right border
 		rm.write("<div class=\"sapUiMnuItmR\"></div>");
@@ -203,14 +208,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 
 	MenuTextFieldItem.prototype.onclick = function(oEvent){
 		this.getParent().closeSubmenu(false, true);
-		if (!sap.ui.Device.system.desktop && this.getParent().checkEnabled(this)) {
+		if (!Device.system.desktop && this.getParent().checkEnabled(this)) {
 			this.focus();
 		}
 		oEvent.stopPropagation();
 	};
 
 
-	MenuTextFieldItem.prototype.onsapenter = function(oEvent){
+	MenuTextFieldItem.prototype.onkeyup = function(oEvent){
+		//like sapenter but on keyup -> see Menu.prototype.onkeyup
+		if (!jQuery.sap.PseudoEvents.sapenter.fnCheck(oEvent)) {
+			return;
+		}
 		var sValue = this.$("tf").val();
 		this.setValue(sValue);
 		this.getParent().selectItem(this);
@@ -244,7 +253,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 	/**
 	 * The aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
 	 *
-	 * @param {sap.ui.unified.Menu} oSubmenu
+	 * @param {sap.ui.unified.Menu} oMenu The menu to which the sap.ui.unified.Submenu should be set
 	 * @return {sap.ui.unified.MenuTextFieldItem} <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated The aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
@@ -274,8 +283,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 	MenuTextFieldItem.prototype.setValueState = function(sValueState){
 		this.setProperty("valueState", sValueState, true);
 		var $tf = this.$("tf");
-		$tf.toggleClass("sapUiMnuTfItemTfErr", sValueState == sap.ui.core.ValueState.Error);
-		$tf.toggleClass("sapUiMnuTfItemTfWarn", sValueState == sap.ui.core.ValueState.Warning);
+		$tf.toggleClass("sapUiMnuTfItemTfErr", sValueState == ValueState.Error);
+		$tf.toggleClass("sapUiMnuTfItemTfWarn", sValueState == ValueState.Warning);
 		var sTooltip = ValueStateSupport.enrichTooltip(this, this.getTooltip_AsString());
 		this.$().attr("title", sTooltip ? sTooltip : "");
 		return this;
@@ -325,4 +334,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ValueStateSupport', './MenuItem
 
 	return MenuTextFieldItem;
 
-}, /* bExport= */ true);
+});

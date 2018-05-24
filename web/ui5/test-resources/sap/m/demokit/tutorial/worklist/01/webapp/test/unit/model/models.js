@@ -1,12 +1,14 @@
+/*global QUnit*/
+
 sap.ui.define([
-	"myCompany/myApp/model/models",
+	"mycompany/myapp/model/models",
 	"sap/ui/thirdparty/sinon",
 	"sap/ui/thirdparty/sinon-qunit"
 ], function(models) {
 	"use strict";
 
 	QUnit.module("createDeviceModel", {
-		teardown: function() {
+		afterEach: function() {
 			this.oDeviceModel.destroy();
 		}
 	});

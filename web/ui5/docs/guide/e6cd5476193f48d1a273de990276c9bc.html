@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Screen readers offer list features, that ease the app navigation, by grouping and extracting all elements with similar behaviors. This leads to additional requirements when creating OpenUI5 controls. Control developers need to make sure that their controls are marked with the correct ARIA role."/>
+<meta name="description" content="Screen readers offer list features, that ease the app navigation, by grouping and extracting all elements with similar behaviors. This leads to additional requirements when creating OpenUI5 controls. Control developers need to make sure that their controls are marked with the correct ARIA role."/>
 
-
-
-
-
-<meta name="abstract" content="Screen readers offer list features, that ease the app navigation, by grouping and extracting all elements with similar behaviors. This leads to additional requirements when creating SAPUI5 controls. Control developers need to make sure that their controls are marked with the correct ARIA role."/>
-<meta name="description" content="Screen readers offer list features, that ease the app navigation, by grouping and extracting all elements with similar behaviors. This leads to additional requirements when creating SAPUI5 controls. Control developers need to make sure that their controls are marked with the correct ARIA role."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8263296218268821"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6290095069879362"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6290095069879362"/>
 <title>Keyboard Usage of ARIA Role Mapped Controls</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioe6cd5476193f48d1a273de990276c9bc">
 <div id="wrapper"><div id="container">
@@ -35,7 +21,7 @@
 	
 	<div class="body conbody"><p class="shortdesc">Screen readers offer list features, that ease the app navigation, by grouping and
 		extracting all elements with similar behaviors. This leads to additional requirements when
-		creating <span class="ph"><span class="ph pname">SAPUI5</span></span> controls.
+		creating <span class="ph"><span class="ph pname">OpenUI5</span></span> controls.
 		Control developers need to make sure that their controls are marked with the correct ARIA
 		role.</p>
 
@@ -51,7 +37,7 @@
 
 			<div class="p">
 				<div class="note note"><span class="notetitle">Note</span> 
-					<div class="p">If you develop new <span class="ph"><span class="ph pname">SAPUI5</span></span>
+					<div class="p">If you develop new <span class="ph"><span class="ph pname">OpenUI5</span></span>
 						controls please note the following:<ul class="ul" id="loioe6cd5476193f48d1a273de990276c9bc__ul_jny_vlk_1s">
 							<li class="li">
 								<p class="p">Navigation with the cursor of the screen reader cannot be the
@@ -104,10 +90,9 @@
 
 						<ul class="ul" id="loioe6cd5476193f48d1a273de990276c9bc__ul_y2d_vq5_yr">
 							<li class="li">
-								<p class="p">The headings in an <span class="ph"><span class="ph pname">SAPUI5</span></span>
+								<p class="p">The headings in an <span class="ph"><span class="ph pname">OpenUI5</span></span>
 									app must have either ARIA <samp class="ph codeph">role=heading</samp> +
-										<samp class="ph codeph">aria-level</samp> or use <samp class="ph codeph">&lt;H1 –
-										H6&gt;</samp> HTML tags.</p>
+										<samp class="ph codeph">aria-level</samp> or use <samp class="ph codeph">&lt;H1 – H6&gt;</samp> HTML tags.</p>
 
 							</li>
 
@@ -132,7 +117,7 @@
 
 						<ul class="ul" id="loioe6cd5476193f48d1a273de990276c9bc__ul_p43_gr5_yr">
 							<li class="li">
-								<p class="p">Links in an <span class="ph"><span class="ph pname">SAPUI5</span></span> app must
+								<p class="p">Links in an <span class="ph"><span class="ph pname">OpenUI5</span></span> app must
 									either be true <samp class="ph codeph">&lt;a&gt;</samp> HTML elements or have
 									ARIA <samp class="ph codeph">role=link</samp>.</p>
 
@@ -263,19 +248,5 @@
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Keyboard Usage of ARIA Role Mapped Controls";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

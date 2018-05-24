@@ -3,7 +3,7 @@
     <name>DataSet</name>
     <derived/>
     <documentation>DataSet</documentation>
-    <deprecation since="1.38"></deprecation>
+    <deprecation since="1.38">Use a container by choice from the {@link sap.m} library, instead.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="showToolbar" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
@@ -65,11 +65,6 @@
     <methods>
         <method name="getLeadSelection" type="sap.ui.core/int">
             <documentation>Returns the LeadSelection index</documentation>
-            <parameters>
-                <parameter name="itemId" type="sap.ui.core/string">
-                    <documentation>Id of the selected DataSetItem</documentation>
-                </parameter>
-            </parameters>
         </method>
         <method name="setLeadSelection" type="sap.ui.core/void">
             <documentation>Set the LeadSelection index</documentation>

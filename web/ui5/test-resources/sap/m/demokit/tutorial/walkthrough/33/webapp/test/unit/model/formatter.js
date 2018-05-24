@@ -1,7 +1,7 @@
 /*global QUnit*/
 
 sap.ui.require([
-		"sap/ui/demo/wt/model/formatter",
+		"sap/ui/demo/walkthrough/model/formatter",
 		"sap/ui/model/resource/ResourceModel",
 		"sap/ui/thirdparty/sinon",
 		"sap/ui/thirdparty/sinon-qunit"
@@ -10,12 +10,12 @@ sap.ui.require([
 		"use strict";
 
 		QUnit.module("Formatting functions", {
-			setup: function () {
+			beforeEach: function () {
 				this._oResourceModel = new ResourceModel({
-					bundleUrl: jQuery.sap.getModulePath("sap.ui.demo.wt", "/i18n/i18n.properties")
+					bundleUrl: jQuery.sap.getModulePath("sap.ui.demo.walkthrough", "/i18n/i18n.properties")
 				});
 			},
-			teardown: function () {
+			afterEach: function () {
 				this._oResourceModel.destroy();
 			}
 		});

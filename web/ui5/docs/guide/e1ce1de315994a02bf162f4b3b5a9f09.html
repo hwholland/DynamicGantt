@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Now that we have a test folder in the app, we can start to increase our test coverage."/>
+<meta name="description" content="Now that we have a test folder in the app, we can start to increase our test coverage."/>
 
-
-
-
-
-<meta name="abstract" content="Now that we have a test folder in the app, we can start to increase our test coverage. Actually, every feature that we added to the app so far, would require a separate test case. We have totally neglected this so far, so let’s add a simple unit test for our custom formatter function from Step 23. We will test if the long text for our status is correct by comparing it with the texts from our resource bundle."/>
-<meta name="description" content="Now that we have a test folder in the app, we can start to increase our test coverage. Actually, every feature that we added to the app so far, would require a separate test case. We have totally neglected this so far, so let’s add a simple unit test for our custom formatter function from Step 23. We will test if the long text for our status is correct by comparing it with the texts from our resource bundle."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=17078411320532028"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9199193069658725"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9199193069658725"/>
 <title>Step 28: Unit Test with QUnit</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioe1ce1de315994a02bf162f4b3b5a9f09">
 <div id="wrapper"><div id="container">
@@ -33,11 +19,13 @@
 	<h1 class="title topictitle1">Step 28: Unit Test with QUnit</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">Now that we have a test folder in the app, we can start to increase our test coverage.
-		Actually, every feature that we added to the app so far, would require a separate test case.
-		We have totally neglected this so far, so let’s add a simple unit test for our custom
-		formatter function from Step 23. We will test if the long text for our status is correct by
-		comparing it with the texts from our resource bundle.</p>
+	<div class="body conbody"><p class="shortdesc">Now that we have a test folder in the app, we can start to increase our test
+		coverage. </p>
+
+		<p class="p">Actually, every feature that we added to the app so far, would require a separate test
+			case. We have totally neglected this so far, so let’s add a simple unit test for our
+			custom formatter function from Step 23. We will test if the long text for our status is
+			correct by comparing it with the texts from our resource bundle.</p>
 
 		<div class="section"><div class="section_title">Preview</div><div type="Preview">
 			
@@ -50,8 +38,7 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview">Walkthrough - Step 28</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.28/preview">Walkthrough - Step 28</a></span>.</p>
 
 			<div class="fig fignone" id="loioe1ce1de315994a02bf162f4b3b5a9f09__fig_lbx_wcp_ns"><div class="figcontainer">
 				
@@ -67,9 +54,9 @@
 
 		<div class="section"><div class="section_title">webapp/test/unit/model/formatter.js</div><div type="webapp/test/unit/model/formatter.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.require(
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.require(
 	[
-		"sap/ui/demo/wt/model/formatter",
+		"sap/ui/demo/walkthrough/model/formatter",
 		"sap/ui/model/resource/ResourceModel",
 		"sap/ui/thirdparty/sinon",
 		"sap/ui/thirdparty/sinon-qunit"
@@ -77,19 +64,23 @@
 	function (formatter, ResourceModel) {
 		"use strict";
 		QUnit.module("Formatting functions", {
-			setup: function () {
+			beforeEach: function () {
 				this._oResourceModel = new ResourceModel({
-					bundleUrl : jQuery.sap.getModulePath("sap.ui.demo.wt", "/i18n/i18n.properties")
+					bundleUrl : jQuery.sap.getModulePath("sap.ui.demo.walkthrough", "/i18n/i18n.properties")
 				});
 			},
-			teardown: function () {
+			afterEach: function () {
 				this._oResourceModel.destroy();
 			}
 		});
 		QUnit.test("Should return the translated texts", function (assert) {
 			// Arrange
-			var	oViewStub = {
-				getModel: this.stub().withArgs("i18n").returns(this._oResourceModel)
+			// this.stub() does not support chaining and it always return the right data
+			// even if with wrong or empty parameter passed to it
+			var oModel = this.stub();
+			oModel.withArgs("i18n").returns(this._oResourceModel);
+			var oViewStub = {
+				getModel: oModel
 			};
 			var oControllerStub = {
 				getView: this.stub().returns(oViewStub)
@@ -115,23 +106,25 @@
 
 			<p class="p">The formatter file just contains one QUnit module for our formatter function. It
 				instantiates our <samp class="ph codeph">ResourceBundle</samp> with the localized texts in the
-				setup function and destroys it again in the teardown function. These functions are
-				called before and after each test is executed.</p>
+					<samp class="ph codeph">beforeEach</samp> function and destroys it again in the
+					<samp class="ph codeph">afterEach</samp> function. These functions are called before and after
+				each test is executed.</p>
 
 			<p class="p">Next is our unit test for the formatter function. In the implementation of the
 					<samp class="ph codeph">statusText</samp> function that we created in step 23 we access the
-					<samp class="ph codeph">ResourceBundle</samp> with the following queued call: <samp class="ph codeph">var
-					resourceBundle =
-				this.getView().getModel("i18n").getResourceBundle();</samp>.</p>
+					<samp class="ph codeph">ResourceBundle</samp> with the following queued call: <samp class="ph codeph">var resourceBundle = this.getView().getModel("i18n").getResourceBundle();</samp>.</p>
 
-			<p class="p">Since we do not want to test the controller, the view, or the model functionality, we first remove the dependencies by replacing these calls with empty
-				hulls with the help of <samp class="ph codeph">SinonJS</samp> and its stub method. This happens in the <samp class="ph codeph">Arrange</samp> section of the unit test.
-				SinonJS injects a stub method for all objects so we can simply call <samp class="ph codeph">this.stub()</samp> to create a new stub for any behavior we need
-				to mock.</p>
+			<p class="p">Since we do not want to test the controller, the view, or the model functionality, we
+				first remove the dependencies by replacing these calls with empty hulls with the
+				help of <samp class="ph codeph">SinonJS</samp> and its stub method. This happens in the
+					<samp class="ph codeph">Arrange</samp> section of the unit test. SinonJS injects a stub method
+				for all objects so we can simply call <samp class="ph codeph">this.stub()</samp> to create a new
+				stub for any behavior we need to mock.</p>
 
-			<p class="p">Test stubs are functions with pre-programmed behavior. They support the full SinonJS test spy API in addition to methods which can be used to
-				alter the stub’s behavior. If this part is a bit confusing have a look at the official SinonJS documentation for test spies or ignore it for
-				now, it will become clear later on.</p>
+			<p class="p">Test stubs are functions with pre-programmed behavior. They support the full SinonJS
+				test spy API in addition to methods which can be used to alter the stub’s behavior.
+				If this part is a bit confusing have a look at the official SinonJS documentation
+				for test spies or ignore it for now, it will become clear later on.</p>
 
 			<p class="p">Then we bind our stub to the <samp class="ph codeph">statusText</samp> formatter by calling the
 					<samp class="ph codeph">bind</samp> function of JavaScript. The <samp class="ph codeph">this</samp> pointer
@@ -153,7 +146,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/unit/unitTests.qunit.html (New)</div><div type="webapp/test/unit/unitTests.qunit.html (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp><span class="ph emphasis emphasis">&lt;!DOCTYPE html&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html"><span class="ph emphasis emphasis">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
 	&lt;title&gt;Unit tests for Walkthrough&lt;/title&gt;
@@ -162,7 +155,7 @@
 	&lt;script id="sap-ui-bootstrap"
 			src="/resources/sap-ui-core.js"
 			data-sap-ui-resourceroots='{
-			"sap.ui.demo.wt": "../../",
+			"sap.ui.demo.walkthrough": "../../",
 			"test.unit": "./"
 		}'&gt;
 	&lt;/script&gt;
@@ -201,8 +194,8 @@
 			<p class="p">After requiring some basic QUnit functionality (for technical reasons we cannot do
 				this asynchronously with our <samp class="ph codeph">sap.ui.require</samp> syntax), we load and
 				thus execute our formatter. Other QUnit tests can be added here as well. If we now
-				open the <samp class="ph codeph">webapp/test/service/unit/unitTests.qunit.html</samp> file in the
-				browser, we should see our test running and verifying the formatter logic.</p>
+				open the <samp class="ph codeph">webapp/test/unit/unitTests.qunit.html</samp> file in the browser,
+				we should see our test running and verifying the formatter logic.</p>
 
 		</div></div>
 
@@ -247,36 +240,22 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
-<strong>Previous: </strong><a class="link" href="bae9d90d2e9c4206889368f04edab508.html" title="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located. This system is the so-called back-end system that we will now simulate with a SAPUI5 feature called mock server. It serves local files, but it simulates a back-end system more realistically than just loading the local data. We will also change the model instantiation part so that the model is configured in the descriptor and instantiated automatically by SAPUI5. This way, we do not need to take care of the model instantiation in the code.">Step 27: Mock Server Configuration</a><br/>
+<strong>Previous: </strong><a class="link" href="bae9d90d2e9c4206889368f04edab508.html" title="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located.">Step 27: Mock Server Configuration</a><br/>
 </div>
 <div class="nextlink"><br/>
-<strong>Next: </strong><a class="link" href="9bf4dce43b7943d0909cd6c58a933589.html" title="If we want to test interaction patterns or more visual features of our app, we can also write an integration test. We haven’t thought about testing our interaction with the app yet, so in this step we will check if the dialog actually opens when we click the “Say Hello with Dialog” button. We can easily do this with OPA5, a feature of SAPUI5 that is easy to set up and is based on JavaScript and QUnit. Using integration and unit tests and running them consistently in a continuous integration (CI) environment, we can make sure that we don’t accidentally break our app or introduce logical errors in existing code.">Step 29: Integration Test with OPA</a><br/>
+<strong>Next: </strong><a class="link" href="9bf4dce43b7943d0909cd6c58a933589.html" title="If we want to test interaction patterns or more visual features of our app, we can also write an integration test.">Step 29: Integration Test with OPA</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="708002929ea548fd9433954a9275eb5f.html" title="QUnit is a powerful, easy-to-use JavaScript unit testing framework. It is used by the jQuery, jQuery UI and jQuery Mobile projects and is capable of testing any generic JavaScript code. It supports asynchronous tests out-of-the-box.">QUnit Testing Fundamentals</a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https://qunitjs.com/" alt="https://qunitjs.com/" title="https://qunitjs.com/">QUnit Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http://sinonjs.org/" alt="http://sinonjs.org/" title="http://sinonjs.org/">Sinon.JS Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="link" href="09d145cd86ee4f8e9d08715f1b364c51.html" title="QUnit is a powerful, easy-to-use JavaScript unit testing framework. It is used by the jQuery, jQuery UI and jQuery Mobile projects and is capable of testing any generic JavaScript code. It supports asynchronous tests out-of-the-box.">Unit Testing with QUnit</a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https%3A%2F%2Fqunitjs.com%2F" alt="https://qunitjs.com/" title="https://qunitjs.com/">QUnit Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fsinonjs.org%2F" alt="http://sinonjs.org/" title="http://sinonjs.org/">Sinon.JS Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 28: Unit Test with QUnit";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

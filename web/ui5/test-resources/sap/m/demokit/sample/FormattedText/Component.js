@@ -5,7 +5,11 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 	var Component = UIComponent.extend("sap.m.sample.FormattedText.Component", {
 
 		metadata : {
-			rootView : "sap.m.sample.FormattedText.V",
+			rootView : {
+				"viewName": "sap.m.sample.FormattedText.V",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.m",
@@ -15,6 +19,7 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 			config : {
 				sample : {
 					files : [
+						"C.controller.js",
 						"V.view.xml"
 					]
 				}

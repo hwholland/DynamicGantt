@@ -68,17 +68,22 @@ Example: mimeType ["image/png", "image/jpeg"].</documentation>
         <property name="valueState" type="sap.ui.core/ValueState" defaultValue="None" group="Data" since="1.24.0">
             <documentation>Visualizes warnings or errors related to the text field. Possible values: Warning, Error, Success, None.</documentation>
         </property>
+        <property name="valueStateText" type="sap.ui.core/string" group="Misc" since="1.52">
+            <documentation>Custom text for the value state message pop-up.
+
+&lt;b&gt;Note:&lt;/b&gt; If not specified, a default text, based on the value state type, will be used instead.</documentation>
+        </property>
         <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Appearance" since="1.26.0">
             <documentation>Icon to be displayed as graphical element within the button.
-This can be an URI to an image or an icon font URI.</documentation>
+This can be a URI to an image or an icon font URI.</documentation>
         </property>
         <property name="iconHovered" type="sap.ui.core/URI" defaultValue="" group="Appearance" since="1.26.0">
             <documentation>Icon to be displayed as graphical element within the button when it is hovered (only if also a base icon was specified). If not specified the base icon is used.
-If a icon font icon is used, this property is ignored.</documentation>
+If an icon font icon is used, this property is ignored.</documentation>
         </property>
         <property name="iconSelected" type="sap.ui.core/URI" defaultValue="" group="Appearance" since="1.26.0">
             <documentation>Icon to be displayed as graphical element within the button when it is selected (only if also a base icon was specified). If not specified the base or hovered icon is used.
-If a icon font icon is used, this property is ignored.</documentation>
+If an icon font icon is used, this property is ignored.</documentation>
         </property>
         <property name="iconFirst" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.26.0">
             <documentation>If set to true (default), the display sequence is 1. icon 2. control text.</documentation>
@@ -223,16 +228,35 @@ This property is not supported by Internet Explorer 9.</documentation>
         <aggregation name="headerParameters" type="sap.ui.unified/FileUploaderParameter" cardinality="0..n">
             <documentation>The header parameters for the FileUploader which are only submitted with XHR requests. Header parameters are not supported by Internet Explorer 9.</documentation>
         </aggregation>
+        <aggregation name="xhrSettings" type="sap.ui.unified/FileUploaderXHRSettings" since="1.52" cardinality="0..1">
+            <documentation>Settings for the &lt;code&gt;XMLHttpRequest&lt;/code&gt; object.
+&lt;b&gt;Note:&lt;/b&gt; This aggregation is only used when the &lt;code&gt;sendXHR&lt;/code&gt; property is set to &lt;code&gt;true&lt;/code&gt;.</documentation>
+        </aggregation>
     </aggregations>
     <methods>
-        <method name="clear" type="sap.ui.core/void" since="1.25.0">
-            <documentation>Clears the content of the FileUploader. The attached additional data however is retained.</documentation>
+        <method name="clear" type="sap.ui.unified/FileUploader" since="1.25.0">
+            <documentation>Clears the content of the &lt;code&gt;FileUploader&lt;/code&gt;.
+
+&lt;b&gt;Note:&lt;/b&gt; The attached additional data however is retained.</documentation>
         </method>
         <method name="upload" type="sap.ui.core/void">
-            <documentation>Starts the upload (as defined by uploadUrl)</documentation>
+            <documentation>Starts the upload (as defined by uploadUrl).</documentation>
+            <parameters>
+                <parameter name="preProcessFiles" type="sap.ui.core/boolean">
+                    <documentation>Set to &lt;code&gt;true&lt;/code&gt; to allow pre-processing of the files before sending the request.</documentation>
+                </parameter>
+            </parameters>
         </method>
-        <method name="abort" type="sap.ui.core/void" since="1.24.0">
+        <method name="abort" since="1.24.0">
             <documentation>Aborts the currently running upload.</documentation>
+            <parameters>
+                <parameter name="headerParameterName" type="sap.ui.core/string">
+                    <documentation>The name of the parameter within the &lt;code&gt;headerParameters&lt;/code&gt; aggregation to be checked.</documentation>
+                </parameter>
+                <parameter name="headerParameterValue" type="sap.ui.core/string">
+                    <documentation>The value of the parameter within the &lt;code&gt;headerParameters&lt;/code&gt; aggregation to be checked.</documentation>
+                </parameter>
+            </parameters>
         </method>
     </methods>
 </control>

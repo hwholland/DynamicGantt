@@ -1,4 +1,7 @@
+/*global QUnit,sinon*/
+
 (function ($, QUnit, sinon, Importance) {
+	"use strict";
 
 	jQuery.sap.registerModulePath("view", "./view");
 	jQuery.sap.registerModulePath("sap.uxap.testblocks", "./blocks");
@@ -14,7 +17,6 @@
 		var ObjectPageSectionView = sap.ui.xmlview("UxAP-13_objectPageSection", {
 			viewName: "view.UxAP-13_ObjectPageSection"
 		});
-		var iRenderingDelay = 1000;
 
 		ObjectPageSectionView.placeAt('qunit-fixture');
 		sap.ui.getCore().applyChanges();
@@ -127,7 +129,6 @@
 		oObjectPageLayout.destroy();
 	});
 
-
 	QUnit.test("Default state for hiding/showing the content", function (assert) {
 		var oMockSection = {
 			getImportance: sinon.stub().returns(Importance.High)
@@ -142,13 +143,57 @@
 			"When the section has high importance then it should never be hidden");
 	});
 
+	QUnit.test("Section title display/hide", function (assert) {
+		var oObjectPageLayout = new sap.uxap.ObjectPageLayout({
+			sections: new sap.uxap.ObjectPageSection({
+				title: "Title",
+				subSections: [
+					new sap.uxap.ObjectPageSubSection({
+						blocks: [new sap.m.Text({text: "test"})]
+					})
+				]
+			})
+		}),
+		oFirstSection = oObjectPageLayout.getSections()[0],
+		$oFirstSection;
+
+		// Arrange
+		oObjectPageLayout.placeAt('qunit-fixture');
+		sap.ui.getCore().applyChanges();
+		$oFirstSection = oFirstSection.$();
+
+		// Assert
+		assert.strictEqual($oFirstSection.hasClass("sapUxAPObjectPageSectionNoTitle"), false,
+			"The correct styling is applied");
+
+		// Act
+		oFirstSection.setShowTitle(false);
+		sap.ui.getCore().applyChanges();
+		$oFirstSection = oFirstSection.$();
+
+		// Assert
+		assert.strictEqual($oFirstSection.hasClass("sapUxAPObjectPageSectionNoTitle"), true,
+			"The correct styling is applied");
+
+		// Act
+		oFirstSection.setShowTitle(true);
+		sap.ui.getCore().applyChanges();
+		$oFirstSection = oFirstSection.$();
+
+		// Assert
+		assert.strictEqual($oFirstSection.hasClass("sapUxAPObjectPageSectionNoTitle"), false,
+			"The correct styling is applied");
+
+		oObjectPageLayout.destroy();
+	});
+
 	QUnit.test("Behavior with different importance levels", function (assert) {
-		fnGenerateTest = function (sImportance, sCurrentImportanceLevel, bExpectToBeHidden, assert) {
+		var fnGenerateTest = function (sImportance, sCurrentImportanceLevel, bExpectToBeHidden, assert) {
 			var sShouldBeHidden = "The section should be hidden",
 				sShouldBeVisible = "The section should be visible",
 				oMockSection = {
 					setImportance: function (sImportance) {
-						this.getImportance = sinon.stub().returns(sImportance)
+						this.getImportance = sinon.stub().returns(sImportance);
 					}
 				};
 
@@ -200,7 +245,7 @@
 				_sContainerSelector: '.someClass',
 				_getIsHidden: sinon.stub().returns(this._isHidden),
 				setImportance: function (sImportance) {
-					this.getImportance = sinon.stub().returns(sImportance)
+					this.getImportance = sinon.stub().returns(sImportance);
 				},
 				_updateShowHideState: sinon.spy(),
 				$: sinon.stub().returns(jQueryObject)
@@ -279,6 +324,18 @@
 		assert.ok(oButton.getText(sExpectedText));
 
 		oButton.destroy();
+	});
+
+	QUnit.test("Testing ObjectPageSubSection._getClosestSection", function (assert) {
+		var ObjectPageSectionView = sap.ui.xmlview("UxAP-13_objectPageSection", {
+				viewName: "view.UxAP-13_ObjectPageSection"
+			}),
+			oSectionWithTwoSubSection = ObjectPageSectionView.byId("SectionWithSubSection"),
+			oFirstSubSection = oSectionWithTwoSubSection.getSubSections()[0],
+			fnGetClosestSection = sap.uxap.ObjectPageSection._getClosestSection;
+
+		assert.equal(fnGetClosestSection(oFirstSubSection).getId(), oSectionWithTwoSubSection.getId());
+		assert.equal(fnGetClosestSection(oSectionWithTwoSubSection).getId(), oSectionWithTwoSubSection.getId());
 	});
 
 }(jQuery, QUnit, sinon, sap.uxap.Importance));

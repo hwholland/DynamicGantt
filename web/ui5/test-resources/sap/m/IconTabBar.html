@@ -3,11 +3,10 @@
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>sap.m.IconTabBar</title>
+		<script src="shared-config.js"></script>
 		<script src="../../../resources/sap-ui-core.js"
-			type="text/javascript"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.m"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.m, sap.ui.layout">
 		</script>
 
 		<style>
@@ -17,8 +16,11 @@
 				width: auto;
 				white-space: normal;
 			}
-			.ITBContainer{
+			.ITBContainer {
 				border: 1px solid #0F5D94;
+			}
+			.iconTabBarContainer {
+				background-color: #a9c6de;
 			}
 		</style>
 		<script>
@@ -42,7 +44,7 @@
 			sap.ui.getCore().setModel(model);
 
 			// create and add app
-			var app = new sap.m.App("myApp", {initialPage:"tabBarPage"});
+			var app = new sap.m.App("myApp", {initialPage:"page1"});
 			app.placeAt("body");
 
 			var label1 = new sap.m.Label({
@@ -66,7 +68,7 @@
 			label4.addStyleClass("label");
 
 			var label4a = new sap.m.Label({
-				text: "Same as above, just without item keys (should work fine but user cannot get the selected tab key) and with no padding of the content"
+				text: "Without item keys (user cannot get the selected tab key) and with no padding of the content"
 			});
 			label4a.addStyleClass("label");
 
@@ -74,6 +76,11 @@
 				text: "IconTabBar with tabs which have no icons, only labels. Tabs are expandable. Semanctic colors are used."
 			});
 			label5.addStyleClass("label");
+
+			var label5a = new sap.m.Label({
+				text: "IconTabBar inline mode"
+			});
+			label5a.addStyleClass("label");
 
 			var label6 = new sap.m.Label({
 				text: "Initially collapsed IconTabBar with no active item."
@@ -101,10 +108,203 @@
 			});
 			label12.addStyleClass("label");
 
-			// create and add a page with icon tab bar
-			var page = new sap.m.Page("tabBarPage", {
-				title:"IconTabBar",
+			var label13 = new sap.m.Label({
+				text: "IconTabBar overflow select list."
+			});
+			label13.addStyleClass("label");
+
+			var label14 = new sap.m.Label({
+				text: "IconTabBar with a simple form to control backgroundDesign and headerBackgroundDesign properties. " +
+				"There is also a panel with dark color which wraps the tab bar."
+			});
+			label14.addStyleClass("label");
+
+			var tabItems = [];
+			for (var i = 1; i <= 30; i++) {
+				tabItems.push(new sap.m.IconTabFilter({
+					text : 'Tab ' + i,
+					id: 'testId_' + i,
+					content: new sap.m.Text({
+						text: 'Content ' + i
+					})
+				}));
+			}
+
+			var iconTabBarOverflowSelectList = new sap.m.IconTabBar("overFlowTab", {
+				showOverflowSelectList: true,
+				items: tabItems
+			});
+
+			// backgroundDesign Panel
+			var panelBackgroundDesign = new sap.m.Panel();
+			panelBackgroundDesign.addStyleClass("iconTabBarContainer");
+
+			var iconTabBarBackgroundDesign = new sap.m.IconTabBar("backgroundDesignIconTabBar", {
+				expandable: false,
+				items: [
+					new sap.m.IconTabFilter({
+						showAll: true,
+						count: "8",
+						text: "Orders Productive",
+						key: "All",
+						iconColor: sap.ui.core.IconColor.Neutral
+					}),
+					new sap.m.IconTabSeparator(),
+					new sap.m.IconTabFilter("backgroundDesignIconTabBar_fileter3", {
+						icon: "sap-icon://task",
+						iconColor: sap.ui.core.IconColor.Critical,
+						count: "3",
+						text: "Open",
+						key: "Open"
+					}),
+					new sap.m.IconTabFilter("itfBackgroundDesign", {
+						icon: "sap-icon://instance",
+						iconColor: sap.ui.core.IconColor.Negative,
+						count: "2",
+						text: "In Process",
+						key: "In Process"
+					}),
+					new sap.m.IconTabFilter({
+						icon: "sap-icon://shipping-status",
+						iconColor: sap.ui.core.IconColor.Positive,
+						count: "3",
+						text: "Shipped",
+						key: "Shipped"
+					})
+				],
+				select: function(oEvent) {
+					var oBinding = this.getContent()[0].getBinding("items"),
+							sKey = oEvent.getParameter("key"),
+							oFilter;
+					if (sKey == "All") {
+						oBinding.filter([]);
+					}
+					else {
+						oFilter = new sap.ui.model.Filter("status", "EQ", sKey);
+						oBinding.filter([oFilter]);
+					}
+				},
+				content: new sap.m.Table("listBackgroundDesign", {
+					growing: true,
+					growingThreshold: 200,
+					columns: [
+						new sap.m.Column({
+							width: "2em",
+							header: new sap.m.Label({text: "ID"})
+						}),
+						new sap.m.Column({
+							width: "7em",
+							header: new sap.m.Label({text: "Name"})
+						}),
+						new sap.m.Column({
+							width: "3em",
+							header: new sap.m.Label({text: "Status"})
+						}),
+						new sap.m.Column({
+							width: "2em",
+							minScreenWidth: "Tablet",
+							hAlign: "Right",
+							header: new sap.m.Label({text: "Amount"})
+						}),
+						new sap.m.Column({
+							width: "3em",
+							hAlign: "Right",
+							minScreenWidth: "Tablet",
+							header: new sap.m.Label({text: "Price"})
+						})
+					],
+					items: {
+						path: "/items",
+						template: new sap.m.ColumnListItem({
+							cells: [
+								new sap.m.Text({text: "{id}"}),
+								new sap.m.Text({text: "{name}"}),
+								new sap.m.ObjectStatus({
+									text: "{status}",
+									state: {
+										path: "status",
+										formatter: function(value) {
+											switch(value) {
+												case "Open": return "Warning";
+												case "In Process": return "Error";
+												case "Shipped": return "Success";
+											}
+										}
+									}
+								}),
+								new sap.m.Text({text: "{amount}"}),
+								new sap.m.Text({text: {
+									path: "price",
+									formatter: function(value) {
+										if (value !== undefined) {
+											return "$ " + oFloat.format(value);
+										}
+									}
+								}})
+							]
+						})
+					}
+				})
+			});
+
+			// Radio button group background design
+			var rbBackgroundDesign = new sap.m.RadioButtonGroup("RBBackgroundDesign", {
+				columns: 3,
+				select: function (oEvent) {
+					var sSelectedValue = oEvent.getSource().getSelectedButton().getText();
+					iconTabBarBackgroundDesign.setBackgroundDesign(sSelectedValue);
+				}
+			});
+			var oLabelBackgroundDesign = new sap.m.Label({
+				text: "Background Design",
+				labelFor: rbBackgroundDesign
+			});
+			var rb1 = new sap.m.RadioButton("RB1-Solid", { text: "Solid" });
+			var rb2 = new sap.m.RadioButton("RB1-Transparent", { text: "Transparent" });
+			var rb3 = new sap.m.RadioButton("RB1-Translucent", { text: "Translucent" });
+			rbBackgroundDesign.addButton(rb1);
+			rbBackgroundDesign.addButton(rb2);
+			rbBackgroundDesign.addButton(rb3);
+
+			// Radio button group header background design
+			var rbHeaderBackgroundDesign = new sap.m.RadioButtonGroup("RBHeaderBackgroundDesign", {
+				columns: 3,
+				select: function (oEvent) {
+					var sSelectedValue = oEvent.getSource().getSelectedButton().getText();
+					iconTabBarBackgroundDesign.setHeaderBackgroundDesign(sSelectedValue);
+				}
+			});
+			var oLabelHeaderBackgroundDesign = new sap.m.Label({
+				text: "Header Background Design",
+				labelFor: rbHeaderBackgroundDesign
+			});
+			var rb4 = new sap.m.RadioButton("RB2-Solid", { text: "Solid" });
+			var rb5 = new sap.m.RadioButton("RB2-Transparent", { text: "Transparent" });
+			var rb6 = new sap.m.RadioButton("RB2-Translucent", { text: "Translucent" });
+			rbHeaderBackgroundDesign.addButton(rb4);
+			rbHeaderBackgroundDesign.addButton(rb5);
+			rbHeaderBackgroundDesign.addButton(rb6);
+
+			var appearanceFormBackgroundDesign = new sap.ui.layout.form.SimpleForm({
+				labelSpanL : 6,
+				labelSpanM : 6,
+				editable : true,
+				layout : "ResponsiveGridLayout",
 				content : [
+					oLabelBackgroundDesign,
+					rbBackgroundDesign,
+					oLabelHeaderBackgroundDesign,
+					rbHeaderBackgroundDesign
+				]
+			});
+
+			panelBackgroundDesign.addContent(appearanceFormBackgroundDesign);
+			panelBackgroundDesign.addContent(iconTabBarBackgroundDesign);
+
+			// create and add a page with icon tab bar
+
+			var page1 = new sap.m.Page("page1", {
+				content: [
 					label1,
 					new sap.m.IconTabBar("itb1", {
 						expandable: false,
@@ -141,8 +341,8 @@
 						],
 						select: function(oEvent) {
 							var oBinding = this.getContent()[0].getBinding("items"),
-								sKey = oEvent.getParameter("key"),
-								oFilter;
+									sKey = oEvent.getParameter("key"),
+									oFilter;
 							if (sKey == "All") {
 								oBinding.filter([]);
 							}
@@ -212,7 +412,47 @@
 								})
 							}
 						})
-					}),
+					})],
+				footer: [new sap.m.Bar({
+					contentMiddle: [
+						new sap.m.Button({
+							text: "Samples 1",
+							press: function(){
+								app.to("page1");
+							}
+						}),
+						new sap.m.Button("sample2", {
+							text: "Samples 2",
+							press: function(){
+								app.to("page2");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 3",
+							press: function(){
+								app.to("page3");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 4",
+							press: function(){
+								app.to("page4");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 5",
+							press: function(){
+								app.to("page5");
+							}
+						})
+					]
+				})]
+			});
+			var page2 = new sap.m.Page("page2",{
+				showNavButton: true,
+				navButtonText: "Page 1",
+				navButtonPress: function(){ app.back(); },
+				content: [
 					label2,
 					new sap.m.IconTabBar("itb2", {
 						selectedKey: "key13",
@@ -571,45 +811,6 @@
 							})
 						]
 					}),
-					label4,
-					new sap.m.IconTabBar("itb4", {
-						upperCase: true,
-						items: [
-							new sap.m.IconTabFilter("itf3", {
-								iconColor: sap.ui.core.IconColor.Default,
-								text: "Lorem",
-								count: "3",
-								key: "k1",
-								content: [
-									new sap.m.Label({
-										text: "info info info"
-									})
-								]
-							}),
-							new sap.m.IconTabFilter({
-								iconColor: sap.ui.core.IconColor.Default,
-								text: "Ipsum",
-								count: "3",
-								key: "key2",
-								content: [
-									new sap.m.Input({
-										placeholder: "input placeholder"
-									})
-								]
-							}),
-							new sap.m.IconTabFilter({
-								iconColor: sap.ui.core.IconColor.Default,
-								text: "Lorem Ipsum",
-								key: "key3",
-								count: "233",
-								content: [
-									new sap.m.RatingIndicator({
-										value: 3
-									})
-								]
-							})
-						]
-					}),
 					label4a,
 					new sap.m.IconTabBar("itb4a", {
 						upperCase: true,
@@ -676,8 +877,50 @@
 									})
 								]
 							})
-						],
+						]
 					}),
+				],
+				footer: [new sap.m.Bar({
+					contentMiddle: [
+						new sap.m.Button({
+							text: "Samples 1",
+							press: function(){
+								app.to("page1");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 2",
+							press: function(){
+								app.to("page2");
+							}
+						}),
+						new sap.m.Button("sample3", {
+							text: "Samples 3",
+							press: function(){
+								app.to("page3");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 4",
+							press: function(){
+								app.to("page4");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 5",
+							press: function(){
+								app.to("page5");
+							}
+						})
+					]
+				}),
+					]
+			});
+			var page3 = new sap.m.Page("page3", {
+				showNavButton: true,
+				navButtonText: "Page 3",
+				navButtonPress: function(){ app.back(); },
+				content:[
 					label5,
 					new sap.m.IconTabBar("itb5", {
 						upperCase: true,
@@ -691,7 +934,7 @@
 								content: [
 									new sap.m.Label({
 										text: "info info info"
-									}),
+									})
 								]
 							}),
 							new sap.m.IconTabFilter({
@@ -702,7 +945,7 @@
 								content: [
 									new sap.m.Input({
 										placeholder: "input placeholder"
-									}),
+									})
 								]
 							}),
 							new sap.m.IconTabFilter({
@@ -713,12 +956,12 @@
 								content: [
 									new sap.m.RatingIndicator({
 										value: 3
-									}),
+									})
 								]
-							}),
-						],
+							})
+						]
 					}),
-					label6,
+					label5a,
 					new sap.m.IconTabBar("itb6", {
 						expanded: false,
 						items: [
@@ -731,7 +974,7 @@
 								content: [
 									new sap.m.Label({
 										text: "info info info"
-									}),
+									})
 								]
 							}),
 							new sap.m.IconTabFilter({
@@ -743,7 +986,7 @@
 								content: [
 									new sap.m.Input({
 										placeholder: "input placeholder"
-									}),
+									})
 								]
 							}),
 							new sap.m.IconTabFilter({
@@ -754,10 +997,10 @@
 								content: [
 									new sap.m.RatingIndicator({
 										value: 3
-									}),
+									})
 								]
 							})
-						],
+						]
 					}),
 					label9,
 					new sap.m.IconTabBar("itb9", {
@@ -807,6 +1050,46 @@
 							}),
 						]
 					}),
+				],
+				footer: [new sap.m.Bar({
+					contentMiddle: [
+						new sap.m.Button({
+							text: "Samples 1",
+							press: function(){
+								app.to("page1");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 2",
+							press: function(){
+								app.to("page2");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 3",
+							press: function(){
+								app.to("page3");
+							}
+						}),
+						new sap.m.Button("sample4", {
+							text: "Samples 4",
+							press: function(){
+								app.to("page4");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 5",
+							press: function(){
+								app.to("page5");
+							}
+						})
+					]
+				})]
+			});
+			var page4 = new sap.m.Page("page4",{
+				showNavButton: true,
+				navButtonPress: function(){ app.back(); },
+				content:[
 					label10,
 					new sap.m.IconTabBar("itb10", {
 					}),
@@ -860,159 +1143,232 @@
 					}),
 					label12,
 					new sap.m.ScrollContainer({
-								height: "250px",
-								width: "100%",
-								horizontal: false,
-								vertical: false,
-								content: [
-									new sap.m.IconTabBar("itb12", {
-										stretchContentHeight: true,
-										backgroundDesign: "Transparent",
-										applyContentPadding: false,
-										items: [
-											new sap.m.IconTabFilter({
-												text: "Products",
-												content: [
+						height: "250px",
+						width: "100%",
+						horizontal: false,
+						vertical: false,
+						content: [
+							new sap.m.IconTabBar("itb12", {
+								stretchContentHeight: true,
+								backgroundDesign: "Transparent",
+								applyContentPadding: false,
+								items: [
+									new sap.m.IconTabFilter({
+										text: "Products",
+										content: [
 
-													new sap.m.List({
-														items: [
-															new sap.m.StandardListItem({
-																title: "Item1",
-																counter: 476
-															}),
-															new sap.m.StandardListItem({
-																title: "Item2",
-																counter: 486
-															}),
-															new sap.m.StandardListItem({
-																title: "Item3",
-																counter: 472
-															})
-														]
+											new sap.m.List({
+												items: [
+													new sap.m.StandardListItem({
+														title: "Item1",
+														counter: 476
+													}),
+													new sap.m.StandardListItem({
+														title: "Item2",
+														counter: 486
+													}),
+													new sap.m.StandardListItem({
+														title: "Item3",
+														counter: 472
 													})
 												]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Attachments",
-												content: [new sap.m.Text({text: "Attachments go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Notes",
-												content: [new sap.m.Text({text: "Notes go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "People",
-												content: [new sap.m.Text({text: "People go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
-											}),
-											new sap.m.IconTabFilter({
-												text: "Other",
-												content: [new sap.m.Text({text: "Other go here..."})]
 											})
-
 										]
-									}).addStyleClass("sapUiResponsiveContentPadding")
+									}),
+									new sap.m.IconTabFilter({
+										text: "Attachments",
+										content: [new sap.m.Text({text: "Attachments go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Notes",
+										content: [new sap.m.Text({text: "Notes go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "People",
+										content: [new sap.m.Text({text: "People go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									}),
+									new sap.m.IconTabFilter({
+										text: "Other",
+										content: [new sap.m.Text({text: "Other go here..."})]
+									})
+
 								]
-							}).addStyleClass("ITBContainer"),
-							new sap.m.Label({text: " "}) // placeholder to see content below
-				]
+							}).addStyleClass("sapUiResponsiveContentPadding")
+						]
+					}).addStyleClass("ITBContainer")
+
+
+				],
+				footer: [new sap.m.Bar({
+					contentMiddle: [
+						new sap.m.Button( {
+							text: "Samples1",
+							press: function(){
+								app.to("page1");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples2",
+							press: function(){
+								app.to("page2");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples3",
+							press: function(){
+								app.to("page3");
+							}
+						}),
+						new sap.m.Button("sample5",{
+							text: "Samples 5",
+							press: function(){
+								app.to("page5");
+							}
+						})
+					]
+				})]
 			});
-			app.addPage(page);
+
+			var page5 = new sap.m.Page("page5",{
+				showNavButton: true,
+				navButtonPress: function(){ app.back(); },
+				content:[
+					iconTabBarOverflowSelectList,
+					panelBackgroundDesign
+
+				],
+				footer: [new sap.m.Bar({
+					contentMiddle: [
+						new sap.m.Button( {
+							text: "Samples 1",
+							press: function(){
+								app.to("page1");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 2",
+							press: function(){
+								app.to("page2");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 3",
+							press: function(){
+								app.to("page3");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 4",
+							press: function(){
+								app.to("page4");
+							}
+						}),
+						new sap.m.Button({
+							text: "Samples 5",
+							press: function(){
+								app.to("page5");
+							}
+						})
+					]
+				})]
+			});
+			app.addPage(page1).addPage(page2).addPage(page3).addPage(page4).addPage(page5);
 
 		</script>
 	</head>

@@ -1,16 +1,30 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.TabStrip.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
-		'sap/ui/core/delegate/ItemNavigation', 'sap/ui/core/Icon',
-		'sap/ui/core/delegate/ScrollEnablement', 'sap/ui/Device'],
-	function(jQuery, library, Control,
-	         ItemNavigation, Icon,
-	         ScrollEnablement, Device) {
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/delegate/ItemNavigation',
+    'sap/ui/core/Icon',
+    'sap/ui/core/delegate/ScrollEnablement',
+    'sap/ui/Device',
+    "./TabStripRenderer"
+],
+	function(
+	    jQuery,
+		library,
+		Control,
+		ItemNavigation,
+		Icon,
+		ScrollEnablement,
+		Device,
+		TabStripRenderer
+	) {
 	"use strict";
 
 
@@ -28,7 +42,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -176,7 +190,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 		var iSelectedIndex = this.getSelectedIndex();
 		var oTab = aTabs[iSelectedIndex];
 
-		if (oTab && oTab.$().length > 0) {
+		if (this._oScroller && oTab && oTab.$().length > 0) {
 
 			if (!this._oScroller._$Container) {
 				this._oScroller.onAfterRendering();
@@ -373,7 +387,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 		var aTabs = this.getTabs();
 		var oTab = aTabs[iSelectedIndex];
 
-		if (oTab && oTab.$().length > 0) {
+		if (this._oScroller && oTab && oTab.$().length > 0) {
 			this._scrollIntoView(oTab.$(), TabStrip.SCROLL_ANIMATION_DURATION);
 		}
 
@@ -936,7 +950,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 	/**
 	 * Checks whether the passed oEvent is a touch event.
 	 * @private
-	 * @param {event} oEvent The event to check
+	 * @param {jQuery.Event} oEvent The event to check
 	 * @return {boolean} false
 	 */
 	TabStrip.prototype._isTouchMode = function(oEvent) {
@@ -1099,7 +1113,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 			}
 		}
 
-		this._oScroller.scrollTo(iScrollTarget, 0, iDuration);
+		if (this._oScroller) {
+			this._oScroller.scrollTo(iScrollTarget, 0, iDuration);
+		}
+
 		this._iCurrentScrollLeft = iScrollTarget;
 	};
 
@@ -1136,7 +1153,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control',
 
 			// store current scroll state to set it after re-rendering
 			this._iCurrentScrollLeft = iNewScrollLeft;
-			this._oScroller.scrollTo(iNewScrollLeft, 0, iDuration);
+
+			if (this._oScroller) {
+				this._oScroller.scrollTo(iNewScrollLeft, 0, iDuration);
+			}
 		}
 	};
 

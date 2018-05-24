@@ -29,5 +29,9 @@ URI of an image or an icon registered in sap.ui.core.IconPool.</documentation>
         <property name="key" type="sap.ui.core/string" group="Data">
             <documentation>Can be used as identifier of the appointment</documentation>
         </property>
+        <property name="color" type="sap.ui.core/CSSColor" group="Appearance" since="1.46.0">
+            <documentation>Overrides the color derived from the &lt;code&gt;type&lt;/code&gt; property.
+This property will work only with full hex color with pound symbol, e.g.: #FF0000.</documentation>
+        </property>
     </properties>
 </control>

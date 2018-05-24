@@ -5,9 +5,9 @@
 
 <title>sap.m.Button Test</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript"
-	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m"
-	data-sap-ui-theme="sap_bluecrystal">
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js"
+	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m">
 
 </script>
 
@@ -18,7 +18,7 @@
 }
 </style>
 
-<script type="text/javascript">
+<script>
 	jQuery.sap.require("sap.ui.core.HTML");
 	jQuery.sap.require("sap.ui.core.IconPool");
 
@@ -26,7 +26,9 @@
 	var sDeleteIconURI = sap.ui.core.IconPool.getIconURI("delete");
 	var sChangeIconURI = sap.ui.core.IconPool.getIconURI("cause");
 	var sSrcIconURI = sap.ui.core.IconPool.getIconURI("employee");
+	var sSrcActiveIconURI = sap.ui.core.IconPool.getIconURI("employee-lookup");
 	var sStoreIconURI = sap.ui.core.IconPool.getIconURI("retail-store");
+	var sStoreActiveIconURI = sap.ui.core.IconPool.getIconURI("cart-full");
 	var sNotesIconURI = sap.ui.core.IconPool.getIconURI("notes");
 
 	var oHelper = {
@@ -85,7 +87,8 @@
 			oButton.setActiveIcon("./images/travel_request.png");
 		},
 		removeImage : function(oButton) {
-			oButton.setIcon("");
+			oButton.setIcon(null);
+			oButton.setActiveIcon(null);
 		},
 		alignImage : function(oButton) {
 			if (oButton.getIconFirst()) {
@@ -96,9 +99,11 @@
 		},
 		addIcon : function(oButton) {
 			oButton.setIcon(sSrcIconURI);
+			oButton.setActiveIcon(sSrcActiveIconURI);
 		},
 		removeIcon : function(oButton) {
 			oButton.setIcon(null);
+			oButton.setActiveIcon(null);
 		},
 		alignIcon : function(oButton) {
 			if (oButton.getIconFirst()) {
@@ -109,6 +114,7 @@
 		},
 		changeIcon : function(oButton) {
 			oButton.setIcon(sStoreIconURI);
+			oButton.setActiveIcon(sStoreActiveIconURI);
 		},
 		hide : function(oButton) {
 			oButton.setVisible(false);
@@ -652,6 +658,22 @@
 		}
 	});
 
+	var oButtonBdiLTR = new sap.m.Button("myButtonBdiLtr", {
+		text: "BDI tag when text is in LTR language (Next button is only in RTL 123)"
+	});
+
+	var oButtonBdiRTL = new sap.m.Button("myButtonBdiRtl", {
+		text: "עברית (עברית 123)"
+	});
+
+	var oButtonBdi = new sap.m.Button("myButtonBdi", {
+		text: "Here we have both LTR and RTL languages 123 (עברית  456)"
+	});
+
+	var oButtonBdi2 = new sap.m.Button("myButtonBdi2", {
+		text: "עברית 123 (now English in the brackets 456)"
+	});
+
 	oPage1.addContent(oBar2)
 	      .addContent(new sap.ui.core.HTML("myEmptyLine1", {content: "<br>"}))
 				.addContent(new sap.ui.core.HTML("myHtmlBarDefault", {content: ""}))
@@ -757,7 +779,15 @@
 				.addContent(new sap.ui.core.HTML("myHtmlResetText", {content: "<div class='ButtonSpace'>&nbsp;</div>"}))
 				.addContent(oButtonResetText)
 				.addContent(new sap.ui.core.HTML("myHtmlToggleTextDirection", {content: "<div class='ButtonSpace'>&nbsp;</div>"}))
-				.addContent(oButtonToggleTextDirection);
+				.addContent(oButtonToggleTextDirection)
+				.addContent(new sap.ui.core.HTML("myDividerLine4", {content: "<br><hr style='border:solid #000000; border-width: 5px 0 0;'>"}))
+				.addContent(oButtonBdiLTR)
+				.addContent(new sap.ui.core.HTML("myHtmloButtonBdiLTR", {content: "<div class='ButtonSpace'>&nbsp;</div>"}))
+				.addContent(oButtonBdiRTL)
+				.addContent(new sap.ui.core.HTML("myHtmloButtonBdi", {content: "<div class='ButtonSpace'>&nbsp;</div>"}))
+				.addContent(oButtonBdi)
+				.addContent(new sap.ui.core.HTML("myHtmloButtonBdi2", {content: "<div class='ButtonSpace'>&nbsp;</div>"}))
+				.addContent(oButtonBdi2);
 
 	oApp.addPage(oPage1);
 	oApp.placeAt("body");

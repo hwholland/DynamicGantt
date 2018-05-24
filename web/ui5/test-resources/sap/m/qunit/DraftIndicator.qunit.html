@@ -7,24 +7,23 @@
 <link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 
 		<!-- UI5 Bootstrap -->
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.m">
 		</script>
 
 		<!-- QUnit libraries -->
 		<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 		<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
 		<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 
 	<!-- use the sinon faketimers for this test -->
-	<script type="text/javascript">
+	<script>
 		sinon.config.useFakeTimers = true;
 	</script>
 
@@ -33,28 +32,28 @@
 	var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 	var oCore = sap.ui.getCore();
 
-	module("id");
+	QUnit.module("id");
 
-	test("semantic control can be retrieved by Id", function () {
+	QUnit.test("semantic control can be retrieved by Id", function (assert) {
 		// Arrange
 		var oDraftIndi = new sap.m.DraftIndicator("draftId");
 
-		strictEqual(oDraftIndi.getId(), "draftId", "control has the expected id");
+		assert.strictEqual(oDraftIndi.getId(), "draftId", "control has the expected id");
 
 		// Act
 		var oRetrievedIndi = sap.ui.getCore().byId("draftId");
 
 		// Assert
-		notEqual(oRetrievedIndi, undefined, "the button is retrieved by id");
-		strictEqual(oRetrievedIndi.getId(), "draftId", "control has the expected id");
+		assert.notEqual(oRetrievedIndi, undefined, "the button is retrieved by id");
+		assert.strictEqual(oRetrievedIndi.getId(), "draftId", "control has the expected id");
 
 		oDraftIndi.destroy();
 	});
 
 
-	module("states");
+	QUnit.module("states");
 
-	test("set 'Saving draft' and 'Clear Draft' state", function () {
+	QUnit.test("set 'Saving draft' and 'Clear Draft' state", function (assert) {
 		// Arrange
 		var oDraftIndi = new sap.m.DraftIndicator();
 
@@ -65,21 +64,20 @@
 		// Act
 		oDraftIndi.showDraftSaving();
 		// Assert
-		strictEqual(oDraftIndi.$("label").html(), oBundle.getText("DRAFT_INDICATOR_SAVING_DRAFT"), "Saving draft is shown");
+		assert.strictEqual(oDraftIndi._getLabel().getText(), oBundle.getText("DRAFT_INDICATOR_SAVING_DRAFT"), "Saving draft is shown");
 
 		this.clock.tick(3000);
 
 		// Act
 		oDraftIndi.clearDraftState();
 		// Assert
-		strictEqual(oDraftIndi.$("label").html(), "", "Draft saved is cleared");
+		assert.strictEqual(oDraftIndi._getLabel().getText(), "", "Draft saved is cleared");
 
 		// Clean up
-		oDraftIndi._resetDraftTimer();
 		oDraftIndi.destroy();
 	});
 
-	test("set Draft Saved state and check that it is not cleared after default timeout", function () {
+	QUnit.test("set Draft Saved state and check that it is not cleared after default timeout", function (assert) {
 		// Arrange
 		var oDraftIndi = new sap.m.DraftIndicator();
 
@@ -91,18 +89,17 @@
 		oDraftIndi.showDraftSaved();
 
 		// Assert
-		strictEqual(oDraftIndi.$("label").html(), oBundle.getText("DRAFT_INDICATOR_DRAFT_SAVED"), "Draft saved is shown");
+		assert.strictEqual(oDraftIndi.$("label").text(), oBundle.getText("DRAFT_INDICATOR_DRAFT_SAVED"), "Draft saved is shown");
 		this.clock.tick(1500);
 
 		// Assert
-		ok(oDraftIndi.$("label").html()!="", "Draft saved state is not cleared after default timeout");
+		assert.ok(oDraftIndi.$("label").text()!="", "Draft saved state is not cleared after default timeout");
 
 		// Clean up
-		oDraftIndi._resetDraftTimer();
 		oDraftIndi.destroy();
 	});
 
-	test("set Draft Saving state and check that if it is cleared after default timeout", function () {
+	QUnit.test("set Draft Saving state and check that if it is cleared after default timeout", function (assert) {
 		// Arrange
 		var oDraftIndi = new sap.m.DraftIndicator();
 
@@ -114,14 +111,29 @@
 		oDraftIndi.showDraftSaving();
 
 		// Assert
-		strictEqual(oDraftIndi.$("label").html(), oBundle.getText("DRAFT_INDICATOR_SAVING_DRAFT"), "Draft saved is shown");
+		assert.strictEqual(oDraftIndi.$("label").text(), oBundle.getText("DRAFT_INDICATOR_SAVING_DRAFT"), "Draft saved is shown");
 		this.clock.tick(1500);
 
 		// Assert
-		strictEqual(oDraftIndi.$("label").html(), "", "Draft saving state is cleared after default timeout");
+		assert.strictEqual(oDraftIndi.$("label").text(), "", "Draft saving state is cleared after default timeout");
 
 		// Clean up
-		oDraftIndi._resetDraftTimer();
+		oDraftIndi.destroy();
+	});
+
+	QUnit.test("the control doesn't recreate the label upon destruction", function (assert) {
+		// Arrange
+		var oDraftIndi = new sap.m.DraftIndicator();
+
+		// Act
+		oDraftIndi.showDraftSaving();
+		oDraftIndi.destroy();
+		this.clock.tick(1500);
+
+		// Assert
+		assert.strictEqual(oDraftIndi.getAggregation("_label"), null, "The label was not recreated");
+
+		// Clean up
 		oDraftIndi.destroy();
 	});
 

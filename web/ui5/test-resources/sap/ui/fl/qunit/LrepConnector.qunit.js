@@ -1,8 +1,4 @@
-/*globals QUnit, sinon*/
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
-
+/*global QUnit, sinon*/
 (function() {
 	"use strict";
 	jQuery.sap.require("sap.ui.fl.LrepConnector");
@@ -25,6 +21,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 			}
 
 			sap.ui.fl.LrepConnector.prototype._aSentRequestListeners = [];
+			sap.ui.fl.LrepConnector.prototype._sRequestUrlPrefix = "";
 		}
 	});
 
@@ -38,7 +35,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 
 	QUnit.test("_resolveUrl", function(assert) {
 		//Arrange
-		ok(this.oLrepConnector);
+		assert.ok(this.oLrepConnector);
 
 		//Act & Assert
 		assert.equal(this.oLrepConnector._resolveUrl("/content/subfolder"), "/content/subfolder");
@@ -48,6 +45,23 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		assert.equal(this.oLrepConnector._resolveUrl(""), "/");
 		assert.equal(this.oLrepConnector._resolveUrl("index.html"), "/index.html");
 		assert.equal(this.oLrepConnector._resolveUrl("index.html?anyParam=value"), "/index.html?anyParam=value");
+	});
+
+	QUnit.test("_resolveUrl with request url prefix", function(assert) {
+
+		sap.ui.fl.LrepConnector.prototype.setRequestUrlPrefix("/newprefix");
+
+		//Arrange
+		assert.ok(this.oLrepConnector);
+
+		//Act & Assert
+		assert.equal(this.oLrepConnector._resolveUrl("/content/subfolder"), "/newprefix/content/subfolder");
+		assert.equal(this.oLrepConnector._resolveUrl("content/subfolder"), "/newprefix/content/subfolder");
+		assert.equal(this.oLrepConnector._resolveUrl("//content/subfolder"), "/newprefix//content/subfolder");
+		assert.equal(this.oLrepConnector._resolveUrl("/content//subfolder/"), "/newprefix/content//subfolder/");
+		assert.equal(this.oLrepConnector._resolveUrl(""), "/newprefix/");
+		assert.equal(this.oLrepConnector._resolveUrl("index.html"), "/newprefix/index.html");
+		assert.equal(this.oLrepConnector._resolveUrl("index.html?anyParam=value"), "/newprefix/index.html?anyParam=value");
 	});
 
 	QUnit.test("_getDefaultHeader", function(assert) {
@@ -77,7 +91,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 
 	QUnit.test("_getDefaultOptions", function(assert) {
 		//Arrange
-		var defaultHeaderStub = sandbox.stub(this.oLrepConnector, "_getDefaultHeader").returns({
+		sandbox.stub(this.oLrepConnector, "_getDefaultHeader").returns({
 			headers: {
 				"X-CSRF-Token": "ABCDEFGHIJKLMN123456789"
 			}
@@ -86,9 +100,9 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var firstTry = {
 			async: true,
 			type: "GET",
-			contentType: "text/html",
+			contentType: "text/html; charset=ascii",
 			headers: {
-				"Content-Type": "text/html",
+				"Content-Type": "text/html; charset=ascii",
 				"X-CSRF-Token": "ABCDEFGHIJKLMN123456789"
 			},
 			processData: false
@@ -100,9 +114,9 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var secondTry = {
 			async: true,
 			type: "POST",
-			contentType: "text/plain",
+			contentType: "text/plain; charset=utf-8",
 			headers: {
-				"Content-Type": "text/plain",
+				"Content-Type": "text/plain; charset=utf-8",
 				"X-CSRF-Token": "ABCDEFGHIJKLMN123456789"
 			},
 			processData: false
@@ -114,9 +128,9 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var thirdTry = {
 			async: true,
 			type: "PUT",
-			contentType: "application/json",
+			contentType: "application/json; charset=utf-8",
 			headers: {
-				"Content-Type": "application/json",
+				"Content-Type": "application/json; charset=utf-8",
 				"X-CSRF-Token": "ABCDEFGHIJKLMN123456789"
 			},
 			processData: false
@@ -126,7 +140,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		};
 
 		//Act & Assert
-		assert.deepEqual(this.oLrepConnector._getDefaultOptions("GET", "text/html", null), firstTry);
+		assert.deepEqual(this.oLrepConnector._getDefaultOptions("GET", "text/html; charset=ascii", null), firstTry);
 		assert.deepEqual(this.oLrepConnector._getDefaultOptions("POST", "text/plain"), secondTry);
 		assert.deepEqual(this.oLrepConnector._getDefaultOptions("PUT"), thirdTry);
 	});
@@ -197,10 +211,12 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 	QUnit.test("_sendAjaxRequest - resolve", function(assert) {
 		//Arrange
 		this.server = sinon.fakeServer.create();
+		var sEtag = "abc123";
 		this.server.respondWith([200, {
 			"Content-Type": "application/json",
 			"Content-Length": 13,
-			"X-CSRF-Token": "0987654321"
+			"X-CSRF-Token": "0987654321",
+			"etag": sEtag
 		}, "{ test: 123 }"]);
 		this.server.autoRespond = true;
 
@@ -225,6 +241,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 			//Assert
 			assert.equal(result.status, "success");
 			assert.equal(result.response, "{ test: 123 }");
+			assert.equal(result.etag, sEtag);
 			assert.equal(that.oLrepConnector._sXsrfToken, "0987654321");
 		});
 	});
@@ -312,22 +329,42 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		assert.equal(this.oLrepConnector._aSentRequestListeners[1], fFunction3, "the third function should be still in the list of attached functions");
 	});
 
+	QUnit.test("loadSettings", function(assert) {
+		this.oLrepConnector._sClient = "123";
+		var sExpectedCallUrl = "/sap/bc/lrep/flex/settings" + "?sap-client=" + this.oLrepConnector._sClient;
+
+		var oFakeResponse = {
+			response: {}
+		};
+
+		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
+
+		return this.oLrepConnector.loadSettings().then(function() {
+			assert.equal(oSendStub.callCount, 1, "the backend request was triggered");
+			var oCall = oSendStub.getCall(0);
+			var aCallArguments = oCall.args;
+			assert.equal(aCallArguments[0], sExpectedCallUrl, "the call url was correctly built");
+		});
+	});
+
 	QUnit.test("loadChanges", function(assert) {
 		var sComponentClassName;
 		this.server = sinon.fakeServer.create();
+		var sEtag = "abc123";
 		this.server.respondWith([200,
-			{"Content-Type": "application/json", "Content-Length": 13, "X-CSRF-Token": "0987654321"},
+			{"Content-Type": "application/json", "Content-Length": 13, "X-CSRF-Token": "0987654321", "etag": sEtag},
 			'{ "changes": [ ], "settings": { "isKeyUser": true, "isAtoAvailable": false, "isAtoEnabled": false, "isProductiveSystem": false }, "messagebundle": {"i_123": "translatedKey"} }'
 		]);
 		this.server.autoRespond = true;
 
 		var that = this;
 		sComponentClassName = "smartFilterBar.Component";
-		return this.oLrepConnector.loadChanges(sComponentClassName).then(function(oResult) {
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}).then(function(oResult) {
 			assert.equal(oResult.changes.changes.length, 0);
 			assert.equal(oResult.changes.settings.isKeyUser, true);
 			assert.equal(oResult.changes.componentClassName, that.sComponentClassName);
-			assert.deepEqual(oResult.messagebundle, {"i_123": "translatedKey"}, "returns the responded messagebundle within the result");
+			assert.equal(oResult.etag, sEtag);
+			assert.deepEqual(oResult.changes.messagebundle, {"i_123": "translatedKey"}, "returns the responded messagebundle within the result");
 		});
 	});
 
@@ -343,15 +380,15 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var that = this;
 		sComponentClassName = "smartFilterBar.Component";
 		var oAppDescriptor = {
-		      			"sap.app": {
-		      				"id": "sap.ui.smartFormOData"
-		      			}
-		      		};
+						"sap.app": {
+							"id": "sap.ui.smartFormOData"
+						}
+					};
 
 		var mPropertyBag = {
-       			appDescriptor: oAppDescriptor
-     		};
-		return this.oLrepConnector.loadChanges(sComponentClassName, mPropertyBag).then(function(oResult) {
+				appDescriptor: oAppDescriptor
+			};
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}, mPropertyBag).then(function() {
 			assert.equal(that.server.requests.length, 1, "Only one HTTP request shall be send for fetching changes via getChanges request)");
 			assert.ok(that.server.requests[0].requestHeaders, "Request for getChanges shall contain a request header");
 			assert.equal(that.server.requests[0].requestHeaders["X-LRep-AppDescriptor-Id"], "sap.ui.smartFormOData", "Request header shall contain appDescriptorId");
@@ -370,29 +407,36 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var that = this;
 		sComponentClassName = "smartFilterBar.Component";
 		var mPropertyBag = {
-       			siteId: "dummyId4711"
-       		};
+				siteId: "dummyId4711"
+			};
 
-		return this.oLrepConnector.loadChanges(sComponentClassName, mPropertyBag).then(function(oResult) {
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}, mPropertyBag).then(function() {
 			assert.equal(that.server.requests.length, 1, "Only one HTTP request shall be send for fetching changes via getChanges request)");
 			assert.ok(that.server.requests[0].requestHeaders, "Request for getChanges shall contain a request header");
 			assert.equal(that.server.requests[0].requestHeaders["X-LRep-Site-Id"], mPropertyBag.siteId, "Request header shall contain siteId");
 		});
 	});
 
-	QUnit.test("loadChanges returns an empty list of changes without sending an request " +
-			"if the passed parameter contain already the information that there are no changes", function(assert) {
+	QUnit.test("loadChanges adds upToLayerType parameter to request when requested", function(assert) {
 		var sComponentClassName = "smartFilterBar.Component";
 		var mPropertyBag = {
-			cacheKey: "<NO CHANGES>"
+			layer: "CUSTOMER"
 		};
 
-		var oSendStub = this.stub(this.oLrepConnector, "send");
+		var sExpectedCallUrl = "/sap/bc/lrep/flex/data/" + sComponentClassName + "?upToLayerType=CUSTOMER";
 
-		return this.oLrepConnector.loadChanges(sComponentClassName, mPropertyBag).then(function(oResult) {
-			assert.ok(Array.isArray(oResult), "an array was returned");
-			assert.equal(oResult.length, 0, "no changes are present");
-			assert.equal(oSendStub.callCount, 0, "no backend request was triggered");
+		var oFakeResponse = {
+			response: {}
+		};
+
+		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}, mPropertyBag).then(function() {
+			assert.equal(oSendStub.callCount, 1, "the backend request was triggered");
+
+			var oCall = oSendStub.getCall(0);
+			var aCallArguments = oCall.args;
+			assert.equal(aCallArguments[0], sExpectedCallUrl, "the call url was correctly build with the upToLayerType parameter");
 		});
 	});
 
@@ -402,7 +446,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 			cacheKey: "ABC123thisISaHASH"
 		};
 
-		var sExpectedCallUrl = "/sap/bc/lrep/flex/data/~" + mPropertyBag.cacheKey + "~" + sComponentClassName;
+		var sExpectedCallUrl = "/sap/bc/lrep/flex/data/~" + mPropertyBag.cacheKey + "~/" + sComponentClassName;
 
 		var oFakeResponse = {
 			response: {}
@@ -410,7 +454,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 
 		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
 
-		return this.oLrepConnector.loadChanges(sComponentClassName, mPropertyBag).then(function() {
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}, mPropertyBag).then(function() {
 			assert.equal(oSendStub.callCount, 1, "the backend request was triggered");
 
 			var oCall = oSendStub.getCall(0);
@@ -432,7 +476,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 
 		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
 
-		return this.oLrepConnector.loadChanges(sComponentClassName, mPropertyBag).then(function() {
+		return this.oLrepConnector.loadChanges({name: sComponentClassName}, mPropertyBag).then(function() {
 			assert.equal(oSendStub.callCount, 1, "the backend request was triggered");
 
 			var oCall = oSendStub.getCall(0);
@@ -442,20 +486,96 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		});
 	});
 
-	QUnit.test("_loadChangesBasedOnOldRoute", function(assert) {
-		//Arrange
-		sandbox.stub(sap.ui.fl.Utils, "getComponentClassName").returns("MyComponentClassName");
-		sandbox.stub(jQuery.sap, "getResourceName");
-		sandbox.stub(jQuery.sap, "loadResource").returns(Promise.resolve({changes: [{selector: 1}, {selector: 2}, {selector: 3}]}));
-		var expectedResult = {
-			changes: {changes: [{selector: 1}, {selector: 2}, {selector: 3}]},
-			componentClassName: "MyComponentClassName"
+	QUnit.test("when requested, loadChanges adds appVersion parameter to the request URL", function(assert) {
+		var sComponentClassName = "smartFilterBar.Component";
+		var sAppVersion = "1.2.3";
+
+		var sExpectedCallUrl = "/sap/bc/lrep/flex/data/" + sComponentClassName + "?appVersion=1.2.3";
+
+		var oFakeResponse = {
+			response: {}
 		};
 
-		//Act
-		return this.oLrepConnector._loadChangesBasedOnOldRoute("MyComponentClassName").then(function(result) {
-			//Assert
-			assert.deepEqual(result, expectedResult);
+		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName, appVersion : sAppVersion}).then(function() {
+			assert.equal(oSendStub.callCount, 1, "the back-end request was triggered");
+
+			var oCall = oSendStub.getCall(0);
+			var aCallArguments = oCall.args;
+			assert.equal(aCallArguments[0], sExpectedCallUrl, "the request URL was correctly built and the appVersion parameter was included");
+		});
+	});
+
+	QUnit.test("loadChanges ignores appVersion parameter to the request URL in case of default app version", function(assert) {
+		var sComponentClassName = "smartFilterBar.Component";
+		var sAppVersion = sap.ui.fl.Utils.DEFAULT_APP_VERSION;
+
+		var sExpectedCallUrl = "/sap/bc/lrep/flex/data/" + sComponentClassName;
+
+		var oFakeResponse = {
+			response: {}
+		};
+
+		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName, appVersion : sAppVersion}).then(function() {
+			assert.equal(oSendStub.callCount, 1, "the back-end request was triggered");
+
+			var oCall = oSendStub.getCall(0);
+			var aCallArguments = oCall.args;
+			assert.equal(aCallArguments[0], sExpectedCallUrl, "the request URL was correctly built and the appVersion parameter was not included");
+		});
+	});
+
+	QUnit.test("loadChanges returns an error when appVersion is an expression binding with no value", function(assert) {
+		var sComponentClassName = "smartFilterBar.Component";
+		var sAppVersion = "${project.appVersion}";
+
+		var oSendStub = this.stub(this.oLrepConnector, "send");
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName, appVersion : sAppVersion}).
+			then(
+				function() {},
+				function(oError) {
+					assert.equal(oSendStub.callCount, 0, "the back-end request was not triggered");
+					assert.strictEqual(oError.message, "Component appVersion is invalid", "then the correct error message was returned");
+				});
+	});
+
+	QUnit.test("loadChanges returns an error when component name is an expression binding with no value", function(assert) {
+		var sComponentClassName = "${project.appVersion}.Component";
+		var sAppVersion = "1.2.3";
+
+		var oSendStub = this.stub(this.oLrepConnector, "send");
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName, appVersion : sAppVersion}).
+		then(
+			function() {},
+			function(oError) {
+				assert.equal(oSendStub.callCount, 0, "the back-end request was not triggered");
+				assert.strictEqual(oError.message, "Component name not specified", "then the correct error message was returned");
+			});
+	});
+
+	QUnit.test("loadChanges uses a passed url if provided", function(assert) {
+		var sComponentClassName = "smartFilterBar.Component";
+		var sAppVersion = sap.ui.fl.Utils.DEFAULT_APP_VERSION;
+
+		var sExpectedCallUrl = "/a/complete/different/url/abc";
+
+		var oFakeResponse = {
+			response: {}
+		};
+
+		var oSendStub = this.stub(this.oLrepConnector, "send").returns(Promise.resolve(oFakeResponse));
+
+		return this.oLrepConnector.loadChanges({name: sComponentClassName, appVersion : sAppVersion},{url: sExpectedCallUrl}).then(function() {
+			assert.equal(oSendStub.callCount, 1, "the back-end request was triggered");
+
+			var oCall = oSendStub.getCall(0);
+			var aCallArguments = oCall.args;
+			assert.equal(aCallArguments[0], sExpectedCallUrl, "the request URL was correctly built and the appVersion parameter was not included");
 		});
 	});
 
@@ -718,7 +838,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.getStaticResource("myNamespace/mySubNamespace", "myName", "myType", true).then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -732,7 +852,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.getStaticResource("myNamespace/mySubNamespace", "myName", "myType").then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -746,7 +866,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.getStaticResource("myNamespace/mySubNamespace", "myName", "myType", false).then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -760,7 +880,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.getFileAttributes("myNamespace/mySubNamespace", "myName", "myType", "myLayer").then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -774,7 +894,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.getFileAttributes("myNamespace/mySubNamespace", "myName", "myType").then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -782,9 +902,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 	QUnit.test("upsert - all params", function(assert) {
 		//Arrange
 		var expectedResult = {abc: 123};
-		var expectedOptions = {contentType: "text/plain"}
-		var expectedUrl = "/sap/bc/lrep/content/myNamespace/mySubNamespace/myName.myType?layer=myLayer&changelist=myChangelist";
-		var sendStub = sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve(expectedResult));
+		sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve(expectedResult));
 
 		//Act
 		return this.oLrepConnector.upsert("myNamespace/mySubNamespace/", "myName", "myType", "myLayer", "testcontent", "text/plain", "myChangelist").then(function(result) {
@@ -796,9 +914,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 	QUnit.test("upsert - required only", function(assert) {
 		//Arrange
 		var expectedResult = {abc: 123};
-		var expectedOptions = {contentType: "application/json"}
-		var expectedUrl = "/sap/bc/lrep/content/myNamespace/mySubNamespace/myName.myType?layer=myLayer";
-		var sendStub = sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve(expectedResult));
+		sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve(expectedResult));
 
 		//Act
 		return this.oLrepConnector.upsert("myNamespace/mySubNamespace/", "myName", "myType", "myLayer", "{}").then(function(result) {
@@ -810,8 +926,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 	QUnit.test("deleteFile - all params", function(assert) {
 		//Arrange
 		var expectedResult = {abc: 123};
-		var expectedUrl = "/sap/bc/lrep/content/myNamespace/mySubNamespace/myName.myType?layer=myLayer&changelist=myChangelist";
-		var sendStub = sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve({abc: 123}));
+		sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve({abc: 123}));
 
 		//Act
 		return this.oLrepConnector.deleteFile("myNamespace/mySubNamespace", "myName", "myType", "myLayer", "myChangelist").then(function(result) {
@@ -823,8 +938,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 	QUnit.test("deleteFile - required only", function(assert) {
 		//Arrange
 		var expectedResult = {abc: 123};
-		var expectedUrl = "/sap/bc/lrep/content/myNamespace/mySubNamespace/myName.myType?layer=myLayer";
-		var sendStub = sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve({abc: 123}));
+		sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve({abc: 123}));
 
 		//Act
 		return this.oLrepConnector.deleteFile("myNamespace/mySubNamespace", "myName", "myType", "myLayer").then(function(result) {
@@ -870,7 +984,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		//Act
 		return this.oLrepConnector.listContent("myNamespace/mySubNamespace", "myLayer").then(function(result) {
 			//Assert
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -881,7 +995,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		var sendStub = sinon.stub(this.oLrepConnector, "send").returns(Promise.resolve({abc: 123}));
 
 		return this.oLrepConnector.listContent("myNamespace/mySubNamespace").then(function(result) {
-			assert.ok(sendStub.calledWith(expectedUrl, "GET", {}, null));
+			assert.ok(sendStub.calledWith(expectedUrl, "GET", null, null));
 			assert.deepEqual(result, expectedResult);
 		});
 	});
@@ -904,7 +1018,7 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 		assert.equal(sPrefix, "/sap/bc/lrep/changes/");
 	});
 
-	QUnit.test("_sendAjaxRequest - refetch XSRF Token in case of http 403 (not authorised)", function(assert) {
+	QUnit.test("_sendAjaxRequest - refetch XSRF Token in case of http 403 (not authorised) and reuse of previous XSRF token", function(assert) {
 		var requestCount = 0;
 		var bValidRequestReceived = false;
 		var bValidFetchXSRFReceived = false;
@@ -922,7 +1036,11 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 				}
 				request.respond(200, {"X-CSRF-Token": "123"}); // valid token
 			} else if (request.requestHeaders["X-CSRF-Token"] === "123") {  //valid request
-				request.respond(200);
+				if (request.method === "DELETE") {
+					request.respond(204);
+				} else {
+					request.respond(200);
+				}
 				bValidRequestReceived = true;
 			} else { //XSRF Token is invalid --> 403 (not authorised)
 				request.respond(403);
@@ -942,7 +1060,25 @@ if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <
 			assert.equal(requestCount, 3, "There shall be 3 roundtrips: 1) Failed due to missing XSFR token. 2) Fetch XSRF Token. 3) Repeat first roundtrip.");
 			assert.ok(bValidRequestReceived, "The XSRF Token shall be fetched and the origin request shall be resent");
 			assert.ok(bValidFetchXSRFReceived, "The XSRF Token shall be fetched with a dedicated GET request");
-		});
+			mSampleOptions.type = "POST";
+			bValidRequestReceived = false;
+			return this.oLrepConnector._sendAjaxRequest(sSampleUri, mSampleOptions).then(function() {
+				assert.equal(requestCount, 4, "Next POST request will re use previous valid XSRF Token");
+				assert.ok(bValidRequestReceived, "and send the correct request");
+				mSampleOptions.type = "PUT";
+				bValidRequestReceived = false;
+				return this.oLrepConnector._sendAjaxRequest(sSampleUri, mSampleOptions).then(function() {
+					assert.equal(requestCount, 5, "Next PUT request will re use previous valid XSRF Token");
+					assert.ok(bValidRequestReceived, "and send the correct request");
+					mSampleOptions.type = "DELETE";
+					bValidRequestReceived = false;
+					return this.oLrepConnector._sendAjaxRequest(sSampleUri, mSampleOptions).then(function() {
+						assert.equal(requestCount, 6, "Next DELETE request will re use previous valid XSRF Token");
+						assert.ok(bValidRequestReceived, "and send the correct request");
+					});
+				}.bind(this));
+			}.bind(this));
+		}.bind(this));
 	});
 
 	QUnit.test("_sendAjaxRequest - shall reject Promise when backend returns error", function(assert) {

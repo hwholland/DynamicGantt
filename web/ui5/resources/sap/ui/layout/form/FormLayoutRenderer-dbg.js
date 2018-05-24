@@ -1,12 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define(["sap/ui/layout/library", "sap/ui/core/library", "sap/ui/core/theming/Parameters", "sap/ui/layout/form/Form"],
+	function(library, coreLibrary, themingParameters, Form) {
 	"use strict";
+
+	// shortcut for sap.ui.core.TitleLevel
+	var TitleLevel = coreLibrary.TitleLevel;
+
+	// shortcut for sap.ui.layout.BackgroundDesign
+	var BackgroundDesign = library.BackgroundDesign;
 
 	/**
 	 * FormLayout renderer.
@@ -26,7 +32,7 @@ sap.ui.define(['jquery.sap.global'],
 		var rm = oRenderManager;
 
 		var oForm = oLayout.getParent();
-		if (oForm && oForm instanceof sap.ui.layout.form.Form) {
+		if (oForm && oForm instanceof Form) {
 			this.renderForm(rm, oLayout, oForm);
 		}
 
@@ -57,7 +63,7 @@ sap.ui.define(['jquery.sap.global'],
 		if (oToolbar) {
 			rm.renderControl(oToolbar);
 		} else {
-			var sSize = sap.ui.core.theming.Parameters.get('sap.ui.layout.FormLayout:sapUiFormTitleSize');
+			var sSize = themingParameters.get('sap.ui.layout.FormLayout:_sap_ui_layout_FormLayout_FormTitleSize');
 			this.renderTitle(rm, oForm.getTitle(), undefined, false, sSize, oForm.getId());
 		}
 
@@ -73,7 +79,7 @@ sap.ui.define(['jquery.sap.global'],
 	FormLayoutRenderer.addBackgroundClass = function(rm, oLayout){
 
 		var sBackgroundDesign = oLayout.getBackgroundDesign();
-		if (sBackgroundDesign != sap.ui.layout.BackgroundDesign.Transparent) {
+		if (sBackgroundDesign != BackgroundDesign.Transparent) {
 			rm.addClass("sapUiFormBackgr" + sBackgroundDesign);
 		}
 
@@ -84,7 +90,7 @@ sap.ui.define(['jquery.sap.global'],
 		var aContainers = oForm.getFormContainers();
 		for (var i = 0, il = aContainers.length; i < il; i++) {
 			var oContainer = aContainers[i];
-			if (oContainer.getVisible()) {
+			if (oContainer.isVisible()) {
 				this.renderContainer(rm, oLayout, oContainer);
 			}
 		}
@@ -119,7 +125,7 @@ sap.ui.define(['jquery.sap.global'],
 		if (oToolbar) {
 			rm.renderControl(oToolbar);
 		} else {
-			this.renderTitle(rm, oTitle, oContainer._oExpandButton, bExpandable, sap.ui.core.TitleLevel.H4, oContainer.getId());
+			this.renderTitle(rm, oTitle, oContainer._oExpandButton, bExpandable, TitleLevel.H4, oContainer.getId());
 		}
 
 		if (bExpandable) {
@@ -136,7 +142,7 @@ sap.ui.define(['jquery.sap.global'],
 
 			var oElement = aElements[j];
 
-			if (oElement.getVisible()) {
+			if (oElement.isVisible()) {
 				this.renderElement(rm, oLayout, oElement);
 			}
 
@@ -184,11 +190,11 @@ sap.ui.define(['jquery.sap.global'],
 
 		if (oTitle) {
 			//determine title level -> if not set use H4 as default
-			var sLevel = sap.ui.core.theming.Parameters.get('sap.ui.layout.FormLayout:sapUiFormSubTitleSize');
+			var sLevel = themingParameters.get('sap.ui.layout.FormLayout:_sap_ui_layout_FormLayout_FormSubTitleSize');
 			if (sLevelDefault) {
 				sLevel = sLevelDefault;
 			}
-			if (typeof oTitle !== "string" && oTitle.getLevel() != sap.ui.core.TitleLevel.Auto) {
+			if (typeof oTitle !== "string" && oTitle.getLevel() != TitleLevel.Auto) {
 				sLevel = oTitle.getLevel();
 			}
 

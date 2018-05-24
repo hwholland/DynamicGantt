@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.require([
@@ -8,11 +8,12 @@ sap.ui.require([
 	"sap/ui/model/odata/v4/lib/_Batch",
 	"sap/ui/test/TestUtils"
 ], function (jQuery, _Batch, TestUtils) {
-	/*global QUnit, sinon */
+	/*global QUnit */
 	/*eslint max-nested-callbacks: 0, no-multi-str: 0, no-warning-comments: 0 */
 	"use strict";
 
 	var oEmployeesBody = {
+			"@odata.context": "$metadata#EMPLOYEES",
 			"value" : [{
 				"@odata.etag" : "W/\"19770724000000.0000000\"",
 				"ID" : "1",
@@ -36,7 +37,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "EUR",
 					"YEARLY_BONUS_AMOUNT" : 5000.000,
 					"BONUS_CURR" : "KWD"
-				}
+				},
+				"STATUS": "Available"
 			}, {
 				"@odata.etag" : "W/\"20030701000000.0000000\"",
 				"ID" : "2",
@@ -60,7 +62,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "EUR",
 					"YEARLY_BONUS_AMOUNT" : 10000.00,
 					"BONUS_CURR" : "EUR"
-				}
+				},
+				"STATUS": "Occupied"
 			}, {
 				"@odata.etag" : "W/\"19770724000000.0000000\"",
 				"ID" : "3",
@@ -84,7 +87,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "EUR",
 					"YEARLY_BONUS_AMOUNT" : 10000.00,
 					"BONUS_CURR" : "EUR"
-				}
+				},
+				"STATUS": "Occupied"
 			}, {
 				"@odata.etag" : "W/\"20040912000000.0000000\"",
 				"ID" : "4",
@@ -108,7 +112,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "GBP",
 					"YEARLY_BONUS_AMOUNT" : 15000.00,
 					"BONUS_CURR" : "USD"
-				}
+				},
+				"STATUS": "Available"
 			}, {
 				"@odata.etag" : "W/\"20010201000000.0000000\"",
 				"ID" : "5",
@@ -132,7 +137,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "GBP",
 					"YEARLY_BONUS_AMOUNT" : 15000.00,
 					"BONUS_CURR" : "USD"
-				}
+				},
+				"STATUS": "Available"
 			}, {
 				"@odata.etag" : "W/\"20101201000000.0000000\"",
 				"ID" : "6",
@@ -156,7 +162,8 @@ sap.ui.require([
 					"BASIC_SALARY_CURR" : "GBP",
 					"YEARLY_BONUS_AMOUNT" : 15000.00,
 					"BONUS_CURR" : "USD"
-				}
+				},
+				"STATUS": "Occupied"
 			}]
 		},
 		oDepartmentsBody = {
@@ -198,9 +205,9 @@ sap.ui.require([
 			},
 			"SALARY" : {
 				"MONTHLY_BASIC_SALARY_AMOUNT" : 0.00,
-				"BASIC_SALARY_CURR" : "",
+				"BASIC_SALARY_CURR" : "EUR",
 				"YEARLY_BONUS_AMOUNT" : 0.00,
-				"BONUS_CURR" : ""
+				"BONUS_CURR" : "EUR"
 			}
 		},
 		oNewTeamBody =  {
@@ -229,14 +236,9 @@ sap.ui.require([
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.odata.v4.lib._Batch", {
 		beforeEach : function () {
-			this.oSandbox = sinon.sandbox.create();
-			this.oLogMock = this.oSandbox.mock(jQuery.sap.log);
+			this.oLogMock = this.mock(jQuery.sap.log);
 			this.oLogMock.expects("warning").never();
 			this.oLogMock.expects("error").never();
-		},
-
-		afterEach : function () {
-			this.oSandbox.verifyAndRestore();
 		}
 	});
 
@@ -319,14 +321,14 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_03"}'
+				body : {"TEAM_ID" : "TEAM_03"}
 			}, {
 				method : "PATCH",
 				url : "Employees('2')",
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_01"}'
+				body : {"TEAM_ID" : "TEAM_01"}
 			}
 		]],
 		body : "--batch_id-0123456789012-345\r\n" +
@@ -340,7 +342,7 @@ sap.ui.require([
 		"PATCH Employees('1') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_03"}\r\n' +
+		'{"TEAM_ID":"TEAM_03"}\r\n' +
 		"--changeset_id-9876543210987-654\r\n" +
 		"Content-Type:application/http\r\n" +
 		"Content-Transfer-Encoding:binary\r\n" +
@@ -349,7 +351,7 @@ sap.ui.require([
 		"PATCH Employees('2') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_01"}\r\n' +
+		'{"TEAM_ID":"TEAM_01"}\r\n' +
 		"--changeset_id-9876543210987-654--\r\n" +
 		"--batch_id-0123456789012-345--\r\n",
 		"Content-Type" : "multipart/mixed; boundary=batch_id-0123456789012-345",
@@ -374,14 +376,14 @@ sap.ui.require([
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"TEAM_ID": "TEAM_03"}'
+					body : {"TEAM_ID" : "TEAM_03"}
 				}, {
 					method : "PATCH",
 					url : "Employees('2')",
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"TEAM_ID": "TEAM_01"}'
+					body : {"TEAM_ID" : "TEAM_01"}
 				}
 			],
 			{
@@ -390,7 +392,7 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_01"}'
+				body : {"TEAM_ID" : "TEAM_01"}
 			},
 			[
 				{
@@ -399,14 +401,14 @@ sap.ui.require([
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"TEAM_ID": "TEAM_02"}'
+					body : {"TEAM_ID" : "TEAM_02"}
 				}, {
 					method : "PATCH",
 					url : "Employees('4')",
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"TEAM_ID": "TEAM_01"}'
+					body : {"TEAM_ID" : "TEAM_01"}
 				}
 			]
 		],
@@ -430,7 +432,7 @@ sap.ui.require([
 		"PATCH Employees('1') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_03"}\r\n' +
+		'{"TEAM_ID":"TEAM_03"}\r\n' +
 		"--changeset_id-9876543210987-654\r\n" +
 		"Content-Type:application/http\r\n" +
 		"Content-Transfer-Encoding:binary\r\n" +
@@ -439,7 +441,7 @@ sap.ui.require([
 		"PATCH Employees('2') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_01"}\r\n' +
+		'{"TEAM_ID":"TEAM_01"}\r\n' +
 		"--changeset_id-9876543210987-654--\r\n" +
 		"--batch_id-0123456789012-345\r\n" +
 		"Content-Type:application/http\r\n" +
@@ -448,7 +450,7 @@ sap.ui.require([
 		"PATCH Employees('3') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_01"}\r\n' +
+		'{"TEAM_ID":"TEAM_01"}\r\n' +
 		"--batch_id-0123456789012-345\r\n" +
 		"Content-Type: multipart/mixed;boundary=changeset_id-0123456789012-912\r\n" +
 		"\r\n" +
@@ -460,7 +462,7 @@ sap.ui.require([
 		"PATCH Employees('3') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_02"}\r\n' +
+		'{"TEAM_ID":"TEAM_02"}\r\n' +
 		"--changeset_id-0123456789012-912\r\n" +
 		"Content-Type:application/http\r\n" +
 		"Content-Transfer-Encoding:binary\r\n" +
@@ -469,7 +471,7 @@ sap.ui.require([
 		"PATCH Employees('4') HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"TEAM_ID": "TEAM_01"}\r\n' +
+		'{"TEAM_ID":"TEAM_01"}\r\n' +
 		"--changeset_id-0123456789012-912--\r\n" +
 		"--batch_id-0123456789012-345--\r\n",
 		"Content-Type" : "multipart/mixed; boundary=batch_id-0123456789012-345",
@@ -485,14 +487,14 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : JSON.stringify(oNewTeamBody)
+				body : oNewTeamBody
 			}, {
 				method : "POST",
 				url : "$0/TEAM_2_EMPLOYEES",
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : JSON.stringify(oNewEmployeeBody)
+				body : oNewEmployeeBody
 			}],
 			[{
 				method : "POST",
@@ -500,35 +502,35 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{\
-"Team_Id": "TEAM_05",\
-"Name": "UI2 Services",\
-"MEMBER_COUNT": 9,\
-"MANAGER_ID": "1",\
-"BudgetCurrency": "EUR",\
-"Budget": 5555\
-}'
+				body : {
+					"Team_Id" : "TEAM_05",
+					"Name" : "UI2 Services",
+					"MEMBER_COUNT" : 9,
+					"MANAGER_ID" : "1",
+					"BudgetCurrency" : "EUR",
+					"Budget" : 5555
+				}
 			}, {
 				method : "POST",
 				url : "TEAMS",
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{\
-"Team_Id": "TEAM_06",\
-"Name": "UI2 Services",\
-"MEMBER_COUNT": 9,\
-"MANAGER_ID": "1",\
-"BudgetCurrency": "EUR",\
-"Budget": 5555\
-}'
+				body : {
+					"Team_Id" : "TEAM_06",
+					"Name" : "UI2 Services",
+					"MEMBER_COUNT" : 9,
+					"MANAGER_ID" : "1",
+					"BudgetCurrency" : "EUR",
+					"Budget" : 5555
+				}
 			}, {
 				method : "POST",
 				url : "$1/TEAM_2_EMPLOYEES",
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : JSON.stringify(oNewEmployeeBody)
+				body : oNewEmployeeBody
 			}]
 		],
 		body : "--batch_id-1450426018742-911\r\n" +
@@ -564,12 +566,12 @@ sap.ui.require([
 		"POST TEAMS HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"Team_Id": "TEAM_05",'
-		+ '"Name": "UI2 Services",'
-		+ '"MEMBER_COUNT": 9,'
-		+ '"MANAGER_ID": "1",'
-		+ '"BudgetCurrency": "EUR",'
-		+ '"Budget": 5555}\r\n' +
+		'{"Team_Id":"TEAM_05",'
+		+ '"Name":"UI2 Services",'
+		+ '"MEMBER_COUNT":9,'
+		+ '"MANAGER_ID":"1",'
+		+ '"BudgetCurrency":"EUR",'
+		+ '"Budget":5555}\r\n' +
 		"--changeset_id-1450426018742-913\r\n" +
 		"Content-Type:application/http\r\n" +
 		"Content-Transfer-Encoding:binary\r\n" +
@@ -578,12 +580,12 @@ sap.ui.require([
 		"POST TEAMS HTTP/1.1\r\n" +
 		"Content-Type:application/json\r\n" +
 		"\r\n" +
-		'{"Team_Id": "TEAM_06",'
-		+ '"Name": "UI2 Services",'
-		+ '"MEMBER_COUNT": 9,'
-		+ '"MANAGER_ID": "1",'
-		+ '"BudgetCurrency": "EUR",'
-		+ '"Budget": 5555}\r\n' +
+		'{"Team_Id":"TEAM_06",'
+		+ '"Name":"UI2 Services",'
+		+ '"MEMBER_COUNT":9,'
+		+ '"MANAGER_ID":"1",'
+		+ '"BudgetCurrency":"EUR",'
+		+ '"Budget":5555}\r\n' +
 		"--changeset_id-1450426018742-913\r\n" +
 		"Content-Type:application/http\r\n" +
 		"Content-Transfer-Encoding:binary\r\n" +
@@ -600,7 +602,8 @@ sap.ui.require([
 	}].forEach(function (oFixture) {
 			QUnit.test("serializeBatchRequest: " + oFixture.testTitle, function (assert) {
 				var oBatchRequest,
-					oMock = this.oSandbox.mock(jQuery.sap);
+					oMock = this.mock(jQuery.sap),
+					aRequests = JSON.parse(JSON.stringify(oFixture.requests));
 
 				if (oFixture.expectedBoundaryIDs) {
 					oFixture.expectedBoundaryIDs.forEach(function (oValue) {
@@ -610,8 +613,9 @@ sap.ui.require([
 					oMock.expects("uid").returns("id-0123456789012-345");
 				}
 
-				oBatchRequest = _Batch.serializeBatchRequest(oFixture.requests);
+				oBatchRequest = _Batch.serializeBatchRequest(aRequests);
 
+				assert.deepEqual(aRequests, oFixture.requests, "input remained unchanged");
 				assert.strictEqual(oBatchRequest.body, oFixture.body);
 				assert.strictEqual(oBatchRequest.headers["Content-Type"], oFixture["Content-Type"]);
 				assert.strictEqual(oBatchRequest.headers["MIME-Version"], oFixture["MIME-Version"]);
@@ -629,7 +633,7 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_03"}'
+				body : '{"TEAM_ID" : "TEAM_03"}'
 			},
 			[
 				{
@@ -638,7 +642,7 @@ sap.ui.require([
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"TEAM_ID": "TEAM_01"}'
+					body : '{"TEAM_ID" : "TEAM_01"}'
 				}
 			]]
 		],
@@ -652,14 +656,14 @@ sap.ui.require([
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_03"}'
+				body : '{"TEAM_ID" : "TEAM_03"}'
 			}, {
 				method : "GET",
 				url : "Employees('2')",
 				headers : {
 					"Content-Type" : "application/json"
 				},
-				body : '{"TEAM_ID": "TEAM_01"}'
+				body : '{"TEAM_ID" : "TEAM_01"}'
 			}]
 		],
 		errorMessage : "Invalid HTTP request method: GET. Change set must contain only POST, " +
@@ -684,7 +688,7 @@ Content-Type: application/http\r\n\
 Content-Length: 4711\r\n\
 content-transfer-encoding: binary\r\n\
 \r\n\
-HTTP/1.1 200 OK\r\n\
+HTTP/1.1 200\r\n\
 Content-Type: application/json;odata.metadata=minimal\r\n\
 Content-Length: 9\r\n\
 odata-version: 4.0\r\n\
@@ -707,7 +711,7 @@ header-with-space-before-colon : Headername with space before colon\r\n\
 this is a batch request epilogue",
 		expectedResponses : [{
 			status : 200,
-			statusText : "OK",
+			statusText : "", // optional!
 			headers : {
 				"Content-Type" : "application/json;odata.metadata=minimal",
 				"Content-Length" : "9",
@@ -725,6 +729,29 @@ this is a batch request epilogue",
 				"header-with-space-before-colon" : "Headername with space before colon"
 			},
 			responseText : "{\"foo1\":\"bar1\"}"
+		}]
+	}, {
+		testTitle : "no final CRLF",
+		contentType : "multipart/mixed; boundary=batch_id-0123456789012-345",
+		body : "--batch_id-0123456789012-345\r\n\
+Content-Type: application/http\r\n\
+\r\n\
+HTTP/1.1 200 OK\r\n\
+Content-Type: application/json;odata.metadata=minimal\r\n\
+Content-Length: 9\r\n\
+odata-version: 4.0\r\n\
+\r\n\
+{\"foo\":\"bar\"}\r\n\
+--batch_id-0123456789012-345--",
+		expectedResponses : [{
+			status : 200,
+			statusText : "OK",
+			headers : {
+				"Content-Type" : "application/json;odata.metadata=minimal",
+				"Content-Length" : "9",
+				"odata-version" : "4.0"
+			},
+			responseText : "{\"foo\":\"bar\"}"
 		}]
 	}, {
 		testTitle : "batch parts without headers",
@@ -761,7 +788,7 @@ HTTP/1.1 200 OK\r\n\
 		testTitle : "batch boundary with special characters",
 		contentType : ' multipart/mixed; myboundary="invalid"; '
 		+ 'boundary="batch_id-0123456789012-345\'()+_,-./:=?"',
-		body : "--batch_id-0123456789012-345\'()+_,-./:=? \r\n\
+		body : "--batch_id-0123456789012-345\'()+_,-./:=?\t\r\n\
 Content-Type: application/http\r\n\
 Content-Length: 4711\r\n\
 content-transfer-encoding: binary\r\n\
@@ -1201,7 +1228,36 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 					"Accept" : "application/json",
 					"Content-Type" : "application/json;charset=UTF-8"
 				},
-				body : '{"ENTRYDATE":"2015-10-01", "Name":"Egon", "AGE":17}'
+				// TODO:
+				// Nowadays for POST we have to provide all properties, hence we need a new employee
+				// with initial values for all properties as gateway strictly checks now that all
+				// properties are available
+				// -> we may reduce properties again if back-end provides defaulting
+				body : {
+					"ID" : "7",
+					"Name" : "Egon",
+					"AGE" : 17,
+					"ENTRYDATE" : "2015-10-01",
+					"MANAGER_ID" : "",
+					"ROOM_ID" : "",
+					"TEAM_ID" : "",
+					"Is_Manager" : false,
+					"LAST_MODIFIED_AT" : "1970-01-01T00:00:00Z",
+					"LOCATION" : {
+						"COUNTRY" : "",
+						"City" : {
+							"POSTALCODE" : "",
+							"CITYNAME" : ""
+						}
+					},
+					"SALARY" : {
+						"MONTHLY_BASIC_SALARY_AMOUNT" : 0.00,
+						"BASIC_SALARY_CURR" : "EUR",
+						"YEARLY_BONUS_AMOUNT" : 0.00,
+						"BONUS_CURR" : "EUR"
+					},
+					"STATUS" : "Available"
+				}
 			}],
 			expectedResponses : [{
 				status : 200,
@@ -1275,14 +1331,14 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						"Content-Type" : "application/json",
 						"If-Match" : "W/\"19770724000000.0000000\""
 					},
-					body : '{"TEAM_ID": "TEAM_03"}'
+					body : {"TEAM_ID" : "TEAM_03"}
 				}, {
 					method : "POST",
 					url : "Unknown",
 					headers : {
 						"Content-Type" : "application/json"
 					},
-					body : '{"bar": "bar"}'
+					body : {"bar" : "bar"}
 				}
 			],
 			{
@@ -1323,14 +1379,14 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 							"Content-Type" : "application/json",
 							"If-Match" : "W/\"19770724000000.0000000\""
 						},
-						body : '{"TEAM_ID": "TEAM_03"}'
+						body : {"TEAM_ID" : "TEAM_03"}
 					}, {
 						method : "POST",
 						url : "Unknown",
 						headers : {
 							"Content-Type" : "application/json"
 						},
-						body : '{"bar": "bar"}'
+						body : {"bar" : "bar"}
 					}
 				],
 				{
@@ -1408,7 +1464,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						"Content-Type" : "application/json",
 						"If-Match" : "W/\"19770724000000.0000000\""
 					},
-					body : '{"TEAM_ID": "TEAM_03"}'
+					body : {"TEAM_ID" : "TEAM_03"}
 				}, {
 					method : "PATCH",
 					url : "EMPLOYEES('2')",
@@ -1416,7 +1472,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						"Content-Type" : "application/json",
 						"If-Match" : "W/\"20030701000000.0000000\""
 					},
-					body : '{"TEAM_ID": "TEAM_01"}'
+					body : {"TEAM_ID" : "TEAM_01"}
 				}
 			],
 			{
@@ -1426,7 +1482,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 					"Content-Type" : "application/json",
 					"If-Match" : "W/\"20010201000000.0000000\""
 				},
-				body : '{"TEAM_ID": "TEAM_01"}'
+				body : {"TEAM_ID" : "TEAM_01"}
 			},
 			[
 				{
@@ -1436,7 +1492,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						"Content-Type" : "application/json",
 						"If-Match" : "W/\"19770724000000.0000000\""
 					},
-					body : '{"TEAM_ID": "TEAM_02"}'
+					body : {"TEAM_ID" : "TEAM_02"}
 				}, {
 					method : "PATCH",
 					url : "EMPLOYEES('4')",
@@ -1444,7 +1500,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						"Content-Type" : "application/json",
 						"If-Match" : "W/\"20040912000000.0000000\""
 					},
-					body : '{"TEAM_ID": "TEAM_01"}'
+					body : {"TEAM_ID" : "TEAM_01"}
 				}
 			]],
 			expectedResponses : [{
@@ -1656,7 +1712,7 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 					},
 					responseText : oNewEmployeeBody
 				}]]
-		}].forEach(function (oFixture, i) {
+		}].forEach(function (oFixture) {
 			QUnit[oFixture.skip ? "skip" : "test"](
 				"Multipart Integration Test: " + oFixture.testTitle,
 				function (assert) {
@@ -1746,7 +1802,6 @@ Content-Type: application/json;odata.metadata=minimal;charset=UTF-8\r\n\
 						oResponse = aResponses[0];
 
 						assert.strictEqual(oResponse.status, 404);
-						assert.strictEqual(oResponse.statusText, "Not Found");
 						assert.ok(oResponse.headers["content-language"]);
 						done();
 					});

@@ -4,17 +4,18 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>sap.m.Popover - Accessibility</title>
 
+	<script src="../shared-config.js"></script>
 	<script src="../../../../resources/sap-ui-core.js"
-	        type="text/javascript"
-	        id="sap-ui-bootstrap"
-	        data-sap-ui-libs="sap.m"
-	        data-sap-ui-theme="sap_bluecrystal">
+		id="sap-ui-bootstrap"
+		data-sap-ui-libs="sap.m">
 	</script>
 
 	<script>
 		var oApp = new sap.m.App("myApp", {
 			initialPage: "page"
 		});
+
+		var oInvisibleText = new sap.ui.core.InvisibleText({text: "Items to buy from the supermarket"});
 
 		var oPopover = new sap.m.Popover({
 			title: "Grocery List",
@@ -26,7 +27,8 @@
 								new sap.m.StandardListItem({ title: "Salt" })
 						]
 					})
-			]
+			],
+			ariaLabelledBy: oInvisibleText.getId()
 		});
 
 		var oButton = new sap.m.Button({
@@ -39,7 +41,8 @@
 		var oPage = new sap.m.Page("page", {
 			title: "Popover Control",
 			content: [
-				oButton
+				oButton,
+				oInvisibleText
 			]
 		});
 

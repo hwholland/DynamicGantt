@@ -3,7 +3,7 @@
     <name>InputBase</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The &lt;code&gt;sap.m.InputBase&lt;/code&gt; control provides a base functionality of the Input controls, e.g. &lt;code&gt;sap.m.Input&lt;/code&gt;, &lt;code&gt;sap.m.DatePicker&lt;/code&gt;, &lt;code&gt;sap.m.TextArea&lt;/code&gt;, &lt;code&gt;sap.m.ComboBox&lt;/code&gt;.</documentation>
+    <documentation>The &lt;code&gt;sap.m.InputBase&lt;/code&gt; control provides a basic functionality for input controls.</documentation>
     <since>1.12.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>

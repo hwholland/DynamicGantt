@@ -4,7 +4,7 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>Enables users to trigger actions such as save or print. For the button UI, you can define some text or an icon, or both.</documentation>
-    <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.Button&lt;/code&gt; control.</deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Button}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" defaultValue="" group="Appearance">
@@ -21,15 +21,15 @@
         </property>
         <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Appearance">
             <documentation>Icon to be displayed as graphical element within the button.
-This can be an URI to an image or an icon font URI.</documentation>
+This can be a URI to an image or an icon font URI.</documentation>
         </property>
         <property name="iconHovered" type="sap.ui.core/URI" defaultValue="" group="Appearance">
             <documentation>Icon to be displayed as graphical element within the button when it is hovered (only if also a base icon was specified). If not specified the base icon is used.
-If a icon font icon is used, this property is ignored.</documentation>
+If an icon font icon is used, this property is ignored.</documentation>
         </property>
         <property name="iconSelected" type="sap.ui.core/URI" defaultValue="" group="Appearance">
             <documentation>Icon to be displayed as graphical element within the button when it is selected (only if also a base icon was specified). If not specified the base or hovered icon is used.
-If a icon font icon is used, this property is ignored.</documentation>
+If an icon font icon is used, this property is ignored.</documentation>
         </property>
         <property name="iconFirst" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>If set to true (default), the display sequence is 1. icon 2. control text .</documentation>

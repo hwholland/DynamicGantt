@@ -6,6 +6,7 @@
     <documentation>Switches between two control areas and animates it via CSS transitions</documentation>
     <since>1.16.0</since>
     <developmentState state="experimental" since="1.16.0">API is not yet finished and might change completely</developmentState>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="animation" type="sap.ui.core/string" defaultValue="None" group="Appearance">

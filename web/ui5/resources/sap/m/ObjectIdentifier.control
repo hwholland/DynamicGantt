@@ -14,15 +14,15 @@
         </property>
         <property name="badgeNotes" type="sap.ui.core/boolean" group="Misc">
             <documentation>Indicates whether or not the notes icon is displayed.</documentation>
-            <deprecation since="1.24.0">Will be replaced in the future by a more generic mechanism.</deprecation>
+            <deprecation since="1.24.0">There is no replacement for the moment.</deprecation>
         </property>
         <property name="badgePeople" type="sap.ui.core/boolean" group="Misc">
             <documentation>Indicates whether or not the address book icon is displayed.</documentation>
-            <deprecation since="1.24.0">Will be replaced in the future by a more generic mechanism.</deprecation>
+            <deprecation since="1.24.0">There is no replacement for the moment.</deprecation>
         </property>
         <property name="badgeAttachments" type="sap.ui.core/boolean" group="Misc">
             <documentation>Indicates whether or not the attachments icon is displayed.</documentation>
-            <deprecation since="1.24.0">Will be replaced in the future by a more generic mechanism.</deprecation>
+            <deprecation since="1.24.0">There is no replacement for the moment.</deprecation>
         </property>
         <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>Indicates if the ObjectIdentifier is visible. An invisible ObjectIdentifier is not being rendered.</documentation>

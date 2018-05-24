@@ -1,3 +1,5 @@
+/*global QUnit*/
+
 sap.ui.require(
 	["sap/ui/test/opaQunit"],
 	function (opaTest) {
@@ -13,7 +15,8 @@ sap.ui.require(
 			When.onTheWorklistPage.iLookAtTheScreen();
 
 			// Assertions
-			Then.onTheWorklistPage.theTitleShouldDisplayTheTotalAmountOfItems();
+			Then.onTheWorklistPage.theTableShouldHavePagination().
+				and.theTitleShouldDisplayTheTotalAmountOfItems();
 		});
 
 		opaTest("Should be able to load more items", function (Given, When, Then) {
@@ -21,7 +24,15 @@ sap.ui.require(
 			When.onTheWorklistPage.iPressOnMoreData();
 
 			// Assertions
-			Then.onTheWorklistPage.theTableShouldHaveAllEntries().
+			Then.onTheWorklistPage.theTableShouldHaveAllEntries();
+		});
+
+		opaTest("Should be able to search for items", function (Given, When, Then) {
+			//Actions
+			When.onTheWorklistPage.iSearchFor("Bear");
+
+			// Assertions
+			Then.onTheWorklistPage.theTableHasOneItem().
 				and.iTeardownMyAppFrame();
 		});
 	}

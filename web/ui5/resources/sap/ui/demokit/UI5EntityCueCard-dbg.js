@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.UI5EntityCueCard.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/commons/Link', './EntityInfo', './library'],
-	function(jQuery, Control, Link, EntityInfo, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    'sap/ui/commons/Link',
+    './EntityInfo',
+    './library',
+    "./UI5EntityCueCardRenderer"
+],
+	function(jQuery, Control, Link, EntityInfo, library, UI5EntityCueCardRenderer) {
 	"use strict";
 
 
@@ -27,12 +34,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/commons/Link'
 	 * and when pressed, the navigate event is fired. This allows consumers to react on a user click on such a type
 	 * (and to e.g. navigate to the underlying type of a property or aggregation)
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.UI5EntityCueCard
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var UI5EntityCueCard = Control.extend("sap.ui.demokit.UI5EntityCueCard", /** @lends sap.ui.demokit.UI5EntityCueCard.prototype */ { metadata : {
 

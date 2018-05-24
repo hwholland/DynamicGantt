@@ -3,9 +3,9 @@
     <name>ScrollContainer</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The ScrollContainer is a control that can display arbitrary content within a limited screen area and provides touch scrolling to make all content accessible.
-
-Note that it is not recommended to have nested scrolling areas that scroll into the same direction (e.g. a ScrollContainer that scrolls vertically inside a Page control with scrolling enabled). This is currently not considered a valid use-case of a good UI and the behavior will feel wrong.</documentation>
+    <documentation>The ScrollContainer is a control that can display arbitrary content within a limited screen area and provides scrolling to make all content accessible.
+&lt;h3&gt;When not to use&lt;/h3&gt;
+Do not nest scrolling areas that scroll in the same direction (e.g. a ScrollContainer that scrolls vertically inside a Page control with scrolling enabled).</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="width" type="sap.ui.core/CSSSize" defaultValue="auto" group="Dimension">

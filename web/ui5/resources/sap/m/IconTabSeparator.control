@@ -9,6 +9,9 @@
         <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Misc">
             <documentation>The icon to display for this separator. If no icon is given, a separator line is used instead.</documentation>
         </property>
+        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+            <documentation>Specifies whether the separator is rendered.</documentation>
+        </property>
         <property name="iconDensityAware" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>If set to true, it sends one or more requests,
 trying to get the density perfect version of the image if this version of

@@ -21,7 +21,7 @@
         </property>
         <property name="iconDensityAware" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
             <documentation>By default, one or more requests are sent to get the density perfect version of the icon if the given version of the icon doesn't exist on the server.
-&lt;b&gt;Note:&lt;b&gt; If bandwidth is a key factor for the application, set this value to &lt;code&gt;false&lt;/code&gt;.</documentation>
+&lt;b&gt;Note:&lt;/b&gt; If bandwidth is a key factor for the application, set this value to &lt;code&gt;false&lt;/code&gt;.</documentation>
         </property>
         <property name="activeIcon" type="sap.ui.core/URI" group="Misc">
             <documentation>Defines the icon that is shown while the list item is pressed.</documentation>

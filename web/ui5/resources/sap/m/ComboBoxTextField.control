@@ -11,7 +11,7 @@
             <documentation>Sets the maximum width of the text field.</documentation>
         </property>
         <property name="showButton" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.38">
-            <documentation>Indicates whether the dropdown arrow button is shown.</documentation>
+            <documentation>Indicates whether the dropdown downward-facing arrow button is shown.</documentation>
         </property>
     </properties>
     <aggregations>

@@ -1,29 +1,55 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.SplitApp.
-sap.ui.define(['jquery.sap.global', './SplitContainer', './library'],
-	function(jQuery, SplitContainer, library) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./SplitContainer',
+	'./library',
+	'sap/ui/Device',
+	'./SplitAppRenderer'
+],
+	function(jQuery, SplitContainer, library, Device, SplitAppRenderer) {
 	"use strict";
-
-
 
 	/**
 	 * Constructor for a new SplitApp.
 	 *
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
-	 *
+	 * A container control that is used to display a master-detail view in an application.
 	 * @class
-	 * SplitApp is another root element of a UI5 mobile application besides App control. It maintains two NavContainers if running on tablet and one - on phone.
+	 * SplitApp is another possible root element of an SAPUI5 mobile application besides {@link sap.m.App}. It contains two NavContainers if running on tablet or desktop,  and one on phone.
 	 * The display of master NavContainer depends on the portrait/landscape mode of the device and the mode of SplitApp.
+	 * <h3>Structure</h3>
+	 * The SplitApp divides the screen into two areas:
+	 * <ul>
+	 * <li>Master area - contains a list of available items where the user can search and filter.</li>
+	 * <li>Details area - contains a control which shows further details on the item(s) selected from the master view.</li>
+	 * </ul>
+	 * Both areas have separate headers and footer bars with navigation and actions.
+	 * <h3>Usage</h3>
+	 * <h4>When to use</h4>
+	 * <ul>
+	 * <li>You need to review and process different items quickly with minimal navigation.</li>
+	 * </ul>
+	 * <h4>When not to use</h4>
+	 * <ul>
+	 * <li>You need to offer complex filters for the list of items.</li>
+	 * <li>You need to see different attributes for each item in the list, and compare these values across items.</li>
+	 * <li>You want to display a single object. Do not use the master list to display different facets of the same object.</li>
+	 * </ul>
+	 * <h3>Responsive Behavior</h3>
+	 * On narrow screens for phones (or tablet devices in portrait mode), the master list and the details are split into two separate pages.
+	 *
+	 * The user can navigate between the list and details, and see all the available information for each area.
 	 * @extends sap.m.SplitContainer
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -74,13 +100,21 @@ sap.ui.define(['jquery.sap.global', './SplitContainer', './library'],
 					landscape : {type : "boolean"}
 				}
 			}
-		}
+		},
+		designtime: "sap/m/designtime/SplitApp.designtime"
 	}});
 
 
 	//**************************************************************
 	//* START - Life Cycle Methods
 	//**************************************************************/
+
+	/**
+	 * Initializes the control.
+	 *
+	 * @name sap.m.SplitApp.init
+	 * @private
+	 */
 	SplitApp.prototype.init = function() {
 		if (SplitContainer.prototype.init) {
 			SplitContainer.prototype.init.apply(this, arguments);
@@ -95,6 +129,12 @@ sap.ui.define(['jquery.sap.global', './SplitContainer', './library'],
 		});
 	};
 
+	/**
+	 * Overwrites the onBeforeRendering.
+	 *
+	 * @name sap.m.SplitApp.onBeforeRendering
+	 * @private
+	 */
 	SplitApp.prototype.onBeforeRendering = function() {
 		if (SplitContainer.prototype.onBeforeRendering) {
 			SplitContainer.prototype.onBeforeRendering.apply(this, arguments);
@@ -104,6 +144,12 @@ sap.ui.define(['jquery.sap.global', './SplitContainer', './library'],
 		});
 	};
 
+	/**
+	 * Overwrites the onAfterRendering.
+	 *
+	 * @name sap.m.SplitApp.onAfterRendering
+	 * @private
+	 */
 	SplitApp.prototype.onAfterRendering = function(){
 		if (SplitContainer.prototype.onAfterRendering) {
 			SplitContainer.prototype.onAfterRendering.apply(this, arguments);
@@ -133,14 +179,15 @@ sap.ui.define(['jquery.sap.global', './SplitContainer', './library'],
 	/**
 	 * Fires the orientationChange event after SplitApp has reacted to the browser orientationChange event.
 	 *
-	 * @protected
+	 * @name sap.m.SplitApp._onOrientationChange
+	 * @private
 	 */
 	SplitApp.prototype._onOrientationChange = function(){
 		this.fireOrientationChange({
-			landscape: sap.ui.Device.orientation.landscape
+			landscape: Device.orientation.landscape
 		});
 	};
 
 	return SplitApp;
 
-}, /* bExport= */ true);
+});

@@ -1,7 +1,7 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.rta.plugin.RTAElementMover.
@@ -10,10 +10,25 @@ sap.ui.define([
 	'sap/ui/dt/OverlayUtil',
 	'sap/ui/dt/ElementUtil',
 	'sap/ui/fl/Utils',
-	'sap/ui/rta/controlAnalyzer/ControlAnalyzerFactory',
-	'sap/ui/rta/Utils'
+	'sap/ui/rta/Utils',
+	'sap/ui/rta/command/CommandFactory',
+	'sap/ui/rta/plugin/Plugin',
+	'sap/ui/dt/OverlayRegistry',
+	'sap/ui/rta/util/BindingsExtractor',
+	'sap/ui/dt/MetadataPropagationUtil'
 ],
-function(ElementMover, OverlayUtil, ElementUtil, FlexUtils, ControlAnalyzerFactory, Utils) {
+function(
+	ElementMover,
+	OverlayUtil,
+	ElementUtil,
+	FlexUtils,
+	Utils,
+	CommandFactory,
+	Plugin,
+	OverlayRegistry,
+	BindingsExtractor,
+	MetadataPropagationUtil
+) {
 	"use strict";
 
 	/**
@@ -23,10 +38,10 @@ function(ElementMover, OverlayUtil, ElementUtil, FlexUtils, ControlAnalyzerFacto
 	 * @param {object} [mSettings] initial settings for the new object
 	 *
 	 * @class
-	 * The RTAElementMover is responsible for the RTA specific adaption of element movements.
+	 * The RTAElementMover is responsible for the RTA specific adaptation of element movements.
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @private
@@ -41,6 +56,10 @@ function(ElementMover, OverlayUtil, ElementUtil, FlexUtils, ControlAnalyzerFacto
 			// ---- control specific ----
 			library : "sap.ui.rta",
 			properties : {
+				commandFactory : {
+					type : "any",
+					defaultValue : CommandFactory
+				},
 				movableTypes : {
 					type : "string[]",
 					defaultValue : ["sap.ui.core.Element"]
@@ -53,63 +72,245 @@ function(ElementMover, OverlayUtil, ElementUtil, FlexUtils, ControlAnalyzerFacto
 		}
 	});
 
+	RTAElementMover.prototype.init = function() {
+		this.oBasePlugin = new Plugin({
+			commandFactory : this.getCommandFactory()
+		});
+	};
+
+	RTAElementMover.prototype.exit = function() {
+		this.oBasePlugin.destroy();
+	};
+
+	RTAElementMover.prototype.setCommandFactory = function(oCommandFactory) {
+		this.setProperty("commandFactory", oCommandFactory);
+		this.oBasePlugin.setCommandFactory(oCommandFactory);
+	};
+
+	RTAElementMover.prototype.isEditable = function(oOverlay, bOnRegistration) {
+		var oElement = oOverlay.getElement();
+		var bMovable = false;
+		if (
+			this.isMovableType(oElement)
+			&& this.checkMovable(oOverlay, bOnRegistration)
+			&& !OverlayUtil.isInAggregationBinding(oOverlay, oElement.sParentAggregationName)
+		) {
+			bMovable = true;
+		}
+		oOverlay.setMovable(bMovable);
+		return bMovable;
+	};
+
 	/**
-	 * @param  {sap.ui.dt.Overlay} oOverlay overlay object
-	 * @return {boolean}          true if parent has stable Id, false if not
+	 * Check if the element is editable for the move
+	 * @param  {sap.ui.dt.Overlay}  oOverlay The overlay being moved or the aggregation overlay
+	 * @param  {boolean} bOnRegistration if embedded, false if not
+	 * @return {boolean} true if editable
+	 */
+	function fnIsValidForMove(oOverlay, bOnRegistration) {
+		var bValid = false,
+			oDesignTimeMetadata = oOverlay.getDesignTimeMetadata(),
+			oParentElementOverlay = oOverlay.getParentElementOverlay();
+
+		if (!oDesignTimeMetadata || !oParentElementOverlay) {
+			return false;
+		}
+
+		var oRelevantContainer = oOverlay.getRelevantContainer();
+		var oRelevantContainerOverlay = OverlayRegistry.getOverlay(oRelevantContainer);
+		if (!oRelevantContainerOverlay) {
+			return false;
+		}
+
+		bValid = this._isMoveAvailableOnRelevantContainer(oOverlay);
+
+		if (bValid) {
+			bValid = this.oBasePlugin.hasStableId(oOverlay) &&
+			this.oBasePlugin.hasStableId(oParentElementOverlay) &&
+			this.oBasePlugin.hasStableId(oRelevantContainerOverlay);
+		}
+
+		// element is only valid for move if it can be moved to somewhere else
+		if (bValid) {
+			var aOverlays = OverlayUtil.findAllUniqueAggregationOverlaysInContainer(oOverlay, oRelevantContainerOverlay);
+
+			var aValidAggregationOverlays = aOverlays.filter(function(oAggregationOverlay) {
+				return this.checkTargetZone(oAggregationOverlay, oOverlay, bOnRegistration);
+			}.bind(this));
+
+			if (aValidAggregationOverlays.length < 1) {
+				bValid = false;
+			} else if (aValidAggregationOverlays.length === 1) {
+				var aVisibleOverlays = aValidAggregationOverlays[0].getChildren().filter(function(oChildOverlay) {
+					var oChildElement = oChildOverlay.getElement();
+					// At least one sibling has to be visible and still attached to the parent
+					// In some edge cases, the child element is not available anymore (element already got destroyed)
+					return (oChildElement && oChildElement.getVisible() && oChildElement.getParent());
+				});
+				bValid = aVisibleOverlays.length > 1;
+			}
+		}
+
+		return bValid;
+	}
+
+	function fnHasMoveAction(oAggregationOverlay, oElement, oRelevantContainer) {
+		var oAggregationDTMetadata = oAggregationOverlay.getDesignTimeMetadata();
+		var oMoveAction = oAggregationDTMetadata.getAction("move", oElement);
+		if (!oMoveAction) {
+			return false;
+		}
+		// moveChangeHandler information is always located on the relevant container
+		return this.oBasePlugin.hasChangeHandler(oMoveAction.changeType, oRelevantContainer);
+	}
+
+	/**
+	 * @param	{sap.ui.dt.Overlay} oOverlay overlay object
+	 * @return {sap.ui.dt.DesignTimeMetadata} oDesignTimeMetadata
 	 * @private
 	 */
-	RTAElementMover.prototype._hasParentStableId = function(oOverlay) {
-		var oBlockOverlay = oOverlay.getParentElementOverlay();
-		var oBlock = oBlockOverlay ? oBlockOverlay.getElementInstance() : null;
+	ElementMover.prototype._getMoveAction = function(oOverlay) {
+		var oParentAggregationDtMetadata,
+			oParentAggregationOverlay = oOverlay.getParentAggregationOverlay();
+		if (oParentAggregationOverlay) {
+			oParentAggregationDtMetadata = oParentAggregationOverlay.getDesignTimeMetadata();
+		}
+		return oParentAggregationDtMetadata ? oParentAggregationDtMetadata.getAction("move", oOverlay.getElement()) : undefined;
+	};
 
-		return oBlock && FlexUtils.checkControlId(oBlock);
+	/**
+	 * Predicate to compute movability of a type
+	 * @param {any} oElement given element
+	 * @public
+	 * @return {boolean} true if type is movable, false otherwise
+	 */
+	ElementMover.prototype.isMovableType = function(oElement) {
+		//real check is part of checkMovable which has the overlay
+		return true;
 	};
 
 	/**
 	 * @param  {sap.ui.dt.Overlay} oOverlay overlay object
-	 * @return {boolean}          true if embedded, false if not
+	 * @return {boolean} true if embedded, false if not
 	 * @override
 	 */
-	RTAElementMover.prototype.checkMovable = function(oOverlay) {
-		var bMovable = ElementMover.prototype.checkMovable.apply(this, arguments);
-		var oElement;
-		var oControlAnalyzer;
-
-		if (bMovable) {
-			oElement = oOverlay.getElementInstance();
-			oControlAnalyzer = ControlAnalyzerFactory.getControlAnalyzerFor(oElement);
-			bMovable = oControlAnalyzer.isEditable(oElement);
-
-		}
-
-		return bMovable && oControlAnalyzer.hasParentStableId(oOverlay);
+	RTAElementMover.prototype.checkMovable = function(oOverlay, bOnRegistration) {
+		return fnIsValidForMove.call(this, oOverlay, bOnRegistration);
 	};
 
 	/**
-	 * Checks droppability for aggregation overlays
+	 * Checks drop ability for aggregation overlays
 	 * @param  {sap.ui.dt.Overlay} oAggregationOverlay aggregation overlay object
-	 * @return {boolean}                     true if aggregation overlay is droppable, false if not
+	 * @return {boolean} true if aggregation overlay is droppable, false if not
 	 * @override
 	 */
-	RTAElementMover.prototype.checkTargetZone = function(oAggregationOverlay) {
-		var bTargetZone = ElementMover.prototype.checkTargetZone.call(this, oAggregationOverlay);
+	RTAElementMover.prototype.checkTargetZone = function(oAggregationOverlay, oOverlay, bOverlayNotInDom) {
+		var oMovedOverlay = oOverlay ? oOverlay : this.getMovedOverlay();
 
-		if (bTargetZone) {
-			var oMovedOverlay = this.getMovedOverlay();
-			var oMovedElement = oMovedOverlay.getElementInstance();
-			var oOverlay = oAggregationOverlay.getParent();
-			var oParentElement = oOverlay.getElementInstance();
-			var sAggregationName = oAggregationOverlay.getAggregationName();
-
-			var oAnalyzer = ControlAnalyzerFactory.getControlAnalyzerFor(oMovedElement);
-
-			bTargetZone = oAnalyzer.isEditable(oParentElement) && oAnalyzer.checkTargetZone(oParentElement, sAggregationName, oMovedElement);
+		var bTargetZone = ElementMover.prototype.checkTargetZone.call(this, oAggregationOverlay, oMovedOverlay, bOverlayNotInDom);
+		if (!bTargetZone) {
+			return false;
 		}
 
-		return bTargetZone;
+		var oMovedElement = oMovedOverlay.getElement();
+		var oTargetOverlay = oAggregationOverlay.getParent();
+		var oMovedRelevantContainer = oMovedOverlay.getRelevantContainer();
+		var oTargetElement = oTargetOverlay.getElement();
+		var oAggregationDtMetadata = oAggregationOverlay.getDesignTimeMetadata();
+
+		// determine target relevantContainer
+		var vTargetRelevantContainerAfterMove = MetadataPropagationUtil.getRelevantContainerForPropagation(oAggregationDtMetadata.getData(), oMovedElement);
+		vTargetRelevantContainerAfterMove = vTargetRelevantContainerAfterMove ? vTargetRelevantContainerAfterMove : oTargetElement;
+
+		// check for same relevantContainer
+		if (
+			!oMovedRelevantContainer
+			|| !vTargetRelevantContainerAfterMove
+			|| !Plugin.prototype.hasStableId(oTargetOverlay)
+			|| oMovedRelevantContainer !== vTargetRelevantContainerAfterMove
+		) {
+			return false;
+		}
+
+		// Binding context is not relevant if the element is being moved inside its parent
+		if (oMovedOverlay.getParent().getElement() !== oTargetElement) {
+			// check if binding context is the same
+			var aBindings = BindingsExtractor.getBindings(oMovedElement, oMovedElement.getModel());
+			if (Object.keys(aBindings).length > 0 && oMovedElement.getBindingContext() && oTargetElement.getBindingContext()) {
+				var sMovedElementBindingContext = Utils.getEntityTypeByPath(
+					oMovedElement.getModel(),
+					oMovedElement.getBindingContext().getPath()
+				);
+				var sTargetElementBindingContext = Utils.getEntityTypeByPath(
+					oTargetElement.getModel(),
+					oTargetElement.getBindingContext().getPath()
+				);
+				if (!(sMovedElementBindingContext === sTargetElementBindingContext)) {
+					return false;
+				}
+			}
+		}
+
+		// check if movedOverlay is movable into the target aggregation
+		return fnHasMoveAction.call(this, oAggregationOverlay, oMovedElement, vTargetRelevantContainerAfterMove);
 	};
 
-//	RTAElementMover.Default = new RTAElementMover();
+	/**
+	 * Checks if move is available on relevantcontainer
+	 * @param  {sap.ui.dt.Overlay} oOverlay overlay object
+	 * @return {boolean} true if move available on relevantContainer
+	 */
+	RTAElementMover.prototype._isMoveAvailableOnRelevantContainer = function(oOverlay) {
+		var oChangeHandlerRelevantElement,
+			oMoveAction = this._getMoveAction(oOverlay);
+
+		if (oMoveAction && oMoveAction.changeType) {
+			// moveChangeHandler information is always located on the relevant container
+			oChangeHandlerRelevantElement = oOverlay.getRelevantContainer();
+			return this.oBasePlugin.hasChangeHandler(oMoveAction.changeType, oChangeHandlerRelevantElement);
+		}
+		return false;
+	};
+
+	/**
+	 * Builds the Move command
+	 * @return {any} Move command object
+	 */
+	RTAElementMover.prototype.buildMoveCommand = function() {
+
+		var oMovedOverlay = this.getMovedOverlay();
+		var oParentAggregationOverlay = oMovedOverlay.getParentAggregationOverlay();
+		var oMovedElement = oMovedOverlay.getElement();
+		var oSource = this._getSource();
+		var oRelevantContainer = oMovedOverlay.getRelevantContainer();
+		var oTarget = OverlayUtil.getParentInformation(oMovedOverlay);
+		var iSourceIndex = oSource.index;
+		var iTargetIndex = oTarget.index;
+
+		var bSourceAndTargetAreSame = this._compareSourceAndTarget(oSource, oTarget);
+
+		if (bSourceAndTargetAreSame) {
+			return undefined;
+		}
+		delete oSource.index;
+		delete oTarget.index;
+
+		var oMoveAction = this._getMoveAction(oMovedOverlay);
+		var sVariantManagementReference = this.oBasePlugin.getVariantManagementReference(oMovedOverlay, oMoveAction, true);
+
+		var oMove = this.getCommandFactory().getCommandFor(oRelevantContainer, "Move", {
+			movedElements : [{
+				element : oMovedElement,
+				sourceIndex : iSourceIndex,
+				targetIndex : iTargetIndex
+			}],
+			source : oSource,
+			target : oTarget
+		}, oParentAggregationOverlay.getDesignTimeMetadata(), sVariantManagementReference);
+
+		return oMove;
+
+	};
 
 	return RTAElementMover;
 }, /* bExport= */ true);

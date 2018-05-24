@@ -5,6 +5,7 @@
 		<meta charset="utf-8">
 		<title>Grid - SAPUI5 Demo Kit</title>
 		<link rel="stylesheet" href="../../../../../theme/default.css">
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
 			src="../../../../../resources/sap-ui-core.js"
 			data-sap-ui-theme="sap_bluecrystal"
@@ -184,14 +185,14 @@
 						text: 'Left on large and medium screens. Right on small screens.',
 						layoutData : new sap.ui.layout.GridData({
 							span: "L6 M6 S6",
-							moveFwd: "S6" //??
+							moveForward: "S6" //??
 						})
 					}),
 					new sap.ui.commons.TextView({
 						text: 'Right on large and medium screens. Left on small screens.',
 						layoutData : new sap.ui.layout.GridData({
 							span: "L6 M6 S6",
-							moveBwd: "S6" //??
+							moveBackwards: "S6" //??
 						})
 					})
 				]

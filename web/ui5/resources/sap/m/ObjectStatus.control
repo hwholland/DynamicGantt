@@ -11,6 +11,11 @@
         <property name="text" type="sap.ui.core/string" group="Misc">
             <documentation>Defines the ObjectStatus text.</documentation>
         </property>
+        <property name="active" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.54">
+            <documentation>Indicates if the &lt;code&gt;ObjectStatus&lt;/code&gt; text and icon can be clicked/tapped by the user.
+
+&lt;b&gt;Note:&lt;/b&gt; If you set this property to &lt;code&gt;true&lt;/code&gt;, you have to also set the &lt;code&gt;text&lt;/code&gt; or &lt;code&gt;icon&lt;/code&gt; property.</documentation>
+        </property>
         <property name="state" type="sap.ui.core/ValueState" defaultValue="None" group="Misc">
             <documentation>Defines the text value state.</documentation>
         </property>
@@ -27,6 +32,11 @@ If bandwidth is key for the application, set this value to false.</documentation
 Available options for the text direction are LTR (left-to-right) and RTL (right-to-left). By default the control inherits the text direction from its parent control.</documentation>
         </property>
     </properties>
+    <events>
+        <event name="press" since="1.54" allowPreventDefault="false">
+            <documentation>Fires when the user clicks/taps on active text.</documentation>
+        </event>
+    </events>
     <associations>
         <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
             <documentation>Association to controls / IDs, which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>

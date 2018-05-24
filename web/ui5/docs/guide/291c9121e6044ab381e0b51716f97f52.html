@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="In this tutorial we will test application functionality with the testing tools that are delivered with OpenUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more."/>
+<meta name="description" content="In this tutorial we will test application functionality with the testing tools that are delivered with OpenUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more."/>
 
-
-
-
-
-<meta name="abstract" content="In this tutorial we will test application functionality with the testing tools that are delivered with SAPUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more."/>
-<meta name="description" content="In this tutorial we will test application functionality with the testing tools that are delivered with SAPUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14420053155161716"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9082881426570839"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9082881426570839"/>
 <title>Testing</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio291c9121e6044ab381e0b51716f97f52">
 <div id="wrapper"><div id="container">
@@ -34,7 +20,7 @@
 
 	
 	<div class="body conbody"><p class="shortdesc">In this tutorial we will test application functionality with the testing tools that are
-		delivered with <span class="ph"><span class="ph pname">SAPUI5</span></span>. At
+		delivered with <span class="ph"><span class="ph pname">OpenUI5</span></span>. At
 		different steps of this tutorial you will write tests using QUnit, OPA5, and the mock
 		server. Additionally, you will learn about testing strategies, Test Driven Development
 		(TDD), and much more. </p>
@@ -52,13 +38,13 @@
 		<p class="p">With this very minimalistic app as a starting point, we have a good foundation and we can
 			inspect the most important testing functionality. Furthermore, we want to implement new
 			features for the app that were requested by the product team using Test Driven
-			Development and best practices for writing testable code and testing <span class="ph"><span class="ph pname">SAPUI5</span></span> apps.</p>
+			Development and best practices for writing testable code and testing <span class="ph"><span class="ph pname">OpenUI5</span></span> apps.</p>
 
 		<p class="p">So why do we do all this? Obviously, writing tests and testable code does not come
 			without effort. Well, we want to ensure the implementation of a high quality app by
 			having decent test coverage of our application logic. And we check that our code does
 			not break by running the automated tests whenever we change something or when we upgrade
-			to a newer version of the <span class="ph"><span class="ph pname">SAPUI5</span></span> framework or other
+			to a newer version of the <span class="ph"><span class="ph pname">OpenUI5</span></span> framework or other
 			external libraries. Additionally, we can find bugs proactively and do not need excessive
 			manual testing anymore so the efforts definitely pay off. Also, when we decide to
 			refactor something in the future, we can easily verify that the features of the app are
@@ -66,8 +52,7 @@
 
 		<p class="p">There are a lot more reasons and many small details that we will address throughout this
 			tutorial. You can work yourself through the steps by applying the code deltas
-			individually or by downloading the samples for each step from the explored app and
-			playing around with it. </p>
+			individually or by downloading the samples for each step and playing around with it. </p>
 
 		<div class="section"><div class="section_title">Preview</div><div type="Preview">
 			
@@ -85,6 +70,9 @@
 				Walkthrough tutorial also cover the test setup in an app that is used throughout
 				this tutorial.</p>
 
+			<p class="p">If you want to automate the test execution using a test runner, you can set this up as
+				described under <a class="xref" href="ae448243822448d8ba04b4784f4b09a0.html#loioae448243822448d8ba04b4784f4b09a0" title="To make sure that the code is always tested thoroughly before it is included in a productive app, you should use a test runner that automates tests. The test runner can be included in your project setup so that it is called whenever code changes are submitted.">Test Automation</a>.</p>
+
 		</div></div>
 
 		<div class="section">
@@ -93,21 +81,12 @@
 					to any step you want. Just download the code from the previous step, and start
 					there.</p>
 
-				<p class="p">You can view and download the files for all steps in the
-						<span class="ph uicontrol">Explored</span> app in the demo kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/entity/sap.m.tutorial.testing/samples" alt="../../explored.html#/entity/sap.m.tutorial.testing/samples" title="../../explored.html#/entity/sap.m.tutorial.testing/samples">Testing
-						Apps</a></span>. Copy the
-					code to your workspace and make sure that the application
-					runs by calling the <samp class="ph codeph">webapp/test/test.html</samp>
-					file. Depending on your development environment you might
-					have to adjust resource paths and configuration entries.</p>
+				<p class="p">You can view and download the files for all steps in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/entity/sap.m.tutorial.testing/samples" alt="../../explored.html#/entity/sap.m.tutorial.testing/samples" title="../../explored.html#/entity/sap.m.tutorial.testing/samples">Testing Apps</a></span>. Copy the code to your workspace and make sure
+					that the application runs by calling the <samp class="ph codeph">webapp/test/test.html</samp>
+					file. Depending on your development environment you might have to adjust
+					resource paths and configuration entries.</p>
 
-				<div class="p">For more information check the following sections of the tutorials overview page
-					(see <a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html" title="The SAPUI5 tutorials introduce you to all major development paradigms of SAPUI5 using practical examples in an interactive format.">Tutorials</a>):<ul class="ul" id="loio291c9121e6044ab381e0b51716f97f52__ul_uxg_vmr_xs">
-						<li class="li">
-							<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_outline">Outline of the Steps of Each Tutorial</a></p>
-
-						</li>
-
+				<div class="p">For more information check the following sections of the tutorials overview page (see <a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html" title="Set up your development environment and go through our tutorials. They introduce you to all major development paradigms of OpenUI5 using practical examples in an interactive format.">Get Started: Setup and Tutorials</a>):<ul class="ul" id="loio291c9121e6044ab381e0b51716f97f52__ul_uxg_vmr_xs">
 						<li class="li">
 							<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_download">Downloading Code for a Tutorial Step</a></p>
 
@@ -115,11 +94,6 @@
 
 						<li class="li">
 							<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_adaptation">Adapting Code to Your Development Environment</a></p>
-
-						</li>
-
-						<li class="li">
-							<p class="p"><a class="xref" href="8b49fc198bf04b2d9800fc37fecbb218.html#loio8b49fc198bf04b2d9800fc37fecbb218__tutorials_troubleshooting">Troubleshooting</a></p>
 
 						</li>
 
@@ -135,7 +109,7 @@
 	<div class="related-links"> 
 
 <ol>
-<li><strong><a class="link" href="ab134ef3932c4b42898c79c10341e8b5.html" title="In this step, we will take a look at the prototype that is handed over to us and define the test strategy for our app. The prototype already contains the infrastructure for unit and integration testing and a minimum set of tests and features.">Step 1: Overview and Testing Strategy</a></strong><br/>
+<li><strong><a class="link" href="ab134ef3932c4b42898c79c10341e8b5.html" title="In this step, we will take a look at the prototype and define the test strategy for our app. The prototype already contains the infrastructure for unit and integration testing and a minimum set of tests and features.">Step 1: Overview and Testing Strategy</a></strong><br/>
 </li>
 <li><strong><a class="link" href="b81736e0fcb246efb3b0cf0ca422f8fd.html" title="In this step we will analyze the unit testing infrastructure and write a first unit test.">Step 2: A First Unit Test</a></strong><br/>
 </li>
@@ -155,37 +129,25 @@
 </li>
 <li><strong><a class="link" href="07c97a2e497d443eb6fa74bb9445ab9c.html" title="In this step, we will step back from our tests and application features that we have implemented so far and add another important piece of test code: The test suite page. A test suite can execute multiple tests and collect the results. This comes in handy for automatic tools in a continuous integration process.">Step 10: Test Suite and Automated Testing</a></strong><br/>
 </li>
-<li><strong><a class="link" href="19ccd473c9a14c2ab7529303a2232d2c.html" title="In this step we want to write a test that simulates user interaction with an icon tab bar. We want to change the tab and check if the correct content is shown.">Step 11: Testing User Interaction</a></strong><br/>
+<li><strong><a class="link" href="92959b10ecf14582b65eaadb40571156.html" title="In this step, we will write a test that simulates a user search. We will enter the search string into the search field and check if the correct results are shown in worklist table.">Step 11: Testing User Input</a></strong><br/>
 </li>
-<li><strong><a class="link" href="6e9c6bd2054c4425b7f15cac31aa675c.html" title="We want to display statistics for posts, for example, how many times it was viewed. To achieve this, we implement an icon tab bar with an Info tab and a Statistics tab. The existing content should be placed on the Info tab and the view count on the Statistics tab.">Step 12: Adding Tabs</a></strong><br/>
+<li><strong><a class="link" href="0c270b45dd904429ba634656e3a37a73.html" title="We now add a search field to our bulletin board and define a filter that represents the search term. This is done similarly as in step 24 of the Walkthrough tutorial.">Step 12: Adding a Search</a></strong><br/>
 </li>
-<li><strong><a class="link" href="bc4114a88e4d4ac1a0f53b2a7a92b226.html" title="It's now time to improve the content of the Info tab. We want to see the Posted At date in a formatted way. Based on the age of the post, we either display the time, a textural representation of the day, or the date only.">Step 13: Writing a Short Date Formatter Using TDD</a></strong><br/>
+<li><strong><a class="link" href="19ccd473c9a14c2ab7529303a2232d2c.html" title="In this step we want to write a test that simulates user interaction with an icon tab bar. We want to change the tab and check if the correct content is shown.">Step 13: Testing User Interaction</a></strong><br/>
 </li>
-<li><strong><a class="link" href="2ca583d6b9c24e4d8f189eada7c4b668.html" title="Our formatter does its job, but it is not yet used. In this step we will use it.">Step 14: Adding the Date Formatter</a></strong><br/>
+<li><strong><a class="link" href="6e9c6bd2054c4425b7f15cac31aa675c.html" title="We want to display statistics for posts, for example, how many times it was viewed. To achieve this, we implement an icon tab bar with an Info tab and a Statistics tab. The existing content should be placed on the Info tab and the view count on the Statistics tab.">Step 14: Adding Tabs</a></strong><br/>
 </li>
-<li><strong><a class="link" href="7c2b3f4f57534810a2f4d587374f9b6e.html" title="You have now completed the Testing tutorial.">Summary</a></strong><br/>
+<li><strong><a class="link" href="bc4114a88e4d4ac1a0f53b2a7a92b226.html" title="It's now time to improve the content of the Info tab. We want to see the Posted At date in a formatted way. Based on the age of the post, we either display the time, a textural representation of the day, or the date only.">Step 15: Writing a Short Date Formatter Using TDD</a></strong><br/>
+</li>
+<li><strong><a class="link" href="2ca583d6b9c24e4d8f189eada7c4b668.html" title="Our formatter does its job, but it is not yet used. In this step we will use it.">Step 16: Adding the Date Formatter</a></strong><br/>
 </li>
 </ol>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="7cdee404cac441888539ed7bfe076e57.html" title="SAPUI5 provides several testing options, like to unit and integration tests and the Mock Server. It also contains tools to measure the performance of an app.">Testing and Performance Measurement</a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https://qunitjs.com/" alt="https://qunitjs.com/" title="https://qunitjs.com/">QUnit Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="link" href="7cdee404cac441888539ed7bfe076e57.html" title="OpenUI5 provides several testing options, like to unit and integration tests and the mock server.">Testing</a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https%3A%2F%2Fqunitjs.com%2F" alt="https://qunitjs.com/" title="https://qunitjs.com/">QUnit Home Page<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Testing";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

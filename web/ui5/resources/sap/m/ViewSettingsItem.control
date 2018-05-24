@@ -22,7 +22,7 @@ It is derived from a core Item, but does not support the base class properties "
                 <parameter name="propertyKey" type="sap.ui.core/string">
                     <documentation>Key of the changed property.</documentation>
                 </parameter>
-                <parameter name="propertyValue" type="any">
+                <parameter name="propertyValue" type="sap.ui.core/any">
                     <documentation>Value of the changed property.</documentation>
                 </parameter>
             </parameters>

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The resume view contains four tabs as we have seen in the previous steps. However, when the user navigates to the resume page, only the first tab is displayed initially. Navigating directly to a specific tab or bookmarking a tab is not yet supported in our current app."/>
 <meta name="description" content="The resume view contains four tabs as we have seen in the previous steps. However, when the user navigates to the resume page, only the first tab is displayed initially. Navigating directly to a specific tab or bookmarking a tab is not yet supported in our current app."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9272205955252261"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=645327478096558"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=645327478096558"/>
 <title>Step 9: Allow Bookmarkable Tabs with Optional Query Parameters</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiob8561ff6f4c34c85a91ed06d20814cd3">
 <div id="wrapper"><div id="container">
@@ -46,21 +32,21 @@
 			
 			<div class="fig fignone" id="loiob8561ff6f4c34c85a91ed06d20814cd3__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loiob8561ff6f4c34c85a91ed06d20814cd3__image_gy5_3yn_ns" src="loio3eb33f8439b842629261fbd72a92d371_HiRes.png"/>
+				<img class="image" id="loiob8561ff6f4c34c85a91ed06d20814cd3__image_gy5_3yn_ns" src="loio3eb33f8439b842629261fbd72a92d371_LowRes.png"/>
 			<div class="figcap">Deep link to allow bookmarkable tabs</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview">Routing and Navigation - Step 9</a></span>.</p>
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.09/preview">Routing and Navigation - Step 9</a></span>.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -122,7 +108,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/Resume.view.xml</div><div type="webapp/view/employee/Resume.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.Resume"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
@@ -168,7 +154,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/Resume.controller.js</div><div type="webapp/controller/employee/Resume.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"<span class="ph emphasis emphasis">,
 	"sap/ui/model/json/JSONModel"
 </span>
@@ -302,7 +288,7 @@ When you click on any tab you will see that the hash in the URL changes immediat
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="3e5f6f3e163f46ecaef376950258e5e4.html" title="In this step, we want to illustrate how to navigate to a page with a custom transition animation. Both forward and backward navigation will use the “flip” transition but with a different direction. We will create a simple link on the Employee view that triggers a flip navigation to a page that displays the resume data of a certain employee. Pressing the Back button will navigate back to the Employee view with a reversed flip transition.">Step 8: Navigate with Flip Transition</a><br/>
@@ -317,19 +303,5 @@ When you click on any tab you will see that the hash in the URL changes immediat
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 9: Allow Bookmarkable Tabs with Optional Query Parameters";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

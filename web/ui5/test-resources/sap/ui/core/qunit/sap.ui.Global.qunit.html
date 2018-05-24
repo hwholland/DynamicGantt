@@ -2,19 +2,18 @@
 <html>
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>qUnit Page for sap.ui.Global</title>
+		<title>QUnit Page for sap.ui.Global</title>
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.ui.core">
 		</script>
 		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
 		<!--[if IE 9]>
 			<script>
 				// If this flag is set to `false` sinon will only fake `XDomainRequest` but not `XMLHttpRequest`
@@ -26,9 +25,9 @@
 			</script>
 		<![endif]-->
 		<!--[if IE]>
-			<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+			<script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
 		<![endif]-->
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 		<script>
 
 			sap.ui.require([
@@ -40,7 +39,7 @@
 				// a failure of the first test when the core or some initial module loads the versioninfo
 				// right away. If this is the case and the behavior is expected these module/tests should be adopted.
 				QUnit.module("sap.ui.getVersionInfo", {
-					setup: function() {
+					beforeEach: function() {
 						// Define mocked version info
 						this.oVersionInfo = {
 							"name": "qunit",
@@ -71,7 +70,7 @@
 							JSON.stringify(this.oVersionInfo)
 						]);
 					},
-					teardown: function() {
+					afterEach: function() {
 						// Delete cached versionInfo data after each test
 						delete sap.ui.versioninfo;
 					}
@@ -354,7 +353,7 @@
 						"'sap.ui.versioninfo' should be undefined before calling the function.");
 
 					sap.ui.getVersionInfo({ async: true }).then(function() {
-						ok(false, "Promise should not get resolved.");
+						assert.ok(false, "Promise should not get resolved.");
 					}, function(err) {
 
 						// Check if exception is correct
@@ -380,7 +379,7 @@
 						"'sap.ui.versioninfo' should be undefined before calling the function.");
 
 					sap.ui.getVersionInfo({ library: "sap.ui.core", async: true }).then(function() {
-						ok(false, "Promise should not get resolved.");
+						assert.ok(false, "Promise should not get resolved.");
 					}, function(err) {
 
 						// Check if exception is correct

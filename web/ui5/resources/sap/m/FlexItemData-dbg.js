@@ -1,24 +1,30 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides element sap.m.FlexItemData
-sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/ui/core/LayoutData'],
-	function(jQuery, FlexBoxStylingHelper, library, LayoutData) {
+sap.ui.define(['./FlexBoxStylingHelper', './library', 'sap/ui/core/LayoutData'],
+ function(FlexBoxStylingHelper, library, LayoutData) {
 	"use strict";
+
+	// shortcut for sap.m.BackgroundDesign
+	var BackgroundDesign = library.BackgroundDesign;
+
+	// shortcut for sap.m.FlexAlignSelf
+	var FlexAlignSelf = library.FlexAlignSelf;
 
 	/**
 	 * Constructor for a new <code>sap.m.FlexItemData</code>.
 	 *
-	 * @param {string} [sId] id for the new element, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new element
+	 * @param {string} [sId] ID for the new element, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new element.
 	 *
 	 * @class
-	 * Holds layout data for a FlexBox|HBox|VBox
+	 * Holds layout data for a FlexBox / HBox / VBox.
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -31,11 +37,11 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		properties : {
 
 			/**
-			 * Determines cross-axis alignment of individual element (not currently supported in Internet Explorer)
+			 * Determines cross-axis alignment of individual element (not currently supported in Internet Explorer).
 			 *
 			 * @see http://www.w3.org/TR/css-flexbox-1/#align-items-property
 			 */
-			alignSelf : {type : "sap.m.FlexAlignSelf", group : "Misc", defaultValue : sap.m.FlexAlignSelf.Auto},
+			alignSelf : {type : "sap.m.FlexAlignSelf", group : "Misc", defaultValue : FlexAlignSelf.Auto},
 
 			/**
 			 * Determines the display order of flex items independent of their source code order.
@@ -95,7 +101,7 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 			maxWidth : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : ''},
 
 			/**
-			 * The style class will be applied to the flex item and can be used for CSS selectors
+			 * The style class will be applied to the flex item and can be used for CSS selectors.
 			 */
 			styleClass : {type : "string", group : "Misc", defaultValue : ''},
 
@@ -104,10 +110,19 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 			 *
 			 * @since 1.38.5
 			 */
-			backgroundDesign: {type: "sap.m.BackgroundDesign", group: "Appearance", defaultValue: sap.m.BackgroundDesign.Transparent}
+			backgroundDesign: {type: "sap.m.BackgroundDesign", group: "Appearance", defaultValue: BackgroundDesign.Transparent}
 		}
 	}});
 
+	/**
+	 * Sets the <code>alignSelf</code> property.
+	 *
+	 * @name sap.m.FlexItemData.setAlignSelf
+	 * @method
+	 * @public
+	 * @param {string} sValue Align option.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setAlignSelf = function(sValue) {
 		var sOldValue = this.getAlignSelf();
 		this.setProperty("alignSelf", sValue, true);
@@ -116,6 +131,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets the order.
+	 *
+	 * @name sap.m.FlexItemData.setOrder
+	 * @method
+	 * @public
+	 * @param {string} sValue Order in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setOrder = function(sValue) {
 		this.setProperty("order", sValue, true);
 		FlexBoxStylingHelper.setStyle(null, this, "order", this.getOrder());
@@ -123,6 +147,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets the <code>growFactor</code> property.
+	 *
+	 * @name sap.m.FlexItemData.setGrowFactor
+	 * @method
+	 * @public
+	 * @param {string} sValue Grow factor in string format.
+	 * @returns {sap.m.FlexItemData} this FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setGrowFactor = function(sValue) {
 		this.setProperty("growFactor", sValue, true);
 		FlexBoxStylingHelper.setStyle(null, this, "flex-grow", this.getGrowFactor());
@@ -130,6 +163,16 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets the <code>shrinkFactor</code> property.
+	 *
+	 * @name sap.m.FlexItemData.setShrinkFactor
+	 * @method
+	 * @public
+	 * @param {string} sValue Shrink factor in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 * @see https://www.w3.org/TR/css-flexbox-1/#propdef-flex-shrink
+	 */
 	FlexItemData.prototype.setShrinkFactor = function(sValue) {
 		this.setProperty("shrinkFactor", sValue, true);
 		FlexBoxStylingHelper.setStyle(null, this, "flex-shrink", this.getShrinkFactor());
@@ -137,6 +180,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets the base size for flex items.
+	 *
+	 * @name sap.m.FlexItemData.setBaseSize
+	 * @method
+	 * @public
+	 * @param {string} sValue Base size in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setBaseSize = function(sValue) {
 		this.setProperty("baseSize", sValue, true);
 		FlexBoxStylingHelper.setStyle(null, this, "flex-basis", this.getBaseSize());
@@ -144,6 +196,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets minimum height.
+	 *
+	 * @name sap.m.FlexItemData.setMinHeight
+	 * @method
+	 * @public
+	 * @param {string} sValue Minimum height in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setMinHeight = function(sValue) {
 		this.setProperty("minHeight", sValue, true);
 		this.$().css("min-height", this.getMinHeight());
@@ -151,6 +212,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets maximum height.
+	 *
+	 * @name sap.m.FlexItemData.setMaxHeight
+	 * @method
+	 * @public
+	 * @param {string} sValue Maximum height in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setMaxHeight = function(sValue) {
 		this.setProperty("maxHeight", sValue, true);
 		this.$().css("max-height", this.getMaxHeight());
@@ -158,6 +228,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets minimum width.
+	 *
+	 * @name sap.m.FlexItemData.setMinWidth
+	 * @method
+	 * @public
+	 * @param {string} sValue Minimum width in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setMinWidth = function(sValue) {
 		this.setProperty("minWidth", sValue, true);
 		this.$().css("min-width", this.getMinWidth());
@@ -165,6 +244,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets maximum width.
+	 *
+	 * @name sap.m.FlexItemData.setMaxWidth
+	 * @method
+	 * @public
+	 * @param {string} sValue Maximum width in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setMaxWidth = function(sValue) {
 		this.setProperty("maxWidth", sValue, true);
 		this.$().css("max-width", this.getMaxWidth());
@@ -172,6 +260,15 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets background design for flex items.
+	 *
+	 * @name sap.m.FlexItemData.setBackgroundDesign
+	 * @method
+	 * @public
+	 * @param {string} sValue Background design in string format.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
 	FlexItemData.prototype.setBackgroundDesign = function(sValue) {
 		var sOldValue = this.getBackgroundDesign();
 		this.setProperty("backgroundDesign", sValue, true);
@@ -180,6 +277,23 @@ sap.ui.define(['jquery.sap.global', './FlexBoxStylingHelper', './library', 'sap/
 		return this;
 	};
 
+	/**
+	 * Sets style class.
+	 *
+	 * @name sap.m.FlexItemData.setStyleClass
+	 * @method
+	 * @public
+	 * @param {string} sValue Style class.
+	 * @returns {sap.m.FlexItemData} <code>this</code> FlexItemData reference for chaining.
+	 */
+	FlexItemData.prototype.setStyleClass = function(sValue) {
+		var sOldValue = this.getStyleClass();
+		this.setProperty("styleClass", sValue, true);
+		this.$().removeClass(sOldValue).addClass(this.getStyleClass());
+
+		return this;
+	};
+
 	return FlexItemData;
 
-}, /* bExport= */ true);
+});

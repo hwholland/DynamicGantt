@@ -3,8 +3,15 @@
     <name>ObjectPageHeader</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>ObjectPageHeader represents the static part of an Object page header.
-Typically used to display the basic information about a business object, such as title/description/picture, as well as a list of common actions.</documentation>
+    <documentation>Represents the static part (header title) of the classic header of the {@link sap.uxap.ObjectPageLayout}.
+
+&lt;h3&gt;Overview&lt;/h3&gt;
+
+The &lt;code&gt;ObjectPageHeader&lt;/code&gt; is used to display the basic information about a business object,
+such as title/description/picture, as well as a list of common actions.
+
+&lt;b&gt;Note:&lt;/b&gt; The &lt;code&gt;ObjectPageHeader&lt;/code&gt; is meant to be used inside the &lt;code&gt;ObjectPageLayout&lt;/code&gt;
+control. Any other usage is not supported and can lead to unexpected behavior.</documentation>
     <since>1.26</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
@@ -40,7 +47,10 @@ See sap.m.Image for more details on densityAware.</documentation>
             <documentation>Determines whether the action buttons should always be visible or visible only when the header is snapped.</documentation>
         </property>
         <property name="headerDesign" type="sap.uxap/ObjectPageHeaderDesign" defaultValue="Light">
-            <documentation>Determines the design of the header - Light or Dark</documentation>
+            <documentation>Determines the design of the header - Light or Dark.
+&lt;b&gt;Note: &lt;/b&gt;This property is deprecated. It will continue to work in the Blue Crystal theme,
+but it will not be taken into account for the Belize themes.</documentation>
+            <deprecation since="1.40.1"></deprecation>
         </property>
         <property name="showTitleSelector" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
             <documentation>When set to true, the selector arrow icon/image is shown and can be pressed.</documentation>
@@ -94,10 +104,15 @@ If both are set to true, only the locked state will be displayed.</documentation
     </events>
     <aggregations default="actions">
         <aggregation name="_breadCrumbs" type="sap.m/Breadcrumbs" cardinality="0..1" visibility="hidden">
-            <documentation>Internal aggregation for the BreadCrumbs in the header.</documentation>
+            <documentation>Internal aggregation for the legacy breadCrumbsLinks.</documentation>
+        </aggregation>
+        <aggregation name="breadcrumbs" type="sap.m/Breadcrumbs" since="1.50" cardinality="0..1">
+            <documentation>The breadcrumbs displayed in the &lt;code&gt;ObjectPageHeader&lt;/code&gt;.
+If this aggregation is set, the &lt;code&gt;breadCrumbsLinks&lt;/code&gt; aggregation is omitted.</documentation>
         </aggregation>
         <aggregation name="breadCrumbsLinks" type="sap.m/Link" cardinality="0..n" singularName="breadCrumbLink">
             <documentation>A list of all the active link elements in the BreadCrumbs control.</documentation>
+            <deprecation since="1.50">use the &lt;code&gt;breadcrumbs&lt;/code&gt; aggregation instead.</deprecation>
         </aggregation>
         <aggregation name="_overflowButton" type="sap.m/Button" cardinality="0..1" visibility="hidden">
             <documentation>Internal aggregation for the overflow button in the header.</documentation>
@@ -108,6 +123,7 @@ If both are set to true, only the locked state will be displayed.</documentation
         <aggregation name="_objectImage" type="sap.ui.core/Control" cardinality="0..1" visibility="hidden">
             <documentation>Icon for the identifier line.</documentation>
         </aggregation>
+        <aggregation name="_placeholder" type="sap.ui.core/Icon" cardinality="0..1" visibility="hidden"/>
         <aggregation name="_lockIconCont" type="sap.m/Button" cardinality="0..1" visibility="hidden"/>
         <aggregation name="_lockIcon" type="sap.m/Button" cardinality="0..1" visibility="hidden"/>
         <aggregation name="_titleArrowIconCont" type="sap.m/Button" cardinality="0..1" visibility="hidden"/>

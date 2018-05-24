@@ -1,16 +1,61 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 // Provides control sap.m.ViewSettingsPopover.
-sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolbar", "./ToolbarSpacer", "./Bar", "./List",
-		"./StandardListItem", "./library", "sap/ui/core/Control", "sap/ui/core/IconPool", "./Text", "sap/ui/core/Icon",
-		"./SegmentedButton", "./Page", "./NavContainer", "./Popover", "./ViewSettingsItem", "sap/ui/base/ManagedObject"],
-
-	function (jQuery, ResponsivePopover, Button, Toolbar, ToolbarSpacer, Bar, List, StandardListItem, library, Control,
-			  IconPool, Text, Icon, SegmentedButton, Page, NavContainer, Popover, ViewSettingsItem, ManagedObject) {
+sap.ui.define([
+	"jquery.sap.global",
+	"./ResponsivePopover",
+	"./Button",
+	"./Toolbar",
+	"./ToolbarSpacer",
+	"./Bar",
+	"./List",
+	"./StandardListItem",
+	"./library",
+	"sap/ui/core/Control",
+	"sap/ui/core/IconPool",
+	"./SegmentedButton",
+	"./Page",
+	"./NavContainer",
+	"./ViewSettingsItem",
+	"sap/ui/base/ManagedObject",
+	"sap/ui/Device",
+	"sap/ui/core/InvisibleText",
+	"./ViewSettingsPopoverRenderer"
+], function(
+	jQuery,
+	ResponsivePopover,
+	Button,
+	Toolbar,
+	ToolbarSpacer,
+	Bar,
+	List,
+	StandardListItem,
+	library,
+	Control,
+	IconPool,
+	SegmentedButton,
+	Page,
+	NavContainer,
+	ViewSettingsItem,
+	ManagedObject,
+	Device,
+	InvisibleText,
+	ViewSettingsPopoverRenderer
+	) {
 		"use strict";
+
+		// shortcut for sap.m.VerticalPlacementType
+		var VerticalPlacementType = library.VerticalPlacementType;
+
+		// shortcut for sap.m.ListType
+		var ListType = library.ListType;
+
+		// shortcut for sap.m.ListMode
+		var ListMode = library.ListMode;
+
 		var TOOLBAR_SUFFIX                  = '-toolbar';
 		var SEGMENTED_BUTTON_SUFFIX         = '-segmented';
 		var LIST_ITEMS_SUFFIX               = '-listitem';
@@ -25,18 +70,20 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		var TITLE_SUFFIX                    = '-title';
 		var SEARCH_FIELD_SUFFIX             = '-searchfield';
 		var SELECT_ALL_SUFFIX               = '-selectall';
+		var CUSTOM_TAB_SUFFIX               = '-custom-button';
+
 		/**
 		 * Constructor for a new <code>ViewSettingsPopover</code>.
 		 *
 		 * @param {string} [sId] ID for the new control, generated automatically if no ` is given
-		 * @param {object} [mSettings] Initial settings for the new control
+		 * @param {Object} [mSettings] Initial settings for the new control
 		 *
 		 * @class
 		 * A <code>ViewSettingsPopover</code> is a Popover containing a summarized list with messages.
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @private
@@ -63,7 +110,11 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					/**
 					 * Holds public collection of group items.
 					 */
-					groupItems: {type: "sap.ui.core.Item", multiple: true, singularName: "groupItem"}
+					groupItems: {type: "sap.ui.core.Item", multiple: true, singularName: "groupItem"},
+					/**
+					 * The list of all the custom tabs.
+					 */
+					customTabs: {type: "sap.m.ViewSettingsCustomTab", multiple: true, singularName: "customTab", bindable : "bindable"}
 				},
 				associations : {
 					/**
@@ -246,23 +297,33 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Opens the popover.
-		 * @param {object} oControl Instance of the control that triggered the opening
+		 * @param {Object} oControl Instance of the control that triggered the opening
 		 */
 		ViewSettingsPopover.prototype.openBy = function (oControl) {
-			this._getPopover(oControl).openBy(oControl);
-			if (sap.ui.Device.system.phone) {
-				this._showContentFor(this._determinePageToOpen());
-			} else {
-				// no tab pressed by default
-				this._removeSegmentedButtonSelection();
-				this._adjustInitialWidth();
+			var oPopover = this._getPopover(oControl),
+				sPageToOpen = this._determinePageToOpen();
+
+			oPopover.openBy(oControl);
+
+			if (sPageToOpen) {
+				if (Device.system.phone) {
+					this._showContentFor(sPageToOpen);
+				} else {
+					// no tab pressed by default
+					this._removeSegmentedButtonSelection();
+					this._adjustInitialWidth();
+				}
 			}
 
 			this._initialHeight = this._getPopover().getContentHeight();
 
 			// if only one tab is present, directly show it's content
-			if (this._getSegmentedButton().getItems() && this._getSegmentedButton().getItems().length === 1) {
-				this._showContentFor(this._determinePageToOpen());
+			if (this._getSegmentedButton().getItems() && this._getSegmentedButton().getItems().length === 1 && sPageToOpen) {
+				this._showContentFor(sPageToOpen);
+			}
+
+			if (oPopover.getAriaLabelledBy() && oPopover.getAriaLabelledBy().indexOf(this._getPopoverAriaLabel()) === -1) {
+				oPopover.addAriaLabelledBy(this._getPopoverAriaLabel());
 			}
 		};
 
@@ -271,6 +332,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 */
 		ViewSettingsPopover.prototype._removeSegmentedButtonSelection = function () {
 			this._getSegmentedButton().setProperty('selectedKey', '', true).removeAllAssociation('selectedButton', true);
+			// by default the SegmentedButton sets the first button as selected if the association is set to false
+			// the only way to not have a selected button is to give the association invalid value
+			this._getSegmentedButton().setAssociation("selectedButton", "no_selected_button", true);
 			this._getSegmentedButton().getButtons().forEach(function (oButton) {
 				oButton.$().removeClass("sapMSegBBtnSel").attr("aria-checked", false);
 			});
@@ -323,19 +387,45 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._determinePageToOpen = function () {
-			var sProperty,
+			var i, j,
+				sProperty,
 				sType,
-				aItems;
+				aItems,
+				aSegmentedButtonItems,
+				oCustomTab,
+				sCustomTabButtonId,
+				oCustomTabs = this.getCustomTabs();
+
+			// check for page to open among the predefined tabs
 			for (sProperty in this._tabMap) {
 				sType = this._tabMap[sProperty];
 				sType = sType.slice(0,1).toUpperCase() + sType.slice(1);
 				aItems = this['_get' + sType + 'List']().getItems();
 
-				if (aItems.length) {
+				if (aItems.length === 1) {
+					// if we have only one item, don't open page, it will be selected by default
+					return;
+				} else if (aItems.length > 1) {
 					return this._tabMap[sProperty];
 				}
 			}
-			// default empty page
+
+			// if there are custom tabs check for page to open
+			if (oCustomTabs) {
+				aSegmentedButtonItems = this._getSegmentedButton().getItems();
+				for (i = 0; i < oCustomTabs.length; i++) {
+					oCustomTab = oCustomTabs[i];
+					sCustomTabButtonId = this.getId() + oCustomTab.getId() + CUSTOM_TAB_SUFFIX;
+					if (!this._isEmptyCustomTab(oCustomTab)) {
+						for (j = 0; j < aSegmentedButtonItems.length; j++) {
+							if (sCustomTabButtonId === aSegmentedButtonItems[j].getId()) {
+								return oCustomTab.getId();
+							}
+						}
+					}
+				}
+			}
+			// if no page is found open default empty page
 			return this._tabMap['sort'];
 		};
 
@@ -343,7 +433,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 * Removes the internal popover footer.
 		 */
 		ViewSettingsPopover.prototype._removeFooter = function () {
-			// hIDe any footer buttons from detail page
+			// hide any footer buttons from detail page
 			if (this._getPopover()._oFooter) {
 				this._getPopover()._oFooter.destroy();
 				this._getPopover()._oFooter = null;
@@ -355,30 +445,35 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Manage internal aggregations so that the correct contents are being set for rendering.
 		 * @param {string} sPageId ID of the page for which to show content
-		 * @param {object} oParentItem of a parent item (e.g. filter details page parent)
+		 * @param {Object} oParentItem of a parent item (e.g. filter details page parent)
 		 * @param {boolean} bDisableSlideEffect Flag enabling or disabling the slide animation on pages navigation
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._showContentFor = function (sPageId, oParentItem, bDisableSlideEffect) {
+			var oPopoverAriaLabelledBy = sap.ui.getCore().byId(this._getPopoverAriaLabel()),
+				sAriaText;
+
 			this._getPopover().setContentHeight('300px');
 			this._getPopover().setContentWidth('300px');
 
 			// remove any current contents from the page
 			this._removePageContents(sPageId);
-
 			// add new content to the page to show
 			this._addPageContents(sPageId);
 
 			if (sPageId === this._tabMap['filterDetail']) {
-				this._updateTitleText(this._getText('VIEWSETTINGS_TITLE_FILTERBY') + oParentItem.getTitle(), true);
+				sAriaText = this._getText('VIEWSETTINGS_TITLE_FILTERBY') + this._updateTitleText(oParentItem.getTitle(), true);
 				this._goToDetailsPage(oParentItem, bDisableSlideEffect);
 			} else {
-				this._updateTitleText(sPageId);
-				if (sPageId === this._tabMap['filter']) {
-					this._updateFilterListItemsCount();
+				if (sPageId in this._tabMap) {
+					sAriaText = this._updateTitleText(sPageId);
+					if (sPageId === this._tabMap['filter']) {
+						this._updateFilterListItemsCount();
+					}
 				}
 				this._goToMainPage();
 			}
+			oPopoverAriaLabelledBy.setText(sAriaText);
 			this._getSegmentedButton().setSelectedKey(sPageId); // make sure segmented button is always in sync
 			this._currentPageId = sPageId;
 		};
@@ -386,7 +481,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Updates the text of the title aggregation.
 		 * @param {string} sText String to be shown as new title
-		 * @param {boolean} bSkipTranslate Weather to translate a key ot displayed a string directly
+		 * @param {boolean} bSkipTranslate Whether to translate a key ot displayed a string directly
+		 * @returns {string} the computed title text
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._updateTitleText = function (sText, bSkipTranslate) {
@@ -407,11 +503,12 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			} else {
 				this._getTitle().setText(sString);
 			}
+			return sString;
 		};
 
 		/**
 		 * Goes to the details page.
-		 * @param {object} oParentItem
+		 * @param {Object} oParentItem The parent item
 		 * @param {boolean} bDisableSlideEffect Flag enabling or disabling the slide animation on pages navigation
 		 * @private
 		 */
@@ -436,8 +533,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			this._addFooterButtons();
 			this._updateSelectAllCheckBoxState();
 
-			if (sap.ui.Device.system.phone) {
-				// hide the header on filder detail page
+			if (Device.system.phone) {
+				// hide the header on filter detail page
 				this._hideToolbarButtons();
 			}
 
@@ -453,13 +550,13 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns reference to the button for filtering selected items.
-		 * @returns {object} Reference to <code>sap.m.Button</code>
+		 * @returns {Object} Reference to <code>sap.m.Button</code>
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getShowSelectedOnlyButton = function () {
 			var bShowSelectedOnly = false;
 			if (!this._oShowSelectedOnlyButton) {
-				this._oShowSelectedOnlyButton = new sap.m.Button({
+				this._oShowSelectedOnlyButton = new Button({
 					icon : IconPool.getIconURI("multiselect-all"),
 					tooltip: this._getText('SHOW_SELECTED_ONLY'),
 					press: function (oEvent) {
@@ -628,7 +725,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			iButtonMargin = parseInt(aSegmentedButtonAggregations[0].$().css('margin-right'), 10);
 			iButtonsLen = aSegmentedButtonAggregations.length;
 
-			if (sap.m._bSizeCompact || !!document.querySelector('.sapUiSizeCompact')) {
+			if (library._bSizeCompact || !!document.querySelector('.sapUiSizeCompact')) {
 				iButtonWidth = iButtonWidth * 2;
 			}
 			iNewWidth = (iButtonWidth + iButtonMargin) * (iButtonsLen + 1.6); // make more room for close button
@@ -662,13 +759,13 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			this._getNavContainer().attachEventOnce("afterNavigate", function() {
 				if (this._currentPageId !== this._tabMap['filterDetail']) {
 					this._removeFooter();
-					if (sap.ui.Device.system.desktop && this._lastViewedFilterParent && this._lastViewedFilterParent.getFocusDomRef()) {
+					if (Device.system.desktop && this._lastViewedFilterParent && this._lastViewedFilterParent.getFocusDomRef()) {
 						// focus filter item
 						this._lastViewedFilterParent.getFocusDomRef().focus();
 					}
 				} else {
 					// focus first item on filter detail page
-					if (sap.ui.Device.system.desktop && this._getFilterDetailList().getItems()[0] && this._getFilterDetailList().getItems()[0].getFocusDomRef()) {
+					if (Device.system.desktop && this._getFilterDetailList().getItems()[0] && this._getFilterDetailList().getItems()[0].getFocusDomRef()) {
 						this._getFilterDetailList().getItems()[0].getFocusDomRef().focus();
 					}
 				}
@@ -702,7 +799,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Updates the list with the items for a concrete parent filter item
-		 * @param {object} oParentFilterItem The parent filter item
+		 * @param {Object} oParentFilterItem The parent filter item
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._updateFilterDetailListFor = function (oParentFilterItem) {
@@ -715,9 +812,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 			if (bMultiSelectMode) {
 				oList.setIncludeItemInSelection(true);
-				oList.setMode(sap.m.ListMode.MultiSelect);
+				oList.setMode(ListMode.MultiSelect);
 			} else {
-				oList.setMode(sap.m.ListMode.SingleSelectLeft);
+				oList.setMode(ListMode.SingleSelectLeft);
 			}
 
 			// create items anew
@@ -725,7 +822,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 				oList.addItem(new StandardListItem({
 					id: oVSPItem.getId() + FILTERDETAIL_LIST_ITEMS_SUFFIX,
 					title: oVSPItem.getText(),
-					type: sap.m.ListType.Active,
+					type: ListType.Active,
 					selected: oVSPItem.getSelected()
 				}));
 			}, this);
@@ -739,12 +836,14 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		ViewSettingsPopover.prototype._removePageContents = function(sPageId) {
 			var sProperty,
 				sType,
+				oPageContent,
 				oPageList,
 				sGetPageMethodName = '_getMainPage';
 			if (sPageId === 'filterDetail') {
 				sGetPageMethodName = '_getDetailsPage';
 			}
-			oPageList = this[sGetPageMethodName]().getContent()[0];
+			oPageContent = this[sGetPageMethodName]().getContent();
+			oPageList = oPageContent[0];
 			for (sProperty in this._tabMap) {
 				sType = this._tabMap[sProperty];
 				if (oPageList) {
@@ -753,6 +852,18 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					}
 				}
 			}
+
+			if (!(sPageId in this._tabMap) || isLastPageContentCustomTab.call(this)) {
+				// custom tabs
+				this.getCustomTabs().forEach(function (oCustomTab) {
+					if (this._currentPageId === oCustomTab.getId()) {
+						oPageContent.forEach(function (oContent) {
+							oCustomTab.addAggregation('content', oContent, true);
+						});
+					}
+				}, this);
+			}
+
 			this[sGetPageMethodName]().removeAllContent();
 		};
 
@@ -766,7 +877,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			var sProperty,
 				sType,
 				oList,
+				aCustomTabs = this.getCustomTabs(),
 				sGetPageMethodName = '_getMainPage';
+
 			if (sPageId === 'filterDetail') {
 				sGetPageMethodName = '_getDetailsPage';
 			}
@@ -778,12 +891,23 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					this[sGetPageMethodName]().addContent(oList);
 				}
 			}
+
+			if (!(sPageId in this._tabMap)) {
+				// custom tabs
+				aCustomTabs.forEach(function (oCustomTab) {
+					if (oCustomTab.getId() === sPageId) {
+						oCustomTab.getContent().forEach(function (oContent) {
+							this[sGetPageMethodName]().addContent(oContent);
+						}, this);
+					}
+				}, this);
+			}
 		};
 
 
 		/**
 		 * Stash items for later use.
-		 * @param {object} mSettings Object holding a collection of settings
+		 * @param {Object} mSettings Object holding a collection of settings
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._stashItems = function (mSettings) {
@@ -822,8 +946,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		};
 
 		/**
-		 * Handles "back" navgation logic.
-		 * @param {object} oEvent Original event trigger for the "back" action
+		 * Handles "back" navigation logic.
+		 * @param {Object} oEvent Original event trigger for the "back" action
 		 */
 		ViewSettingsPopover.prototype._handleBack = function (oEvent) {
 			if (this._currentPageId === 'filterDetail') {
@@ -833,8 +957,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Creates "select all" checkbox.
-		 * @param {array} aFilterSubItems
-		 * @param {object} oFilterDetailList
+		 * @param {array} aFilterSubItems The filter sub-items
+		 * @param {Object} oFilterDetailList The filter details list
+		 * @returns {sap.m.CheckBox} The created checkBox
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getSelectAllCheckbox = function (aFilterSubItems, oFilterDetailList) {
@@ -865,62 +990,79 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 
 		/**
-		 * Createss a single <cpde>sap.m.List</code>.
+		 * Creates a single <code>sap.m.List</code>.
 		 * @param {string} sType Adds namespace for list's Id to avoid duplicates and make list selections easier
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._createList = function (sType) {
-			var oList = new List({
-				id : this.getId() + '-' + sType + 'list',
-				selectionChange: function (oEvent) {
-					this._updateSelectAllCheckBoxState();
-					var oVSPItem = this._findViewSettingsItemFromListItem(oEvent.getParameter('listItem'));
-					var aFilterItems;
-					var aSubItems;
-					var aAllDetailItems = [];
-					oVSPItem.setProperty('selected', oEvent.getParameter('selected'), true);
+			var oVSPItem,
+				sEventName = sType.slice(0,1).toUpperCase() + sType.slice(1),
+				oList = new List({
+					id : this.getId() + '-' + sType + 'list',
+					itemPress: function (oEvent) {
+						oVSPItem = this._findViewSettingsItemFromListItem(oEvent.getParameter('listItem'));
 
-					// make sure only one item is selected in single select mode
-					if (oList.getMode() !== sap.m.ListMode.MultiSelect) {
-						aFilterItems = this.getFilterItems();
-						if (aFilterItems) {
-							aFilterItems.forEach(function (oItem) {
-								aSubItems = oItem.getItems();
-								if (aSubItems) {
-									aAllDetailItems = aAllDetailItems.concat(aSubItems);
+						// if we click on an already selected item from grouping or sorting fire select event
+						// inside filtering the select event is fired after "OK" button is pressed
+						if (sType === 'group' || sType === 'sort') {
+							this['fire' + sEventName + 'Selected']({
+								items: [oVSPItem]
+							});
+							this.close();
+						}
+					}.bind(this),
+					selectionChange: function (oEvent) {
+						var aFilterItems;
+						var aSubItems;
+						var aAllDetailItems = [];
+
+						this._updateSelectAllCheckBoxState();
+						oVSPItem = this._findViewSettingsItemFromListItem(oEvent.getParameter('listItem'));
+
+						oVSPItem.setProperty('selected', oEvent.getParameter('selected'), true);
+
+						// make sure only one item is selected in single select mode
+						if (oList.getMode() !== ListMode.MultiSelect) {
+							aFilterItems = this.getFilterItems();
+							if (aFilterItems) {
+								aFilterItems.forEach(function (oItem) {
+									aSubItems = oItem.getItems();
+									if (aSubItems) {
+										aAllDetailItems = aAllDetailItems.concat(aSubItems);
+									}
+								});
+							}
+							aAllDetailItems.forEach(function (oFilterDetailItem) {
+								if (
+									oFilterDetailItem.getParent().getId() === oVSPItem.getParent().getId() &&
+									oFilterDetailItem.getSelected(true) &&
+									oFilterDetailItem.getId() !== oVSPItem.getId()
+								) {
+									oFilterDetailItem.setProperty('selected', false, true);
 								}
 							});
 						}
-						aAllDetailItems.forEach(function (oFilterDetailItem) {
-							if (
-								oFilterDetailItem.getParent().getId() === oVSPItem.getParent().getId() &&
-								oFilterDetailItem.getSelected(true) &&
-								oFilterDetailItem.getId() !== oVSPItem.getId()
-							) {
-								oFilterDetailItem.setProperty('selected', false, true);
-							}
-						});
-					}
 
-					var sEventName = sType.slice(0,1).toUpperCase() + sType.slice(1);
-					if (sType === 'filterDetail') {
-						sEventName = 'Filter';
-					} else {
-						this['fire' + sEventName + 'Selected']({
-							items: [oVSPItem]
-						});
-						this.close();
-					}
-					switch (sType) {
-						case 'group':
-							// add 'no grouping' option
-							this._getGroupList().addItem(this._getRemoveGroupingItem());
-							break;
-					}
-				}.bind(this)
-			});
+						if (sType === 'filterDetail') {
+							sEventName = 'Filter';
+						} else {
+							this['fire' + sEventName + 'Selected']({
+								items: [oVSPItem]
+							});
+							this.close();
+						}
+
+						switch (sType) {
+							case 'group':
+								// add 'no grouping' option
+								this._getGroupList().addItem(this._getRemoveGroupingItem());
+								break;
+						}
+					}.bind(this)
+				});
+
 			if (sType !== 'filter') {
-				oList.setMode(sap.m.ListMode.SingleSelectMaster);
+				oList.setMode(ListMode.SingleSelectMaster);
 			}
 			this['_' + sType + 'List'] = oList;
 		};
@@ -935,7 +1077,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 				this._removeGroupingItem = new StandardListItem({
 					id: this.getId() + '-nogrouping',
 					title: this._getText('NO_GROUPING'),
-					type: sap.m.ListType.Active
+					type: ListType.Active
 				});
 			}
 			return this._removeGroupingItem;
@@ -951,7 +1093,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 				this._removeFilteringItem = new StandardListItem({
 					id: this.getId() + '-nofiltering',
 					title: this._getText('REMOVE_FILTER'),
-					type: sap.m.ListType.Active,
+					type: ListType.Active,
 					press: function () {
 						this.getFilterItems().forEach(function (oFilterItem) {
 							oFilterItem.getItems().forEach(function (oSubItem) {
@@ -971,16 +1113,39 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		};
 
 		/**
+		 * Create <code>sap.m.SegmentedButtonItem</code> for the <code>customTab</code>.
+		 * @param {sap.m.ViewSettingsCustomTab} oCustomTab custom tab for which should be created SegmentedButtonItem
+		 * @returns {sap.m.SegmentedButtonItem}
+		 * @private
+		 */
+		ViewSettingsPopover.prototype._getTabButtonItem = function (oCustomTab) {
+			var sButtonId = this.getId() + oCustomTab.getId() + CUSTOM_TAB_SUFFIX,
+				oButton = sap.ui.getCore().byId(sButtonId);
+
+			if (oButton) {
+				return oButton;
+			} else {
+				return new sap.m.SegmentedButtonItem({
+					key     : sButtonId,
+					id      : sButtonId,
+					icon    : oCustomTab.getIcon(),
+					tooltip : oCustomTab.getTooltip()
+				});
+			}
+		};
+
+		/**
 		 * Adds <code>sap.m.SegmentedButtonItem</code>.
 		 * @param {string} sType Type of item to add
 		 * @private
 		 */
-		ViewSettingsPopover.prototype._addTab = function (sType) {
+		ViewSettingsPopover.prototype._addPredefinedTab = function (sType) {
 			var sIconName = this._tabMap[sType];
+
 			switch (sIconName) {
-				case 'group':
-					sIconName = sIconName + '-2';
-					break;
+			case 'group':
+				sIconName = sIconName + '-2';
+				break;
 			}
 			var oNewButton = new sap.m.SegmentedButtonItem({
 				key: sType,
@@ -990,7 +1155,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					var sPageId = oEvent.getSource().getProperty('key');
 					var aItems = this['get' + sPageId.slice(0, 1).toUpperCase() + sPageId.slice(1) + 'Items']();
 					if (this._currentPageId === sPageId || this._currentPageId === this._tabMap['filterDetail'] && aItems && aItems.length > 1) {
-						if (sap.ui.Device.system.phone) {
+						if (Device.system.phone) {
 							this._cancel();
 						} else {
 							this._hideContent();
@@ -1018,21 +1183,72 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			});
 
 			switch (sType) {
-				case 'sort':
-					this._getSegmentedButton().insertAggregation('items', oNewButton, 0);
-					break;
-				case 'filter':
-					this._getSegmentedButton().insertAggregation('items', oNewButton, 1);
-					break;
-				case 'group':
-					this._getSegmentedButton().addItem(oNewButton);
-					break;
+			case 'sort':
+				this._getSegmentedButton().insertItem(oNewButton, 0);
+				break;
+			case 'filter':
+				this._getSegmentedButton().insertItem(oNewButton, 1);
+				break;
+			case 'group':
+				this._getSegmentedButton().insertItem(oNewButton, 2);
+				break;
 			}
-
-			this._getSegmentedButton().updateItems();
-
 		};
 
+		/**
+		 * Overwrites the aggregation setter in order to have ID validation logic as some strings
+		 * are reserved for the predefined tabs.
+		 *
+		 * @overwrite
+		 * @public
+		 * @param {sap.m.ViewSettingsCustomTab} oCustomTab The custom tab to be added
+		 * @returns {sap.m.ViewSettingsPopover} this pointer for chaining
+		 */
+		ViewSettingsPopover.prototype.addCustomTab = function (oCustomTab) {
+			var sId = oCustomTab.getId();
+			if (sId === 'sort' || sId === 'filter' || sId === 'group') {
+				throw new Error('Id "' + sId + '" is reserved and cannot be used as custom tab id.');
+			}
+			this.addAggregation('customTabs', oCustomTab);
+			if (!this._isEmptyCustomTab(oCustomTab)) {
+				var oButton = this._getTabButtonItem(oCustomTab);
+				oButton.attachEvent("press", this._handleCustomTabPress, this);
+				// add custom tab to segmented button
+				this._getSegmentedButton().addItem(oButton);
+			}
+			return this;
+		};
+
+		ViewSettingsPopover.prototype._handleCustomTabPress = function (oEvent) {
+			var i,
+				oCustomTab,
+				sCustomTabButtonId,
+				sCurrentPage,
+				aCustomTabs = this.getCustomTabs(),
+				iCustomTabsLength = aCustomTabs.length,
+				sPageId = oEvent.getParameter('id');
+
+			for (i = 0; i < iCustomTabsLength; i++) {
+				oCustomTab = aCustomTabs[i];
+				sCustomTabButtonId = this.getId() + oCustomTab.getId() + CUSTOM_TAB_SUFFIX;
+				sCurrentPage = this.getId() + this._currentPageId + CUSTOM_TAB_SUFFIX;
+
+				if (sCurrentPage === sPageId) {
+					if (Device.system.phone) {
+						this._cancel();
+						break;
+					} else {
+						this._hideContent();
+						break;
+					}
+				} else {
+					if (!this._isEmptyCustomTab(oCustomTab) && sPageId === sCustomTabButtonId) {
+						this._showContentFor(oCustomTab.getId());
+						break;
+					}
+				}
+			}
+		};
 
 		/**
 		 * Hides content and collapses in toolbar view.
@@ -1059,11 +1275,12 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Removes <code>sap.m.SegmentedButtonItem</code>.
-		 * @param {string} sType Type of item to add
+		 * @param {string} sType Type of item to remove
 		 * @private
 		 */
-		ViewSettingsPopover.prototype._removeTab = function (sType) {
+		ViewSettingsPopover.prototype._removePredefinedTab = function (sType) {
 			var aTabs = this._getSegmentedButton().getItems();
+
 			aTabs.forEach(function (oItem) {
 				if (oItem.getKey() === sType.toLowerCase()) {
 					this._getSegmentedButton().removeItem(oItem);
@@ -1075,14 +1292,48 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		};
 
 		/**
+		 * Removes <code>sap.m.SegmentedButtonItem</code>.
+		 * @param {Object} oObject if given only the button for that custom tab will be removed
+		 * @private
+		 */
+		ViewSettingsPopover.prototype._removeCustomTab = function (oObject) {
+			var bShouldRemovePage,
+				sCustomTabButtonId,
+				sCurrentCustomPageId = this.getId() + this._currentPageId + CUSTOM_TAB_SUFFIX,
+				bObjectIsCustomTabButton = false,
+				aTabs = this._getSegmentedButton().getItems();
+
+			aTabs.forEach(function (oItem) {
+				if (oItem.getKey().indexOf(CUSTOM_TAB_SUFFIX) !== -1) {
+					if (oObject) {
+						bShouldRemovePage = (this._currentPageId === oObject.getId());
+						sCustomTabButtonId = this.getId() + oObject.getId() + CUSTOM_TAB_SUFFIX;
+						bObjectIsCustomTabButton = (oObject && sCustomTabButtonId === oItem.getId());
+					} else {
+						bShouldRemovePage = (sCurrentCustomPageId === oItem.getId());
+					}
+
+					if (!oObject || bObjectIsCustomTabButton) {
+						this._getSegmentedButton().removeItem(oItem);
+					}
+					// if the opened page belongs to the removed item of the segementedButton
+					// it will be removed also and we should find which page should be opened on its place
+					if (bShouldRemovePage) {
+						this._showContentFor(this._determinePageToOpen());
+					}
+				}
+			}, this);
+		};
+
+		/**
 		 * Gets <code>LabelledBy</code> association or create label and return its ID
-		 * @returns {string}
+		 * @returns {sap.ui.core.InvisibleText} The created label
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getPopoverAriaLabel = function () {
 			var sLabel = this.getAssociation("ariaLabelledBy");
 			if (!sLabel) {
-				sLabel = new sap.ui.core.InvisibleText({
+				sLabel = new InvisibleText({
 					text: this._getText("ARIA_LABELLED_BY_POPOVER")
 				}).toStatic().getId();
 				this.setAssociation("ariaLabelledBy", sLabel, true);
@@ -1093,7 +1344,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Determine if a string is actually a name of one of the items aggregations.
 		 * @param {string} sAggregationName Suggested name of aggregation
-		 * @returns {boolean}
+		 * @returns {boolean} Whether a string is actually a name of one of the items aggregations
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._isItemsAggregation = function (sAggregationName) {
@@ -1111,15 +1362,15 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Adds an entity <code>oObject</code> to the aggregation identified by <code>sAggregationName</code>.
 		 *
-		 * @param sAggregationName {string} The name of the aggregation where the new entity is to be added
-		 * @param oObject {mixed} The value of the aggregation to be added
-		 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+		 * @param {string} sAggregationName The name of the aggregation where the new entity is to be added
+		 * @param {any} oObject The value of the aggregation to be added
+		 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> pointer for chaining
 		 * @override
 		 */
 		ViewSettingsPopover.prototype.addAggregation = function(sAggregationName, oObject, bSuppressInvalidate) {
 			if (this._isItemsAggregation(sAggregationName)) {
-				(!this.getAggregation(sAggregationName) || this.getAggregation(sAggregationName).length === 0) && this._addTab(sAggregationName.replace('Items', ''));
+				(!this.getAggregation(sAggregationName) || this.getAggregation(sAggregationName).length === 0) && this._addPredefinedTab(sAggregationName.replace('Items', ''));
 				this._handleItemsAggregation.call(this, ['addAggregation', sAggregationName, oObject, bSuppressInvalidate], true);
 			}
 			return Control.prototype.addAggregation.call(this, sAggregationName, oObject, bSuppressInvalidate);
@@ -1128,16 +1379,16 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Inserts an entity to the aggregation named <code>sAggregationName</code> at position <code>iIndex</code>.
 		 *
-		 * @param sAggregationName {string} The name of the aggregation
-		 * @param oObject {mixed} The value of the aggregation to be inserted
-		 * @param iIndex {int} Where to insert
-		 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+		 * @param {string} sAggregationName The name of the aggregation
+		 * @param {any} oObject The value of the aggregation to be inserted
+		 * @param {int} iIndex Where to insert
+		 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> pointer for chaining
 		 * @override
 		 */
 		ViewSettingsPopover.prototype.insertAggregation = function(sAggregationName, oObject, iIndex, bSuppressInvalidate) {
 			if (this._isItemsAggregation(sAggregationName)) {
-				(!this.getAggregation(sAggregationName) || this.getAggregation(sAggregationName).length === 0) && this._addTab(sAggregationName.replace('Items', ''));
+				(!this.getAggregation(sAggregationName) || this.getAggregation(sAggregationName).length === 0) && this._addPredefinedTab(sAggregationName.replace('Items', ''));
 				this._handleItemsAggregation.call(this, ['insertAggregation', sAggregationName, oObject, iIndex, bSuppressInvalidate], true);
 			}
 			return Control.prototype.insertAggregation.call(this, sAggregationName, oObject, iIndex, bSuppressInvalidate);
@@ -1146,9 +1397,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Removes an entity from the aggregation named <code>sAggregationName</code>.
 		 *
-		 * @param sAggregationName {string} The name of the aggregation
-		 * @param oObject {mixed} The value of aggregation to be removed
-		 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+		 * @param {string} sAggregationName The name of the aggregation
+		 * @param {any} oObject The value of aggregation to be removed
+		 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> pointer for chaining
 		 * @override
 		 */
@@ -1156,8 +1407,10 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			if (this._isItemsAggregation(sAggregationName)) {
 				this._handleItemsAggregation.call(this, ['removeAggregation', sAggregationName, oObject, bSuppressInvalidate]);
 				if (!this['getAggregation'](sAggregationName)) {
-					this._removeTab(sAggregationName.replace('Items', ''));
+					this._removePredefinedTab(sAggregationName.replace('Items', ''));
 				}
+			} else {
+				this._removeCustomTab(oObject);
 			}
 			return Control.prototype.removeAggregation.call(this, sAggregationName, oObject, bSuppressInvalidate);
 		};
@@ -1165,15 +1418,17 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Removes all objects from the aggregation named <code>sAggregationName</code>.
 		 *
-		 * @param sAggregationName {string} The name of aggregation
-		 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+		 * @param {string} sAggregationName The name of aggregation
+		 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> pointer for chaining
 		 * @override
 		 */
 		ViewSettingsPopover.prototype.removeAllAggregation = function(sAggregationName, bSuppressInvalidate) {
 			if (this._isItemsAggregation(sAggregationName)) {
 				this._handleItemsAggregation.call(this, ['removeAllAggregation', sAggregationName, null, bSuppressInvalidate]);
-				this._removeTab(sAggregationName.replace('Items', ''));
+				this._removePredefinedTab(sAggregationName.replace('Items', ''));
+			} else {
+				this._removeCustomTab();
 			}
 			return Control.prototype.removeAllAggregation.call(this, sAggregationName, bSuppressInvalidate);
 		};
@@ -1181,8 +1436,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Destroys all the entities in the aggregation named <code>sAggregationName</code>.
 		 *
-		 * @param sAggregationName {string} The name of aggregation
-		 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+		 * @param {string} sAggregationName The name of aggregation
+		 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> pointer for chaining
 		 * @override
 		 */
@@ -1190,7 +1445,10 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			if (this._isItemsAggregation(sAggregationName)) {
 				var sType = sAggregationName.replace('Items', '');
 				this._handleItemsAggregation.call(this, ['destroyAggregation', sAggregationName, bSuppressInvalidate]);
-				this._removeTab(sType.slice(0,1).toUpperCase() + sType.slice(1));
+				this._removePredefinedTab(sType.slice(0,1).toUpperCase() + sType.slice(1));
+			} else if (this._segmentedButton) {
+				// check if the segmentedButton exists before removing some of its buttons
+				this._removeCustomTab();
 			}
 			return Control.prototype.destroyAggregation.call(this, sAggregationName, bSuppressInvalidate);
 		};
@@ -1198,8 +1456,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Ensures proper handling of <code>ViewSettingsPopover</code> <code>items</code> aggregation> and proxies to the list <code>items</code> aggregation.
 		 *
-		 * @param aArgs {array}
-		 * @param bIsAdding {boolean}
+		 * @param {array} aArgs
+		 * @param {boolean} bIsAdding
 		 * @returns {sap.m.ViewSettingsPopover} <code>this</code> instance for chaining
 		 */
 		ViewSettingsPopover.prototype._handleItemsAggregation = function (aArgs, bIsAdding) {
@@ -1215,9 +1473,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 			if (bIsAdding) {
 				// attach and detach (or only detach if not adding) event listeners for the item
-				this._attachItemEventListeners(oObject);
-			} else {
-				this._detachItemEventListeners(oObject);
+				this._handleItemEventListeners(oObject);
 			}
 
 			this._handleListItemsAggregation(aNewArgs,  bIsAdding, sFunctionName, oObject);
@@ -1227,10 +1483,10 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Ensures proper handling of <code>ViewSettingsPopover</code> <code>items</code> aggregation and proxies to the List <code>items</code> aggregation.
 		 *
-		 * @param aArgs {array}
-		 * @param bIsAdding {boolean}
-		 * @param sFunctionName {string}
-		 * @param oObject {object}
+		 * @param {array} aArgs
+		 * @param {boolean} bIsAdding
+		 * @param {string} sFunctionName
+		 * @param {Object} oObject
 		 * @returns {*}
 		 */
 		ViewSettingsPopover.prototype._handleListItemsAggregation = function (aArgs, bIsAdding, sFunctionName, oObject) {
@@ -1252,6 +1508,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					break;
 				case 'filterItems':
 					oList = this._getFilterList();
+					break;
+				case 'filterDetailItems':
+					oList = this._getFilterDetailList();
 					break;
 			}
 
@@ -1331,28 +1590,28 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		};
 
 		/**
-		 * Attaches any previously added event handlers.
+		 * Attaches and detaches any previously added event handlers.
 		 *
-		 * @param oObject {object} The <code>ViewSettingsItem</code> instance on which events will be detached/attached
+		 * @param {Object} oObject The <code>ViewSettingsItem</code> instance on which events will be attached
 		 * @private
 		 */
-		ViewSettingsPopover.prototype._attachItemEventListeners = function (oObject) {
+		ViewSettingsPopover.prototype._handleItemEventListeners = function (oObject) {
 			if (oObject instanceof ViewSettingsItem && oObject.getId().indexOf('nogrouping') === -1) {
 				// make sure we always have one listener at a time only
-				oObject.detachItemPropertyChanged(this._handleViewSettingsItemPropertyChanged.bind(this));
-				oObject.attachItemPropertyChanged(this._handleViewSettingsItemPropertyChanged.bind(this));
+				oObject.detachItemPropertyChanged(this._handleViewSettingsItemPropertyChanged, this);
+				oObject.attachItemPropertyChanged(this._handleViewSettingsItemPropertyChanged, this);
 			}
 
 			if (oObject instanceof sap.m.ViewSettingsFilterItem) {
-				oObject.detachFilterDetailItemsAggregationChange(this._handleFilterDetailItemsAggregationChange.bind(this));
-				oObject.attachFilterDetailItemsAggregationChange(this._handleFilterDetailItemsAggregationChange.bind(this));
+				oObject.detachFilterDetailItemsAggregationChange(this._handleFilterDetailItemsAggregationChange, this);
+				oObject.attachFilterDetailItemsAggregationChange(this._handleFilterDetailItemsAggregationChange, this);
 			}
 		};
 
 		/**
 		 * Handles ViewSettingsItem property change
 		 *
-		 * @param {object} oEvent
+		 * @param {Object} oEvent The fired event
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._handleViewSettingsItemPropertyChanged = function (oEvent) {
@@ -1372,7 +1631,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Handles FilterDetailItem aggregation change to redraw its corresponding list item
 		 *
-		 * @param {object} oEvent
+		 * @param {Object} oEvent The fired event
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._handleFilterDetailItemsAggregationChange = function (oEvent) {
@@ -1386,28 +1645,18 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		};
 
 		/**
-		 * Detaches any previously added event handlers.
-		 *
-		 * @param oObject {object} The <code>ViewSettingsItem</code> instance on which events will be detached/attached.
-		 * @private
-		 */
-		ViewSettingsPopover.prototype._detachItemEventListeners = function (oObject) {
-			//TODO: detach handlers properly
-		};
-
-		/**
 		 * Ensures proper <code>ViewSettingsItem</code> inheritance in context of List.
 		 *
-		 * @param {object} oViewSettingsItem
-		 * @param {string} sType
-		 * @param {boolean} bHasDetailsPage
-		 * @returns {sap.ui.core.Element}
+		 * @param {Object} oViewSettingsItem The sap.m.ViewSettingsItem to be inherit
+		 * @param {string} sType Its type
+		 * @param {boolean} bHasDetailsPage Whether it has details page
+		 * @returns {sap.ui.core.Element} The created list item
 		 */
 		ViewSettingsPopover.prototype._createListItemFromViewSettingsItem = function (oViewSettingsItem, sType, bHasDetailsPage) {
 			var oListItem,
 				sSuffix = LIST_ITEMS_SUFFIX;
 
-			if (!oViewSettingsItem && !(oViewSettingsItem instanceof sap.m.ViewSettingsItem)) {
+			if (!oViewSettingsItem && !(oViewSettingsItem instanceof ViewSettingsItem)) {
 				jQuery.sap.log.error('Expecting instance of "sap.m.ViewSettingsItem": instead of ' + oViewSettingsItem + ' given.');
 				return;
 			}
@@ -1424,12 +1673,12 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					break;
 			}
 
-			oListItem = new sap.m.StandardListItem({
+			oListItem = new StandardListItem({
 				id      : oViewSettingsItem.getId() + sSuffix,
 				title   : oViewSettingsItem.getText(),
-				type    : sap.m.ListType.Active
+				type    : ListType.Active
 			});
-			bHasDetailsPage && oListItem.attachPress(this._showContentFor.bind(this, 'filterDetail', oListItem, false)) && oListItem.setType(sap.m.ListType.Navigation);
+			bHasDetailsPage && oListItem.attachPress(this._showContentFor.bind(this, 'filterDetail', oListItem, false)) && oListItem.setType(ListType.Navigation);
 
 			return oListItem;
 		};
@@ -1437,7 +1686,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Finds the correct <code>ViewSettingsItem</code> in context of <code>ViewSettingsPopover</code> by a given <code>StandardListItem</code> instance.
 		 *
-		 * @param oListItem {sap.m.ViewSettingsItem} The <code>ViewSettingsItem</code> instance which analogue is to be found
+		 * @param {sap.m.ViewSettingsItem} oListItem The <code>ViewSettingsItem</code> instance which analogue is to be found
 		 * @returns {sap.m.ViewSettingsItem} The <code>ViewSettingsItem</code> in context of List found (if any)
 		 */
 		ViewSettingsPopover.prototype._findViewSettingsItemFromListItem = function (oListItem) {
@@ -1451,7 +1700,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Finds the correct <code>ViewSettingsItem</code> in context of List by a given <code>ViewSettingsItem</code> instance.
 		 *
-		 * @param oViewSettingsItem {sap.m.ViewSettingsItem} The <code>ViewSettingsItem</code> instance which analogue is to be found
+		 * @param {sap.m.ViewSettingsItem} oViewSettingsItem The <code>ViewSettingsItem</code> instance which analogue is to be found
 		 * @returns {sap.m.ViewSettingsItem} The <code>ViewSettingsItem</code> in context of List found (if any)
 		 */
 		ViewSettingsPopover.prototype._findListItemFromViewSettingsItem = function (oViewSettingsItem) {
@@ -1474,12 +1723,9 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		ViewSettingsPopover.prototype._getMainPage = function () {
 			if (!this._mainPage) {
 				this._mainPage = new Page({
-					showHeader: true,
+					showHeader: false,
 					id: this._getMainPageId()
 				});
-				this._getMainPage().addHeaderContent(new sap.m.Bar({
-					contentMiddle: this._getTitle()
-				}).addStyleClass('sapMVSDBar').addStyleClass("sapMVSPCompactHeaderBar"));
 			}
 			return this._mainPage;
 		};
@@ -1502,15 +1748,14 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					text: this._getText("VIEWSETTINGS_TITLE")
 				}).addStyleClass("sapMVSDTitle");
 
-				oDetailHeader = new sap.m.Bar({
+				oDetailHeader = new Bar({
 					contentMiddle: [oTitle]
 				}).addStyleClass("sapMVSPCompactHeaderBar");
 
 				this._getDetailsPage().addHeaderContent(oDetailHeader);
 
-
 				// create back button here, as it is meant to be present only on the details page
-				oBackButton = new sap.m.Button(this.getId() + BACK_BUTTON_SUFFIX, {
+				oBackButton = new Button(this.getId() + BACK_BUTTON_SUFFIX, {
 					icon : IconPool.getIconURI("nav-back"),
 					press: this._handleBack.bind(this)
 				});
@@ -1521,7 +1766,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns the id of the main page.
-		 * @returns {object} Main page instance
+		 * @returns {Object} Main page instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getMainPageId = function () {
@@ -1530,7 +1775,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns the id of the details.
-		 * @returns {object} Details page instance
+		 * @returns {Object} Details page instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getDetailsPageId = function () {
@@ -1539,8 +1784,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to {sap.m.Popover} instance or creates one if it doesn't exist.
-		 * @param {object} oOpener Instance of the control that triggered the opening
-		 * @returns {object} Popover instance
+		 * @param {Object} oOpener Instance of the control that triggered the opening
+		 * @returns {Object} Popover instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getPopover = function (oOpener) {
@@ -1548,7 +1793,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 				this._popover = new ResponsivePopover({
 					showHeader     : true,
 					contentWidth   : "300px",
-					placement      : sap.m.VerticalPlacementType.Vertical,
+					placement      : VerticalPlacementType.Vertical,
 					showCloseButton: false,
 					modal          : false,
 					afterOpen      : function (oEvent) {
@@ -1575,7 +1820,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			}
 
 			if (oOpener  && oOpener.$()) {
-				this._popover.setOffsetY(-oOpener.$().height());
+				this._popover.setOffsetY(-oOpener.$().outerHeight());
 			}
 			return this._popover;
 		};
@@ -1583,7 +1828,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		/**
 		 * Returns a reference to <code>sap.m.NavContainer</code> instance or create new one if it doesn't exist.
 		 * @private
-		 * @returns {object} NavContainer instance
+		 * @returns {Object} NavContainer instance
 		 */
 		ViewSettingsPopover.prototype._getNavContainer = function () {
 			if (!this._navContainer) {
@@ -1597,7 +1842,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the sort list internal aggregation.
-		 * @returns {object} Sort list instance
+		 * @returns {Object} Sort list instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getSortList = function () {
@@ -1609,7 +1854,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the group list internal aggregation.
-		 * @returns {object} Group list instance
+		 * @returns {Object} Group list instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getGroupList = function () {
@@ -1621,7 +1866,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the filter list internal aggregation.
-		 * @returns {object} Filter list instance
+		 * @returns {Object} Filter list instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getFilterList = function () {
@@ -1633,7 +1878,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the filter  detail list internal aggregation.
-		 * @returns {object} Filter list instance
+		 * @returns {Object} Filter list instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getFilterDetailList = function () {
@@ -1655,18 +1900,13 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			if (!this._toolbar) {
 				var oCloseBtn;
 
-				this._toolbar = new sap.m.Toolbar({
+				this._toolbar = new Toolbar({
 					id: this.getId() + TOOLBAR_SUFFIX
-				});
-
-				this._oCloseBtnARIAInvText = new sap.ui.core.InvisibleText({
-					text: this._getText("MESSAGEPOPOVER_CLOSE")
 				});
 
 				// create close button
 				oCloseBtn = new Button({
 					icon: IconPool.getIconURI("decline"),
-					ariaLabelledBy: this._oCloseBtnARIAInvText.toStatic().getId(),
 					press: this._cancel.bind(this)
 				}).addStyleClass('sapMVSPCloseBtn');
 
@@ -1679,7 +1919,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the <code>sap.m.Label</code> title internal instance or create it.
-		 * @returns {object} Toolbar instance
+		 * @returns {Object} Toolbar instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getTitle = function () {
@@ -1691,9 +1931,10 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			}
 			return this._title;
 		};
+
 		/**
 		 * Returns a reference to the search field instance.
-		 * @returns {object} Search instance
+		 * @returns {Object} Search instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getSearchField = function () {
@@ -1729,7 +1970,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 
 		/**
 		 * Returns a reference to the segmented button internal aggregation.
-		 * @returns {object} Segmented button instance
+		 * @returns {Object} Segmented button instance
 		 * @private
 		 */
 		ViewSettingsPopover.prototype._getSegmentedButton = function () {
@@ -1794,9 +2035,6 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			this._popover.destroy();
 			this._popover = null;
 
-			this._oCloseBtnARIAInvText.destroy();
-			this._oCloseBtnARIAInvText = null;
-
 			this._title = null;
 			this._navContainer = null;
 			this._mainPage = null;
@@ -1820,5 +2058,25 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			}
 		};
 
+		/**
+		 * Checks whether a custom tab instance is empty.
+		 * @param {sap.m.ViewSettingsCustomTab} oCustomTab the tab to be checked
+		 * @returns {boolean} Whether the tab is empty
+		 * @private
+		 */
+		ViewSettingsPopover.prototype._isEmptyCustomTab = function (oCustomTab) {
+			/*  if the tab has no content check if the content aggregation
+			 is not currently transferred to the main page instance - if the last page content
+			 corresponds to the tab id that must be the case */
+			var bCustomTabContent = oCustomTab.getContent().length,
+				bCustomTabContentInsideMainPage = this._currentPageId === oCustomTab.getId() && this._getMainPage().getContent().length;
+
+			return !(bCustomTabContent || bCustomTabContentInsideMainPage);
+		};
+
+		function isLastPageContentCustomTab() {
+			return (this._getMainPage().getContent().length && !(this._currentPageId in this._tabMap));
+		}
+
 		return ViewSettingsPopover;
-	}, /* bExport= */ false);
+	});

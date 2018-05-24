@@ -1,13 +1,22 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.unified.ContentSwitcher.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
-	function(jQuery, Control, library) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/core/Control',
+	'./library',
+	"./ContentSwitcherRenderer"
+], function(jQuery, Control, library, ContentSwitcherRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.unified.ContentSwitcherAnimation
+	var ContentSwitcherAnimation = library.ContentSwitcherAnimation;
 
 
 
@@ -22,13 +31,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.16.0
 	 * @experimental Since version 1.16.0.
 	 * API is not yet finished and might change completely
+	 * @deprecated Since version 1.44.0.
 	 * @alias sap.ui.unified.ContentSwitcher
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -101,8 +111,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	 * sapUiUnifiedCSwitcherVisible
 	 */
 	ContentSwitcher.prototype._showActiveContent = function(iNumber) {
-		this._$Contents[0].toggleClass("sapUiUfdCSwitcherVisible", iNumber === 1);
-		this._$Contents[1].toggleClass("sapUiUfdCSwitcherVisible", iNumber === 2);
+		if (this._$Contents) {
+			this._$Contents[0].toggleClass("sapUiUfdCSwitcherVisible", iNumber === 1);
+			this._$Contents[1].toggleClass("sapUiUfdCSwitcherVisible", iNumber === 2);
+		}
 	};
 
 	///////////////////////////////////////// Hidden Functions /////////////////////////////////////////
@@ -110,7 +122,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 
 	//////////////////////////////////////// Overridden Methods ////////////////////////////////////////
 
-	    ///////////////////////////////// Property "activeContent" /////////////////////////////////
+		///////////////////////////////// Property "activeContent" /////////////////////////////////
 
 	ContentSwitcher.prototype.setActiveContent = function(iNumber) {
 		iNumber = parseInt(iNumber, 10);
@@ -137,14 +149,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	};
 
 
-	    /////////////////////////////////// Property "animation" ///////////////////////////////////
+		/////////////////////////////////// Property "animation" ///////////////////////////////////
 
 	ContentSwitcher.prototype.setAnimation = function(sAnimation, bSuppressInvalidate){
 		if (typeof (sAnimation) !== "string") {
-			sAnimation = sap.ui.unified.ContentSwitcherAnimation.None;
+			sAnimation = ContentSwitcherAnimation.None;
 			jQuery.sap.log.warning(
 				"setAnimation argument must be a string. Animation was set to \"" +
-				sap.ui.unified.ContentSwitcherAnimation.None + "\"."
+				ContentSwitcherAnimation.None + "\"."
 			);
 		}
 
@@ -155,7 +167,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 
 		if (sAnimation === sCurrentAnimation) {
 			// No change.
-			return;
+			return this;
 		}
 
 		var $Dom = this.$();
@@ -167,18 +179,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 			// The renderer will take care of it.
 		}/**/
 
-		this.setProperty("animation", sAnimation, bSuppressInvalidate);
-
-		return this;
+		return this.setProperty("animation", sAnimation, bSuppressInvalidate);
 	};
 
 
-	    //////////////////////////////////////// Event "xxx" ///////////////////////////////////////
-	    ///////////////////////////////////// Aggregation "xxx" ////////////////////////////////////
-	    ///////////////////////////////////// Association "xxx" ////////////////////////////////////
+		//////////////////////////////////////// Event "xxx" ///////////////////////////////////////
+		///////////////////////////////////// Aggregation "xxx" ////////////////////////////////////
+		///////////////////////////////////// Association "xxx" ////////////////////////////////////
 
 	})(window);
 
 	return ContentSwitcher;
 
-}, /* bExport= */ true);
+});

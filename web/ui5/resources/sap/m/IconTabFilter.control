@@ -10,7 +10,11 @@
             <documentation>Represents the "count" text, which is displayed in the tab filter.</documentation>
         </property>
         <property name="showAll" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
-            <documentation>Enables special visualization for disabled filter (show all items).</documentation>
+            <documentation>Enables special visualization for disabled filter (show all items).
+&lt;b&gt;Note:&lt;/b&gt; You can use this property when you use &lt;code&gt;IconTabBar&lt;/code&gt; as a filter.
+In order for it to be displayed correctly, the other tabs in the filter should consist of an icon, text and an optional count.
+It can be set to true for the first tab filter.
+You can find more detailed guidelines at https://experience.sap.com/fiori-design-web/icontabbar/#tabs-as-filters.</documentation>
         </property>
         <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Misc">
             <documentation>Specifies the icon to be displayed for the tab filter.</documentation>

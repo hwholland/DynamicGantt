@@ -1,15 +1,15 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './library'],
-	function(jQuery, library) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/Device'],
+	function(jQuery, library, Control, Device) {
 	"use strict";
 
 
-	var ShellHeader = sap.ui.core.Control.extend("sap.ui.unified.ShellHeader", {
+	var ShellHeader = Control.extend("sap.ui.unified.ShellHeader", {
 
 		metadata: {
 			properties: {
@@ -70,7 +70,8 @@ sap.ui.define(['jquery.sap.global', './library'],
 				var aItems = begin ? oHeader.getHeadItems() : oHeader.getHeadEndItems();
 
 				for (var i = 0; i < aItems.length; i++) {
-					rm.write("<a tabindex='0' href='javascript:void(0);'");
+
+					rm.write("<div tabindex='0'");
 					rm.writeElementData(aItems[i]);
 					rm.addClass("sapUiUfdShellHeadItm");
 					if (aItems[i].getStartsSection()) {
@@ -100,12 +101,12 @@ sap.ui.define(['jquery.sap.global', './library'],
 							pressed: aItems[i].getToggleEnabled() ? aItems[i].getSelected() : null
 						});
 					}
-					rm.write("><span></span><div class='sapUiUfdShellHeadItmMarker'><div></div></div></a>");
+					rm.write("><span></span><div class='sapUiUfdShellHeadItmMarker'><div></div></div></div>");
 				}
 
 				var oUser = oHeader.getUser();
 				if (!begin && oUser) {
-					rm.write("<a tabindex='0' href='javascript:void(0);'");
+					rm.write("<div tabindex='0'");
 					rm.writeElementData(oUser);
 					rm.addClass("sapUiUfdShellHeadUsrItm");
 					if (!oUser.getShowPopupIndicator()) {
@@ -131,7 +132,7 @@ sap.ui.define(['jquery.sap.global', './library'],
 					rm.writeAttributeEscaped("title", sUserName);
 					rm.write(">");
 					rm.writeEscaped(sUserName);
-					rm.write("</span><span class='sapUiUfdShellHeadUsrItmExp' aria-hidden='true'></span></a>");
+					rm.write("</span><span class='sapUiUfdShellHeadUsrItmExp' aria-hidden='true'></span></div>");
 				}
 
 				rm.write("</div>");
@@ -151,7 +152,7 @@ sap.ui.define(['jquery.sap.global', './library'],
 				rm.writeAttributeEscaped("alt", sLogoTooltip);
 				rm.write("src='");
 				rm.writeEscaped(sIco);
-				rm.write("' style='", sIco ? "" : "display:none;","'></img>");
+				rm.write("' style='", sIco ? "" : "display:none;","'/>");
 				rm.write("</div>");
 			}
 		}
@@ -170,7 +171,7 @@ sap.ui.define(['jquery.sap.global', './library'],
 			}
 			that._refresh();
 		};
-		sap.ui.Device.media.attachHandler(this._handleMediaChange, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
+		Device.media.attachHandler(this._handleMediaChange, this, Device.media.RANGESETS.SAP_STANDARD);
 
 		this._handleResizeChange = function(mParams){
 			if (!that.getDomRef() || !that.getUser()) {
@@ -183,15 +184,15 @@ sap.ui.define(['jquery.sap.global', './library'],
 				that._refresh();
 			}
 		};
-		sap.ui.Device.resize.attachHandler(this._handleResizeChange, this);
+		Device.resize.attachHandler(this._handleResizeChange, this);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
 	};
 
 	ShellHeader.prototype.exit = function(){
-		sap.ui.Device.media.detachHandler(this._handleMediaChange, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
+		Device.media.detachHandler(this._handleMediaChange, this, Device.media.RANGESETS.SAP_STANDARD);
 		delete this._handleMediaChange;
-		sap.ui.Device.resize.detachHandler(this._handleResizeChange, this);
+		Device.resize.detachHandler(this._handleResizeChange, this);
 		delete this._handleResizeChange;
 	};
 
@@ -251,4 +252,4 @@ sap.ui.define(['jquery.sap.global', './library'],
 
 	return ShellHeader;
 
-}, /* bExport= */ true);
+});

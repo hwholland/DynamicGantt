@@ -13,7 +13,27 @@
         <property name="transitionTime" type="sap.ui.core/int" defaultValue="500" group="Appearance">
             <documentation>The time of the slide changing in milliseconds.</documentation>
         </property>
+        <property name="scope" type="sap.m/GenericTileScope" defaultValue="Display" group="Misc" since="1.46.0">
+            <documentation>Changes the visualization in order to enable additional actions with the SlideTile control.</documentation>
+        </property>
     </properties>
+    <events>
+        <event name="press" since="1.46.0" allowPreventDefault="false">
+            <documentation>The event is fired when the user chooses the tile. The event is available only in Actions scope.</documentation>
+            <parameters>
+                <parameter name="scope" type="sap.m/GenericTileScope" since="1.46.0">
+                    <documentation>The current scope the SlideTile was in when the event occurred.</documentation>
+                </parameter>
+                <parameter name="action" type="sap.ui.core/string" since="1.46.0">
+                    <documentation>The action that was pressed on the tile. In the Actions scope, the available actions are Press and Remove.</documentation>
+                </parameter>
+                <parameter name="domRef" type="sap.ui.core/any" since="1.46.0">
+                    <documentation>The Element's DOM Element.
+In Actions scope the domRef points to the DOM Element of the remove button (if pressed) or the more icon.</documentation>
+                </parameter>
+            </parameters>
+        </event>
+    </events>
     <aggregations default="tiles">
         <aggregation name="tiles" type="sap.m/GenericTile" cardinality="0..n" bindable="bindable">
             <documentation>The set of Generic Tiles to be shown in the control.</documentation>

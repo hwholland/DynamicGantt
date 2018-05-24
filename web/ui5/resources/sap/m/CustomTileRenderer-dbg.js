@@ -1,27 +1,30 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['jquery.sap.global', './TileRenderer'],
-	function(jQuery, TileRenderer) {
+sap.ui.define(['./TileRenderer', 'sap/ui/core/Renderer'],
+	function(TileRenderer, Renderer) {
 	"use strict";
 
 /**
 	 * CustomTile renderer.
 	 * @namespace
 	 */
-	var CustomTileRenderer = sap.ui.core.Renderer.extend(TileRenderer);
+	var CustomTileRenderer = Renderer.extend(TileRenderer);
 
 	/**
 	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
 	 *
 	 * @param {sap.ui.core.RenderManager}
-	 *                oRm The RenderManager that can be used for writing to the render output buffer
+	 *                rm The RenderManager that can be used for writing to the render output buffer
 	 * @param {sap.ui.core.Control}
 	 *                oControl An object representation of the control that should be rendered
 	 */
 	 CustomTileRenderer.render = function(rm, oControl) {
+		var oTileContainer,
+			aVisibleTiles;
+
 		rm.write("<div tabindex=\"0\"");
 		rm.writeControlData(oControl);
 		rm.addClass("sapMCustomTile");
@@ -33,10 +36,13 @@ sap.ui.define(['jquery.sap.global', './TileRenderer'],
 
 		/* WAI ARIA if in TileContainer context */
 		if (oControl.getParent() instanceof sap.m.TileContainer) {
-			rm.writeAccessibilityState({
+			oTileContainer = oControl.getParent();
+			aVisibleTiles = oTileContainer._getVisibleTiles();
+
+			rm.writeAccessibilityState(oControl, {
 				role: "option",
-				posinset: oControl._getTileIndex(),
-				setsize: oControl._getTilesCount()
+				posinset: oTileContainer._indexOfVisibleTile(oControl, aVisibleTiles) + 1,
+				setsize: aVisibleTiles.length
 			});
 		}
 

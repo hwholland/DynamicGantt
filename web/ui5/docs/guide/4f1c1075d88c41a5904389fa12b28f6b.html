@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="With sap.m.URLHelper you can easily trigger native mobile phone applications such as e-mail, telephone, and text messages."/>
 <meta name="description" content="With sap.m.URLHelper you can easily trigger native mobile phone applications such as e-mail, telephone, and text messages."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8310433568050027"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=463587313837729"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=463587313837729"/>
 <title>URL Helper</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio4f1c1075d88c41a5904389fa12b28f6b">
 <div id="wrapper"><div id="container">
@@ -48,7 +34,7 @@
 			<li class="li">
 				<p class="p">Trigger telephone application</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 sap.m.URLHelper.triggerTel( [Telephone Number] ); //Telephone number is optional</pre></div>
 
 			</li>
@@ -56,7 +42,7 @@ sap.m.URLHelper.triggerTel( [Telephone Number] ); //Telephone number is optional
 			<li class="li">
 				<p class="p">Trigger text messaging application</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 sap.m.URLHelper.triggerSms( [Telephone Number] ); //Telephone number is optional</pre></div>
 
 			</li>
@@ -64,7 +50,7 @@ sap.m.URLHelper.triggerSms( [Telephone Number] ); //Telephone number is optional
 			<li class="li">
 				<p class="p">Trigger e-mail application</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 sap.m.URLHelper.triggerEmail( [Destination Email], [Subject], [Default Message Text], [CC], [BCC] ); 
 // All parameters are optional</pre></div>
 
@@ -73,7 +59,7 @@ sap.m.URLHelper.triggerEmail( [Destination Email], [Subject], [Default Message T
 			<li class="li">
 				<p class="p">Redirect To custom URL</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 sap.m.URLHelper.redirect( URL ); 
 //URL is required and can be used for custom protocols (e.g http, ftp, ...)</pre></div>
 
@@ -108,18 +94,18 @@ sap.m.URLHelper.redirect( URL );
 
 					<ul class="ul" id="loio4f1c1075d88c41a5904389fa12b28f6b__ul_z4n_s4v_gj">
 						<li class="li">
-							<p class="p">For iOS: <a class="extlink" href="http://help.sap.com/disclaimer?site=http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html" alt="http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html" title="http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html"> http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></p>
+							<p class="p">For iOS: <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdeveloper.apple.com%2Flibrary%2Fsafari%2F%23featuredarticles%2FiPhoneURLScheme_Reference%2FIntroduction%2FIntroduction.html" alt="http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html" title="http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html"> http://developer.apple.com/library/safari/#featuredarticles/iPhoneURLScheme_Reference/Introduction/Introduction.html<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></p>
 
 						</li>
 
 						<li class="li">
-							<p class="p">For Android: <a class="extlink" href="http://help.sap.com/disclaimer?site=http://developer.android.com/guide/appendix/g-app-intents.html" alt="http://developer.android.com/guide/appendix/g-app-intents.html" title="http://developer.android.com/guide/appendix/g-app-intents.html"> http://developer.android.com/guide/appendix/g-app-intents.html<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>
+							<p class="p">For Android: <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdeveloper.android.com%2Fguide%2Fappendix%2Fg-app-intents.html" alt="http://developer.android.com/guide/appendix/g-app-intents.html" title="http://developer.android.com/guide/appendix/g-app-intents.html"> http://developer.android.com/guide/appendix/g-app-intents.html<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>
 							</p>
 
 						</li>
 
 						<li class="li">
-							<p class="p">URI schemes: <a class="extlink" href="http://help.sap.com/disclaimer?site=http://en.wikipedia.org/wiki/URI_scheme" alt="http://en.wikipedia.org/wiki/URI_scheme" title="http://en.wikipedia.org/wiki/URI_scheme"> http://en.wikipedia.org/wiki/URI_scheme<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></p>
+							<p class="p">URI schemes: <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FURI_scheme" alt="http://en.wikipedia.org/wiki/URI_scheme" title="http://en.wikipedia.org/wiki/URI_scheme"> http://en.wikipedia.org/wiki/URI_scheme<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></p>
 
 						</li>
 
@@ -131,7 +117,7 @@ sap.m.URLHelper.redirect( URL );
 					<p class="p">If you just want to get a URI back without a redirect, you can use normalize
 						methods which have the same parameter as trigger methods, for example:</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 /*
  * These methods do not redirect but return URI scheme back as string.
  * All parameters are optional
@@ -166,19 +152,5 @@ sap.m.URLHelper.normalizeEmail( [Destination Email], [Subject], [Default Message
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="URL Helper";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -1,12 +1,17 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.TextView.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+ 'jquery.sap.global',
+ './library',
+ 'sap/ui/core/Control',
+ "./TextViewRenderer"
+],
+	function(jQuery, library, Control, TextViewRenderer) {
 	"use strict";
 
 	/**
@@ -18,10 +23,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @class
 	 * Is used to display some continous text. The control can inherit the text direction from its parent control.
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.commons.ToolbarItem
+	 * @implements sap.ui.commons.ToolbarItem, sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -32,7 +37,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	var TextView = Control.extend("sap.ui.commons.TextView", /** @lends sap.ui.commons.TextView.prototype */ { metadata : {
 
 		interfaces : [
-			"sap.ui.commons.ToolbarItem"
+			"sap.ui.commons.ToolbarItem",
+			"sap.ui.core.IFormContent"
 		],
 		library : "sap.ui.commons",
 		properties : {
@@ -123,7 +129,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
 	 * @protected
 	 */
 	TextView.prototype.getAccessibilityInfo = function() {

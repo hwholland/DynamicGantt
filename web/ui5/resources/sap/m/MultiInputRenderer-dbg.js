@@ -1,10 +1,10 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['jquery.sap.global', './InputRenderer', 'sap/ui/core/Renderer'],
-	function(jQuery, InputRenderer, Renderer) {
+sap.ui.define(['./InputRenderer', 'sap/ui/core/Renderer'],
+	function(InputRenderer, Renderer) {
 	"use strict";
 
 
@@ -22,26 +22,35 @@ sap.ui.define(['jquery.sap.global', './InputRenderer', 'sap/ui/core/Renderer'],
 		if (oControl.getEnableMultiLineMode()) {
 			oRm.addClass("sapMMultiInputMultiLine");
 		}
+
+		if (oControl.getTokens().length > 0) {
+			oRm.addClass("sapMMultiInputNoPlaceholder");
+		}
 	};
 
 	MultiInputRenderer.getAriaDescribedBy = function(oControl) {
 
-		var sAriaDescribedBy = InputRenderer.getAriaDescribedBy.apply(this, arguments);
+		var sAriaDescribedBy = InputRenderer.getAriaDescribedBy.apply(this, arguments),
+			oInvisibleTextId = oControl.getAggregation("tokenizer") &&
+				oControl.getAggregation("tokenizer").getTokensInfoId();
 
 		if (sAriaDescribedBy) {
-			sAriaDescribedBy = sAriaDescribedBy + " " + oControl._sAriaMultiInputContainTokenId;
+			sAriaDescribedBy = sAriaDescribedBy + " " + oInvisibleTextId;
 		} else {
-			sAriaDescribedBy = oControl._sAriaMultiInputContainTokenId;
+			sAriaDescribedBy = oInvisibleTextId ;
 		}
 
 		return sAriaDescribedBy;
 	};
 
-
 	MultiInputRenderer.openInputTag = function(oRm, oControl) {
 
 		oRm.write('<div id="' + oControl.getId() + '-border"');
 		oRm.addClass('sapMMultiInputBorder');
+
+		if (oControl.getTokens().length > 0) {
+			oRm.addClass("sapMMultiInputNarrowBorder");
+		}
 
 		if (oControl.getEnableMultiLineMode() || oControl._bUseDialog ) {
 
@@ -66,25 +75,28 @@ sap.ui.define(['jquery.sap.global', './InputRenderer', 'sap/ui/core/Renderer'],
 	};
 
 	MultiInputRenderer._renderInput = function(oRm, oControl) {
-		var oTokenizer = oControl.getAggregation("tokenizer"),
-			aTokens = (oTokenizer && oTokenizer.getTokens) ? oTokenizer.getTokens() : [];
+		oRm.write("<div class=\"sapMMultiInputInputContainer\">");
 
-		if ( oControl._isMultiLineMode && oControl._bShowIndicator === false && aTokens.length) {
-			oRm.write("<div class=\"sapMMultiInputInputContainer sapMMultiInputMultiModeInputContainer\">");
-		} else {
-			if ( oControl._isMultiLineMode && oControl._bShowIndicator === true) {
-				var iTokens = oControl.getTokens().length;
-				oRm.write("<span class=\"sapMMultiInputIndicator\">");
-				if (iTokens > 1) {
-					var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
-					oRm.write( oMessageBundle.getText("MULTIINPUT_SHOW_MORE_TOKENS", iTokens - 1) );
-				}
-				oRm.write("</span>");
+		if ( oControl._isMultiLineMode && oControl._bShowIndicator === true) {
+			var iTokens = oControl.getTokens().length;
+			oRm.write("<span class=\"sapMMultiInputIndicator\">");
+			if (iTokens > 1) {
+				var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+				oRm.write( oMessageBundle.getText("MULTIINPUT_SHOW_MORE_TOKENS", iTokens - 1) );
 			}
-			oRm.write("<div class=\"sapMMultiInputInputContainer\">");
+			oRm.write("</span>");
 		}
 
 		InputRenderer.openInputTag.call(this, oRm, oControl);
+	};
+
+	/**
+	 * Write the decorations of the input.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+	 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
+	 */
+	MultiInputRenderer.writeDecorations = function(oRm, oControl) {
 
 	};
 
@@ -93,13 +105,16 @@ sap.ui.define(['jquery.sap.global', './InputRenderer', 'sap/ui/core/Renderer'],
 		InputRenderer.closeInputTag.call(this, oRm, oControl);
 
 		oRm.write("</div>");
+
+		InputRenderer.writeValueHelpIcon(oRm, oControl);
+
 		oRm.write("</div>");
-		oRm.write("<div class=\"sapMMultiInputShadowDiv\"/>");
+		oRm.write("<div class=\"sapMMultiInputShadowDiv\"></div>");
 	};
 
 	MultiInputRenderer.addInnerStyles = function(oRm, oControl) {
 		if (oControl._isMultiLineMode && oControl._bShowIndicator === true && oControl.getTokens().length > 1) {
-			oRm.addStyle("opacity", 0);
+			 oRm.addStyle("opacity", 0);
 		}
 	};
 

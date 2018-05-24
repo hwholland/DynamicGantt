@@ -1,5 +1,5 @@
 <mvc:View
-	controllerName="myCompany.myApp.controller.Worklist"
+	controllerName="mycompany.myapp.controller.Worklist"
 	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:semantic="sap.m.semantic"
 	xmlns="sap.m">
@@ -57,10 +57,7 @@
 						<cells>
 							<ObjectIdentifier
 								title="{ProductName}"/>
-							<ObjectNumber number="{
-								path: 'UnitsInStock',
-								formatter: '.formatter.numberUnit'
-							}"/>
+							<ObjectNumber number="{UnitsInStock}"/>
 						</cells>
 					</ColumnListItem>
 				</items>

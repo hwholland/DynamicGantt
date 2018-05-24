@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,6 +8,7 @@
 sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', './RenderManager', 'jquery.sap.act', 'jquery.sap.ui', 'jquery.sap.keycodes', 'jquery.sap.trace'],
 	function(jQuery, ManagedObject, Element, RenderManager /* , jQuerySap1, jQuerySap, jQuerySap2 */) {
 	"use strict";
+
 
 	//lazy dependency (to avoid cycle)
 	var Control;
@@ -116,7 +117,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @param {sap.ui.core.Core} oCore internal API of the <core>Core</code> that manages this UIArea
 	 * @param {object} [oRootNode] reference to the Dom Node that should be 'hosting' the UI Area.
 	 * @public
@@ -434,7 +435,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	};
 
 	/**
-	 * Notifies the UIArea about an just invalidated control.
+	 * Notifies the UIArea about an invalidated control.
 	 *
 	 * The UIArea internally decides whether to re-render just the modified
 	 * controls or the complete content. It also informs the Core when it
@@ -456,7 +457,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 
 		var sId = oControl.getId();
 		//check whether the control is already invalidated
-		if (/*jQuery.inArray(oControl, this.getContent()) || */oControl === this ) {
+		if ( oControl === this ) {
 			this.bRenderSelf = true; //everything in this UIArea
 			this.bNeedsRerendering = true;
 			this.mInvalidatedControls = {};
@@ -670,7 +671,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			oDomRef = oControl.getDomRef();
 			if (!oDomRef || RenderManager.isPreservedContent(oDomRef) ) {
 				// In case no old DOM node was found or only preserved DOM, search for an 'invisible' placeholder
-				oDomRef = jQuery.sap.domById(sap.ui.core.RenderPrefixes.Invisible + oControl.getId());
+				oDomRef = jQuery.sap.domById(RenderManager.RenderPrefixes.Invisible + oControl.getId());
 			}
 		}
 
@@ -689,6 +690,44 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	};
 
 	var rEvents = /^(mousedown|mouseup|click|keydown|keyup|keypress|touchstart|touchend|tap)$/;
+	var aPreprocessors = [], aPostprocessors = [];
+	var mVerboseEvents = {mousemove: 1, mouseover: 1, mouseout: 1, scroll: 1, dragover: 1, dragenter: 1, dragleave: 1};
+
+	/**
+	 * Adds an event handler that will be executed before the event is dispatched.
+	 * @param {Function} fnPreprocessor The event handler to add
+	 * @private
+	 */
+	UIArea.addEventPreprocessor = function(fnPreprocessor) {
+		aPreprocessors.push(fnPreprocessor);
+	};
+
+	/**
+	 * Gets the event handlers that will be executed before the event is dispatched.
+	 * @return {Function[]} The event preprocessors
+	 * @private
+	 */
+	UIArea.getEventPreprocessors = function() {
+		return aPreprocessors;
+	};
+
+	/**
+	 * Adds an event handler that will be executed after the event is dispatched.
+	 * @param {Function} fnPostprocessor The event handler to add
+	 * @private
+	 */
+	UIArea.addEventPostprocessor = function(fnPostprocessor) {
+		aPostprocessors.push(fnPostprocessor);
+	};
+
+	/**
+	 * Gets the event handlers that will be executed after the event is dispatched.
+	 * @return {Function[]} The event postprocessors
+	 * @private
+	 */
+	UIArea.getEventPostprocessors = function() {
+		return aPostprocessors;
+	};
 
 	/**
 	 * Handles all incoming DOM events centrally and dispatches the event to the
@@ -700,7 +739,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		// execute the registered event handlers
 		var oElement = null,
 			bInteractionRelevant;
-
 
 		// TODO: this should be the 'lowest' SAPUI5 Control of this very
 		// UIArea instance's scope -> nesting scenario
@@ -741,6 +779,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			return;
 		}
 
+		aPreprocessors.forEach(function(fnPreprocessor){
+			fnPreprocessor(oEvent);
+		});
+
 		// forward the control event:
 		// if the control propagation has been stopped or the default should be
 		// prevented then do not forward the control event.
@@ -773,7 +815,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		var bGroupChanged = false;
 
 		// dispatch the event to the controls (callback methods: onXXX)
-		while (oElement && oElement instanceof Element && oElement.isActive() && !oEvent.isPropagationStopped()) {
+		while (oElement instanceof Element && oElement.isActive() && !oEvent.isPropagationStopped()) {
 
 			// for each event type call the callback method
 			// if the execution should be stopped immediately
@@ -832,6 +874,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			}
 		}
 
+		aPostprocessors.forEach(function(fnPostprocessor){
+			fnPostprocessor(oEvent);
+		});
+
 		if (bInteractionRelevant) {
 			jQuery.sap.interaction.notifyEventEnd(oEvent);
 		}
@@ -849,15 +895,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			jQuery.sap.log.debug("'" + oEvent.type + "' propagation has been stopped");
 		}
 
-		// logging: prevent the logging of some events and for others do some
-		//          info logging into the console
-		var sName = oEvent.type;
-		if (sName != "mousemove" && sName != "mouseover" && sName != "scroll" && sName != "mouseout") {
+		// logging: prevent the logging of some events that are verbose and for others do some info logging into the console
+		var sEventName = oEvent.type;
+		if (!mVerboseEvents[sEventName]) {
 			var oElem = jQuery(oEvent.target).control(0);
 			if (oElem) {
-				jQuery.sap.log.debug("Event fired: '" + oEvent.type + "' on " + oElem, "", "sap.ui.core.UIArea");
+				jQuery.sap.log.debug("Event fired: '" + sEventName + "' on " + oElem, "", "sap.ui.core.UIArea");
 			} else {
-				jQuery.sap.log.debug("Event fired: '" + oEvent.type + "'", "", "sap.ui.core.UIArea");
+				jQuery.sap.log.debug("Event fired: '" + sEventName + "'", "", "sap.ui.core.UIArea");
 			}
 		}
 
@@ -888,7 +933,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	//		for (var evt in oPsEv) {
 	//				for (j = 0, js = oPsEv[evt].aTypes.length; j < js; j++) {
 	//					var type = oPsEv[evt].aTypes[j];
-	//					if (jQuery.inArray(type, aEvents) == -1) {
+	//					if (aEvents.indexOf(type) === -1) {
 	//						aEvents.push(type);
 	//					}
 	//				}
@@ -897,7 +942,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	//		// check for events and register them
 	//		for (var i = 0, is = aEv.length; i < is; i++) {
 	//			var type = aEv[i];
-	//				if (jQuery.inArray(type, aEvents) == -1) {
+	//				if (aEvents.indexOf(type) === -1) {
 	//					aEvents.push(type);
 	//				}
 	//		}
@@ -919,8 +964,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			return;
 		}
 
-		//	mark the DOM as UIArea and bind the required events
-		jQuery(oDomRef).attr("data-sap-ui-area", oDomRef.id).bind(jQuery.sap.ControlEvents.join(" "), jQuery.proxy(this._handleEvent, this));
+		// mark the DOM as UIArea and bind the required events
+		jQuery(oDomRef).attr("data-sap-ui-area", oDomRef.id).bind(jQuery.sap.ControlEvents.join(" "), this._handleEvent.bind(this));
 
 	};
 
@@ -953,7 +998,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	};
 
 	/**
-	 * An UIArea can't be cloned and throws an error when trying to do so.
+	 * UIAreas can't be cloned and throw an error when trying to do so.
 	 */
 	UIArea.prototype.clone = function() {
 		throw new Error("UIArea can't be cloned");

@@ -5,10 +5,11 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>Splitter - sap.ui.layout</title>
+	<script src="shared-config.js"></script>
 	<script src="../../../../resources/sap-ui-core.js"
-	        type="text/javascript"
+	       
 	        id="sap-ui-bootstrap"
-	        data-sap-ui-libs="sap.ui.core,sap.ui.layout,sap.ui.commons"
+	        data-sap-ui-libs="sap.ui.core,sap.ui.layout,sap.ui.commons, sap.m"
 	        data-sap-ui-theme="sap_bluecrystal">
 	</script>
 	<style>
@@ -83,9 +84,7 @@
 			}
 
 
-			var oContent = new sap.ui.commons.Button({
-				width: "100%",
-				height: "100%",
+			var oContent = new sap.m.Text({
 				text : "Content!",
 				layoutData: oLd
 			});
@@ -105,7 +104,11 @@
 
 		var oSplitter = new sap.ui.layout.Splitter("mySplitter", {
 			contentAreas: [
-				createExampleContent(), createExampleContent(), createExampleContent(),
+				createExampleContent(), createExampleContent(),
+				sap.ui.layout.Splitter({
+					contentAreas: [new sap.m.Button(), new sap.m.Button()],
+					orientation: "Vertical"
+				})
 			]
 		});
 
@@ -265,14 +268,6 @@
 		});
 
 		oSplitter.placeAt("content");
-		oButtons
-			.addContent(oButton)
-			.addContent(oButton2)
-			.addContent(oButton3)
-			.addContent(oButton4)
-			.addContent(oEventStatus)
-			.placeAt("buttons");
-		oOptionsLayout.placeAt("options");
 	</script>
 </head>
 <body class="sapUiBody" role="application">
@@ -281,7 +276,7 @@
 	<div id="buttons"></div>
 	<div id="options"></div>
 </body>
-<script type="text/javascript">
+<script>
 /*
 jQuery(document).on("touchmove", function(oEv) {
 	debug.innerHTML = oEv.changedTouches[0].pageX + ", " + oEv.changedTouches[0].pageY + "&nbsp; | &nbsp;"+ debug.innerHTML;

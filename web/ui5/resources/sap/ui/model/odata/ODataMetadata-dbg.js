@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -25,9 +25,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 	 * Implementation to access oData metadata
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
-	 * @constructor
 	 * @public
 	 * @alias sap.ui.model.odata.ODataMetadata
 	 * @extends sap.ui.base.EventProvider
@@ -65,7 +64,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 			this._loadMetadata()
 				.catch(function() {
 					// Ignored for initial metadata loading. Error handling is done inside _loadMetadata
-					jQuery.sap.assert(false, "[ODataMetadata] initial loading of metadata failed");
+					jQuery.sap.log.error("[ODataMetadata] initial loading of metadata failed");
 				});
 		},
 
@@ -114,6 +113,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 					metadataString: that.sMetadataBody,
 					entitySets: aEntitySets
 				};
+
+				var sLastModified = oResponse.headers["Last-Modified"];
+				if (sLastModified) {
+					mParams.lastModified = sLastModified;
+				}
+
 				// resolve global promise
 				that.fnResolve(mParams);
 				// resolve this promise
@@ -485,7 +490,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 			// first part must be the entityType
 			oEntityType = this._getEntityTypeByName(aMetaParts[0]);
 
-			jQuery.sap.assert(oEntityType, aMetaParts[0] + " is not a valid EnityType");
+			jQuery.sap.assert(oEntityType, aMetaParts[0] + " is not a valid EntityType");
 
 			if (!oEntityType) {
 				return;
@@ -514,8 +519,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 
 			//extract property
 			sPath = aParts[0].replace(/^\/|\/$/g, "");
-			sPropertyPath = sPath.substr(sPath.indexOf('/') + 1);
-			oProperty = this._getPropertyMetadata(oEntityType,sPropertyPath);
+			sPropertyPath = sPath;
+			while (!oProperty && sPropertyPath.indexOf("/") > 0) {
+				sPropertyPath = sPropertyPath.substr(sPropertyPath.indexOf('/') + 1);
+				oProperty = this._getPropertyMetadata(oEntityType, sPropertyPath);
+			}
 
 			jQuery.sap.assert(oProperty, sPropertyPath + " is not a valid property path");
 			if (!oProperty) {
@@ -701,7 +709,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 	};
 
 	/**
-	 * Get the the use-batch extension value if any
+	 * Get the use-batch extension value if any
 	 * @return {boolean} true/false
 	 * @public
 	 */
@@ -830,7 +838,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 	};
 
 	/**
-	*  extract the property metadata of a specified property of a entity type out of the metadata document
+	*  extract the property metadata of a specified property of an entity type out of the metadata document
 	*/
 	ODataMetadata.prototype._getPropertyMetadata = function(oEntityType, sProperty) {
 		var oPropertyMetadata, that = this;
@@ -841,7 +849,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 
 		// remove starting/trailing /
 		sProperty = sProperty.replace(/^\/|\/$/g, "");
-		var aParts = sProperty.split("/"); // path could point to a complex type
+		var aParts = sProperty.split("/"); // path could point to a complex type or nav property
 
 		jQuery.each(oEntityType.property, function(k, oProperty) {
 			if (oProperty.name === aParts[0]) {
@@ -850,17 +858,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 			}
 		});
 
-		// check if complex type
-		if (oPropertyMetadata && aParts.length > 1 && !jQuery.sap.startsWith(oPropertyMetadata.type.toLowerCase(), "edm.")) {
-			var aName = this._splitName(oPropertyMetadata.type);
-			oPropertyMetadata = this._getPropertyMetadata(this._getObjectMetadata("complexType", aName[0], aName[1]), aParts[1]);
-		}
-
-		// check if navigation property
-		if (!oPropertyMetadata && aParts.length > 1) {
-			var oParentEntityType = this._getEntityTypeByNavProperty(oEntityType, aParts[0]);
-			if (oParentEntityType) {
-				oPropertyMetadata = that._getPropertyMetadata(oParentEntityType, aParts[1]);
+		if (aParts.length > 1) {
+			// check for navigation property and complex type
+			if (!oPropertyMetadata) {
+				while (oEntityType && aParts.length > 1) {
+					oEntityType = this._getEntityTypeByNavProperty(oEntityType, aParts[0]);
+					aParts.shift();
+				}
+				if (oEntityType) {
+					oPropertyMetadata = that._getPropertyMetadata(oEntityType, aParts[0]);
+				}
+			} else if (!jQuery.sap.startsWith(oPropertyMetadata.type.toLowerCase(), "edm.")) {
+				var aName = this._splitName(oPropertyMetadata.type);
+				oPropertyMetadata = this._getPropertyMetadata(this._getObjectMetadata("complexType", aName[0], aName[1]), aParts[1]);
 			}
 		}
 
@@ -952,17 +962,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/thirdpa
 	/**
 	 * Add metadata url: The response will be merged with the existing metadata object
 	 *
-	 * @param string | array vUrl Either one URL as string or an array or Uri strings
+	 * @param {string | string[]} vUrl Either one URL as string or an array of Uri strings
 	 * @returns Promise The Promise for metadata loading
 	 * @private
 	 */
 	ODataMetadata.prototype._addUrl = function(vUrl) {
-		var aUrls = [].concat(vUrl),
-			that = this;
+		var aUrls = [].concat(vUrl);
 
-		return Promise.all(jQuery.map(aUrls, function(sUrl) {
-			return that._loadMetadata(sUrl, true);
-		}));
+		return Promise.all(aUrls.map(function(sUrl) {
+			return this._loadMetadata(sUrl, true);
+		}, this));
 	};
 
 	/**

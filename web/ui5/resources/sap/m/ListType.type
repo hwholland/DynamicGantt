@@ -10,7 +10,7 @@
         </value>
         <value name="Detail">
             <documentation>Enables detail button of the list item that fires &lt;code&gt;detailPress&lt;/code&gt; event.
-Also see {@link sap.m.ListBase#attachDetailPress}.</documentation>
+Also see {@link sap.m.ListItemBase#attachDetailPress}.</documentation>
         </value>
         <value name="Navigation">
             <documentation>Indicates the list item is navigable to show extra information about the item.</documentation>
@@ -19,7 +19,7 @@ Also see {@link sap.m.ListBase#attachDetailPress}.</documentation>
             <documentation>Indicates that the item is clickable via active feedback when item is pressed.</documentation>
         </value>
         <value name="DetailAndActive">
-            <documentation>Enables {@link sap.m.ListType#Detail} and {@link sap.m.ListType#Active} enumerations together.</documentation>
+            <documentation>Enables {@link sap.m.ListType.Detail} and {@link sap.m.ListType.Active} enumerations together.</documentation>
         </value>
     </enumeration>
 </simple-type>

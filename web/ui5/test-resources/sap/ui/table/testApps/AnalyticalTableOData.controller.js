@@ -3,6 +3,9 @@ sap.ui.define([
 	"sap/ui/model/json/JSONModel"
 ], function (Controller, JSONModel) {
 	"use strict";
+
+	var TABLESETTINGS = window.TABLESETTINGS;
+
 	return Controller.extend("sap.ui.table.testApps.AnalyticalTableOData", {
 
 		onInit: function () {
@@ -46,11 +49,19 @@ sap.ui.define([
 			var sResultSet = oDataModel.getProperty("/resultSet");
 			var iRowCount = parseInt(oDataModel.getProperty("/visibleRowCount"), 10);
 
+			var oStoredData = TABLESETTINGS.getAnalyticalService();
+			sServiceUrl = sServiceUrl || oStoredData.url;
+			sCollection = sCollection || oStoredData.collection;
+
+			if (sServiceUrl && sCollection) {
+				oDataModel.setProperty("/serviceURL", sServiceUrl);
+				oDataModel.setProperty("/collection", sCollection);
+				TABLESETTINGS.setAnalyticalService(sServiceUrl, sCollection);
+			}
+
 			sServiceUrl = "../../../../../proxy/" + sServiceUrl.replace("://", "/");
 
 			var sSelectProperties = oDataModel.getProperty("/selectProperties");
-
-			var sBindingThreshold = oDataModel.getProperty("/bindingThreshold");
 
 			//dimensions and measures of Analytical Table
 			var aDimensions = oDataModel.getProperty("/dimensions").split(",");
@@ -145,7 +156,7 @@ sap.ui.define([
 			var aProperties = sSelectProperties.split(",");
 
 			jQuery.each(aProperties, function(iIndex, sProperty) {
-				
+
 				var oTemplate = sProperty;
 				// measure column
 				if (aMeasures.indexOf(sProperty) != -1) {
@@ -157,7 +168,7 @@ sap.ui.define([
 						textAlign: "End"
 					});
 				}
-				
+
 
 				var oColumn = new sap.ui.table.AnalyticalColumn({
 					label: sProperty,
@@ -197,18 +208,16 @@ sap.ui.define([
 
 
 			window.oTable = oTable;
-			
+
 			/**
 			 * Create Perf Measurements
 			 */
 			var aJSMeasure = jQuery.sap.measure.filterMeasurements(function(oMeasurement) {
-				return oMeasurement.categories.indexOf("JS") > -1? oMeasurement : null;
+				return oMeasurement.categories.indexOf("JS") > -1 ? oMeasurement : null;
 			});
+			/*eslint-disable no-console*/
 			console.table(aJSMeasure);
-
-			var aRenderMeasure = jQuery.sap.measure.filterMeasurements(function(oMeasurement) {
-				return oMeasurement.categories.indexOf("Render") > -1? oMeasurement : null;
-			});
+			/*eslint-enable no-console*/
 
 			function getValue(attributeName, oObject) {
 				if (oObject) {
@@ -219,7 +228,7 @@ sap.ui.define([
 			}
 
 			//set test result
-			var iCreateRows = Math.round(getValue("duration", aJSMeasure[0])* 1) / 1;
+			var iCreateRows = Math.round(getValue("duration", aJSMeasure[0]) * 1) / 1;
 			var iUpdateTableContent = Math.round(getValue("duration", aJSMeasure[1]) * 1) / 1;
 			var iUpdateRowHeader = Math.round(getValue("duration", aJSMeasure[2]) * 1) / 1;
 			var iSyncColumnHeaders = Math.round(getValue("duration", aJSMeasure[3]) * 1) / 1;
@@ -238,7 +247,7 @@ sap.ui.define([
 
 			this.aFunctionResults.push(oFunctionResult);
 		},
-		
+
 		/**
 		 * Performance Measure Stuff
 		 */
@@ -269,9 +278,9 @@ sap.ui.define([
 			var sCSV = "Run;VisibleRowCount;VisibleRowCountMode;Overall;Before Rendering;Rendering;After Rendering;Table Create;Factor of After Rendering in Rendering;Table._createRows;Table._updateTableContent;Table._syncColumnHeaders;Table._updateRowHeader\n";
 
 			for (var i = 0; i < iRun; i++) {
-				sCSV += (i+1) + ";"
-						+ this.aVisibleRow[i].VisibleRowCount +";"
-						+ this.aVisibleRow[i].VisibleRowCountMode +";"
+				sCSV += (i + 1) + ";"
+						+ this.aVisibleRow[i].VisibleRowCount + ";"
+						+ this.aVisibleRow[i].VisibleRowCountMode + ";"
 						+ this.aRenderResults[i].overall + ";"
 						+ this.aRenderResults[i].onBeforeRendering + ";"
 						+ this.aRenderResults[i].rendering + ";"
@@ -323,10 +332,9 @@ sap.ui.define([
 			var sFileName = "AnalyticalTableODataPerformanceTestResults.csv";
 			var oBlob = new Blob([sCSV], { type: 'application/csv;charset=utf-8' });
 
-			if (navigator.appVersion.toString().indexOf('.NET') > 0)
+			if (navigator.appVersion.toString().indexOf('.NET') > 0) {
 				window.navigator.msSaveBlob(oBlob, sFileName);
-			else
-			{
+			} else {
 				var oLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
 				oLink.href = URL.createObjectURL(oBlob);
 				oLink.download = sFileName;

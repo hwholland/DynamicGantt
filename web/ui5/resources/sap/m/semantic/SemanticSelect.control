@@ -5,18 +5,19 @@
     <author>SAP SE</author>
     <documentation>A semantic select is a {@link sap.m.Select} eligible for aggregation content of a {@link sap.m.semantic.SemanticPage}.</documentation>
     <since>1.30</since>
+    <abstract/>
     <baseType>sap.m/semantic/SemanticControl</baseType>
     <properties>
         <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
-            <documentation>See {@link sap.m.Select#enabled}</documentation>
+            <documentation>See {@link sap.m.Select#getEnabled}</documentation>
         </property>
         <property name="selectedKey" type="sap.ui.core/string" defaultValue="" group="Data">
-            <documentation>See {@link sap.m.Select#selectedKey}</documentation>
+            <documentation>See {@link sap.m.Select#getSelectedKey}</documentation>
         </property>
     </properties>
     <events>
         <event name="change" allowPreventDefault="false">
-            <documentation>See {@link sap.m.Select#change}</documentation>
+            <documentation>See {@link sap.m.Select#event:change}</documentation>
             <parameters>
                 <parameter name="selectedItem" type="sap.ui.core/Item">
                     <documentation>The selected item.</documentation>
@@ -26,12 +27,12 @@
     </events>
     <aggregations default="items">
         <aggregation name="items" type="sap.ui.core/Item" cardinality="0..n" bindable="bindable">
-            <documentation>See {@link sap.m.Select#items}</documentation>
+            <documentation>See {@link sap.m.Select#getItems}</documentation>
         </aggregation>
     </aggregations>
     <associations>
         <association name="selectedItem" type="sap.ui.core/Item" cardinality="0..1">
-            <documentation>See {@link sap.m.Select#selectedItem}</documentation>
+            <documentation>See {@link sap.m.Select#getSelectedItem}</documentation>
         </association>
     </associations>
 </control>

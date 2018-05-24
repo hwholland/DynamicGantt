@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Our app content is still glued to the corners of the letterbox. To fine-tune our layout, we can add margins and paddings to the controls that we added in the previous step."/>
+<meta name="description" content="Our app content is still glued to the corners of the letterbox. To fine-tune our layout, we can add margins and paddings to the controls that we added in the previous step."/>
 
-
-
-
-
-<meta name="abstract" content="Our app content is still glued to the corners of the letterbox. To fine-tune our layout, we can add margins and paddings to the controls that we added in the previous step. But instead of manually adding CSS to the controls, we will use the standard classes provided by SAPUI5. These classes take care of consistent sizing steps, left-to-right support, and responsiveness."/>
-<meta name="description" content="Our app content is still glued to the corners of the letterbox. To fine-tune our layout, we can add margins and paddings to the controls that we added in the previous step. But instead of manually adding CSS to the controls, we will use the standard classes provided by SAPUI5. These classes take care of consistent sizing steps, left-to-right support, and responsiveness."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9130163717505276"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=7512115308625964"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7512115308625964"/>
 <title>Step 13: Margins and Paddings</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio17b87fbafb5a4474982760d2a3a73e69">
 <div id="wrapper"><div id="container">
@@ -34,10 +20,11 @@
 
 	
 	<div class="body conbody"><p class="shortdesc">Our app content is still glued to the corners of the letterbox. To fine-tune our layout,
-		we can add margins and paddings to the controls that we added in the previous step. But
-		instead of manually adding CSS to the controls, we will use the standard classes provided by
-			<span class="ph"><span class="ph pname">SAPUI5</span></span>. These classes take
-		care of consistent sizing steps, left-to-right support, and responsiveness.</p>
+		we can add margins and paddings to the controls that we added in the previous step. </p>
+
+		<p class="p">Instead of manually adding CSS to the controls, we will use the standard classes provided
+			by <span class="ph"><span class="ph pname">OpenUI5</span></span>. These classes
+			take care of consistent sizing steps, left-to-right support, and responsiveness.</p>
 
 		<div class="section"><div class="section_title">Preview</div><div type="Preview">
 			
@@ -50,12 +37,11 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview">Walkthrough - Step 13</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.13/preview">Walkthrough - Step 13</a></span>.</p>
 
 			<div class="section_title">webapp/view/App.view.xml</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-	controllerName="sap.ui.demo.wt.controller.App"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+	controllerName="sap.ui.demo.walkthrough.controller.App"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
 	displayBlock="true"&gt;
@@ -113,7 +99,7 @@
 			
 			<ul class="ul" id="loio17b87fbafb5a4474982760d2a3a73e69__ul_nh5_ybb_nr">
 				<li class="li">
-					<p class="p">Use the standard <span class="ph"><span class="ph pname">SAPUI5</span></span> CSS
+					<p class="p">Use the standard <span class="ph"><span class="ph pname">OpenUI5</span></span> CSS
 						classes for the layout if possible.</p>
 
 				</li>
@@ -128,7 +114,7 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="4df1d914e52d4b1aa0805eb01522537e.html" title="Now we use a shell control as container for our app and use it as our new root element. The shell takes care of visual adaptation of the application to the device’s screen size by introducing a so-called letterbox on desktop screens.">Step 12: Shell Control as Container</a><br/>
@@ -138,25 +124,11 @@
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="777168ffe8324873973151dae2356d1c.html" title="SAPUI5 gives you the option of adding spacing in between controls by adding a margin. A margin clears an area around its respective control, outside of its border.">Using Predefined CSS Margin Classes</a></div>
-<div><a class="link" href="c71f6df62dae47ca8284310a6f5fc80a.html" title="For many container controls in SAPUI5, such as a Dialog or a Page, you can define whether the container should have a padding within the content area. A padding clears the area between the container layout and the controls that are displayed in the content area.">Using Container Content Padding CSS Classes</a></div>
+<div><a class="link" href="777168ffe8324873973151dae2356d1c.html" title="OpenUI5 gives you the option of adding spacing in between controls by adding a margin. A margin clears an area around its respective control, outside of its border.">Using Predefined CSS Margin Classes</a></div>
+<div><a class="link" href="c71f6df62dae47ca8284310a6f5fc80a.html" title="For many container controls in OpenUI5, such as a Dialog or a Page, you can define whether the container should have a padding within the content area. A padding clears the area between the container layout and the controls that are displayed in the content area.">Using Container Content Padding CSS Classes</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 13: Margins and Paddings";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

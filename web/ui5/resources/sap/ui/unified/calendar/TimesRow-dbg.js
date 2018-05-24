@@ -1,14 +1,39 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides control sap.ui.unified.CalendarTimeInterval.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleData', 'sap/ui/core/delegate/ItemNavigation',
-               'sap/ui/model/type/Date', 'sap/ui/unified/calendar/CalendarUtils', 'sap/ui/core/date/UniversalDate', 'sap/ui/unified/library'],
-               function(jQuery, Control, LocaleData, ItemNavigation, Date1, CalendarUtils, UniversalDate, library) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/core/Control',
+	'sap/ui/core/LocaleData',
+	'sap/ui/core/delegate/ItemNavigation',
+	'sap/ui/unified/calendar/CalendarUtils',
+	'sap/ui/core/date/UniversalDate',
+	'sap/ui/unified/library',
+	'sap/ui/core/format/DateFormat',
+	'sap/ui/core/library',
+	'sap/ui/core/Locale',
+	"./TimesRowRenderer"
+], function(
+	jQuery,
+	Control,
+	LocaleData,
+	ItemNavigation,
+	CalendarUtils,
+	UniversalDate,
+	library,
+	DateFormat,
+	coreLibrary,
+	Locale,
+	TimesRowRenderer
+) {
 	"use strict";
+
+	// shortcut for sap.ui.core.CalendarType
+	var CalendarType = coreLibrary.CalendarType;
 
 	/*
 	 * <code>UniversalDate</code> objects are used inside the <code>TimesRow</code>, whereas JavaScript dates are used in the API.
@@ -31,7 +56,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 	 *
 	 * The TimesRow works with JavaScript Date objects.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -66,7 +91,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 			 *
 			 * <b>Note:</b> the start of the interval calculation is always <code>startDat</code> at 00:00.
 			 *
-			 * A interval longer then 720 minutes is not allowed. Please use the <code>DatesRow</code> instead.
+			 * An interval longer than 720 minutes is not allowed. Please use the <code>DatesRow</code> instead.
 			 *
 			 * A day must be divisible by this interval size. One interval must not include more than one day.
 			 */
@@ -145,9 +170,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 
 	TimesRow.prototype.init = function(){
 
-		this._oFormatYyyyMMddHHmm = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyyMMddHHmm", calendarType: sap.ui.core.CalendarType.Gregorian});
-		this._oFormatLong = sap.ui.core.format.DateFormat.getDateTimeInstance({style: "long/short"});
-		this._oFormatDate = sap.ui.core.format.DateFormat.getDateInstance({style: "medium"});
+		this._oFormatYyyyMMddHHmm = DateFormat.getInstance({pattern: "yyyyMMddHHmm", calendarType: CalendarType.Gregorian});
+		this._oFormatLong = DateFormat.getDateTimeInstance({style: "long/short"});
+		this._oFormatDate = DateFormat.getDateInstance({style: "medium"});
 
 		this._mouseMoveProxy = jQuery.proxy(this._handleMouseMove, this);
 
@@ -292,14 +317,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 
 	TimesRow.prototype.setStartDate = function(oStartDate){
 
-		if (!(oStartDate instanceof Date)) {
-			throw new Error("Date must be a JavaScript date object; " + this);
-		}
+		CalendarUtils._checkJSDateObject(oStartDate);
 
 		var iYear = oStartDate.getFullYear();
-		if (iYear < 1 || iYear > 9999) {
-			throw new Error("Date must not be in valid range (between 0001-01-01 and 9999-12-31); " + this);
-		}
+		CalendarUtils._checkYearInValidRange(iYear);
 
 		var oUTCDate = CalendarUtils._createUniversalUTCDate(oStartDate, undefined, true);
 		this.setProperty("startDate", oStartDate, true);
@@ -375,7 +396,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 			return oParent._getLocaleData();
 		} else if (!this._oLocaleData) {
 			var sLocale = this._getLocale();
-			var oLocale = new sap.ui.core.Locale(sLocale);
+			var oLocale = new Locale(sLocale);
 			this._oLocaleData = LocaleData.getInstance(oLocale);
 		}
 
@@ -391,8 +412,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 		var sLocale = this._getLocale();
 
 		if (this._oFormatLong.oLocale.toString() != sLocale) {
-			var oLocale = new sap.ui.core.Locale(sLocale);
-			this._oFormatLong = sap.ui.core.format.DateFormat.getInstance({style: "long"}, oLocale);
+			var oLocale = new Locale(sLocale);
+			this._oFormatLong = DateFormat.getInstance({style: "long/short"}, oLocale);
 		}
 
 		return this._oFormatLong;
@@ -407,7 +428,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 		var sLocale = this._getLocale();
 
 		if (!this._oFormatTime || this._oFormatTime.oLocale.toString() != sLocale) {
-			var oLocale = new sap.ui.core.Locale(sLocale);
+			var oLocale = new Locale(sLocale);
 			var iIntervalMinutes = this.getIntervalMinutes();
 			var oLocaleData = this._getLocaleData();
 			var sPattern;
@@ -418,7 +439,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 				sPattern = oLocaleData.getPreferredHourSymbol();
 				if (oLocaleData.getTimePattern("short").search("a") >= 0) {
 					// AP/PM indicator used
-					this._oFormatTimeAmPm = sap.ui.core.format.DateFormat.getTimeInstance({pattern: "a"}, oLocale);
+					this._oFormatTimeAmPm = DateFormat.getTimeInstance({pattern: "a"}, oLocale);
 				}
 			} else {
 				sPattern = oLocaleData.getTimePattern("short");
@@ -427,11 +448,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 				sPattern = sPattern.replace("hh", "h");
 				if (sPattern.search("a") >= 0) {
 					// AP/PM indicator used
-					this._oFormatTimeAmPm = sap.ui.core.format.DateFormat.getTimeInstance({pattern: "a"}, oLocale);
+					this._oFormatTimeAmPm = DateFormat.getTimeInstance({pattern: "a"}, oLocale);
 					sPattern = sPattern.replace("a", "").trim();
 				}
 			}
-			this._oFormatTime = sap.ui.core.format.DateFormat.getTimeInstance({pattern: sPattern}, oLocale);
+			this._oFormatTime = DateFormat.getTimeInstance({pattern: sPattern}, oLocale);
 		}
 
 		return this._oFormatTime;
@@ -446,8 +467,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 		var sLocale = this._getLocale();
 
 		if (this._oFormatDate.oLocale.toString() != sLocale) {
-			var oLocale = new sap.ui.core.Locale(sLocale);
-			this._oFormatDate = sap.ui.core.format.DateFormat.getDateInstance({style: "medium"}, oLocale);
+			var oLocale = new Locale(sLocale);
+			this._oFormatDate = DateFormat.getDateInstance({style: "medium"}, oLocale);
 		}
 
 		return this._oFormatDate;
@@ -862,9 +883,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 	 */
 	TimesRow.prototype.checkDateFocusable = function(oDate){
 
-		if (!(oDate instanceof Date)) {
-			throw new Error("Date must be a JavaScript date object; " + this);
-		}
+		CalendarUtils._checkJSDateObject(oDate);
 
 		if (this._bNoRangeCheck) {
 			// to force to render months if start date is changed
@@ -884,6 +903,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 			return false;
 		}
 
+	};
+	/**
+	* Overrides the applyFocusInfo in order to focus the given html element.
+	* Focus handler does not work with DOM elements, but with UI5 controls only. That's why we need to take care that
+	* when focus is being restored back (e.g. after rerendering), we focus the needed DOM element (in this case hour)
+	*
+	* @param {object} oInfo the focus info
+	* @returns {sap.ui.unified.calendar.TimesRow} <code>this</code> for method chaining.
+	*/
+	TimesRow.prototype.applyFocusInfo = function(oInfo){
+		this._oItemNavigation.focusItem(this._oItemNavigation.getFocusedIndex());
+		return this;
 	};
 
 	/*
@@ -1066,14 +1097,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 
 	function _changeDate(oDate, bNoFocus){
 
-		if (!(oDate instanceof Date)) {
-			throw new Error("Date must be a JavaScript date object; " + this);
-		}
+		CalendarUtils._checkJSDateObject(oDate);
 
 		var iYear = oDate.getFullYear();
-		if (iYear < 1 || iYear > 9999) {
-			throw new Error("Date must not be in valid range (between 0001-01-01 and 9999-12-31); " + this);
-		}
+		CalendarUtils._checkYearInValidRange(iYear);
 
 		var bFocusable = true; // if date not changed it is still focusable
 		if (!jQuery.sap.equal(this.getDate(), oDate)) {
@@ -1442,4 +1469,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/LocaleDa
 
 	return TimesRow;
 
-}, /* bExport= */ true);
+});

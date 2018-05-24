@@ -1,5 +1,5 @@
 {
-	"_version": "1.4.0",
+	"_version": "1.9.0",
 
 	"sap.app": {
 		"id": "sap.ui.demo.masterdetail",
@@ -9,7 +9,7 @@
 		"description": "{{appDescription}}",
 
 		"applicationVersion": {
-			"version": "1.0.0"
+		"version": "1.0.0"
 		},
 		"dataSources": {
 			"mainService": {
@@ -17,7 +17,7 @@
 				"type": "OData",
 				"settings": {
 					"odataVersion": "2.0",
-					"localUri" : "localService/metadata.xml"
+					"localUri": "localService/metadata.xml"
 				}
 			}
 		}
@@ -37,28 +37,23 @@
 			"desktop": true,
 			"tablet": true,
 			"phone": true
-		},
-		"supportedThemes": [
-			"sap_hcb",
-			"sap_bluecrystal"
-		]
+		}
 	},
 
 	"sap.ui5": {
 		"rootView": {
 			"viewName": "sap.ui.demo.masterdetail.view.App",
 			"type": "XML",
+			"async": true,
 			"id": "app"
 		},
 
 		"dependencies": {
-			"minUI5Version": "1.38.0",
+			"minUI5Version": "1.42.0",
 			"libs": {
 				"sap.ui.core": {
-					"minVersion": "1.38.0"
 				},
 				"sap.m": {
-					"minVersion": "1.38.0"
 				}
 			}
 		},
@@ -75,7 +70,7 @@
 					"bundleName": "sap.ui.demo.masterdetail.i18n.i18n"
 				}
 			},
-			"" : {
+			"": {
 				"dataSource": "mainService",
 				"preload": true
 			}
@@ -89,7 +84,10 @@
 				"controlId": "idAppControl",
 				"controlAggregation": "detailPages",
 				"bypassed": {
-					"target": ["master", "notFound"]
+					"target": [
+						"master",
+						"notFound"
+					]
 				},
 				"async": true
 			},
@@ -98,12 +96,18 @@
 				{
 					"pattern": "",
 					"name": "master",
-					"target": ["object", "master"]
+					"target": [
+						"object",
+						"master"
+					]
 				},
 				{
 					"pattern": "Objects/{objectId}",
 					"name": "object",
-					"target": ["master", "object"]
+					"target": [
+						"master",
+						"object"
+					]
 				}
 			],
 

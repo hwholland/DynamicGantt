@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -128,7 +128,7 @@ sap.ui.define(['jquery.sap.global'],
 			if (bActiveTitle) {
 				rm.write("<span class=\"sapUiUx3ExactLstHeadTopIco\"></span>");
 			}
-			rm.write("</span></h3>");
+			rm.write("</h3>");
 	    } else {
 			// render the header content for non-top list
 			rm.write("<h3 id=\"" + oControl.getId() + "-head-txt\" class=\"sapUiUx3ExactLstHeadTxt\"");

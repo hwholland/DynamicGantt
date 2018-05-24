@@ -3,7 +3,9 @@
     <name>Text</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The Text control can be used for embedding longer text paragraphs, that need text wrapping, into your application.</documentation>
+    <documentation>The &lt;code&gt;Text&lt;/code&gt; control can be used for embedding longer text paragraphs, that need text wrapping, into your app.
+If the configured text value contains HTML code or script tags, those will be escaped.&lt;br&gt;
+&lt;b&gt;Note: &lt;/b&gt;Line breaks (\r\n, \n\r, \r, \n) will always be visualized except when the &lt;code&gt;wrapping&lt;/code&gt; property is set to &lt;code&gt;false&lt;/code&gt;. In addition, tabs (\t) and whitespace (" ") can be preserved by setting the &lt;code&gt;renderWhitespace&lt;/code&gt; property to &lt;code&gt;true&lt;/code&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" defaultValue="" bindable="bindable">
@@ -24,7 +26,13 @@
         <property name="maxLines" type="sap.ui.core/int" group="Appearance" since="1.13.2">
             <documentation>Limits the number of lines for wrapping texts.
 
-Note: The multi-line overflow indicator depends on the browser line clamping support. For such browsers, this will be shown as ellipsis, for the other browsers the overflow will just be hidden.</documentation>
+&lt;b&gt;Note&lt;/b&gt;: The multi-line overflow indicator depends on the browser line clamping support. For such browsers, this will be shown as ellipsis, for the other browsers the overflow will just be hidden.</documentation>
+        </property>
+        <property name="renderWhitespace" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.51">
+            <documentation>Specifies how whitespace and tabs inside the control are handled. If true, whitespace will be preserved by the browser.
+Depending on wrapping property text will either only wrap on line breaks or wrap when necessary, and on line breaks.
+
+&lt;b&gt;Note:&lt;/b&gt; Special characters that can be used are : \t , \n and " " respectively Tab, New line and Space.</documentation>
         </property>
     </properties>
 </control>

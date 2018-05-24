@@ -21,4 +21,9 @@ If not set the day names are shown inside the single days.</documentation>
             <documentation>If set, the month- and yearPicker opens on a popup</documentation>
         </property>
     </properties>
+    <aggregations>
+        <aggregation name="calendarPicker" type="sap.ui.unified/Calendar" cardinality="0..1" visibility="hidden">
+            <documentation>Hidden, for internal use only.</documentation>
+        </aggregation>
+    </aggregations>
 </control>

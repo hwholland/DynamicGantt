@@ -8,7 +8,7 @@
     <baseType>sap.ui.core/LayoutData</baseType>
     <properties>
         <property name="minWidth" type="sap.ui.core/int" defaultValue="100" group="Misc">
-            <documentation>Defines the minimal size in px of an ResponsiveFlowLayout element. The element will be shrunk down to this value.</documentation>
+            <documentation>Defines the minimal size in px of a ResponsiveFlowLayout element. The element will be shrunk down to this value.</documentation>
         </property>
         <property name="weight" type="sap.ui.core/int" defaultValue="1" group="Misc">
             <documentation>Defines the weight of the element, that influences the resulting width. If there are several elements within a row of the ResponsiveFlowLayout, each element could have another weight. The bigger the weight of a single element, the wider it will be stretched, i.e. a bigger weight results in a larger width.</documentation>

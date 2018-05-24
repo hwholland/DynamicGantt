@@ -1,16 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.core.HTML.
-sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library'],
-	function(jQuery, Control, RenderManager, library) {
+sap.ui.define(['jquery.sap.global', './Control', './RenderManager', "./HTMLRenderer"],
+	function(jQuery, Control, RenderManager, HTMLRenderer) {
 	"use strict";
 
 	// local shortcut
-	var RenderPrefixes = library.RenderPrefixes;
+	var RenderPrefixes = RenderManager.RenderPrefixes;
 
 	/**
 	 * Constructor for a new HTML.
@@ -19,7 +19,7 @@ sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library']
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * Embeds standard HTML in a SAPUI5 control tree.
+	 * Embeds standard HTML in an SAPUI5 control tree.
 	 *
 	 * Security Hint: By default, the HTML content (property 'content') is not sanitized and therefore
 	 * open to XSS attacks. Applications that want to show user defined input in an HTML control, should
@@ -37,9 +37,8 @@ sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library']
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
-	 * @constructor
 	 * @public
 	 * @alias sap.ui.core.HTML
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
@@ -70,6 +69,9 @@ sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library']
 			 * The accepted content might be restricted to single root nodes in future versions.
 			 * To notify applications about this fact, a warning is written in the log when multiple root nodes are used.
 			 *
+			 * When changing the content dynamically, ensure that the ID of the root node remains the same as the HTML
+			 * control's ID. Otherwise it cannot be guaranteed that certain lifecycle events take place.
+			 *
 			 * @SecSink {,XSS} The content of the 'content' property is rendered 1:1 to allow the full
 			 * flexibility of HTML in UI5 applications. Applications therefore must ensure, that they don't
 			 * set malicious content (e.g. derived from user input). UI5 does not provide an HTML validation
@@ -83,7 +85,7 @@ sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library']
 			 *
 			 * There are two scenarios where this flag is relevant (when set to true):
 			 * <ul>
-			 * <li>for the initial rendering: when an HTML control is added to an UIArea for the first time
+			 * <li>for the initial rendering: when an HTML control is added to a UIArea for the first time
 			 *     and if the root node of that UIArea contained DOM content with the same id as the HTML
 			 *     control, then that content will be used for rendering instead of any specified string
 			 *     content</li>
@@ -279,7 +281,7 @@ sap.ui.define(['jquery.sap.global', './Control', './RenderManager', './library']
 		return Control.prototype.setTooltip.apply(this, arguments);
 	};
 
-	jQuery.each("hasStyleClass addStyleClass removeStyleClass toggleStyleClass".split(" "), function(method) {
+	"hasStyleClass addStyleClass removeStyleClass toggleStyleClass".split(" ").forEach(function(method) {
 		HTML.prototype[method] = function() {
 			jQuery.sap.log.warning("The sap.ui.core.HTML control doesn't support custom style classes. Manage custom CSS classes in the HTML content instead.");
 			return Control.prototype[method].apply(this, arguments);

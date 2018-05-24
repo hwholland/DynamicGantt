@@ -3,7 +3,7 @@
     <name>form/GridContainerData</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>&lt;code&gt;GridLayout&lt;/code&gt;-specific properties for &lt;code&gt;FormContainers&lt;/code&gt;.</documentation>
+    <documentation>The &lt;code&gt;GridLayout&lt;/code&gt;-specific layout data for &lt;code&gt;FormContainers&lt;/code&gt;.</documentation>
     <since>1.16.0</since>
     <baseType>sap.ui.core/LayoutData</baseType>
     <properties>

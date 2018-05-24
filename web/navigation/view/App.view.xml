@@ -2,12 +2,14 @@
 	controllerName="navigation.controller.App"
 	xmlns:mvc="sap.ui.core.mvc"
 	displayBlock="true"
-	xmlns="sap.m">
+	xmlns="sap.m"
+	height="1200px">
 	<App>
 		<pages>
 			<Page
 				id="navPage"
-				title="{i18n>title}">
+				title="{i18n>title}"
+				showHeader="false">
 				<content></content>
 			</Page>
 		</pages>

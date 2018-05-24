@@ -35,7 +35,7 @@
         </aggregation>
     </aggregations>
     <associations>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n" since="1.38.32">
+        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n" since="1.48.7">
             <documentation>Association to controls / IDs that label this control (see WAI-ARIA attribute &lt;code&gt;aria-labelledby&lt;/code&gt;).</documentation>
         </association>
     </associations>

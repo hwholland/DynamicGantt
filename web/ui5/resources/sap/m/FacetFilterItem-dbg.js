@@ -1,26 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.FacetFilterItem.
-sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
-	function(jQuery, ListItemBase, library) {
+sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
+	function(ListItemBase, library, FacetFilterItemRenderer) {
 	"use strict";
 
 
 
 	/**
-	 * Constructor for a new FacetFilterItem.
+	 * Constructor for a new <code>FacetFilterItem</code>.
 	 *
-	 * @param {string} [sId] ID for the new control, generated automatically if no id is given
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * Represents a value for the FacetFilterList control.
+	 * Represents a value for the {@link sap.m.FacetFilterList} control.
 	 * @extends sap.m.ListItemBase
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -44,46 +44,67 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 
 			/**
 			 * Defines the number of objects that match this item in the target data set.
-			 * @deprecated Since version 1.18.11. Use setCounter instead.
+			 * @deprecated as of version 1.18.11, replaced by <code>setCounter</code> method
 			 */
 			count : {type : "int", group : "Misc", defaultValue : null, deprecated: true}
 		}
 	}});
 
-	/**
+	/*
 	 * Sets count for the FacetFilterList.
 	 * @param {int} iCount The counter to be set to
+	 * @returns {sap.m.FacetFilterItem} this for chaining
 	 */
 	FacetFilterItem.prototype.setCount = function(iCount) {
 
 		 // App dev can still call setCounter on ListItemBase, so we have redundancy here.
 		this.setProperty("count", iCount);
 		this.setProperty("counter", iCount);
+		return this;
 	};
 
 	/**
 	 * Sets counter for the FacetFilter list.
 	 * @param {int} iCount The counter to be set to
+	 * @returns {sap.m.FacetFilterItem} this for chaining
 	 */
 	FacetFilterItem.prototype.setCounter = function(iCount) {
 
 		this.setProperty("count", iCount);
 		this.setProperty("counter", iCount);
+		return this;
 	};
 
 	/**
 	 * @private
 	 */
 	FacetFilterItem.prototype.init = function() {
+		this.attachEvent("_change", this._itemTextChange);
 
-	  ListItemBase.prototype.init.apply(this);
+		ListItemBase.prototype.init.apply(this);
 
-	  // This class must be added to the ListItemBase container element, not the FacetFilterItem container
-	  this.addStyleClass("sapMFFLI");
+		// This class must be added to the ListItemBase container element, not the FacetFilterItem container
+		this.addStyleClass("sapMFFLI");
 	};
 
+	/**
+	 * @private
+	 */
+	FacetFilterItem.prototype.exit = function() {
+		ListItemBase.prototype.exit.apply(this);
 
+		this.detachEvent("_change", this._itemTextChange);
+	};
+
+	/**
+	 * @private
+	 */
+	FacetFilterItem.prototype._itemTextChange = function (oEvent) {
+		if (oEvent.getParameter("name") === "text") {
+			this.informList("TextChange", oEvent.getParameter("newValue"));
+		}
+	};
 
 	return FacetFilterItem;
 
-}, /* bExport= */ true);
+});

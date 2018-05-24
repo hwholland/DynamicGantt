@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ViewSettingsFilterItem.
-sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
-	function(jQuery, ViewSettingsItem, library) {
+sap.ui.define(['./ViewSettingsItem', './library', 'sap/ui/base/ManagedObject'],
+	function(ViewSettingsItem, library, ManagedObject) {
 	"use strict";
 
 
@@ -24,7 +24,7 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 	 * @extends sap.m.ViewSettingsItem
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -87,7 +87,7 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 		 * @returns {sap.m.ViewSettingsFilterItem} This instance for chaining
 		 */
 	ViewSettingsFilterItem.prototype.addAggregation = function (sAggregationName, oObject, bSuppressInvalidate) {
-		sap.ui.base.ManagedObject.prototype.addAggregation.apply(this, arguments);
+		ManagedObject.prototype.addAggregation.apply(this, arguments);
 		this._handleNewAggregationEvents(oObject);
 		return this;
 	};
@@ -96,14 +96,15 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 	/**
 	 * Inserts an entity to the aggregation named <code>sAggregationName</code> at position <code>iIndex</code>.
 	 *
-	 * @param sAggregationName {string} The name of the aggregation
-	 * @param oObject {mixed} The value of the aggregation to be inserted
-	 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+	 * @param {string} sAggregationName The name of the aggregation
+	 * @param {any} oObject The value of the aggregation to be inserted
+	 * @param {int} iIndex The index of the position of the entity to be inserted
+	 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 	 * @returns {sap.m.ViewSettingsFilterItem} <code>this</code> pointer for chaining
 	 * @override
 	 */
 	ViewSettingsFilterItem.prototype.insertAggregation = function(sAggregationName, oObject, iIndex, bSuppressInvalidate) {
-		sap.ui.base.ManagedObject.prototype.insertAggregation.apply(this, arguments);
+		ManagedObject.prototype.insertAggregation.apply(this, arguments);
 		this._handleNewAggregationEvents(oObject);
 		return this;
 	};
@@ -111,14 +112,14 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 	/**
 	 * Removes an entity from the aggregation named <code>sAggregationName</code>.
 	 *
-	 * @param sAggregationName {string} The name of the aggregation
-	 * @param oObject {mixed} The value of aggregation to be removed
-	 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+	 * @param {string} sAggregationName The name of the aggregation
+	 * @param {any} oObject The value of aggregation to be removed
+	 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 	 * @returns {sap.m.ViewSettingsFilterItem} <code>this</code> pointer for chaining
 	 * @override
 	 */
 	ViewSettingsFilterItem.prototype.removeAggregation = function(sAggregationName, oObject, bSuppressInvalidate) {
-		sap.ui.base.ManagedObject.prototype.removeAggregation.apply(this, arguments);
+		ManagedObject.prototype.removeAggregation.apply(this, arguments);
 		this.fireFilterDetailItemsAggregationChange();
 		return this;
 	};
@@ -126,13 +127,13 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 	/**
 	 * Removes all objects from the aggregation named <code>sAggregationName</code>.
 	 *
-	 * @param sAggregationName {string} The name of aggregation
-	 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+	 * @param {string} sAggregationName The name of aggregation
+	 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 	 * @returns {sap.m.ViewSettingsFilterItem} <code>this</code> pointer for chaining
 	 * @override
 	 */
 	ViewSettingsFilterItem.prototype.removeAllAggregation = function(sAggregationName, bSuppressInvalidate) {
-		sap.ui.base.ManagedObject.prototype.removeAllAggregation.apply(this, arguments);
+		ManagedObject.prototype.removeAllAggregation.apply(this, arguments);
 		this.fireFilterDetailItemsAggregationChange();
 		return this;
 	};
@@ -140,13 +141,13 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 	/**
 	 * Destroys all the entities in the aggregation named <code>sAggregationName</code>.
 	 *
-	 * @param sAggregationName {string} The name of aggregation
-	 * @param bSuppressInvalidate {boolean} Whether to suppress invalidation
+	 * @param {string} sAggregationName The name of aggregation
+	 * @param {boolean} bSuppressInvalidate Whether to suppress invalidation
 	 * @returns {sap.m.ViewSettingsFilterItem} <code>this</code> pointer for chaining
 	 * @override
 	 */
 	ViewSettingsFilterItem.prototype.destroyAggregation = function(sAggregationName, bSuppressInvalidate) {
-		sap.ui.base.ManagedObject.prototype.destroyAggregation.apply(this, arguments);
+		ManagedObject.prototype.destroyAggregation.apply(this, arguments);
 		this.fireFilterDetailItemsAggregationChange();
 		return this;
 	};
@@ -155,4 +156,4 @@ sap.ui.define(['jquery.sap.global', './ViewSettingsItem', './library'],
 
 	return ViewSettingsFilterItem;
 
-}, /* bExport= */ true);
+});

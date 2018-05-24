@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, we will take a closer look at another element which can be used to assemble views: the fragment."/>
 <meta name="description" content="In this step, we will take a closer look at another element which can be used to assemble views: the fragment."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=30305003535094976"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=27710211207394064"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=27710211207394064"/>
 <title>Step 16: Dialogs and Fragments</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio4da72985139b4b83b5f1c1e0c0d2ed5a">
 <div id="wrapper"><div id="container">
@@ -67,13 +53,11 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the
-				Demo Kit <span class="ph">at
-						<a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview">Walkthrough - Step 16</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.16/preview">Walkthrough - Step 16</a></span>.</p>
 
 			<div class="section_title">webapp/view/HelloPanel.view.xml</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-   controllerName="sap.ui.demo.wt.controller.HelloPanel"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+   controllerName="sap.ui.demo.walkthrough.controller.HelloPanel"
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"&gt;
    &lt;Panel
@@ -89,14 +73,14 @@
       &lt;Button
          text="{i18n&gt;showHelloButtonText}"
          press="onShowHello"
-         class="sapUiDemoWTmyCustomButton"/&gt;
+         class="myCustomButton"/&gt;
       &lt;Input
          value="{/recipient/name}"
          valueLiveUpdate="true"
          width="60%"/&gt;
-      &lt;Text
-         text="Hello {/recipient/name}"
-         class="sapUiSmallMargin sapThemeHighlight-asColor sapUiDemoWTmyCustomText"/&gt;
+      &lt;FormattedText
+         htmlText="Hello {/recipient/name}"
+         class="sapUiSmallMargin sapThemeHighlight-asColor myCustomText"/&gt;
       &lt;/content&gt;
    &lt;/Panel&gt;
 &lt;/mvc:View&gt;</pre></div>
@@ -108,10 +92,11 @@
 
 		<div class="section"><div class="section_title">webapp/view/HelloDialog.fragment.xml (New)</div><div type="webapp/view/HelloDialog.fragment.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;core:FragmentDefinition
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;core:FragmentDefinition
    xmlns="sap.m"
    xmlns:core="sap.ui.core" &gt;
    &lt;Dialog
+      id="helloDialog"
       title="Hello {/recipient/name}"&gt;
    &lt;/Dialog&gt;
 &lt;/core:FragmentDefinition&gt;</span></pre></div>
@@ -121,54 +106,67 @@
 					<samp class="ph codeph">xml</samp> namespace for it inside the
 					<samp class="ph codeph">FragmentDefinition</samp> tag.</p>
 
-			<p class="p">The syntax is similar to a view, but since fragments do not have a controller this attribute is missing. Also, the fragment does not have any
-				footprint in the DOM tree of the app, and there is no control instance of the fragment itself (only the contained controls). It is
-				simply a container for a set of reuse controls. </p>
+			<p class="p">The syntax is similar to a view, but since fragments do not have a controller this attribute is missing. Also, the fragment does not have any footprint in
+				the DOM tree of the app, and there is no control instance of the fragment itself (only the contained controls). It is simply a container for a
+				set of reuse controls.</p>
+
+			<p class="p">We also add an <samp class="ph codeph">id</samp> for our <samp class="ph codeph">Dialog</samp> to be able to access the dialog from our <samp class="ph codeph">HelloPanel</samp> controller.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/controller/HelloPanel.controller.js</div><div type="webapp/controller/HelloPanel.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
    "sap/ui/core/mvc/Controller",
    "sap/m/MessageToast"
 ], function (Controller, MessageToast) {
    "use strict";
-   return Controller.extend("sap.ui.demo.wt.controller.HelloPanel", {
+   return Controller.extend("sap.ui.demo.walkthrough.controller.HelloPanel", {
       onShowHello : function () {
          …
-      }<span class="ph emphasis emphasis">,</span>
-     <span class="ph emphasis emphasis"> _getDialog : function () {
-         if (!this._oDialog) {
-            this._oDialog = sap.ui.xmlfragment("sap.ui.demo.wt.view.HelloDialog");
-            this.getView().addDependent(this._oDialog);
-         }
-         return this._oDialog;
-      },
+      }<span class="ph emphasis emphasis">,
       onOpenDialog : function () {
-         this._getDialog().open();
-      }</span>
+         var oView = this.getView();
+         var oDialog = oView.byId("helloDialog");
+         // create dialog lazily
+         if (!oDialog) {
+            // create dialog via fragment factory
+            oDialog = sap.ui.xmlfragment(oView.getId(), "sap.ui.demo.walkthrough.view.HelloDialog");
+            oView.addDependent(oDialog);
+         }
+
+
+         oDialog.open();
+      }
+</span>
    });
 });</pre></div>
 
-			<p class="p">The internal <samp class="ph codeph">_getDialog</samp> helper function is instantiating the
-				fragment by calling the <samp class="ph codeph">sap.ui.xmlfragment</samp> method with the path to
-				the fragment definition as an argument. The function returns the instantiated
-				controls for further use in the app. In our case this is the dialog that we would
-				like to open. </p>
+			<div class="p">If the dialog in the fragment does not exist yet, the fragment is instantiated by calling the
+					<samp class="ph codeph">sap.ui.xmlfragment</samp> method with the following arguments:<ul class="ul" id="loio4da72985139b4b83b5f1c1e0c0d2ed5a__ul_ms3_tp1_px">
+					<li class="li"><p class="p">The ID of the <samp class="ph codeph">HelloPanel</samp> view</p>
+<p class="p">This parameter is used to prefix the IDs inside our fragment. There, we have defined the ID <samp class="ph codeph">helloDialog</samp> for the <samp class="ph codeph">Dialog</samp> control, and we can access the dialog via the view by calling <samp class="ph codeph">oView.byId("helloDialog")</samp>. This makes sure that even if you instantiate the same fragment in other views in the same way, each dialog will have its unique ID that is concatenated from the view ID and the dialog ID.</p>
+<p class="p">Using unique IDs is important, because duplicate IDs lead to errors in the framework.</p>
+</li>
 
-			<p class="p">We store the reference to the dialog in a private property on the controller to be able to open the same instance again when another user action
-				is triggered (lazy instantiation with a singleton), and we add the fragment as "dependent" on the view to be connected to the view’s
-				model lifecycle. A convenient side-effect is that the dialog will automatically be destroyed when the view is destroyed. Otherwise, we
-				would have to destroy the dialog manually to free its resources.</p>
+					<li class="li">
+						<p class="p">The path of the fragment definition</p>
+
+					</li>
+
+				</ul>
+</div>
+
+			<p class="p">We add the dialog as "dependent" on the view to be connected to the lifecycle of the view’s model. A convenient side-effect is that the dialog will
+				automatically be destroyed when the view is destroyed. Otherwise, we would have to destroy the dialog manually to free its resources.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp># App Descriptor
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"># App Descriptor
 appTitle=Hello World
-appDescription=A simple walkthrough app that explains the most important concepts of <span class="ph"><span class="ph pname">SAPUI5</span></span>
+appDescription=A simple walkthrough app that explains the most important concepts of <span class="ph"><span class="ph pname">OpenUI5</span></span>
 
 # Hello Panel
 showHelloButtonText=Say Hello
@@ -207,7 +205,7 @@ dialogCloseButtonText=Ok</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="df8c9c3d79b54c928855162bafcd88ee.html" title="Our panel content is getting more and more complex and now it is time to move the panel content to a separate view. With that approach, the application structure is much easier to understand, and the individual parts of the app can be reused.">Step 15: Nested Views</a><br/>
@@ -220,25 +218,9 @@ dialogCloseButtonText=Ok</span></pre></div>
 <div><a class="link" href="36a5b130076e4b4aac2c27eebf324909.html" title="Fragments are light-weight UI parts (UI sub-trees) which can be reused, defined similar to views, but do not have any controller or other behavior code involved.">Reusing UI Parts: Fragments</a></div>
 <div><a class="link" href="448c6418153149a79c8ff4370808f9c1.html" title="You can use fragments to declaratively define dialogs and other popup controls which are not part of the normal page UI structure.">Dialogs and other Popups as Fragments</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.Fragment.html" alt="../../docs/api/symbols/sap.ui.core.Fragment.html" title="../../docs/api/symbols/sap.ui.core.Fragment.html">API Reference: <samp class="ph codeph">sap.ui.core.Fragment</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.ui.core.Fragment/samples" alt="../../explored.html#/entity/sap.ui.core.Fragment/samples" title="../../explored.html#/entity/sap.ui.core.Fragment/samples">API Overview and Samples: <samp class="ph codeph">sap.ui.core.Fragment</samp>
-				</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 16: Dialogs and Fragments";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

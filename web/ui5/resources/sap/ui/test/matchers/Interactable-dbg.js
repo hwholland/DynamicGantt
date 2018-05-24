@@ -1,15 +1,14 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	'jquery.sap.global',
 	'./Matcher',
-	'./Visible',
-	'sap/ui/test/launchers/iFrameLauncher'
-], function ($, Matcher, Visible, iFrameLauncher) {
+	'./Visible'
+], function ($, Matcher, Visible) {
 	"use strict";
 	var oVisibleMatcher = new Visible();
 
@@ -20,18 +19,7 @@ sap.ui.define([
 	 * A control will be filtered out by this matcher when:
 	 * <ul>
 	 *     <li>
-	 *         There are unfinished XMLHttpRequests (globally).
-	 *         That means, the Opa can wait for pending requests to finish that would probably update the UI.
-	 *         Also detects sinon.FakeXMLHttpRequests that are not responded yet.
-	 *     </li>
-	 *     <li>
 	 *         The control is invisible (using the visible matcher)
-	 *     </li>
-	 *     <li>
-	 *         The control is hidden behind a dialog
-	 *     </li>
-	 *     <li>
-	 *         The control is in a navigating nav container
 	 *     </li>
 	 *     <li>
 	 *         The control or its parents are busy
@@ -40,9 +28,15 @@ sap.ui.define([
 	 *         The control or its parents are not enabled
 	 *     </li>
 	 *     <li>
+	 *         The control is hidden behind a dialog
+	 *     </li>
+	 *		<li>
 	 *         The UIArea of the control needs new rendering
 	 *     </li>
 	 * </ul>
+	 * Since 1.53 Interactable no longer uses internal autoWait functionality.
+	 * Interactable matcher might be made private in the near future.
+	 * It is recommended to enable autoWait OPA option instead of using the Interactable matcher directly.
 	 * @public
 	 * @extends sap.ui.test.matchers.Matcher
 	 * @name sap.ui.test.matchers.Interactable
@@ -51,71 +45,53 @@ sap.ui.define([
 	 */
 	return Matcher.extend("sap.ui.test.matchers.Interactable", {
 		isMatching:  function(oControl) {
-			var bHasPendingXhrs = iFrameLauncher._getIXHRCounter().hasPendingRequests();
-			if (bHasPendingXhrs) {
-				// There are open requests - the XHR counter will log if there are open XHRs
+			// control must be visible
+			if (!oVisibleMatcher.isMatching(oControl)) {
 				return false;
 			}
 
-			var bVisible = oVisibleMatcher.isMatching(oControl);
-
-			if (!bVisible) {
-				// Control is not visible so there is no need to continue
-				return false;
-			}
-
-			// Check busy of the control
+			// control and its ancestors (including indirect ones) must be enabled and not busy
 			if (oControl.getBusy && oControl.getBusy()) {
-				$.sap.log.debug("The control " + oControl + " is busy so it is filtered out", this._sLogPrefix);
+				this._oLogger.debug("Control '" + oControl + "' is busy");
 				return false;
 			}
 
 			if (oControl.getEnabled && !oControl.getEnabled()) {
-				$.sap.log.debug("The control '" + oControl + "' is not enabled", this._sLogPrefix);
+				this._oLogger.debug("Control '" + oControl + "' is not enabled");
 				return false;
 			}
 
 			var oParent = oControl.getParent();
+
 			while (oParent) {
-				// Check busy of parents
 				if (oParent.getBusy && oParent.getBusy()) {
-					$.sap.log.debug("The control " + oControl + " has a parent that is busy " + oParent, this._sLogPrefix);
+					this._oLogger.debug("Control '" + oControl + "' has a parent '" + oParent + "' that is busy");
 					return false;
 				}
 
 				if (oParent.getEnabled && !oParent.getEnabled()) {
-					$.sap.log.debug("The control '" + oControl + "' has a parent '" + oParent + "' that is not enabled", this._sLogPrefix);
+					this._oLogger.debug("Control '" + oControl + "' has a parent '" + oParent + "' that is not enabled");
 					return false;
 				}
 
-				// Check for navigating nav containers
-				var sName = oParent.getMetadata().getName();
-				// Split container and splitapp use navcontainers in the control tree
-				if ((sName === "sap.m.App" || sName === "sap.m.NavContainer") && oParent._bNavigating) {
-					$.sap.log.debug("The control " + oControl + " has a parent NavContainer " + oParent + " that is currently navigating", this._sLogPrefix);
-					return false;
-				}
-
-				if (sName === "sap.ui.core.UIArea" && oParent.bNeedsRerendering) {
-					$.sap.log.debug("The control " + oControl + " is currently in an ui area that needs a new rendering", this._sLogPrefix);
+				var bParentIsUIArea = oParent.getMetadata().getName() === "sap.ui.core.UIArea";
+				if (bParentIsUIArea  && oParent.bNeedsRerendering) {
+					this._oLogger.debug("Control '" + oControl + "' is currently in a UIArea that needs a new rendering");
 					return false;
 				}
 
 				oParent = oParent.getParent();
 			}
 
-			// Control is not in the static UI area
-			if (oControl.$().closest("#sap-ui-static").length === 0) {
-				// Check for blocking layer and if the control is not in the static ui area
-				if ($("#sap-ui-blocklayer-popup").is(":visible")) {
-					$.sap.log.debug("The control " + oControl + " is hidden behind a blocking layer of a Popup", this._sLogPrefix);
-					return false;
-				}
+			var bControlIsInStaticArea = oControl.$().closest("#sap-ui-static").length;
+			var bOpenStaticBlockingLayer = $("#sap-ui-blocklayer-popup").is(":visible");
+			if (!bControlIsInStaticArea && bOpenStaticBlockingLayer) {
+				this._oLogger.debug("The control '" + oControl + "' is hidden behind a blocking popup layer");
+				return false;
 			}
-
 
 			return true;
 		}
 	});
 
-}, /* bExport= */ true);
+});

@@ -1,5 +1,5 @@
 <mvc:View
-	controllerName="myCompany.myApp.controller.Object"
+	controllerName="mycompany.myapp.controller.Object"
 	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:semantic="sap.m.semantic"
 	xmlns:form="sap.ui.layout.form"
@@ -15,35 +15,46 @@
 			<ObjectHeader
 				id="objectHeader"
 				responsive="true"
-				intro="{ProductID}"
 				title="{ProductName}"
 				numberUnit="PC"
-				numberState="Success"
-				number="{
+				numberState="{
 					path: 'UnitsInStock',
-					formatter: '.formatter.numberUnit'
-				}">
+					formatter: '.formatter.quantityState'
+				}"
+				number="{UnitsInStock}">
 				<attributes>
+					<ObjectAttribute
+						title="{i18n>ObjectProductIdText}"
+						text="{
+							path: 'ProductID'
+						}"/>
 					<ObjectAttribute
 						title="{i18n>ObjectPriceTitle}"
 						text="{
 							path: 'UnitPrice',
 							formatter: '.formatter.numberUnit'
 						} EUR"/>
+
 				</attributes>
 				<statuses>
 					<ObjectStatus
 						text="{i18n>ObjectDiscontinuedStatusText}"
 						state="Error"
 						visible="{path:'Discontinued'}"/>
+					<ProgressIndicator
+						percentValue="{UnitsInStock}"
+						displayValue="{UnitsInStock}"
+						showValue="true"
+						state="{
+							path: 'UnitsInStock',
+							formatter: '.formatter.quantityState'}" />
 				</statuses>
 			</ObjectHeader>
 			<Panel
-				class="sapUiContentPadding"
+				class="sapUiNoContentPadding"
 				headerText="{i18n>ObjectSupplierTabTitle}">
-    			<content>
-    				<form:SimpleForm
-						minWidth="1024"
+				<content>
+					<form:SimpleForm
 						maxContainerCols="2"
 						editable="false"
 						layout="ResponsiveGridLayout"
@@ -64,7 +75,7 @@
 							<Text text="{Supplier/Country}"/>
 						</form:content>
 					</form:SimpleForm>
-    			</content>
+				</content>
 			</Panel>
 			<Panel
 				class="sapUiContentPadding"
@@ -78,8 +89,8 @@
 						items="{
 							path: 'productFeedback>/productComments',
 							sorter: {
-							    path: 'date',
-							    descending: true
+								path: 'date',
+								descending: true
 							}
 						}">
 						<FeedListItem

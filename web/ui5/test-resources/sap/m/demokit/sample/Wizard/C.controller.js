@@ -9,9 +9,9 @@ sap.ui.define([
 
 	var WizardController = Controller.extend("sap.m.sample.Wizard.C", {
 		onInit: function () {
-			this._wizard = this.getView().byId("CreateProductWizard");
-			this._oNavContainer = this.getView().byId("wizardNavContainer");
-			this._oWizardContentPage = this.getView().byId("wizardContentPage");
+			this._wizard = this.byId("CreateProductWizard");
+			this._oNavContainer = this.byId("wizardNavContainer");
+			this._oWizardContentPage = this.byId("wizardContentPage");
 			this._oWizardReviewPage = sap.ui.xmlfragment("sap.m.sample.Wizard.ReviewPage", this);
 
 			this._oNavContainer.addPage(this._oWizardReviewPage);
@@ -31,25 +31,34 @@ sap.ui.define([
 		setProductType: function (evt) {
 			var productType = evt.getSource().getTitle();
 			this.model.setProperty("/productType", productType);
-			this.getView().byId("ProductStepChosenType").setText("Chosen product type: " + productType);
-			this._wizard.validateStep(this.getView().byId("ProductTypeStep"));
+			this.byId("ProductStepChosenType").setText("Chosen product type: " + productType);
+			this._wizard.validateStep(this.byId("ProductTypeStep"));
 		},
 		setProductTypeFromSegmented: function (evt) {
 			var productType = evt.mParameters.button.getText();
 			this.model.setProperty("/productType", productType);
-			this._wizard.validateStep(this.getView().byId("ProductTypeStep"));
+			this._wizard.validateStep(this.byId("ProductTypeStep"));
 		},
 		additionalInfoValidation : function () {
-			var name = this.getView().byId("ProductName").getValue();
-			var weight = parseInt(this.getView().byId("ProductWeight").getValue());
+			var name = this.byId("ProductName").getValue();
+			var weight = parseInt(this.byId("ProductWeight").getValue(), 10);
 
-			isNaN(weight) ? this.model.setProperty("/productWeightState", "Error") : this.model.setProperty("/productWeightState", "None");
-			name.length<6 ?  this.model.setProperty("/productNameState", "Error") : this.model.setProperty("/productNameState", "None");
+			if (isNaN(weight)) {
+				this.model.setProperty("/productWeightState", "Error");
+			} else {
+				this.model.setProperty("/productWeightState", "None");
+			}
+			if (name.length < 6) {
+				this.model.setProperty("/productNameState", "Error");
+			} else {
+				this.model.setProperty("/productNameState", "None");
+			}
 
-			if (name.length < 6 || isNaN(weight))
-				this._wizard.invalidateStep(this.getView().byId("ProductInfoStep"));
-			else
-				this._wizard.validateStep(this.getView().byId("ProductInfoStep"));
+			if (name.length < 6 || isNaN(weight)) {
+				this._wizard.invalidateStep(this.byId("ProductInfoStep"));
+			} else {
+				this._wizard.validateStep(this.byId("ProductInfoStep"));
+			}
 		},
 		optionalStepActivation: function () {
 			MessageToast.show(
@@ -68,15 +77,17 @@ sap.ui.define([
 			this.model.setProperty("/navApiEnabled", false);
 		},
 		scrollFrom4to2 : function () {
-			this._wizard.goToStep(this.getView().byId("ProductInfoStep"));
+			this._wizard.goToStep(this.byId("ProductInfoStep"));
 		},
 		goFrom4to3 : function () {
-			if (this._wizard.getProgressStep() === this.getView().byId("PricingStep"))
+			if (this._wizard.getProgressStep() === this.byId("PricingStep")) {
 				this._wizard.previousStep();
+			}
 		},
 		goFrom4to5 : function () {
-			if (this._wizard.getProgressStep() === this.getView().byId("PricingStep"))
+			if (this._wizard.getProgressStep() === this.byId("PricingStep")) {
 				this._wizard.nextStep();
+			}
 		},
 		wizardCompletedHandler : function () {
 			this._oNavContainer.to(this._oWizardReviewPage);
@@ -97,25 +108,23 @@ sap.ui.define([
 			this._handleNavigationToStep(3);
 		},
 		_handleNavigationToStep : function (iStepNumber) {
-			var that = this;
-			function fnAfterNavigate () {
-				that._wizard.goToStep(that._wizard.getSteps()[iStepNumber]);
-				that._oNavContainer.detachAfterNavigate(fnAfterNavigate);
-			}
+			var fnAfterNavigate = function () {
+				this._wizard.goToStep(this._wizard.getSteps()[iStepNumber]);
+				this._oNavContainer.detachAfterNavigate(fnAfterNavigate);
+			}.bind(this);
 
 			this._oNavContainer.attachAfterNavigate(fnAfterNavigate);
 			this.backToWizardContent();
 		},
 		_handleMessageBoxOpen : function (sMessage, sMessageBoxType) {
-			var that = this;
 			MessageBox[sMessageBoxType](sMessage, {
 				actions: [MessageBox.Action.YES, MessageBox.Action.NO],
 				onClose: function (oAction) {
 					if (oAction === MessageBox.Action.YES) {
-						that._handleNavigationToStep(0);
-						that._wizard.discardProgress(that._wizard.getSteps()[0]);
+						this._handleNavigationToStep(0);
+						this._wizard.discardProgress(this._wizard.getSteps()[0]);
 					}
-				},
+				}.bind(this)
 			});
 		},
 		_setEmptyValue : function (sPath) {
@@ -131,10 +140,10 @@ sap.ui.define([
 			return isNaN(val) ? "Error" : "None";
 		},
 		discardProgress: function () {
-			this._wizard.discardProgress(this.getView().byId("ProductTypeStep"));
+			this._wizard.discardProgress(this.byId("ProductTypeStep"));
 
 			var clearContent = function (content) {
-				for (var i = 0; i < content.length ; i++) {
+				for (var i = 0; i < content.length; i++) {
 					if (content[i].setValue) {
 						content[i].setValue("");
 					}
@@ -146,7 +155,7 @@ sap.ui.define([
 			};
 
 			this.model.setProperty("/productWeightState", "Error");
-			this.model.setProperty("/productNameState", "Error")
+			this.model.setProperty("/productNameState", "Error");
 			clearContent(this._wizard.getSteps());
 		}
 	});

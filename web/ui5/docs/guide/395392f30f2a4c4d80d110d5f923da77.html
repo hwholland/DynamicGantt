@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The sap.m.FacetFilter control uses the FacetFilterList and the FacetFilterItem controls to model facets and their associated filters."/>
 <meta name="description" content="The sap.m.FacetFilter control uses the FacetFilterList and the FacetFilterItem controls to model facets and their associated filters."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5760812894111532"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=774515671982448"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=774515671982448"/>
 <title>Facet Filter List and Facet Filter Item</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio395392f30f2a4c4d80d110d5f923da77">
 <div id="wrapper"><div id="container">
@@ -52,21 +38,21 @@
 				the <samp class="ph codeph">FacetFilter</samp> control.</p>
 
 			<div class="table-wrapper"><table summary="" id="loio395392f30f2a4c4d80d110d5f923da77__simpletable_icj_3wh_qn" border="1" class="simpletable"><tr class="sthead">
-					<th valign="bottom" align="left" id="d3113467e55" class="stentry" width="50%">Property</th>
+					<th valign="bottom" align="left" id="d2553955e55" class="stentry" width="50%">Property</th>
 
-					<th valign="bottom" align="left" id="d3113467e58" class="stentry" width="50%">Description</th>
-
-				</tr>
-<tr class="strow">
-					<td valign="top" headers="d3113467e55" class="stentry"><samp class="ph codeph">title</samp></td>
-
-					<td valign="top" headers="d3113467e58" class="stentry">Facet name</td>
+					<th valign="bottom" align="left" id="d2553955e58" class="stentry" width="50%">Description</th>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d3113467e55" class="stentry"><samp class="ph codeph">mode</samp></td>
+					<td valign="top" headers="d2553955e55" class="stentry"><samp class="ph codeph">title</samp></td>
 
-					<td valign="top" headers="d3113467e58" class="stentry">
+					<td valign="top" headers="d2553955e58" class="stentry">Facet name</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d2553955e55" class="stentry"><samp class="ph codeph">mode</samp></td>
+
+					<td valign="top" headers="d2553955e58" class="stentry">
 						<p class="p">Controls the selection mode for the list</p>
 
 						<p class="p">This property is overridden from <samp class="ph codeph">ListBase</samp> and only
@@ -81,9 +67,9 @@
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d3113467e55" class="stentry"><samp class="ph codeph">sequence</samp></td>
+					<td valign="top" headers="d2553955e55" class="stentry"><samp class="ph codeph">sequence</samp></td>
 
-					<td valign="top" headers="d3113467e58" class="stentry">
+					<td valign="top" headers="d2553955e58" class="stentry">
 						<p class="p">Controls the order in which the facets are displayed in the toolbar</p>
 
 						<p class="p">Lists appear in the toolbar in ascending order according to sequence (assuming left to
@@ -95,17 +81,17 @@
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d3113467e55" class="stentry"><samp class="ph codeph">active</samp></td>
+					<td valign="top" headers="d2553955e55" class="stentry"><samp class="ph codeph">active</samp></td>
 
-					<td valign="top" headers="d3113467e58" class="stentry">Indicates if a facet filter list is active and should appear on the toolbar; this is
+					<td valign="top" headers="d2553955e58" class="stentry">Indicates if a facet filter list is active and should appear on the toolbar; this is
 						only applicable for the simple type as all facet filter lists are active in
 						the light type</td>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d3113467e55" class="stentry"><samp class="ph codeph">allCount</samp></td>
+					<td valign="top" headers="d2553955e55" class="stentry"><samp class="ph codeph">allCount</samp></td>
 
-					<td valign="top" headers="d3113467e58" class="stentry">The <samp class="ph codeph">allCount</samp> value can be set to the number of filter matches in the
+					<td valign="top" headers="d2553955e58" class="stentry">The <samp class="ph codeph">allCount</samp> value can be set to the number of filter matches in the
 						target data set given the currently selected filters for the facet filter
 						list.</td>
 
@@ -127,21 +113,21 @@
 					<samp class="ph codeph">FacetFilterItem</samp> provides the following properties:</p>
 
 			<div class="table-wrapper"><table summary="" id="loio395392f30f2a4c4d80d110d5f923da77__simpletable_ezr_fc3_qn" border="1" class="simpletable"><tr class="sthead">
-					<th valign="bottom" align="left" id="d3113467e172" class="stentry" width="50%">Property</th>
+					<th valign="bottom" align="left" id="d2553955e172" class="stentry" width="50%">Property</th>
 
-					<th valign="bottom" align="left" id="d3113467e175" class="stentry" width="50%">Description</th>
-
-				</tr>
-<tr class="strow">
-					<td valign="top" headers="d3113467e172" class="stentry"><samp class="ph codeph">text</samp></td>
-
-					<td valign="top" headers="d3113467e175" class="stentry">Filter item name</td>
+					<th valign="bottom" align="left" id="d2553955e175" class="stentry" width="50%">Description</th>
 
 				</tr>
 <tr class="strow">
-					<td valign="top" headers="d3113467e172" class="stentry"><samp class="ph codeph">key</samp></td>
+					<td valign="top" headers="d2553955e172" class="stentry"><samp class="ph codeph">text</samp></td>
 
-					<td valign="top" headers="d3113467e175" class="stentry">
+					<td valign="top" headers="d2553955e175" class="stentry">Filter item name</td>
+
+				</tr>
+<tr class="strow">
+					<td valign="top" headers="d2553955e172" class="stentry"><samp class="ph codeph">key</samp></td>
+
+					<td valign="top" headers="d2553955e175" class="stentry">
 						<p class="p">Unique identifier of the filter item; used to filter the target data
 							set</p>
 
@@ -164,7 +150,7 @@
 
 		<div class="section"><div class="section_title">Example</div><div type="Example"><p class="p">The following example shows how you use the controls. To
 				build the face filter in the figure, use the code below the figure:</p>
-<img class="image" id="loio395392f30f2a4c4d80d110d5f923da77__image_cl1_gv3_qn" src="loio118e5d5c01ed49ccbf00c174e87c416a_LowRes.png"/><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>    
+<img class="image" id="loio395392f30f2a4c4d80d110d5f923da77__image_cl1_gv3_qn" src="loio118e5d5c01ed49ccbf00c174e87c416a_LowRes.png"/><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">    
 var oFacetFilter = new sap.m.FacetFilter({ // define FacetFilter Control
         lists : [ new sap.m.FacetFilterList({ // city facet
             title : "City",
@@ -200,19 +186,5 @@ var oFacetFilter = new sap.m.FacetFilter({ // define FacetFilter Control
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Facet Filter List and Facet Filter Item";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -43,6 +43,9 @@ It works only in ObjectHeader, since it is a composite control and creates an Im
             <documentation>Determines the alternative text of the &lt;code&gt;ObjectHeader&lt;/code&gt; icon. The text is
 displayed if the image for the icon is not available, or cannot be displayed.</documentation>
         </property>
+        <property name="iconTooltip" type="sap.ui.core/string" group="Accessibility">
+            <documentation>Determines the tooltip text of the &lt;code&gt;ObjectHeader&lt;/code&gt; icon.</documentation>
+        </property>
         <property name="iconDensityAware" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
             <documentation>By default, this is set to &lt;code&gt;true&lt;/code&gt; but then one or more requests are sent trying to get
 the density perfect version of image if this version of image doesn't exist on the server.
@@ -50,19 +53,30 @@ the density perfect version of image if this version of image doesn't exist on t
 If bandwidth is the key for the application, set this value to &lt;code&gt;false&lt;/code&gt;.</documentation>
         </property>
         <property name="markFavorite" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.16.0">
-            <documentation>Sets the favorite state to true or false. The showMarkers property must be true for this property to take effect.</documentation>
+            <documentation>Sets the favorite state for the &lt;code&gt;ObjectHeader&lt;/code&gt;. The &lt;code&gt;showMarkers&lt;/code&gt;
+property must be set to &lt;code&gt;true&lt;/code&gt; for this property to take effect.</documentation>
+            <deprecation since="1.42.0">replaced by &lt;code&gt;markers&lt;/code&gt; aggregation.
+Add {@link sap.m.ObjectMarker} with type &lt;code&gt;sap.m.ObjectMarkerType.Favorite&lt;/code&gt;.
+You should use either this property or the &lt;code&gt;markers&lt;/code&gt; aggregation, using both may lead to unpredicted behavior.</deprecation>
         </property>
         <property name="markFlagged" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.16.0">
-            <documentation>Sets the flagged state to true or false. The showMarkers property must be true for this property to take effect.</documentation>
+            <documentation>Sets the flagged state for the &lt;code&gt;ObjectHeader&lt;/code&gt;. The &lt;code&gt;showMarkers&lt;/code&gt; property
+must be set to &lt;code&gt;true&lt;/code&gt; for this property to take effect.</documentation>
+            <deprecation since="1.42.0">replaced by &lt;code&gt;markers&lt;/code&gt; aggregation.
+Add {@link sap.m.ObjectMarker} with type &lt;code&gt;sap.m.ObjectMarkerType.Flagged&lt;/code&gt;.
+You should use either this property or the &lt;code&gt;markers&lt;/code&gt; aggregation, using both may lead to unpredicted behavior.</deprecation>
         </property>
         <property name="showMarkers" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.16.0">
-            <documentation>Indicates if object header supports showing markers such as flagged and favorite.</documentation>
+            <documentation>If set to &lt;code&gt;true&lt;/code&gt;, the &lt;code&gt;ObjectHeader&lt;/code&gt; can be marked with icons such as favorite and flag.</documentation>
+            <deprecation since="1.42.0">replaced by &lt;code&gt;markers&lt;/code&gt; aggregationv.
+This property is valid only if you are using the already deprecated properties - &lt;code&gt;markFlagged&lt;/code&gt; and &lt;code&gt;markFavorite&lt;/code&gt;.
+If you are using &lt;code&gt;markers&lt;/code&gt;, the visibility of the markers depends on what is set in the aggregation itself.</deprecation>
         </property>
         <property name="showTitleSelector" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.16.0">
             <documentation>Determines whether the selector arrow icon/image is displayed and can be pressed.</documentation>
         </property>
         <property name="numberState" type="sap.ui.core/ValueState" defaultValue="None" group="Misc" since="1.16.0">
-            <documentation>Determines the value state of the &lt;code&gt;number&lt;code&gt; and &lt;code&gt;numberUnit&lt;code&gt; properties.</documentation>
+            <documentation>Determines the value state of the &lt;code&gt;number&lt;/code&gt; and &lt;code&gt;numberUnit&lt;/code&gt; properties.</documentation>
         </property>
         <property name="condensed" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
             <documentation>&lt;code&gt;ObjectHeader&lt;/code&gt; with title, one attribute, number, and number unit.
@@ -80,7 +94,7 @@ If bandwidth is the key for the application, set this value to &lt;code&gt;false
 &lt;/ul&gt;</documentation>
         </property>
         <property name="responsive" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.21.1">
-            <documentation>Determines whether the &lt;code&gt;ObjectHeader&lt;code&gt; is rendered with a different design that
+            <documentation>Determines whether the &lt;code&gt;ObjectHeader&lt;/code&gt; is rendered with a different design that
 reacts responsively to the screen sizes.
 
 &lt;b&gt;Note:&lt;/b&gt; Be aware that the design and behavior of the responsive &lt;code&gt;ObjectHeader&lt;/code&gt;
@@ -192,12 +206,12 @@ Depending on this setting an HTML h1-h6 element is used.</documentation>
         <aggregation name="firstStatus" type="sap.m/ObjectStatus" cardinality="0..1">
             <documentation>First status shown on the right side of the attributes above the second status.
 If it is not set the first attribute will expand to take the entire row.</documentation>
-            <deprecation since="1.16.0">Use the statuses aggregation instead.</deprecation>
+            <deprecation since="1.16.0">replaced by &lt;code&gt;statuses&lt;/code&gt; aggregation</deprecation>
         </aggregation>
         <aggregation name="secondStatus" type="sap.m/ObjectStatus" cardinality="0..1">
             <documentation>Second status shown on the right side of the attributes below the first status.
 If it is not set the second attribute will expand to take the entire row.</documentation>
-            <deprecation since="1.16.0">Use the statuses aggregation instead.</deprecation>
+            <deprecation since="1.16.0">replaced by &lt;code&gt;statuses&lt;/code&gt; aggregation</deprecation>
         </aggregation>
         <aggregation name="statuses" type="sap.ui.core/Control" since="1.16.0" cardinality="0..n">
             <documentation>The list of Object sap.ui.core.Control. It will only allow sap.m.ObjectStatus and sap.m.ProgressIndicator controls.</documentation>
@@ -213,7 +227,11 @@ When only one number is provided, it is rendered with additional separator from 
         </aggregation>
         <aggregation name="headerContainer" type="sap.m/ObjectHeaderContainer" since="1.21.1" cardinality="0..1">
             <documentation>This aggregation takes only effect when you set "responsive" to true.
-It can either be filled with an sap.m.IconTabBar or a sap.suite.ui.commons.HeaderContainer control. Overflow handling must be taken care of by the inner control. If used with an IconTabBar control, only the header will be displayed inside the object header, the content will be displayed below the ObjectHeader.</documentation>
+It can either be filled with an sap.m.IconTabBar or an sap.suite.ui.commons.HeaderContainer control. Overflow handling must be taken care of by the inner control. If used with an IconTabBar control, only the header will be displayed inside the object header, the content will be displayed below the ObjectHeader.</documentation>
+        </aggregation>
+        <aggregation name="markers" type="sap.m/ObjectMarker" cardinality="0..n">
+            <documentation>List of markers (icon and/or text) that can be displayed for the &lt;code&gt;ObjectHeader&lt;/code&gt;, such as favorite and flagged.&lt;br&gt;&lt;br&gt;
+&lt;b&gt;Note:&lt;/b&gt; You should use either this aggregation or the already deprecated properties - &lt;code&gt;markFlagged&lt;/code&gt; and &lt;code&gt;markFavorite&lt;/code&gt;. Using both can lead to unexpected results.</documentation>
         </aggregation>
     </aggregations>
     <associations>

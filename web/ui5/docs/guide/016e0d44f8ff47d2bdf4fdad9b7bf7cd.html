@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Let’s switch back to developing and add the missing feature for the test we implemented in the previous step. We will simply change the table to a growing table as this is a basic feature of the table. This will display a trigger at the end of the table that the user can click on to display more items."/>
 <meta name="description" content="Let’s switch back to developing and add the missing feature for the test we implemented in the previous step. We will simply change the table to a growing table as this is a basic feature of the table. This will display a trigger at the end of the table that the user can click on to display more items."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3831220589265971"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9854575338114446"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9854575338114446"/>
 <title>Step 7: Changing the Table to a Growing Table</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio016e0d44f8ff47d2bdf4fdad9b7bf7cd">
 <div id="wrapper"><div id="container">
@@ -42,7 +28,7 @@
 			
 			<div class="fig fignone" id="loio016e0d44f8ff47d2bdf4fdad9b7bf7cd__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loio016e0d44f8ff47d2bdf4fdad9b7bf7cd__image_ckh_xtm_ft" src="loio43d882b890714236901f5b067e34e81e_HiRes.png"/>
+				<img class="image" id="loio016e0d44f8ff47d2bdf4fdad9b7bf7cd__image_ckh_xtm_ft" src="loio43d882b890714236901f5b067e34e81e_LowRes.png"/>
 			<div class="figcap">The List of posts is now dynamically loading more items when we scroll to the
 					end of the page</div></div></div>
 
@@ -50,7 +36,7 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					
 				<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.testing.07/preview" alt="../../explored.html#/sample/sap.m.tutorial.testing.07/preview" title="../../explored.html#/sample/sap.m.tutorial.testing.07/preview">Testing  - Step 7</a></span>.</p>
 
@@ -58,7 +44,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/Worklist.view.xml</div><div type="webapp/view/Worklist.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View …
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View …
 	&lt;semantic:FullscreenPage
 		id="page"
 		title="{i18n&gt;worklistViewTitle}"&gt;
@@ -103,7 +89,7 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with SAPUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with OpenUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="1b47457cbe4941ee926317d827517acb.html" title="A bulletin board may contain many posts. We expect to have a high data load once it is officially released. Then, there might be performance issues and long loading times if we display all entries at the same time. Therefore we will introduce a feature that limits the initial display to 20 items. The user can then click on a more button to view more items. As with the unit test, we start by writing an integration test for this feature and then add the application functionality later.">Step 6: A First OPA Test</a><br/>
@@ -119,19 +105,5 @@
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 7: Changing the Table to a Growing Table";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

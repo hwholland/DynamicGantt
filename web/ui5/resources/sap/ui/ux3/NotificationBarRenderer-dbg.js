@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/Icon'],
@@ -439,9 +439,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Icon'],
 			oRm.writeClasses();
 
 			oRm.writeAttributeEscaped("src", sUri);
-			oRm.write(">");
-
-			oRm.write("</img>");
+			oRm.write("/>");
 		};
 
 		/**

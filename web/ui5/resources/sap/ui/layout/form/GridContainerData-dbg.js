@@ -1,26 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.form.GridContainerData.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/LayoutData', 'sap/ui/layout/library'],
-	function(jQuery, LayoutData, library) {
+sap.ui.define(['sap/ui/core/LayoutData', 'sap/ui/layout/library'],
+ function(LayoutData, library) {
 	"use strict";
 
 	/**
 	 * Constructor for a new sap.ui.layout.form.GridContainerData.
 	 *
-	 * @param {string} [sId] Id for the new control, generated automatically if no id is given
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * <code>GridLayout</code>-specific properties for <code>FormContainers</code>.
+	 * The <code>GridLayout</code>-specific layout data for <code>FormContainers</code>.
 	 * @extends sap.ui.core.LayoutData
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -50,4 +50,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LayoutData', 'sap/ui/layout/lib
 
 	return GridContainerData;
 
-}, /* bExport= */ true);
+});

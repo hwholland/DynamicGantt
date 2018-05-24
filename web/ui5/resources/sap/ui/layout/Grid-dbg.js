@@ -1,12 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.Grid.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
-	function(jQuery, Control, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    './library',
+    'sap/ui/Device',
+    'sap/ui/core/ResizeHandler',
+    'sap/ui/base/ManagedObjectObserver',
+    "./GridRenderer"
+],
+	function(
+	    jQuery,
+		Control,
+		library,
+		Device,
+		ResizeHandler,
+		ManagedObjectObserver,
+		GridRenderer
+	) {
 	"use strict";
 
 
@@ -22,7 +38,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -82,10 +98,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 
 			/**
 			 * Association to controls / IDs that label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
-			 * @since 1.38.32
+			 * @since 1.48.7
 			 */
 			ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
-		}
+		},
+		designtime: "sap/ui/layout/designtime/Grid.designtime"
 	}});
 
 	/**
@@ -94,13 +111,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	(function() {
 
 		Grid.prototype.init = function() {
-			this._iBreakPointTablet = sap.ui.Device.media._predefinedRangeSets[sap.ui.Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[0];
-			this._iBreakPointDesktop = sap.ui.Device.media._predefinedRangeSets[sap.ui.Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[1];
-			this._iBreakPointLargeDesktop = sap.ui.Device.media._predefinedRangeSets[sap.ui.Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[2];
+			this._iBreakPointTablet = Device.media._predefinedRangeSets[Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[0];
+			this._iBreakPointDesktop = Device.media._predefinedRangeSets[Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[1];
+			this._iBreakPointLargeDesktop = Device.media._predefinedRangeSets[Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[2];
 
 			// Backward compatibility - if no any settings for XL - the settings for L are used
 			this._indentXLChanged = false;
 			this._spanXLChanged = false;
+
+			this._oObserver = new ManagedObjectObserver(Grid.prototype._observeChanges.bind(this));
+			this._oObserver.observe(this, {
+				aggregations: ["content"]
+			});
 		};
 
 		/**
@@ -110,10 +132,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 		 */
 		Grid.prototype.onAfterRendering = function() {
 			if (this.getContainerQuery()) {
-				this._sContainerResizeListener = sap.ui.core.ResizeHandler.register(this, jQuery.proxy(this._onParentResize, this));
+				this._sContainerResizeListener = ResizeHandler.register(this, jQuery.proxy(this._onParentResize, this));
 				this._onParentResize();
 			} else {
-				sap.ui.Device.media.attachHandler(this._handleMediaChange, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD_EXTENDED);
+				this._attachMediaContainerWidthChange(this._handleMediaChange, this, Device.media.RANGESETS.SAP_STANDARD_EXTENDED);
 			}
 		};
 
@@ -125,6 +147,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 		Grid.prototype.exit = function() {
 			// Cleanup resize event registration on exit
 			this._cleanup();
+
+			if (this._oObserver) {
+				this._oObserver.disconnect();
+				this._oObserver = null;
+			}
 		};
 
 		/**
@@ -135,12 +162,46 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 		Grid.prototype._cleanup = function() {
 			// Cleanup resize event registration
 			if (this._sContainerResizeListener) {
-				sap.ui.core.ResizeHandler.deregister(this._sContainerResizeListener);
+				ResizeHandler.deregister(this._sContainerResizeListener);
 				this._sContainerResizeListener = null;
 			}
 
 			// Device Media Change handler
-			sap.ui.Device.media.detachHandler(this._handleMediaChange, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD_EXTENDED);
+			this._detachMediaContainerWidthChange(this._handleMediaChange, this, Device.media.RANGESETS.SAP_STANDARD_EXTENDED);
+		};
+
+		Grid.prototype._observeVisibility = function (oControl) {
+			this._oObserver.observe(oControl, {
+				properties: ["visible"]
+			});
+		};
+
+		Grid.prototype._unobserveVisibility = function (oControl) {
+			this._oObserver.unobserve(oControl, {
+				properties: ["visible"]
+			});
+		};
+
+		Grid.prototype._observeChanges = function (oChanges) {
+			var oObject = oChanges.object,
+				sChangeName = oChanges.name,
+				sMutationName = oChanges.mutation,
+				oChild = oChanges.child;
+
+			if (oObject === this) {
+				if (sMutationName === "insert") {
+					this._observeVisibility(oChild);
+				} else if (sMutationName === "remove") {
+					this._unobserveVisibility(oChild);
+				}
+			} else if (sChangeName === "visible") {
+				// We need to get the grid's internal spans, because they are responsible for the margin
+				// indexOf is used, because when an element is hidden, a placeholder is rendered rather than that specific element.
+				// Because we do not have that element in the DOM, we access it's container through the grid.
+				// Children array consists of DOM refs, not jQuery objects, so we need to convert them.
+				var iElementIndex = this.getContent().indexOf(oObject);
+				jQuery(this.$().children()[iElementIndex]).toggleClass("sapUiRespGridSpanInvisible", !oChanges.current);
+			}
 		};
 
 		Grid.prototype._handleMediaChange  = function(oParams) {
@@ -163,7 +224,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 			if (/XL/gi.test(sDefaultIndent)) {
 				this._setIndentXLChanged(true);
 			}
-			this.setProperty("defaultIndent", sDefaultIndent);
+			return this.setProperty("defaultIndent", sDefaultIndent);
 		};
 
 		Grid.prototype._setIndentXLChanged = function( bChanged) {
@@ -179,7 +240,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 			if (/XL/gi.test(sDefaultSpan)) {
 				this._setSpanXLChanged(true);
 			}
-			this.setProperty("defaultSpan", sDefaultSpan);
+			return this.setProperty("defaultSpan", sDefaultSpan);
 		};
 
 		Grid.prototype._setSpanXLChanged = function( bChanged) {
@@ -241,11 +302,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 
 
 		/*
-	     * Get span information for the Control
-	     * @param {sap.ui.core.Control} Control instance
-	     * @return {Object} Grid layout data
-	     * @private
-	     */
+		 * Get span information for the Control
+		 * @param {sap.ui.core.Control} Control instance
+		 * @return {Object} Grid layout data
+		 * @private
+		 */
 		Grid.prototype._getLayoutDataForControl = function(oControl) {
 			var oLayoutData = oControl.getLayoutData();
 
@@ -277,34 +338,28 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 		};
 
 		/**
-		 * Gets the role used for accessibility
+		 * Gets the role used for accessibility.
 		 * Set by the Form control if Grid represents a FormContainer
 		 * @return {string} sRole accessibility role
 		 * @since 1.28.0
 		 * @private
 		 */
 		Grid.prototype._getAccessibleRole = function() {
-
 			return null;
-
 		};
 
 		/**
-		 * @see {sap.ui.core.Control#getAccessibilityInfo}
+		 * Returns the <code>Grid</code> accessibility information.
+		 * @see sap.ui.core.Control#getAccessibilityInfo
 		 * @protected
+		 * @returns {object} The <code>Grid</code> accessibility information
 		 */
 		Grid.prototype.getAccessibilityInfo = function() {
-			var aContent = this.getContent();
-			var aChildren = [];
-			for (var i = 0; i < aContent.length; i++) {
-				if (aContent[i].getAccessibilityInfo) {
-					var oInfo = aContent[i].getAccessibilityInfo();
-					if (oInfo) {
-						aChildren.push(oInfo);
-					}
-				}
-			}
-			return {children: aChildren};
+			return {
+				children: this.getContent().filter(function(oContent) {
+					return oContent.$().is(':visible');
+				})
+			};
 		};
 
 	}());
@@ -312,4 +367,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 
 	return Grid;
 
-}, /* bExport= */ true);
+});

@@ -5,6 +5,7 @@
     <author>SAP SE</author>
     <documentation>Header Action item of the Shell.</documentation>
     <since>1.15.1</since>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
         <property name="startsSection" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
@@ -27,7 +28,7 @@ is ignored.</documentation>
             <deprecation since="1.18">Markers should not be used anymore.</deprecation>
         </property>
         <property name="icon" type="sap.ui.core/URI" group="Appearance">
-            <documentation>The icon of the item, either defined in the sap.ui.core.IconPool or an URI to a custom image. An icon must be set.</documentation>
+            <documentation>The icon of the item, either defined in the sap.ui.core.IconPool or a URI to a custom image. An icon must be set.</documentation>
         </property>
         <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.18">
             <documentation>Invisible items are not shown on the UI.</documentation>

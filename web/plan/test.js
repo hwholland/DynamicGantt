@@ -34,6 +34,17 @@ function createPage(title, bNeedFooter) {
 			content: [createMsgStack()]
 		}));
 	}
+	window.oPage.pl
+function createPage(title, bNeedFooter) {
+	window.oPage = new sap.m.Page({
+		title: title,
+		titleLevel: sap.ui.core.TitleLevel.H2
+	});
+	if (bNeedFooter) {
+		window.oPage.setFooter(new sap.m.OverflowToolbar({
+			content: [createMsgStack()]
+		}));
+	}
 	window.oPage.placeAt("content");
 }
 function addFooterContentsToPage(oContent) {

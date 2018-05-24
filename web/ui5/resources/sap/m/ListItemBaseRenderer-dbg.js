@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming/Parameters'],
-	function(jQuery, IconPool, Parameters) {
+sap.ui.define(["sap/m/library", "sap/ui/Device", "sap/ui/core/InvisibleText"],
+	function(library, Device, InvisibleText) {
 	"use strict";
+
+
+	// shortcut for sap.m.ListType
+	var ListType = library.ListType;
+
+	// shortcut for sap.m.ListMode
+	var ListMode = library.ListMode;
 
 
 	/**
@@ -16,14 +23,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 */
 	var ListItemBaseRenderer = {};
 
-	// create ARIA announcements
-	var mAriaAnnouncements = {};
-
 	ListItemBaseRenderer.renderInvisible = function(rm, oLI) {
 		this.openItemTag(rm, oLI);
 		rm.writeInvisiblePlaceholderData(oLI);
 		rm.write(">");
 		this.closeItemTag(rm, oLI);
+	};
+
+	/**
+	 * Renders the highlight state.
+	 *
+	 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer.
+	 * @param {sap.ui.core.Control} oLI An object representation of the control that is rendered.
+	 * @protected
+	 */
+	ListItemBaseRenderer.renderHighlight = function(rm, oLI) {
+		var sHighlight = oLI.getHighlight();
+		if (sHighlight == "None") {
+			return;
+		}
+
+		rm.write("<div");
+		rm.addClass("sapMLIBHighlight");
+		rm.addClass("sapMLIBHighlight" + sHighlight);
+		rm.writeClasses();
+		rm.write("></div>");
 	};
 
 	ListItemBaseRenderer.isModeMatched = function(sMode, iOrder) {
@@ -52,26 +76,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	};
 
 	ListItemBaseRenderer.renderModeContent = function(rm, oLI, oModeControl) {
-		var sMode = oLI.getMode(),
-			mModeConfig = {
-				Delete : "D",
-				MultiSelect : "M",
-				SingleSelect : "S",
-				SingleSelectLeft : "SL"
-			};
-
-		rm.write("<div");
-		rm.writeAttribute("id", oLI.getId() + "-mode");
-		rm.addClass("sapMLIBSelect" + mModeConfig[sMode]);
-		this.decorateMode(rm, oLI);
-		rm.writeClasses();
-		rm.writeStyles();
-		rm.write(">");
+		this.decorateMode(oModeControl, oLI);
 		rm.renderControl(oModeControl);
-		rm.write("</div>");
 	};
 
-	ListItemBaseRenderer.decorateMode = function(rm, oLI) {
+	ListItemBaseRenderer.decorateMode = function(oModeControl, oLI) {
+
+		/* Remove animation classes to avoid unexpected re-rendering bahavior */
+		oModeControl.removeStyleClass("sapMLIBSelectAnimation sapMLIBUnselectAnimation");
+
 		// determine whether animation is necessary or not
 		if (!sap.ui.getCore().getConfiguration().getAnimation() ||
 			!oLI.getListProperty("modeAnimationOn")) {
@@ -86,10 +99,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 			return;
 		}
 
-		if (sMode == sap.m.ListMode.None) {
-			rm.addClass("sapMLIBUnselectAnimation");
+		if (sMode == ListMode.None) {
+			oModeControl.addStyleClass("sapMLIBUnselectAnimation");
 		} else {
-			rm.addClass("sapMLIBSelectAnimation");
+			oModeControl.addStyleClass("sapMLIBSelectAnimation");
 		}
 	};
 
@@ -97,7 +110,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * Renders counter if it is not empty
 	 *
 	 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer.
-	 * @param {sap.ui.core.Control} oLI an object representation of the control that should be rendered.
+	 * @param {sap.ui.core.Control} oLI An object representation of the control that is rendered.
 	 * @protected
 	 */
 	ListItemBaseRenderer.renderCounter = function(rm, oLI) {
@@ -141,7 +154,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.openItemTag = function(rm, oLI) {
-		rm.write("<li");
+		rm.write("<" + oLI.TagName);
 	};
 
 	/**
@@ -152,18 +165,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.closeItemTag = function(rm, oLI) {
-		rm.write("</li>");
-	};
-
-	/**
-	 * Determines whether flex box wrapper is necessary or not.
-	 *
-	 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer.
-	 * @param {sap.ui.core.Control} oLI an object representation of the control that should be rendered.
-	 * @protected
-	 */
-	ListItemBaseRenderer.handleNoFlex = function(rm, oLI) {
-		return !jQuery.support.hasFlexBoxSupport;
+		rm.write("</" + oLI.TagName + ">");
 	};
 
 	ListItemBaseRenderer.renderTabIndex = function(rm, oLI) {
@@ -185,7 +187,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.addFocusableClasses = function(rm, oLI) {
-		if (sap.ui.Device.system.desktop) {
+		if (Device.system.desktop) {
 			rm.addClass("sapMLIBFocusable");
 			this.addLegacyOutlineClass(rm, oLI);
 		}
@@ -199,7 +201,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.addLegacyOutlineClass = function(rm, oLI) {
-		if (sap.ui.Device.browser.msie) {
+		if (Device.browser.msie || Device.browser.edge) {
 			rm.addClass("sapMLIBLegacyOutline");
 		}
 	};
@@ -216,16 +218,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.getAriaAnnouncement = function(sKey, sBundleText) {
-		if (mAriaAnnouncements[sKey]) {
-			return mAriaAnnouncements[sKey];
-		}
-
-		sBundleText = sBundleText || "LIST_ITEM_" + sKey.toUpperCase();
-		mAriaAnnouncements[sKey] = new sap.ui.core.InvisibleText({
-			text : sap.ui.getCore().getLibraryResourceBundle("sap.m").getText(sBundleText)
-		}).toStatic().getId();
-
-		return mAriaAnnouncements[sKey];
+		return InvisibleText.getStaticId("sap.m", sBundleText || "LIST_ITEM_" + sKey.toUpperCase());
 	};
 
 
@@ -248,7 +241,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.getAriaLabelledBy = function(oLI) {
-		if (oLI.getAriaLabelledBy().length) {
+		if (!oLI.getContentAnnouncement && oLI.getAriaLabelledBy().length) {
 			return oLI.getId();
 		}
 	};
@@ -261,15 +254,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	 * @protected
 	 */
 	ListItemBaseRenderer.getAriaDescribedBy = function(oLI) {
+		if (oLI.getContentAnnouncement) {
+			return "";
+		}
+
 		var aDescribedBy = [],
 			sType = oLI.getType(),
-			mType = sap.m.ListType;
+			mType = ListType;
 
 		if (oLI.getListProperty("showUnread") && oLI.getUnread()) {
 			aDescribedBy.push(this.getAriaAnnouncement("unread"));
 		}
 
-		if (oLI.getMode() == sap.m.ListMode.Delete) {
+		if (oLI.getMode() == ListMode.Delete) {
 			aDescribedBy.push(this.getAriaAnnouncement("deletable"));
 		}
 
@@ -341,23 +338,36 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 	ListItemBaseRenderer.renderLIAttributes = function(rm, oLI) {
 	};
 
+	/**
+	 * Renders the former part of the item.
+	 *
+	 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer.
+	 * @param {sap.ui.core.Control} oLI An object representation of the control that is rendered.
+	 * @protected
+	 */
+	ListItemBaseRenderer.renderContentFormer = function(rm, oLI) {
+		this.renderHighlight(rm, oLI);
+		this.renderMode(rm, oLI, -1);
+	};
+
+	/**
+	 * Renders the latter part of the item.
+	 *
+	 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer.
+	 * @param {sap.ui.core.Control} oLI An object representation of the control that is rendered.
+	 * @protected
+	 */
+	ListItemBaseRenderer.renderContentLatter = function(rm, oLI) {
+		this.renderCounter(rm, oLI);
+		this.renderType(rm, oLI);
+		this.renderMode(rm, oLI, 1);
+	};
 
 	ListItemBaseRenderer.renderLIContentWrapper = function(rm, oLI) {
 		rm.write('<div class="sapMLIBContent"');
 		rm.writeAttribute("id", oLI.getId() + "-content");
 		rm.write(">");
-
-		// additional content with class for no-flex case
-		if (this.handleNoFlex()) {
-			rm.write('<div class="sapMLIBContentNF">');
-		}
-
 		this.renderLIContent(rm, oLI);
-
-		if (this.handleNoFlex()) {
-			rm.write('</div>');
-		}
-
 		rm.write('</div>');
 	};
 
@@ -389,17 +399,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 		rm.addClass("sapMLIBShowSeparator");
 		rm.addClass("sapMLIBType" + oLI.getType());
 
-		if (sap.ui.Device.system.desktop && oLI.isActionable()) {
+		if (Device.system.desktop && oLI.isActionable()) {
 			rm.addClass("sapMLIBActionable");
 			rm.addClass("sapMLIBHoverable");
 		}
 
 		if (oLI.getSelected()) {
 			rm.addClass("sapMLIBSelected");
-		}
-
-		if (this.handleNoFlex()) {
-			rm.addClass("sapMLIBNoFlex");
 		}
 
 		if (oLI.getListProperty("showUnread") && oLI.getUnread()) {
@@ -424,15 +430,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool', 'sap/ui/core/theming
 		rm.writeStyles();
 		rm.write(">");
 
-		// mode for left hand side of the content
-		this.renderMode(rm, oLI, -1);
-
+		this.renderContentFormer(rm, oLI);
 		this.renderLIContentWrapper(rm, oLI);
-		this.renderCounter(rm, oLI);
-		this.renderType(rm, oLI);
-
-		// mode for right hand side of the content
-		this.renderMode(rm, oLI, 1);
+		this.renderContentLatter(rm, oLI);
 
 		this.closeItemTag(rm, oLI);
 	};

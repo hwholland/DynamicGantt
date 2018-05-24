@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="The list of invoices is already looking nice, but what is an invoice without a price assigned? Typically prices are stored in a technical format and with a '.' delimiter in the data model. For example, our invoice for pineapples has the calculated price 87.2 without a currency. We are going to use the OpenUI5 data types to format the price properly, with a locale-dependent decimal separator and two digits after the separator."/>
+<meta name="description" content="The list of invoices is already looking nice, but what is an invoice without a price assigned? Typically prices are stored in a technical format and with a '.' delimiter in the data model. For example, our invoice for pineapples has the calculated price 87.2 without a currency. We are going to use the OpenUI5 data types to format the price properly, with a locale-dependent decimal separator and two digits after the separator."/>
 
-
-
-
-
-<meta name="abstract" content="The list of invoices is already looking nice, but what is an invoice without a price assigned? Typically prices are stored in a technical format and with a '.' delimiter in the data model. For example, our invoice for pineapples has the calculated price 87.2 without a currency. We are going to use the SAPUI5 data types to format the price properly, with a locale-dependent decimal separator and two digits after the separator."/>
-<meta name="description" content="The list of invoices is already looking nice, but what is an invoice without a price assigned? Typically prices are stored in a technical format and with a '.' delimiter in the data model. For example, our invoice for pineapples has the calculated price 87.2 without a currency. We are going to use the SAPUI5 data types to format the price properly, with a locale-dependent decimal separator and two digits after the separator."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4171689002557115"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=5418902039963346"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5418902039963346"/>
 <title>Step 21: Data Types</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiodfe04650afc046e0802abb1a1a90d2d9">
 <div id="wrapper"><div id="container">
@@ -36,7 +22,7 @@
 	<div class="body conbody"><p class="shortdesc">The list of invoices is already looking nice, but what is an invoice without a price
 		assigned? Typically prices are stored in a technical format and with a '<samp class="ph codeph">.</samp>'
 		delimiter in the data model. For example, our invoice for pineapples has the calculated
-		price <samp class="ph codeph">87.2</samp> without a currency. We are going to use the <span class="ph"><span class="ph pname">SAPUI5</span></span> data types to format the
+		price <samp class="ph codeph">87.2</samp> without a currency. We are going to use the <span class="ph"><span class="ph pname">OpenUI5</span></span> data types to format the
 		price properly, with a locale-dependent decimal separator and two digits after the
 		separator.</p>
 
@@ -51,12 +37,11 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview">Walkthrough - Step 21</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.21/preview">Walkthrough - Step 21</a></span>.</p>
 
 			<div class="section_title">webapp/view/InvoiceList.view.xml</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-   <span class="ph emphasis emphasis">controllerName="sap.ui.demo.wt.controller.InvoiceList"</span>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+   <span class="ph emphasis emphasis">controllerName="sap.ui.demo.walkthrough.controller.InvoiceList"</span>
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"&gt;
    &lt;List
@@ -112,13 +97,13 @@
 
 		<div class="section"><div class="section_title">webapp/controller/InvoiceList.controller.js (New)</div><div type="webapp/controller/InvoiceList.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel"
 ], function (Controller, JSONModel) {
 	"use strict";
 
-	return Controller.extend("sap.ui.demo.wt.controller.InvoiceList", {
+	return Controller.extend("sap.ui.demo.walkthrough.controller.InvoiceList", {
 
 		onInit : function () {
 			var oViewModel = new JSONModel({
@@ -157,39 +142,25 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="bf71375454654b44af01379a3c3a6273.html" title="Now that we have established a good structure for our app, it's time to add some more functionality. We start exploring more features of data binding by adding some invoice data in JSON format that we display in a list below the panel.">Step 20: Aggregation Binding</a><br/>
 </div>
 <div class="nextlink"><br/>
-<strong>Next: </strong><a class="link" href="c98d57347ba444c6945f596584d2db45.html" title="Sometimes the predefined types of SAPUI5 are not flexible enough and you want to do a simple calculation or formatting in the view - that is where expressions are really helpful. We use them to format our price according to the current number in the data model.">Step 22: Expression Binding</a><br/>
+<strong>Next: </strong><a class="link" href="c98d57347ba444c6945f596584d2db45.html" title="Sometimes the predefined types of OpenUI5 are not flexible enough and you want to do a simple calculation or formatting in the view - that is where expressions are really helpful. We use them to format our price according to the current number in the data model.">Step 22: Expression Binding</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="a2fe8e763014477e87990ff50657a0d0.html" title="Calculated fields enable the binding of multiple properties in different models to a single property of a control.">Calculated Fields for Data Binding</a></div>
-<div><a class="link" href="07e4b920f5734fd78fdaa236f26236d8.html" title="SAPUI5 supports the definition of custom formatters.">Custom Formatter Functions</a></div>
+<div><a class="link" href="a2fe8e763014477e87990ff50657a0d0.html" title="Calculated fields enable the binding of multiple properties in different models to a single property of a control.">Composite Binding</a></div>
+<div><a class="link" href="07e4b920f5734fd78fdaa236f26236d8.html" title="Data that is presented on the UI often has to be converted so that is human readable and fits to the locale of the user. On the other hand, data entered by the user has to be parsed and validated to be understood by the data source. For this purpose, you use formatters and data types.">Formatting, Parsing, and Validating Data</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.model.type-1.html" alt="../../docs/api/symbols/sap.ui.model.type-1.html" title="../../docs/api/symbols/sap.ui.model.type-1.html">API Reference: <samp class="ph codeph">sap.ui.model.type</samp></a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.model.type.Currency.html" alt="../../docs/api/symbols/sap.ui.model.type.Currency.html" title="../../docs/api/symbols/sap.ui.model.type.Currency.html">API Reference: <samp class="ph codeph">sap.ui.model.type.Currency</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.ui.core.type.Currency/samples" alt="../../explored.html#/entity/sap.ui.core.type.Currency/samples" title="../../explored.html#/entity/sap.ui.core.type.Currency/samples">API Overview and Samples: <samp class="ph codeph">sap.ui.core.type.Currency</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.ui.model.type.Currency/samples" alt="../../explored.html#/entity/sap.ui.model.type.Currency/samples" title="../../explored.html#/entity/sap.ui.model.type.Currency/samples">Samples: <samp class="ph codeph">sap.ui.model.type.Currency</samp>
 			</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 21: Data Types";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

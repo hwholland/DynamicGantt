@@ -20,7 +20,7 @@
     </properties>
     <events>
         <event name="press" allowPreventDefault="false">
-            <documentation>The event is fired when the user chooses the news content.</documentation>
+            <documentation>The event is triggered when the News Content is pressed.</documentation>
         </event>
     </events>
     <aggregations default="_contentText">

@@ -6,12 +6,12 @@
 
 <title>sap.m.SlideTile</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript"
-	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m, sap.ui.layout"
-	data-sap-ui-theme="sap_bluecrystal">
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js"
+	id="sap-ui-bootstrap" data-sap-ui-libs="sap.m, sap.ui.layout">
 </script>
 
-<script type="text/javascript">
+<script>
 	function setBackgroundColor(oAnyObject) {
 		var oColors = {
 			white : "#FFFFFF",
@@ -34,7 +34,7 @@
 	}
 </script>
 
-<script type="text/javascript">
+<script>
 	jQuery.sap.initMobile();
 
 	var oSlideTileData = {
@@ -133,23 +133,50 @@
 
 			var sMsg = oContext.getProperty("message");
 			if (sMsg) {
-				oGenericTile.attachPress(function() {
+				oGenericTile.attachPress(function(oEvent) {
 					sap.m.MessageToast.show(sMsg + " was pressed.");
 				});
 			}
 			return oGenericTile;
 		};
 		return fnGenericTileFactory;
-	}
+	};
+
+	var handleActionsPress = function(oEvent) {
+		if (oEvent.getSource().getScope() === sap.m.GenericTileScope.Actions &&
+			oEvent.getParameter("action") === "Press") {
+			var oActionSheet = new sap.m.ActionSheet({
+				title : "Choose Your Action",
+				showCancelButton : true,
+				placement : "Bottom",
+				buttons : [
+					new sap.m.Button({
+						text : "Move"
+					}),
+					new sap.m.Button({
+						text : "Whatever"
+					})
+				],
+				afterClose : function () {
+					oActionSheet.destroy();
+				}
+			});
+			oActionSheet.openBy(oEvent.getParameter("domRef"));
+		} else {
+			sap.m.MessageToast.show("Press event from SlideTile in " + oEvent.getParameter("scope") + " scope with parameter " + oEvent.getParameter("action"));
+		}
+	};
 
 	var oFeedSlideTile = new sap.m.SlideTile("st-feed", {
 		displayTime : "{/displayTime}",
 		transitionTime : "{/transitionTime}",
+		scope: "{/scope}",
 		tiles : {
 			factory : fnGetGTFactory(oFeedTileContent),
 			path : "/feedTiles"
-		}
-	});
+		},
+		press: handleActionsPress
+	}).addStyleClass("sapUiTinyMarginTop");
 
 	var oNewsTileContent = new sap.m.TileContent({
 		footer : "{footer}",
@@ -162,20 +189,24 @@
 	var oNewsSlideTile = new sap.m.SlideTile("st-news", {
 		displayTime : "{/displayTime}",
 		transitionTime : "{/transitionTime}",
+		scope: "{/scope}",
 		tiles : {
 			factory : fnGetGTFactory(oNewsTileContent),
 			path : "/newsTiles"
-		}
-	});
+		},
+		press: handleActionsPress
+	}).addStyleClass("sapUiTinyMarginTop");
 
 	var oOneSlideTile = new sap.m.SlideTile("st-one", {
 		displayTime : "{/displayTime}",
 		transitionTime : "{/transitionTime}",
+		scope: "{/scope}",
 		tiles : {
 			factory : fnGetGTFactory(oNewsTileContent),
 			path : "/oneTile"
-		}
-	});
+		},
+		press: handleActionsPress
+	}).addStyleClass("sapUiTinyMarginTop");
 
 	var oTileNoContent = new sap.m.SlideTile("st-noContent");
 
@@ -235,12 +266,28 @@
 		placeholder : 'Enter value ...'
 	});
 
+	var oScopeLabel = new sap.m.Label({
+		text : "Scope",
+		labelFor : "scope"
+	});
+
+	var oScopeSelect = new sap.m.Select("scope", {
+		items : [new sap.ui.core.Item({
+			key : "Display",
+			text : sap.m.GenericTileScope.Display
+		}), new sap.ui.core.Item({
+			key : "Actions",
+			text : sap.m.GenericTileScope.Actions
+		})],
+		selectedKey: "{/scope}"
+	});
+
 	var editableSimpleForm = new sap.ui.layout.form.SimpleForm("controls", {
 		maxContainerCols : 2,
 		editable : true,
 		content : [new sap.ui.core.Title({
 			text : "Modify Tiles Appearing"
-		}), oDTLbl, oDTInput, oTTLbl, oTTInput]
+		}), oDTLbl, oDTInput, oTTLbl, oTTInput, oScopeLabel, oScopeSelect]
 	});
 
 	oPage.addContent(editableSimpleForm);

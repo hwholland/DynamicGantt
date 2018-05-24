@@ -7,14 +7,19 @@
     <since>1.24.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
+        <property name="standardItems" type="sap.ui.core/string[]" defaultValue="[Today,Selected,WorkingDay,NonWorkingDay]" group="Misc" since="1.54">
+            <documentation>Determines the standard items related to the calendar days, such as, today, selected, working and non-working.
+Values must be one of &lt;code&gt;sap.ui.unified.StandardCalendarLegendItem&lt;/code&gt;.
+Note: for versions 1.50 and 1.52, this property was defined in the the subclass &lt;code&gt;sap.m.PlanningCalendarLegend&lt;/code&gt;</documentation>
+        </property>
         <property name="columnWidth" type="sap.ui.core/CSSSize" defaultValue="120px" group="Misc">
-            <documentation>Width of the columns created in which the items are arranged.</documentation>
+            <documentation>Defines the width of the created columns in which the items are arranged.</documentation>
         </property>
     </properties>
     <aggregations>
         <aggregation name="items" type="sap.ui.unified/CalendarLegendItem" cardinality="0..n">
             <documentation>Items to be displayed.</documentation>
         </aggregation>
-        <aggregation name="standardItems" type="sap.ui.unified/CalendarLegendItem" cardinality="0..n" visibility="hidden"/>
+        <aggregation name="_standardItems" type="sap.ui.unified/CalendarLegendItem" cardinality="0..n" visibility="hidden"/>
     </aggregations>
 </control>

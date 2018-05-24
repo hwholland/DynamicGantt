@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The FacetFilterList.getSelectedItems() method returns a copy of each selected facet filter item. You use the method to get the selected filter items when filtering the target data set."/>
 <meta name="description" content="The FacetFilterList.getSelectedItems() method returns a copy of each selected facet filter item. You use the method to get the selected filter items when filtering the target data set."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6259966127330713"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=604927093641029"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=604927093641029"/>
 <title>Facet Filter Selection</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioef860fc989764439957c6446ecebd7ec">
 <div id="wrapper"><div id="container">
@@ -40,15 +26,14 @@
 		<p class="p">Therefore, you should not attempt to modify any of the item's properties.</p>
 
 		<div class="section"><div class="section_title">Variants</div><div type="Variants"><p class="p">An application can support the personalization of settings and
-				allow the user to save the facet filter list selections as well as other properties
-				by means of a variant. For example, you can use <samp class="ph codeph">getSelectedKeys</samp> to
-				retrieve an object containing all selected items and use JSON.stringify to marshall
-				and JSON.parse to unmarshall. After unmarshalling, you can use
-					<samp class="ph codeph">setSelectedKeys</samp> to apply the selections to the list. The
-				following figure and code snippet give an example.</p>
-<img class="image" id="loioef860fc989764439957c6446ecebd7ec__image_awj_1nj_qn" src="loioce923dff09294b65b51609d2ec1f1718_LowRes.png"/><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-var oDataModel = new sap.ui.model.odata.ODataModel(
-    "/uilib-sample/proxy/http/services.odata.org/V3/Northwind/Northwind.svc", true);
+                allow the user to save the facet filter list selections as well as other properties
+                by means of a variant. For example, you can use <samp class="ph codeph">getSelectedKeys</samp> to
+                retrieve an object containing all selected items and use JSON.stringify to marshall
+                and JSON.parse to unmarshall. After unmarshalling, you can use
+                    <samp class="ph codeph">setSelectedKeys</samp> to apply the selections to the list. The
+                following figure and code snippet give an example.</p>
+<img class="image" id="loioef860fc989764439957c6446ecebd7ec__image_awj_1nj_qn" src="loioce923dff09294b65b51609d2ec1f1718_LowRes.png"/><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
+var oDataModel = new sap.ui.model.odata.v2.ODataModel("/uilib-sample/proxy/http/services.odata.org/V3/Northwind/Northwind.svc");
 
 // create the FacetFilterList and bind the filter items
 var oFacetFilterList = new sap.m.FacetFilterList({
@@ -94,19 +79,5 @@ var oFacetFilter = new sap.m.FacetFilter({
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Facet Filter Selection";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

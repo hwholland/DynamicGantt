@@ -18,7 +18,10 @@ Additionally, a user-defined string can be displayed on the ProgressIndicator.</
             <documentation>Specifies the text value to be displayed in the bar.</documentation>
         </property>
         <property name="percentValue" type="sap.ui.core/float" defaultValue="0" group="Data">
-            <documentation>Specifies the numerical value in percent for the length of the progress bar.</documentation>
+            <documentation>Specifies the numerical value in percent for the length of the progress bar.
+
+&lt;b&gt;Note:&lt;/b&gt; If a value greater than 100 is provided, the &lt;code&gt;percentValue&lt;/code&gt; is set to 100.
+In other cases of invalid value, &lt;code&gt;percentValue&lt;/code&gt; is set to its default of 0.</documentation>
         </property>
         <property name="showValue" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>Indicates whether the displayValue should be shown in the ProgressIndicator.</documentation>
@@ -31,6 +34,9 @@ Additionally, a user-defined string can be displayed on the ProgressIndicator.</
         </property>
         <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance" since="1.28.0">
             <documentation>Specifies the element's text directionality with enumerated options (RTL or LTR). By default, the control inherits text direction from the DOM.</documentation>
+        </property>
+        <property name="displayOnly" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.50">
+            <documentation>Determines whether the control is in display-only state where the control has different visualization and cannot be focused.</documentation>
         </property>
     </properties>
 </control>

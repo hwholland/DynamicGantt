@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.ComboBox.
-sap.ui.define(['jquery.sap.global', './TextField', './library', 'sap/ui/core/Popup', 'jquery.sap.strings'],
-	function(jQuery, TextField, library, Popup/* , jQuerySap */) {
+sap.ui.define([
+    'jquery.sap.global',
+    './TextField',
+    './library',
+    'sap/ui/core/Popup',
+    "./ComboBoxRenderer",
+    'jquery.sap.strings'
+],
+	function(jQuery, TextField, library, Popup, ComboBoxRenderer /*, jQuerySap */) {
 	"use strict";
 
 
@@ -24,11 +31,11 @@ sap.ui.define(['jquery.sap.global', './TextField', './library', 'sap/ui/core/Pop
 	 * @implements sap.ui.commons.ToolbarItem
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.ComboBox</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.ComboBox}
 	 * @alias sap.ui.commons.ComboBox
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -65,7 +72,7 @@ sap.ui.define(['jquery.sap.global', './TextField', './library', 'sap/ui/core/Pop
 			/**
 			 * Id of the selected item. If the value has no corresponding item, the <code>selectedItemId</code> is empty.
 			 *
-			 * If the <code>selectedItemId</code> is set to an not existing item, it will not be changed.
+			 * If the <code>selectedItemId</code> is set to a not existing item, it will not be changed.
 			 */
 			selectedItemId : {type : "string", group : "Data", defaultValue : null}
 		},
@@ -1182,7 +1189,7 @@ sap.ui.define(['jquery.sap.global', './TextField', './library', 'sap/ui/core/Pop
 		if (bDelayed) {
 			// Items are updated by binding. As items can be "reused" and have same IDSs,
 			// only one check at the end of all changes is needed
-			// only clear if really from an delayed call
+			// only clear if really from a delayed call
 			this._sHandleItemsChanged = null;
 			this._bNoItemCheck = undefined;
 		}
@@ -1756,7 +1763,7 @@ sap.ui.define(['jquery.sap.global', './TextField', './library', 'sap/ui/core/Pop
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
 	 * @protected
 	 */
 	ComboBox.prototype.getAccessibilityInfo = function() {

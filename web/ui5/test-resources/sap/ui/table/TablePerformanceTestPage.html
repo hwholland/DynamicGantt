@@ -12,13 +12,12 @@
 <!-- SAPUI5 Bootstrap:                                                     -->
 <!-- Extend the "libs" property if you like to import additional libraries  -->
 <!-- ********************************************************************** -->
+<script src="shared-config.js"></script>
 <script id="sap-ui-bootstrap"
-	type="text/javascript"
 	data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.unified,sap.ui.layout"
-	data-sap-ui-theme="sap_bluecrystal"
 	src="../../../../resources/sap-ui-core.js"></script>
 
-<script type="text/javascript">
+<script>
 
 	var oModel,
 		oTable,
@@ -122,7 +121,7 @@
 	var oGetResults = new sap.m.Button({
 		text: "Download Test Results",
 		press: function () {
-			console.log("Test Results: ", oResults);
+			jQuery.sap.log.debug("Test Results: ", oResults);
 
 			var sCSV = "Key;Overall;Rendering;Before Rendering;After Rendering;Table Create;Factor of After Rendering in Rendering\n";
 			jQuery.each(oResults, function (k, v) {
@@ -340,7 +339,7 @@
 					if (i === iColumns - 1) {
 						iColumnWidth = undefined;
 					}
-					oControl = new sap.m.Text({text: "{c" + i + "}"});
+					oControl = new sap.m.Text({text: "{c" + i + "}", wrapping: false});
 					oColumn = new sap.ui.table.Column({
 						label: new sap.m.Label({text: "m.Text"}),
 						template: oControl,

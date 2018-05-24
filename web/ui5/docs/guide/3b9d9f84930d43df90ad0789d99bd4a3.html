@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="After all the work on the app structure it’s time to improve the look of our app. We will use two controls from the sap.m library to add a bit more &#34;bling&#34; to our UI. You will also learn about control aggregations in this step."/>
 <meta name="description" content="After all the work on the app structure it’s time to improve the look of our app. We will use two controls from the sap.m library to add a bit more &#34;bling&#34; to our UI. You will also learn about control aggregations in this step."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8903816949705922"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=49596746070442377"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=49596746070442377"/>
 <title>Step 11: Pages and Panels</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio3b9d9f84930d43df90ad0789d99bd4a3">
 <div id="wrapper"><div id="container">
@@ -48,12 +34,11 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview">Walkthrough - Step 11</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.11/preview">Walkthrough - Step 11</a></span>.</p>
 
 			<div class="section_title">webapp/view/App.view.xml</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-   controllerName="sap.ui.demo.wt.controller.App"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+   controllerName="sap.ui.demo.walkthrough.controller.App"
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"
   <span class="ph emphasis emphasis">displayBlock="true"&gt;
@@ -106,9 +91,9 @@ In order to make the fullscreen height of the view work properly, we add the <sa
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp># App Descriptor
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"># App Descriptor
 appTitle=Hello World
-appDescription=A simple walkthrough app that explains the most important concepts of <span class="ph"><span class="ph pname">SAPUI5</span></span>
+appDescription=A simple walkthrough app that explains the most important concepts of <span class="ph"><span class="ph pname">OpenUI5</span></span>
 
 # Hello Panel
 showHelloButtonText=Say Hello
@@ -139,7 +124,7 @@ helloPanelTitle=Hello World</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="8f93bf2b2b13402e9f035128ce8b495f.html" title="All application-specific configuration settings will now further be put in a separate descriptor file called manifest.json. This clearly separates the application coding from the configuration settings and makes our app even more flexible. For example, all SAP Fiori applications are realized as components and come with a descriptor file in order to be hosted in the SAP Fiori launchpad.">Step 10: Descriptor for Applications</a><br/>
@@ -150,28 +135,14 @@ helloPanelTitle=Hello World</span></pre></div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.NavContainer.html" alt="../../docs/api/symbols/sap.m.NavContainer.html" title="../../docs/api/symbols/sap.m.NavContainer.html">API Reference: <samp class="ph codeph">sap.m.NavContainer</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.NavContainer/samples" alt="../../explored.html#/entity/sap.m.NavContainer/samples" title="../../explored.html#/entity/sap.m.NavContainer/samples">API Overview and Samples: <samp class="ph codeph">sap.m.NavContainer</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.NavContainer/samples" alt="../../explored.html#/entity/sap.m.NavContainer/samples" title="../../explored.html#/entity/sap.m.NavContainer/samples">Samples: <samp class="ph codeph">sap.m.NavContainer</samp>
 			</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.Page.html" alt="../../docs/api/symbols/sap.m.Page.html" title="../../docs/api/symbols/sap.m.Page.html">API Reference: <samp class="ph codeph">sap.m.Page</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Page/samples" alt="../../explored.html#/entity/sap.m.Page/samples" title="../../explored.html#/entity/sap.m.Page/samples">API Overview and Samples: <samp class="ph codeph">sap.m.Page</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Page/samples" alt="../../explored.html#/entity/sap.m.Page/samples" title="../../explored.html#/entity/sap.m.Page/samples">Samples: <samp class="ph codeph">sap.m.Page</samp>
 			</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 11: Pages and Panels";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

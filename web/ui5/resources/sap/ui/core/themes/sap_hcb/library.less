@@ -2,14 +2,16 @@
 
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 @import "../base/library.less";
 @import "global.less";
 /* START "shared.less" */
-/* Shared CSS for 'sap_hcb' theme */
+/* ===================================== */
+/* Shared CSS High Contrast Black theme  */
+/* ===================================== */
 
 .sapUiBody {
 	width: 100%;
@@ -29,10 +31,57 @@
 	display: none;
 }
 
+/* Typography */
+.sapMH1FontSize,
+.sapMH1Style {
+	font-size: @sapMFontHeader1Size !important;
+}
+
+.sapMH2FontSize,
+.sapMH2Style {
+	font-size: @sapMFontHeader2Size !important;
+}
+
+.sapMH3FontSize,
+.sapMH3Style {
+	font-size: @sapMFontHeader3Size !important;
+}
+
+.sapMH4FontSize,
+.sapMH4Style {
+	font-size: @sapMFontHeader4Size !important;
+}
+
+.sapMH5FontSize,
+.sapMH5Style {
+	font-size: @sapMFontHeader5Size !important;
+}
+
+.sapMH6FontSize,
+.sapMH6Style {
+	font-size: @sapMFontHeader6Size !important;
+}
+
+.sapMH1Style,
+.sapMH2Style,
+.sapMH3Style,
+.sapMH4Style,
+.sapMH5Style,
+.sapMH6Style {
+	font-family: @sapUiFontHeaderFamily !important;
+	font-weight: @sapUiFontHeaderWeight !important;
+	color: @sapUiGroupTitleTextColor !important;
+	text-shadow: @sapUiShadowText !important;
+}
 /* END "shared.less" */
 
 
 /* START "BrowserScrollbar.less" */
+/* ============================================= */
+/* CSS for control sap.ui.core/BrowserScrollbar  */
+/* High Contrast Black theme                     */
+/* ============================================= */
+
 .sapUiBody {
 	scrollbar-base-color: @sapHCStandardBG;
 	scrollbar-face-color: @sapHCStandardFG;
@@ -66,12 +115,21 @@ html.sap-desktop ::-webkit-scrollbar-thumb {
 html.sap-desktop ::-webkit-scrollbar-thumb:hover {
 	background-color: @sapHCStandardFG;
 }
-
 /* END "BrowserScrollbar.less" */
 
 /* START "Icon.less" */
-.sapUiIcon:focus {
-	outline: 1px dashed @sapHCStandardFG;
+/* ================================= */
+/* CSS for control sap.ui.core/Icon  */
+/* High Contrast Black theme         */
+/* ================================= */
+
+html:not([data-sap-ui-browser^="ie"]):not([data-sap-ui-browser^="ed"]) .sapUiIcon:focus {
+	outline-color: @sapHCStandardFG;
+}
+
+html[data-sap-ui-browser^="ie"] .sapUiIcon:focus::after,
+html[data-sap-ui-browser^="ed"] .sapUiIcon:focus::after {
+	border-color: @sapHCStandardFG;
 }
 
 .sapUiIconColorNeutral {
@@ -105,22 +163,27 @@ html.sap-desktop ::-webkit-scrollbar-thumb:hover {
 .sapUiIconBGColorNegative {
 	background-color: @sapHCNegative;
 }
-
 /* END "Icon.less" */
 
 /* START "LocalBusyIndicator.less" */
-@sapUiLocalBusyIndicatorBG: fade(@sapHCStandardBG, 30%);
-@sapUiLocalBusyIndicatorBG_IE: @sapHCStandardBG;
+/* =============================================== */
+/* CSS for control sap.ui.core/LocalBusyIndicator  */
+/* High Contrast Black theme                       */
+/* =============================================== */
+
+@_sap_ui_core_LocalBusyIndicator_Background: fade(@sapHCStandardBG, 30%);
+@_sap_ui_core_LocalBusyIndicator_BackgroundIE: @sapHCStandardBG;
 
 // Color the BusyIndicator with the standard FG color in HCB
 // The brandColor default is black, and thus invisible in HCB
-@sapUiLocalBusyIndicatorColor: @sapHCStandardFG;
-
+@_sap_ui_core_LocalBusyIndicator_Color: @sapHCStandardFG;
 /* END "LocalBusyIndicator.less" */
 
 /* START "Shadow.less" */
-
-/* HCB */
+/* =================================== */
+/* CSS for control sap.ui.core/Shadow  */
+/* High Contrast Black theme           */
+/* =================================== */
 
 .sapUiShd {
 	box-shadow: none;

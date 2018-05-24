@@ -1,10 +1,10 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './async/Targets', './sync/Targets'],
-	function(Targets, TargetHandler, Target, asyncTargets, syncTargets) {
+sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './async/Targets', './sync/Targets', 'jquery.sap.global'],
+	function(Targets, TargetHandler, Target, asyncTargets, syncTargets, jQuery) {
 		"use strict";
 
 		/**
@@ -61,7 +61,7 @@ sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './
 		 * The id of the rootView - This should be the id of the view that contains the control with the controlId
 		 * since the control will be retrieved by calling the {@link sap.ui.core.mvc.View#byId} function of the rootView.
 		 * If you are using a component and add the routing.targets <b>do not set this parameter</b>,
-		 * since the component will set the rootView to the view created by the {@link sap.ui.core.UIComponent.html#createContent} function.
+		 * since the component will set the rootView to the view created by the {@link sap.ui.core.UIComponent#createContent} function.
 		 * If you specify the "parent" property of a target, the control will not be searched in the root view but in the view Created by the parent (see parent documentation).
 		 * @param {boolean} [oOptions.config.async=false] @since 1.34 Whether the views which are created through this Targets are loaded asyncly. This option can be set only when the Targets
 		 * is used standalone without the involvement of a Router. Otherwise the async option is inherited from the Router.
@@ -182,7 +182,7 @@ sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './
 		 * It's a perfect candidate to lazy load something inside of it.
 		 * <br/>
 		 * <b>Example app structure:</b><br/>
-		 * We have a rootView that is returned by the createContent function of our UIComponent. This view contains a sap.m.App control with the id 'myApp'
+		 * We have a rootView that is returned by the createContent function of our UIComponent. This view contains an sap.m.App control with the id 'myApp'
 		 * <pre>
 		 * <code>
 		 * &lt;View xmlns="sap.m"&gt;
@@ -248,7 +248,7 @@ sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './
 		 *
 		 * @param {int} [oOptions.targets.anyName.viewLevel]
 		 * If you are having an application that has a logical order of views (eg: a create account process, first provide user data, then review and confirm them).
-		 * You always want to always show a backwards transition if a navigation from the confirm to the userData page takes place.
+		 * You always want to show a backwards transition if a navigation from the confirm to the userData page takes place.
 		 * Therefore you may use the viewLevel. The viewLevel has to be an integer. The user data page should have a lower number than the confirm page.
 		 * These levels should represent the user process of your application and they do not have to match the container structure of your Targets.
 		 * If the user navigates between views with the same viewLevel, a forward transition is taken. If you pass a direction into the display function, the viewLevel will be ignored.<br/>
@@ -386,4 +386,4 @@ sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './
 		});
 
 		return MobileTargets;
-	}, /* bExport= */ true);
+	});

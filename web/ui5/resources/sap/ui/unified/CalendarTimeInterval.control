@@ -32,7 +32,7 @@ will be the first time in the displayed row.</documentation>
 
 &lt;b&gt;Note:&lt;/b&gt; the start of the interval calculation is always on the corresponding date at 00:00.
 
-A interval longer then 720 minutes is not allowed. Please use the &lt;code&gt;CalendarDateInterval&lt;/code&gt; instead.
+An interval longer than 720 minutes is not allowed. Please use the &lt;code&gt;CalendarDateInterval&lt;/code&gt; instead.
 
 A day must be divisible by this interval size. One interval must not include more than one day.</documentation>
         </property>
@@ -80,6 +80,7 @@ If one interval is assigned to more than one type, only the first one will be us
         <aggregation name="datesRow" type="sap.ui.unified/calendar/Month" cardinality="0..1" visibility="hidden"/>
         <aggregation name="monthPicker" type="sap.ui.unified/calendar/MonthPicker" cardinality="0..1" visibility="hidden"/>
         <aggregation name="yearPicker" type="sap.ui.unified/calendar/YearPicker" cardinality="0..1" visibility="hidden"/>
+        <aggregation name="calendarPicker" type="sap.ui.unified/Calendar" cardinality="0..1" visibility="hidden"/>
     </aggregations>
     <associations>
         <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
@@ -101,7 +102,7 @@ If one interval is assigned to more than one type, only the first one will be us
             </parameters>
         </method>
         <method name="displayDate" type="sap.ui.unified/Calendar">
-            <documentation>Displays a item in the &lt;code&gt;CalendarTimeInterval&lt;/code&gt; but doesn't set the focus.</documentation>
+            <documentation>Displays an item in the &lt;code&gt;CalendarTimeInterval&lt;/code&gt; but doesn't set the focus.</documentation>
             <parameters>
                 <parameter name="date" type="sap.ui.core/object">
                     <documentation>JavaScript date object for displayed item.</documentation>

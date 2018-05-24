@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Control metadata consists of properties, events, as well as aggregations and associations."/>
+<meta name="description" content="Control metadata consists of properties, events, as well as aggregations and associations."/>
 
-
-
-
-
-<meta name="abstract" content="Control metadata consist of properties, events, as well as aggregations and associations."/>
-<meta name="description" content="Control metadata consist of properties, events, as well as aggregations and associations."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=601576054200152"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6631134205892837"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6631134205892837"/>
 <title>Defining the Control Metadata</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio7b52540d9d8c4e00b9723151622bbb64">
 <div id="wrapper"><div id="container">
@@ -33,27 +19,31 @@
 	<h1 class="title topictitle1">Defining the Control Metadata</h1>
 
 	
-	<div class="body"><p class="shortdesc">Control metadata consist of properties, events, as well as aggregations and
+	<div class="body conbody"><p class="shortdesc">Control metadata consists of properties, events, as well as aggregations and
 		associations.</p>
 
-		<p class="p">The control metadata are defined as follows:</p>
+		<p class="p">The control metadata is defined as follows:</p>
 
 		<ul class="ul" id="loio7b52540d9d8c4e00b9723151622bbb64__ul_gqc_fgp_zm">
 			<li class="li">
 				<p class="p">Properties</p>
 
-				<p class="p">A property is defined by a name and a type. Additionally, a default value can be
-					defined for a property. The following list gives an overview of the available
-					settings:</p>
+				<p class="p">A property has a name and an associated data type. It has a well-defined default value
+					expressed as a literal of that data type. Properties are accessible to
+					application code via the element's API as getters and setters, but are also used
+					by a control's renderer in a read-only way. The following list gives an overview
+					of the available settings:</p>
 
 				<ul class="ul" id="loio7b52540d9d8c4e00b9723151622bbb64__ul_iwr_ngp_zm">
 					<li class="li">
-						<p class="p"><samp class="ph codeph">type</samp>: Data type of the control property; <span class="ph"><span class="ph pname">SAPUI5</span></span> provides an automatic type
+						<p class="p"><samp class="ph codeph">type</samp>: Data type of the control property; <span class="ph"><span class="ph pname">OpenUI5</span></span> provides an automatic type
 							validation. Valid types are, for example, <samp class="ph codeph">string</samp>
 							(default) for a string property, <samp class="ph codeph">int</samp> or
 								<samp class="ph codeph">float</samp> for number properties,
 							<samp class="ph codeph">int[]</samp>, etc. for arrays and
 								<samp class="ph codeph">sap.ui.core.CSSSize</samp> for a custom-defined type.</p>
+
+						<p class="p">For more information, see <a class="xref" href="ac56d92162ed47ff858fdf1ce26c18c4.html">Defining Control Properties</a>.</p>
 
 					</li>
 
@@ -69,17 +59,19 @@
 				<p class="p">These control-specific settings are only available when inheriting from a control or one of
 					the base classes <samp class="ph codeph">sap.ui.core.Control</samp>,
 						<samp class="ph codeph">sap.ui.core.Element</samp>,
-						<samp class="ph codeph">sap.ui.base.ManagedObject</samp>, see <a class="xref" href="91f29fea6f4d1014b6dd926db0e91070.html" title="SAPUI5 supports the extension of plain objects that are not elements or controls.">Object Metadata and Implementation</a>.</p>
+						<samp class="ph codeph">sap.ui.base.ManagedObject</samp>, see <a class="xref" href="91f29fea6f4d1014b6dd926db0e91070.html" title="OpenUI5 supports the extension of plain objects that are not elements or controls.">Object Metadata and Implementation</a>.</p>
 
 			</li>
 
 			<li class="li">
 				<p class="p">Events</p>
 
-				<p class="p">An event is defined by its name only.</p>
+				<p class="p">An event has a name as well as any number of parameters. The element's API offers
+					support to manage event subscriptions.</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-events: {
+				<p class="p">It is defined by its name only.</p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">events: {
    "logout": {}
 }</pre></div>
 
@@ -90,19 +82,33 @@ events: {
 
 				<p class="p">A control can enable events to be interrupted by the application. A tab control, for example,
 					can enable the application to cancel a <samp class="ph codeph">close</samp> event by setting
-					the <samp class="ph codeph">enablePreventDefault</samp> property of the event to
+					the <samp class="ph codeph">allowPreventDefault</samp> property of the event to
 						<samp class="ph codeph">true</samp> and checking the return value after firing the
 					event:</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-events: {
-   "close": {enablePreventDefault : true}  
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">events: {
+   "close": {allowPreventDefault : true}  
 }</pre></div>
 
 			</li>
 
 			<li class="li">
 				<p class="p">Aggregations and Associations</p>
+
+				<p class="p">An <span class="ph emphasis emphasis">aggregation</span> is a special relation between two UI element
+					types. It is used to define the parent-child relationship within the above
+					mentioned tree structure. The parent end of the aggregation has cardinality
+						<samp class="ph codeph">0..1</samp>, while the child end may have <samp class="ph codeph">0..1</samp> or
+						<samp class="ph codeph">0..*</samp>. The element's API offers convenient and consistent
+					methods to deal with aggregations (e.g. to get, set, or remove target elements).
+					Examples are table rows and cells, or the content of a table cell.</p>
+
+				<p class="p">An <span class="ph emphasis emphasis">association</span> is another type of relation between two UI
+					element types which is independent of the parent-child relationship within the
+					above mentioned tree structure. Directed outgoing associations to a target of
+					cardinality <samp class="ph codeph">0..1</samp> are supported. They represent a loose coupling
+					only and are thus implemented by storing the target element instance's ID. The
+					most prominent example is the association between a label and its field.</p>
 
 				<p class="p">Aggregations and associations are defined by their name and a configuration
 					object with the following information:</p>
@@ -139,12 +145,11 @@ events: {
 
 				<p class="p">One example: </p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-aggregations: {
-   "acceptButton" : "sap.ui.commons.Button", // if only type is given, no object is required
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">aggregations: {
+   "acceptButton" : "sap.m.Button", // if only type is given, no object is required
    "content" : {singularName: "content"},    // default type is "sap.ui.core.Control", 
                                              // which is appropriate for generic containers
-   "worksetItems" : {type : "sap.ui.ux3.NavigationItem", multiple : true, singularName : "worksetItem"} 
+   "toolbarItems" : {type : "sap.m.Button", multiple : true, singularName : "toolbarItem"}
                                              // a fully specified aggregation
 }</pre></div>
 
@@ -161,8 +166,7 @@ aggregations: {
 						<samp class="ph codeph">defaultAggregation</samp> property to the name of the aggregation
 					as shown in the following code snippet:</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-aggregations: {
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">aggregations: {
    "content": {singularName: "content"} // default type is "sap.ui.core.Control", multiple is "true"
 
 },
@@ -179,7 +183,7 @@ defaultAggregation: "content"</pre></div>
 
 <div class="related-links"> <br/>
 <div class="childtopics"><strong>In this section:</strong></div><ul class="ullinks">
-<div><strong><a class="link" href="91f29fea6f4d1014b6dd926db0e91070.html" title="SAPUI5 supports the extension of plain objects that are not elements or controls.">Object Metadata and Implementation</a></strong><br/>
+<div><strong><a class="link" href="91f29fea6f4d1014b6dd926db0e91070.html" title="OpenUI5 supports the extension of plain objects that are not elements or controls.">Object Metadata and Implementation</a></strong><br/>
 </div>
 <div><strong><a class="link" href="ac56d92162ed47ff858fdf1ce26c18c4.html">Defining Control Properties</a></strong><br/>
 </div>
@@ -188,19 +192,5 @@ defaultAggregation: "content"</pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Defining the Control Metadata";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -1,13 +1,13 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException',
-		'sap/ui/model/odata/type/ODataType', 'sap/ui/model/ParseException',
-		'sap/ui/model/ValidateException'],
-	function(NumberFormat, FormatException, ODataType, ParseException, ValidateException) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/format/NumberFormat',
+		'sap/ui/model/FormatException', 'sap/ui/model/odata/type/ODataType',
+		'sap/ui/model/ParseException', 'sap/ui/model/ValidateException'],
+	function(jQuery, NumberFormat, FormatException, ODataType, ParseException, ValidateException) {
 	"use strict";
 
 	/**
@@ -42,7 +42,7 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	}
 
 	/**
-	 * Sets the constraints for Edm.Int. This is meta information used when validating the value.
+	 * Sets the constraints.
 	 *
 	 * @param {sap.ui.model.odata.type.Int} oType
 	 *   the type instance
@@ -50,20 +50,16 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 *   constraints, see {@link #constructor}
 	 */
 	function setConstraints(oType, oConstraints) {
-		var vNullable = oConstraints && oConstraints.nullable;
+		var vNullable;
 
 		oType.oConstraints = undefined;
-		switch (vNullable) {
-		case false:
-		case "false":
-			oType.oConstraints = {nullable : false};
-			break;
-		case true:
-		case "true":
-		case undefined:
-			break;
-		default:
-			jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+		if (oConstraints) {
+			vNullable = oConstraints.nullable;
+			if (vNullable === false || vNullable === "false") {
+				oType.oConstraints = {nullable : false};
+			} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
+				jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+			}
 		}
 		oType._handleLocalizationChange();
 	}
@@ -78,9 +74,9 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
-	 * @constructor
+	 * @abstract
 	 * @alias sap.ui.model.odata.type.Int
 	 * @param {object} [oFormatOptions]
 	 *   type-specific format options; see subtypes
@@ -119,20 +115,25 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 * @param {number} iValue
 	 *   the value in model representation to be formatted
 	 * @param {string} sTargetType
-	 *   the target type; may be "any", "int", "float" or "string".
+	 *   the target type; may be "any", "int", "float", "string", or a type with one of these types
+	 *   as its {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {number|string}
 	 *   the formatted output value in the target type; <code>undefined</code> or <code>null</code>
 	 *   are formatted to <code>null</code>
 	 * @throws {sap.ui.model.FormatException}
-	 *   if <code>sTargetType</code> is unsupported
+	 *   If <code>sTargetType</code> is not supported or <code>iValue</code> is not a model value
+	 *   for this type.
 	 * @public
 	 */
 	Int.prototype.formatValue = function(iValue, sTargetType) {
 		if (iValue === undefined || iValue === null) {
 			return null;
 		}
-		switch (sTargetType) {
+		if (typeof iValue !== "number" && sTargetType !== "any") {
+			throw new FormatException("Illegal " + this.getName() + " value: " + iValue);
+		}
+		switch (this.getPrimitiveType(sTargetType)) {
 			case "string":
 				return getFormatter(this).format(iValue);
 			case "int":
@@ -153,8 +154,9 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 	 *   the value to be parsed. The empty string and <code>null</code> are parsed to
 	 *   <code>null</code>.
 	 * @param {string} sSourceType
-	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int" or
-	 *   "string".
+	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int",
+	 *   "string", or a type with one of these types as its
+	 *   {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @throws {sap.ui.model.ParseException}
 	 *   if <code>sSourceType</code> is unsupported or if the given string cannot be parsed to an
@@ -169,7 +171,7 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 		if (vValue === null || vValue === "") {
 			return null;
 		}
-		switch (sSourceType) {
+		switch (this.getPrimitiveType(sSourceType)) {
 			case "string":
 				iResult = getFormatter(this).parse(vValue);
 				if (isNaN(iResult)) {
@@ -215,11 +217,11 @@ sap.ui.define(['sap/ui/core/format/NumberFormat', 'sap/ui/model/FormatException'
 		}
 		if (iValue < oRange.minimum) {
 			throw new ValidateException(
-				getText("EnterIntMin", [this.formatValue(oRange.minimum, "string")]));
+				getText("EnterNumberMin", [this.formatValue(oRange.minimum, "string")]));
 		}
 		if (iValue > oRange.maximum) {
 			throw new ValidateException(
-				getText("EnterIntMax", [this.formatValue(oRange.maximum, "string")]));
+				getText("EnterNumberMax", [this.formatValue(oRange.maximum, "string")]));
 		}
 	};
 

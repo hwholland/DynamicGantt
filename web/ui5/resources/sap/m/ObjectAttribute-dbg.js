@@ -1,26 +1,41 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ObjectAttribute.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/library',
+	'sap/m/Text',
+	'./ObjectAttributeRenderer'
+],
+function(jQuery, library, Control, coreLibrary, Text, ObjectAttributeRenderer) {
 	"use strict";
+
+	// shortcut for sap.ui.core.TextDirection
+	var TextDirection = coreLibrary.TextDirection;
 
 
 
 	/**
-	 * Constructor for a new ObjectAttribute.
+	 * Constructor for a new <code>ObjectAttribute</code>.
 	 *
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * The ObjectAttribute control displays a text field that can be normal or active. The ObjectAttribute fires a press event when the user selects active text.
+	 * The <code>ObjectAttribute</code> control displays a text field that can be normal or active.
+	 * The <code>ObjectAttribute</code> fires a <code>press</code> event when the user chooses the active text.
+	 *
+	 * <b>Note:</b> If property <code>active</code> is set to <code>true</code>, only the value of the
+	 * <code>text</code> property is styled and acts as a link. In this case the <code>text</code>
+	 * property must also be set, as otherwise there will be no link displayed for the user.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -31,6 +46,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	var ObjectAttribute = Control.extend("sap.m.ObjectAttribute", /** @lends sap.m.ObjectAttribute.prototype */ { metadata : {
 
 		library : "sap.m",
+		designtime: "sap/m/designtime/ObjectAttribute.designtime",
 		properties : {
 
 			/**
@@ -44,7 +60,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			text : {type : "string", group : "Misc", defaultValue : null},
 
 			/**
-			 * Indicates if the ObjectAttribute text is selectable for the user.
+			 * Indicates if the <code>ObjectAttribute</code> text is selectable for the user.
+			 *
+			 * <b>Note:</b> As of version 1.48, only the value of the <code>text</code> property becomes active (styled and acts like a link) as opposed to both the <code>title</code> and <code>text</code> in the previous versions. If you set this property to <code>true</code>, you have to also set the <code>text</code> property.
 			 */
 			active : {type : "boolean", group : "Misc", defaultValue : null},
 
@@ -52,7 +70,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			 * Determines the direction of the text, not including the title.
 			 * Available options for the text direction are LTR (left-to-right) and RTL (right-to-left). By default the control inherits the text direction from its parent control.
 			 */
-			textDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit}
+			textDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit}
 		},
 		aggregations : {
 
@@ -84,18 +102,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	}});
 
-	ObjectAttribute.MAX_LINES = {
-		SINGLE_LINE: 1,
-		MULTI_LINE: 2
-	};
-
 	/**
 	 *  Initializes member variables.
 	 *
 	 * @private
 	 */
 	ObjectAttribute.prototype.init = function() {
-		this.setAggregation('_textControl', new sap.m.Text());
+		this.setAggregation('_textControl', new Text());
 	};
 
 	/**
@@ -110,18 +123,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			sTextDir = this.getTextDirection(),
 			oParent = this.getParent(),
 			bPageRTL = sap.ui.getCore().getConfiguration().getRTL(),
-			iMaxLines = ObjectAttribute.MAX_LINES.MULTI_LINE,
+			iMaxLines = ObjectAttributeRenderer.MAX_LINES.MULTI_LINE,
 			bWrap = true,
 			oppositeDirectionMarker = '';
 
-		if (sTextDir === sap.ui.core.TextDirection.LTR && bPageRTL) {
+		if (sTextDir === TextDirection.LTR && bPageRTL) {
 			oppositeDirectionMarker = '\u200e';
 		}
-		if (sTextDir === sap.ui.core.TextDirection.RTL && !bPageRTL) {
+		if (sTextDir === TextDirection.RTL && !bPageRTL) {
 			oppositeDirectionMarker = '\u200f';
 		}
 		sText = oppositeDirectionMarker + sText + oppositeDirectionMarker;
 		if (sTitle) {
+			sText = sText.replace(new RegExp(sTitle + ":\\s+", "gi"), "");
 			sText = sTitle + ": " + sText;
 		}
 		oAttrAggregation.setProperty('text', sText, true);
@@ -129,7 +143,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		//if attribute is used inside responsive ObjectHeader or in ObjectListItem - only 1 line
 		if (oParent instanceof sap.m.ObjectListItem) {
 			bWrap = false;
-			iMaxLines = ObjectAttribute.MAX_LINES.SINGLE_LINE;
+			iMaxLines = ObjectAttributeRenderer.MAX_LINES.SINGLE_LINE;
 		}
 
 		this._setControlWrapping(oAttrAggregation, bWrap, iMaxLines);
@@ -146,13 +160,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		if (oAttrAggregation instanceof sap.m.Link) {
 			oAttrAggregation.setProperty('wrapping', bWrap, true);
 		}
-		if (oAttrAggregation instanceof sap.m.Text) {
+		if (oAttrAggregation instanceof Text) {
 			oAttrAggregation.setProperty('maxLines', iMaxLines, true);
 		}
 	};
 
 	/**
 	 * @private
+	 * @param {object} oEvent The fired event
 	 */
 	ObjectAttribute.prototype.ontap = function(oEvent) {
 		//event should only be fired if the click is on the text
@@ -165,8 +180,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	/**
 	 * @private
+	 * @param {object} oEvent The fired event
 	 */
-	sap.m.ObjectAttribute.prototype.onsapenter = function(oEvent) {
+	ObjectAttribute.prototype.onsapenter = function(oEvent) {
 		if (this._isSimulatedLink()) {
 			this.firePress({
 				domRef : this.getDomRef()
@@ -179,8 +195,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	/**
 	 * @private
+	 * @param {object} oEvent The fired event
 	 */
-	sap.m.ObjectAttribute.prototype.onsapspace = function(oEvent) {
+	ObjectAttribute.prototype.onsapspace = function(oEvent) {
 		this.onsapenter(oEvent);
 	};
 
@@ -191,7 +208,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @returns {boolean} true if ObjectAttribute's text is empty or only consists of whitespaces
 	 */
 	ObjectAttribute.prototype._isEmpty = function() {
-		if (this.getAggregation('customContent') && !(this.getAggregation('customContent') instanceof sap.m.Link || this.getAggregation('customContent') instanceof sap.m.Text)) {
+		if (this.getAggregation('customContent') && !(this.getAggregation('customContent') instanceof sap.m.Link || this.getAggregation('customContent') instanceof Text)) {
 			jQuery.sap.log.warning("Only sap.m.Link or sap.m.Text are allowed in \"sap.m.ObjectAttribute.customContent\" aggregation");
 			return true;
 		}
@@ -201,7 +218,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	/**
 	 * Called when the control is touched.
-	 *
+	 * @param {object} oEvent The fired event
 	 * @private
 	 */
 	ObjectAttribute.prototype.ontouchstart = function(oEvent) {
@@ -222,9 +239,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	ObjectAttribute.prototype._isSimulatedLink = function () {
-		return this.getActive() && !this.getAggregation('customContent');
+		return (this.getActive() && this.getText() !== "") && !this.getAggregation('customContent');
 	};
 
 	return ObjectAttribute;
 
-}, /* bExport= */ true);
+});

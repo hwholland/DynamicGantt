@@ -5,6 +5,7 @@
     <author>SAP SE</author>
     <documentation>The StandardTile control is displayed in the tile container.</documentation>
     <since>1.12</since>
+    <deprecation since="1.50">replaced by {@link sap.m.GenericTile}</deprecation>
     <baseType>sap.m/Tile</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Misc">

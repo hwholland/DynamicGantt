@@ -1,14 +1,13 @@
-/*
- * ! SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+/*!
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-/*global Promise */
 
 // Provides object sap.ui.fl.ProcessorImpl
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/core/Component', 'sap/ui/fl/FlexControllerFactory', 'sap/ui/fl/Utils', 'sap/ui/fl/LrepConnector', 'sap/ui/fl/Cache'
-], function(jQuery, Component, FlexControllerFactory, Utils, LrepConnector, Cache) {
+	'jquery.sap.global', 'sap/ui/core/Component', 'sap/ui/fl/FlexControllerFactory', 'sap/ui/fl/Utils', 'sap/ui/fl/LrepConnector', 'sap/ui/fl/ChangePersistenceFactory'
+], function(jQuery, Component, FlexControllerFactory, Utils, LrepConnector, ChangePersistenceFactory) {
 	'use strict';
 
 	/**
@@ -18,10 +17,10 @@ sap.ui.define([
 	 * @class
 	 * @constructor
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @experimental Since 1.27.0
 	 */
-	var FlexPreprocessorImpl = function(){
+	var PreprocessorImpl = function(){
 	};
 
 	/**
@@ -35,67 +34,51 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @public
 	 */
-	FlexPreprocessorImpl.prototype.getControllerExtensions = function(sControllerName, sComponentId, bAsync) {
+	PreprocessorImpl.prototype.getControllerExtensions = function(sControllerName, sComponentId, bAsync) {
 		if (bAsync) {
-			return Cache.getChangesFillingCache(LrepConnector.createConnector(), sComponentId, undefined).then(function(oFileContent) {
 
-				var oChanges = oFileContent.changes;
+			if (!sComponentId) {
+				jQuery.sap.log.warning("No component ID for determining the anchor of the code extensions was passed.");
+				//always return a promise if async
+				return Promise.resolve([]);
+			}
+
+			var oComponent = sap.ui.component(sComponentId);
+			var oAppComponent = Utils.getAppComponentForControl(oComponent);
+			var sFlexReference = Utils.getComponentClassName(oAppComponent);
+			var sAppVersion = Utils.getAppVersionFromManifest(oAppComponent.getManifest());
+
+			var oChangePersistence = ChangePersistenceFactory.getChangePersistenceForComponent(sFlexReference, sAppVersion);
+			return oChangePersistence.getChangesForComponent().then(function(oChanges) {
+
 				var aExtensionProviders = [];
-				
-				if (oChanges && oChanges.changes) {
-					jQuery.each(oChanges.changes, function (index, oChange) {
-						if (oChange.changeType === "CodingExtension" && oChange.content && sControllerName === oChange.content.controllerName) {
-							aExtensionProviders.push(FlexPreprocessorImpl.getExtensionProvider(oChange));
-						}
-					});
-				}
+
+				jQuery.each(oChanges, function (index, oChange) {
+					var oChangeDefinition = oChange.getDefinition();
+					if (oChangeDefinition.changeType === "codeExt" && oChangeDefinition.content && sControllerName === oChangeDefinition.selector.id) {
+						aExtensionProviders.push(PreprocessorImpl.getExtensionProvider(oChangeDefinition));
+					}
+				});
 
 				return aExtensionProviders;
 			});
+		} else {
+			jQuery.sap.log.warning("Synchronous extensions are not supported by sap.ui.fl.PreprocessorImpl");
+			return [];
 		}
 	};
 
-	FlexPreprocessorImpl.getExtensionProvider = function(oChange) {
-		var sConvertedAsciiCodeContent = oChange.content.code;
+	PreprocessorImpl.getExtensionProvider = function(oChange) {
+		var sConvertedAsciiCodeContent = oChange.content.code || {};
 		var sConvertedCodeContent = Utils.asciiToString(sConvertedAsciiCodeContent);
 		var oExtensionProvider;
 		/*eslint-disable */
-		eval("oExtensionProvider = {" + sConvertedCodeContent + " } ");
+		eval("oExtensionProvider = " + sConvertedCodeContent);
 		/*eslint-enable */
 
 		return oExtensionProvider;
 	};
 
-	/**
-	 * Asynchronous view processing method.
-	 *
-	 * @param {sap.ui.core.mvc.View} oView view to process
-	 * @returns {jquery.sap.promise} result of the processing, promise if executed asynchronously
-	 *
-	 * @public
-	 */
-	 FlexPreprocessorImpl.process = function(oView){
-		 return Promise.resolve().then(function(){
-			 var sComponentName = Utils.getComponentClassName(oView);
-			 if ( !sComponentName || sComponentName.length === 0 ){
-				 var sError = "no component name found for " + oView.getId();
-				 jQuery.sap.log.info(sError);
-				 throw new Error(sError);
-			 }else {
-			     var oFlexController = FlexControllerFactory.create(sComponentName);
-			     return oFlexController.processView(oView);
-			 }
-		 }).then(function() {
-			 jQuery.sap.log.debug("flex processing view " + oView.getId() + " finished");
-			 return oView;
-		 })["catch"](function(error) {
-			 var sError = "view " + oView.getId() + ": " + error;
-			 jQuery.sap.log.info(sError); //to allow control usage in applications that do not work with UI flex and components
-			 // throw new Error(sError); // throw again, wenn caller handles the promise
-			 return oView;
-		 });
-	 };
-
-	 return FlexPreprocessorImpl;
+	 return PreprocessorImpl;
 
 }, /* bExport= */true);

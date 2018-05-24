@@ -1,17 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/ui/core/mvc/Controller",
+	"jquery.sap.global",
+	"sap/ui/Device",
+	"sap/ui/core/Component",
+	"sap/ui/core/UIComponent",
+	"sap/ui/core/routing/History",
+	"sap/ui/model/json/JSONModel",
 	"sap/ui/demokit/EntityInfo",
-	"sap/ui/demokit/util/JSDocUtil"
-], function (Controller, EntityInfo, JSDocUtil) {
+	"sap/ui/demokit/util/JSDocUtil",
+	"../util/ObjectSearch",
+	"../util/ToggleFullScreenHandler",
+	"../data",
+	"sap/ui/demokit/explored/view/base.controller"
+], function (jQuery, Device, Component, UIComponent, History, JSONModel, EntityInfo, JSDocUtil, ObjectSearch, ToggleFullScreenHandler, data, Base) {
 	"use strict";
 
-	return Controller.extend("sap.ui.demokit.explored.view.entity", {
+	return Base.extend("sap.ui.demokit.explored.view.entity", {
 
 		descriptionText: function (text) {
 			var html;
@@ -23,11 +32,15 @@ sap.ui.define([
 
 		// ====== event handling ====================================================================
 		onInit: function () {
-			this.router = sap.ui.core.UIComponent.getRouterFor(this);
+			this.router = UIComponent.getRouterFor(this);
 			this.router.attachRoutePatternMatched(this.onRouteMatched, this);
-			this._component = sap.ui.core.Component.getOwnerComponentFor(this.getView());
+			this._component = Component.getOwnerComponentFor(this.getView());
 			// click handler for @link tags in JSdoc fragments
 			this.getView().attachBrowserEvent("click", this.onJSDocLinkClick, this);
+
+			this.getView().addEventDelegate({
+				onBeforeFirstShow: jQuery.proxy(this._applyViewConfigurations, this)
+			});
 		},
 
 		onExit: function() {
@@ -116,18 +129,19 @@ sap.ui.define([
 			// find entity in index
 			// (can be null if the entity is not in the index, e.g. for base classes and types)
 			var oEntModel = this.getView().getModel("entity");
-			var sPath = sap.ui.demokit.explored.util.ObjectSearch.getEntityPath(oEntModel.getData(), sNewId);
+			var sPath = ObjectSearch.getEntityPath(oEntModel.getData(), sNewId);
 			var oEntity = (sPath) ? oEntModel.getProperty(sPath) : null;
 
 			// set nav button visibility
 			var bEntityIsInIndex = !!sPath;
-			var oHistory = sap.ui.core.routing.History.getInstance();
+			var oHistory = History.getInstance();
 			var oPrevHash = oHistory.getPreviousHash();
-			var bShowNavButton = sap.ui.Device.system.phone || (!bEntityIsInIndex && !!oPrevHash);
-			this.getView().byId("page").setShowNavButton(bShowNavButton);
+			var bShowNavButton = Device.system.phone || (!bEntityIsInIndex && !!oPrevHash);
+			this.byId("page").setShowNavButton(bShowNavButton);
 
 			// set data model
-			var oData;
+			var oModel,
+				oData;
 			if (this._sId !== sNewId) {
 
 				// retrieve entity docu from server
@@ -143,7 +157,7 @@ sap.ui.define([
 				oData = this._getViewData(sNewId, oDoc, oEntity);
 
 				// set view model
-				var oModel = new sap.ui.model.json.JSONModel(oData);
+				oModel = new JSONModel(oData);
 				this.getView().setModel(oModel);
 
 				// set also the binding context for entity data
@@ -153,9 +167,10 @@ sap.ui.define([
 				this._sId = sNewId;
 
 			} else {
-
+				oModel = this.getView().getModel();
+				oModel.refresh(true);
 				// get existing data model
-				oData = this.getView().getModel().getData();
+				oData = oModel.getData();
 			}
 
 			// handle unknown tab
@@ -166,14 +181,14 @@ sap.ui.define([
 			if (!oData.show[sNewTab]) {
 				sNewTab = "samples";
 			}
-			var oTab = this.getView().byId("tabBar");
+			var oTab = this.byId("tabBar");
 			if (sNewTab !== oTab.getSelectedKey() && oTab.getExpanded()) {
 				oTab.setSelectedKey(sNewTab);
 			}
 		},
 
 		onToggleFullScreen: function (oEvt) {
-			sap.ui.demokit.explored.util.ToggleFullScreenHandler.updateMode(oEvt, this.getView());
+			ToggleFullScreenHandler.updateMode(oEvt, this.getView());
 		},
 
 		// ========= internal ===========================================================================
@@ -266,7 +281,7 @@ sap.ui.define([
 				if (oDoc.properties.hasOwnProperty(key) && key.indexOf("_") !== 0) {
 					var oProp = oDoc.properties[key];
 					oProp.name = key;
-					oProp.deprecatedDescription = this._formatDeprecatedDescription(oProp.deprecation);
+					oProp.deprecatedDescription = this._formatDeprecatedSinceDescription(oProp.deprecation, oProp.deprecationSince);
 					oProp.deprecated = this._formatDeprecated(oProp.deprecation);
 					oProp.doc = this._wrapInSpanTag(oProp.doc);
 					oProp.typeText = this._formatTypeText(oProp.type);
@@ -411,7 +426,7 @@ sap.ui.define([
 						target = target.slice(0, p);
 					}
 
-					return "<a class=\"jsdoclink\" href=\"javascript:void(0);\" data-sap-ui-target=\"" + target + "\">" + (text || target) + "</a>";
+					return "<a class=\"jsdoclink\" href=\"#\" data-sap-ui-target=\"" + target + "\">" + (text || target) + "</a>";
 
 				}
 			}) + '</span>';
@@ -428,7 +443,21 @@ sap.ui.define([
 		 * Adds the string "Deprecated" in front of the deprecation description.
 		 */
 		_formatDeprecatedDescription: function (sDeprecation) {
-			return (sDeprecation && sDeprecation.length > 0 ) ? (this._createDeprecatedMark(sDeprecation) + ": " + sDeprecation) : null;
+			return (this._isDeprecated(sDeprecation)) ? (this._createDeprecatedMark(sDeprecation) + ": " + sDeprecation) : null;
+		},
+
+		/**
+		 * Adds "Deprecated Since" release in front of the deprecation description.
+		 */
+		_formatDeprecatedSinceDescription: function (sDeprecation, sDeprecationSince) {
+			return (this._isDeprecated(sDeprecation)) ? (this._createDeprecatedSinceMark() + " " + sDeprecationSince + ": " + sDeprecation) : null;
+		},
+
+		/**
+		 * Checks if object is deprecated.
+		 */
+		_isDeprecated: function (sDeprecation) {
+			return (sDeprecation && sDeprecation.length > 0);
 		},
 
 		/**
@@ -462,7 +491,21 @@ sap.ui.define([
 		 * Converts the deprecated boolean to a human readable text
 		 */
 		_createDeprecatedMark: function (sDeprecated) {
-			return (sDeprecated) ? this.getView().getModel("i18n").getProperty("deprecated") : "";
+			return (sDeprecated) ? this._getI18nModel().getProperty("deprecated") : "";
+		},
+
+		/**
+		 * Fetch deprecatedSince translatable label
+		 */
+		_createDeprecatedSinceMark: function () {
+			return this._getI18nModel().getProperty("deprecatedSince");
+		},
+
+		/**
+		 * Get i18n model
+		 */
+		_getI18nModel: function () {
+			return this.getView().getModel("i18n");
 		},
 
 		/**
@@ -494,14 +537,15 @@ sap.ui.define([
 		},
 
 		/**
-		 * The the actual component for the control
+		 * the actual component for the control
 		 * @param {string} controlName
 		 * @return {string} sActualControlComponent
 		 */
 		_takeControlComponent: function (controlName) {
-			var oLibComponentModel = sap.ui.demokit.explored.data.libComponentInfos;
+			var oLibComponentModel = data.libComponentInfos;
 			jQuery.sap.require("sap.ui.core.util.LibraryInfo");
-			var oLibInfo = new sap.ui.core.util.LibraryInfo();
+			var LibraryInfo = sap.ui.require("sap/ui/core/util/LibraryInfo");
+			var oLibInfo = new LibraryInfo();
 			var sActualControlComponent = oLibInfo._getActualComponent(oLibComponentModel, controlName);
 			return sActualControlComponent;
 		}

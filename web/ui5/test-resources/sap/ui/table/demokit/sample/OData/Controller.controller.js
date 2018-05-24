@@ -1,11 +1,10 @@
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
-	"sap/ui/table/sample/TableExampleUtils",
 	"sap/ui/core/util/MockServer",
 	"sap/ui/model/odata/v2/ODataModel",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/odata/OperationMode"
-], function(Controller, TableExampleUtils, MockServer, ODataModel, JSONModel, OperationMode) {
+], function(Controller, MockServer, ODataModel, JSONModel, OperationMode) {
 	"use strict";
 
 	var sServiceUrl = "http://my.test.service.com/";
@@ -54,13 +53,13 @@ sap.ui.define([
 
 		formatDimensions : function(sWidth, sHeight, sDepth, sUnit) {
 			if (sWidth && sHeight && sDepth && sUnit) {
-				return sWidth+"x"+sHeight+"x"+sDepth+" "+(sUnit.toLowerCase());
+				return sWidth + "x" + sHeight + "x" + sDepth + " " + (sUnit.toLowerCase());
 			}
 			return null;
 		},
 
 		getTable : function(){
-			return this.getView().byId("table");
+			return this.byId("table");
 		},
 
 		onModelRefresh : function() {
@@ -90,7 +89,12 @@ sap.ui.define([
 		},
 
 		showInfo : function(oEvent) {
-			TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.OData", "/info.json"), oEvent.getSource());
+			try {
+				jQuery.sap.require("sap.ui.table.sample.TableExampleUtils");
+				sap.ui.table.sample.TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.OData", "/info.json"), oEvent.getSource());
+			} catch (e) {
+				// nothing
+			}
 		}
 
 	});

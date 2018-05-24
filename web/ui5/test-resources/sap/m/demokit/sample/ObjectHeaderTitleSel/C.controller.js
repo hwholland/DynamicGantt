@@ -22,7 +22,7 @@ sap.ui.define([
 		},
 
 		_getResponsivePopover: function () {
-			if (! this._oPopover) {
+			if (!this._oPopover) {
 				this._oPopover = sap.ui.xmlfragment("sap.m.sample.ObjectHeaderTitleSel.Popover", this);
 			}
 			return this._oPopover;
@@ -30,7 +30,7 @@ sap.ui.define([
 
 		handleItemSelect: function (oEvent) {
 			var oItem = oEvent.getParameter("listItem");
-			var oObjectHeader = this.getView().byId("idObjectHeader");
+			var oObjectHeader = this.byId("idObjectHeader");
 			oObjectHeader.setTitle(oItem.getTitle());
 			oObjectHeader.setBindingContext(oItem.getBindingContext());
 			this._oPopover.close();

@@ -1,12 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.ResponsiveFlowLayout.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IntervalTrigger', 'sap/ui/core/theming/Parameters', './ResponsiveFlowLayoutData', './library'],
-	function(jQuery, Control, IntervalTrigger, Parameters, ResponsiveFlowLayoutData, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    './ResponsiveFlowLayoutData',
+    './library',
+    'sap/ui/core/ResizeHandler',
+    'sap/ui/Device',
+    "./ResponsiveFlowLayoutRenderer"
+],
+	function(
+	    jQuery,
+		Control,
+		ResponsiveFlowLayoutData,
+		library,
+		ResizeHandler,
+		Device,
+		ResponsiveFlowLayoutRenderer
+	) {
 	"use strict";
 
 
@@ -22,7 +38,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -52,7 +68,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 
 			/**
 			 * Association to controls / IDs that label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
-			 * @since 1.38.32
+			 * @since 1.48.7
 			 */
 			ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
 		}
@@ -77,7 +93,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 			}
 
 			if (this._resizeHandlerComputeWidthsID) {
-				sap.ui.core.ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
+				ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
 			}
 			delete this._resizeHandlerComputeWidthsID;
 			delete this._proxyComputeWidths;
@@ -139,7 +155,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 					minWidth : minWidth,
 					weight : weight,
 					linebreakable : bLinebreakable,
-					// since the margin of the element is used outside of it it
+					// since the margin of the element is used outside of it
 					// becomes padding
 					padding : bMargin,
 					control : aControls[i],
@@ -209,10 +225,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 
 		/**
 		 * Returns the target wrapping.
-		 * @param {object}
-		 *            [oRow] The corresponding row of possible controls
-		 * @param {int}
-		 *            [iWidth] The width of the row in pixels
+		 * @param {object} oRow The corresponding row of possible controls
+		 * @param {int} iWidth The width of the row in pixels
+		 * @returns {array} The target wrapping
 		 *
 		 */
 		var getTargetWrapping = function(oRow, iWidth) {
@@ -523,7 +538,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 						if (this._bLayoutDataChanged || bRender) {
 
 							//in IE when setting the innerHTML property to "" the changes do not take effect correctly and all the children are gone
-							if (sap.ui.Device.browser.internet_explorer){
+							if (Device.browser.internet_explorer){
 								jQuery(this._oDomRef).empty();
 							} else {
 								this._oDomRef.innerHTML = "";
@@ -546,7 +561,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 
 					if (this._rows.length === 0) {
 						if (this._resizeHandlerComputeWidthsID) {
-							sap.ui.core.ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
+							ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
 							delete this._resizeHandlerComputeWidthsID;
 						}
 					}
@@ -564,7 +579,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 			updateRows(this);
 
 			if (this._resizeHandlerFullLengthID) {
-				sap.ui.core.ResizeHandler.deregister(this._resizeHandlerFullLengthID);
+				ResizeHandler.deregister(this._resizeHandlerFullLengthID);
 				delete this._resizeHandlerFullLengthID;
 			}
 		};
@@ -572,7 +587,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 		/**
 		 * Handles the internal event onAfterRendering.
 		 * If the layout should be responsive, it is necessary to fix the width of the content
-                 * items to correspond to the width of the layout.
+		 * items to correspond to the width of the layout.
 		 */
 		ResponsiveFlowLayout.prototype.onAfterRendering = function(oEvent) {
 			this._oDomRef = this.getDomRef();
@@ -583,11 +598,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 
 			if (this.getResponsive()) {
 				if (!this._resizeHandlerComputeWidthsID) {
-					this._resizeHandlerComputeWidthsID = sap.ui.core.ResizeHandler.register(this, this._proxyComputeWidths);
+					this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, this._proxyComputeWidths);
 				}
 			} else {
 				if (this._resizeHandlerComputeWidthsID) {
-					sap.ui.core.ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
+					ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
 					delete this._resizeHandlerComputeWidthsID;
 				}
 			}
@@ -598,7 +613,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 				this._bLayoutDataChanged = true;
 			}
 			if (!this._resizeHandlerComputeWidthsID) {
-				this._resizeHandlerComputeWidthsID = sap.ui.core.ResizeHandler.register(this, this._proxyComputeWidths);
+				this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, this._proxyComputeWidths);
 			}
 
 			updateRows(this);
@@ -670,9 +685,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 		 * This function needs to be overridden to prevent any rendering while some
 		 * content is still being added.
 		 *
-		 * @param {int|string|sap.ui.core.Control}
-		 *            oContent The content that should be removed from the layout
-		 * @returns {sap.ui.core.Control} The <code>this</code> pointer for chaining
+		 * @param {int|string|sap.ui.core.Control} oContent The content that should be removed from the layout
 		 * @public
 		 */
 		ResponsiveFlowLayout.prototype.removeContent = function(oContent) {
@@ -713,8 +726,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 		 * Returns a rectangle describing the current visual positioning of 1st DOM in the collection.
 		 * The difference with the function rect() in jQuery.sap.dom.js is that the height and width are cut to the
 		 * 1st digit after the decimal separator and this is consistent across all browsers.
-		 * @param oElement the jQuery collection to check
-		 * @returns {{top, left, width, height}} or null if no such element
+		 * @param {object} oElement The jQuery collection to check
+		 * @returns {object} Object with properties top, left, width and height or null if no such element
 		 * @private
 		 */
 		ResponsiveFlowLayout.prototype._getElementRect = function (oElement) {
@@ -766,4 +779,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/Interval
 
 	return ResponsiveFlowLayout;
 
-}, /* bExport= */ true);
+});

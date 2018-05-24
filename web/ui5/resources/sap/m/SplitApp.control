@@ -3,8 +3,30 @@
     <name>SplitApp</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>SplitApp is another root element of a UI5 mobile application besides App control. It maintains two NavContainers if running on tablet and one - on phone.
-The display of master NavContainer depends on the portrait/landscape mode of the device and the mode of SplitApp.</documentation>
+    <documentation>SplitApp is another possible root element of an SAPUI5 mobile application besides {@link sap.m.App}. It contains two NavContainers if running on tablet or desktop,  and one on phone.
+The display of master NavContainer depends on the portrait/landscape mode of the device and the mode of SplitApp.
+&lt;h3&gt;Structure&lt;/h3&gt;
+The SplitApp divides the screen into two areas:
+&lt;ul&gt;
+&lt;li&gt;Master area - contains a list of available items where the user can search and filter.&lt;/li&gt;
+&lt;li&gt;Details area - contains a control which shows further details on the item(s) selected from the master view.&lt;/li&gt;
+&lt;/ul&gt;
+Both areas have separate headers and footer bars with navigation and actions.
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You need to review and process different items quickly with minimal navigation.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You need to offer complex filters for the list of items.&lt;/li&gt;
+&lt;li&gt;You need to see different attributes for each item in the list, and compare these values across items.&lt;/li&gt;
+&lt;li&gt;You want to display a single object. Do not use the master list to display different facets of the same object.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+On narrow screens for phones (or tablet devices in portrait mode), the master list and the details are split into two separate pages.
+
+The user can navigate between the list and details, and see all the available information for each area.</documentation>
     <baseType>sap.m/SplitContainer</baseType>
     <properties>
         <property name="homeIcon" type="sap.ui.core/any" group="Misc">

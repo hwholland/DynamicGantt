@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>Orientation</name>
     <derived/>
-    <documentation>Orientation of an UI element</documentation>
+    <documentation>Orientation of a UI element</documentation>
     <since>1.22</since>
     <enumeration>
         <value name="Horizontal">

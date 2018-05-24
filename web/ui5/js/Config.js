@@ -1,18 +1,18 @@
 window["sap-ui-demokit-config"] = {
 
-	productName : "SAPUI5",
+	productName : "OpenUI5",
 
-	supportedThemes : undefined, /* default themes */
+	supportedThemes : ["sap_bluecrystal", "sap_goldreflection", "sap_hcb"],
 
 	onCreateContent : function (oDemokit) {
 
-		oDemokit.addIndex("customize", {
-			caption : "Customize",
-			visible : false,
+		// add the 'license' page to the main index
+		oDemokit.addIndex("license", {
+			caption : "License",
 			index : {
-				ref: "customize.html",
+				ref: "LICENSE.txt",
 				links : [
-					{text: "Customize", ref:"customize.html"}
+					{text: "License", ref:"LICENSE.txt"}
 				]
 			}
 		});

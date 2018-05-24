@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content=""/>
 <meta name="description" content=""/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5698764506625302"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6114523277669893"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6114523277669893"/>
 <title>Mock Server: Frequently Asked Questions</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioc9a91ddaef47461c9c44bfc2198ea3f0">
 <div id="wrapper"><div id="container">
@@ -43,10 +29,18 @@
 
 		</div></div>
 
-		<div class="section"><div class="section_title">What require() is needed?</div><div type="What require() is needed?">
+		<div class="section"><div class="section_title">What module is needed?</div><div type="What module is needed?">
 			
-			<div class="p">The mock server needs the following <samp class="ph codeph">require</samp> statement:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>jQuery.sap.require("sap.ui.core.util.MockServer"); </pre></div>
+			<div class="p">The mock server is contained in module <samp class="ph codeph">sap/ui/core/util/MockServer</samp>. The
+				module can either be added to the list of dependencies in a
+					<samp class="ph codeph">sap.ui.define</samp> call or it can be required with a call to
+					<samp class="ph codeph">sap.ui.require</samp>:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([…, 'sap/ui/core/util/MockServer', ...], function(…, MockServer, …) { 
+    var oMyMockServer = new MockServer(...);
+});
+
+sap.ui.require(['sap/ui/core/util/MockServer'], function(MockServer) {
+    var oMyMockServer = new MockServer(…);
+});</pre></div>
 </div>
 
 		</div></div>
@@ -68,7 +62,7 @@
 			
 			<div class="p">You can let the mock server generate random mock data automatically based on services metadata. For this, provide only the path to the metadata
 				file and omit the second parameter of the simulate function as follows:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// url to the service metadata document 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">// url to the service metadata document 
         var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml"; 
         oMockServer.simulate(sMetadataUrl);</pre></div>
 </div>
@@ -77,7 +71,7 @@
 				JSON format can be generated from an OData service by adding the <samp class="ph codeph">$format=json</samp> parameter to the URL. Save the browser
 				response which is called <samp class="ph codeph">&lt;entity set name&gt;.json</samp>, for example <samp class="ph codeph">FlightCollection.json</samp> and put it
 				into the model folder. Add the path to the simulate function:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// url to the service metadata document 
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">// url to the service metadata document 
         var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml";
         // base url which contains the mockdata
         var sMockdataBaseUrl = "testdata/rmtsampleflight/";
@@ -85,7 +79,7 @@
 </div>
 
 			<div class="p">You can specify a path to .json mock data and let the mock server generate data for the rest of the service entities:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml"// url to the service metadata document
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml"// url to the service metadata document
         var sMockdataBaseUrl = "testdata/rmtsampleflight/"// base url which contains the mockdata
             oMockServer.simulate(sMetadataUrl, {
                 'sMockdataBaseUrl' : sMockdataBaseUrl,
@@ -94,7 +88,7 @@
 </div>
 
 			<div class="p">You can specify the names of the entity sets that are needed, and the mock server will load data only for the specified service
-				entities:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml"// url to the service metadata document
+				entities:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">var sMetadataUrl = "testdata/rmtsampleflight/metadata.xml"// url to the service metadata document
         var sMockdataBaseUrl = "testdata/rmtsampleflight/"// base url which contains the mockdata
             oMockServer.simulate(sMetadataUrl, {
                 'sMockdataBaseUrl' : sMockdataBaseUrl,
@@ -108,7 +102,7 @@
 		<div class="section"><div class="section_title">I'm using the OData model and I get the following error in the console: The following problem occurred: no handler for data</div><div type="I'm using the OData model and I get the following error in the console: The following problem occurred: no handler for data">
 			
 			<div class="p">The OData model uses JSON to fetch the data:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oModel = new sap.ui.model.odata.ODataModel(sUri, true);</pre></div>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">var oModel = new sap.ui.model.odata.ODataModel(sUri, true);</pre></div>
 </div>
 
 		</div></div>
@@ -123,11 +117,20 @@
 				them.</p>
 
 			<div class="p">The code snippet shows an example:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var sUri = "/mock/";
-var oMockServer = new sap.ui.core.util.MockServer({
-    rootUri : sUri
-});
-var oModel = new sap.ui.model.odata.ODataModel(sUri, true);</pre></div>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([…, 
+    'sap/ui/core/util/MockServer',
+    'sap/ui/model/odata/v2/ODataModel',
+     ...
+], function(…, MockServer, ODataModel, …) {
+
+    var sUri = "/mock/";
+    var oMockServer = new MockServer({
+        rootUri : sUri
+    });
+    var oModel = new ODataModel(sUri, true);
+    ...
+
+});</pre></div>
 </div>
 
 		</div></div>
@@ -161,19 +164,21 @@ var oModel = new sap.ui.model.odata.ODataModel(sUri, true);</pre></div>
 		<div class="section"><div class="section_title">How can I use the mock server in a QUnit?</div><div type="How can I use the mock server in a QUnit?">
 			
 			<div class="p">You can set up the mock server in the setup function; example:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var _oMockServer = undefined;
-        module("OData data provider", {
-            setup : function() {
-                jQuery.sap.require("sap.ui.app.MockServer");
-                this._oMockServer = new sap.ui.app.MockServer({ rootUri: "/model/"});
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.require(['sap/ui/core/util/MockServer'], function(MockServer) {
+	...
+        QUnit.module("OData data provider", {
+            beforeEach : function() {
+                this._oMockServer = new MockServer({ rootUri: "/model/"});
                 this._oMockServer.simulate("../../../../qunit/service/metadata.xml");
                 this._oMockServer.start();
             },
-            teardown : function() {
+            afterEach : function() {
                 this._oMockServer.stop();
             }
         });
-</pre></div>
+
+	...
+});</pre></div>
 </div>
 
 			
@@ -190,26 +195,26 @@ var oModel = new sap.ui.model.odata.ODataModel(sUri, true);</pre></div>
 					<samp class="ph codeph">get</samp> requests, but additionally also on a specific entity set
 				name, for example, <samp class="ph codeph">POST</samp> to <samp class="ph codeph">SaleOrders</samp>).</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// add a callback in all requests of a specific http method
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">// add a callback in all requests of a specific http method
 oMockServer.attachAfter(sap.ui.core.util.MockServer.HTTPMETHOD.GET, fnCbPost);</pre></div>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// on a specific entityset name
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">// on a specific entityset name
 oMockServer.attachAfter(sap.ui.core.util.MockServer.HTTPMETHOD.GET, fnCbPost, "CarrierCollection");
 </pre></div>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>// remove the callback
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">// remove the callback
 oMockServer.detachAfter(sap.ui.core.util.MockServer.HTTPMETHOD.GET, fnCbPost);</pre></div>
 
 			<div class="p">If you add additional request handlers and want to use this hooks mechanism inside your response function, just call:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>this.fireEvent(sap.ui.core.util.MockServer.HTTPMETHOD.GET + 'sEntityset' + ':before' , {oXhr: oXhr, sUrlParameters: sUrlParameters});</pre></div>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">this.fireEvent(sap.ui.core.util.MockServer.HTTPMETHOD.GET + 'sEntityset' + ':before' , {oXhr: oXhr, sUrlParameters: sUrlParameters});</pre></div>
 </div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">What do I need to do to run an OPA test with mock server</div><div type="What do I need to do to run an OPA test with mock server">
 			
-			<p class="p">Start you app in mock mode. It is not possible to declare a mock server outside the
-				app's context.</p>
+			<p class="p">Start your app in mock mode. It is not possible to declare a mock server outside the app's
+				context.</p>
 
 		</div></div>
 
@@ -217,19 +222,5 @@ oMockServer.detachAfter(sap.ui.core.util.MockServer.HTTPMETHOD.GET, fnCbPost);</
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Mock Server: Frequently Asked Questions";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

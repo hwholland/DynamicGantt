@@ -6,19 +6,35 @@
     <baseType>sap.ui.table/Table</baseType>
     <properties>
         <property name="expandFirstLevel" type="sap.ui.core/boolean" defaultValue="false">
-            <documentation>Flag to enable or disable expanding of first level.</documentation>
+            <documentation>Specifies whether the first level is expanded.</documentation>
+            <deprecation since="1.46.3">replaced by the corresponding binding parameter &lt;code&gt;numberOfExpandedLevels&lt;/code&gt;.
+
+Example:
+&lt;pre&gt;
+  oTable.bindRows({
+     path: "...",
+     parameters: {
+        numberOfExpandedLevels: 1
+     }
+  });
+&lt;/pre&gt;
+
+The value of the property is only taken into account if no parameter &lt;code&gt;numberOfExpandedLevels&lt;/code&gt; is given in the binding information.
+Changes to this property after the table is bound do not have any effect unless an explicit (re-)bind of the &lt;code&gt;rows&lt;/code&gt; aggregation is done.</deprecation>
         </property>
         <property name="useGroupMode" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
-            <documentation>If group mode is enable nodes with subitems are rendered as if they were group headers.
-This can be used to do the grouping for an OData service on the backend and visualize this in a table.
-This mode only makes sense if the tree has a depth of exacly 1 (group headers and entries)</documentation>
+            <documentation>If group mode is enabled nodes with subitems are rendered as if they were group headers.
+This can be used to do the grouping for an OData service on the backend and visualize this in a table.</documentation>
         </property>
         <property name="groupHeaderProperty" type="sap.ui.core/string" group="Data">
             <documentation>The property name of the rows data which will be displayed as a group header if the group mode is enabled</documentation>
         </property>
         <property name="collapseRecursive" type="sap.ui.core/boolean" defaultValue="true">
             <documentation>Setting collapseRecursive to true means, that when collapsing a node all subsequent child nodes will also be collapsed.
-This property is only supported with sap.ui.model.odata.v2.ODataModel</documentation>
+This property is only supported with sap.ui.model.odata.v2.ODataModel.
+&lt;b&gt;Note:&lt;/b&gt; collapseRecursive is currently &lt;b&gt;not&lt;/b&gt; supported if your OData service exposes the hierarchy annotation &lt;code&gt;hierarchy-descendant-count-for&lt;/code&gt;.
+In this case the value of the collapseRecursive property is ignored.
+For more information about the OData hierarchy annotations, please see the &lt;b&gt;SAP Annotations for OData Version 2.0&lt;/b&gt; specification.</documentation>
         </property>
         <property name="rootLevel" type="sap.ui.core/int" defaultValue="0" group="Data">
             <documentation>The root level is the level of the topmost tree nodes, which will be used as an entry point for OData services.
@@ -29,34 +45,34 @@ The hierarchy annotations may also be provided locally as a parameter for the OD
     </properties>
     <events>
         <event name="toggleOpenState" allowPreventDefault="false">
-            <documentation>fired when a node has been expanded or collapsed (only available in hierachical mode)</documentation>
+            <documentation>Fired when a row has been expanded or collapsed by user interaction. Only available in hierarchical mode.</documentation>
             <parameters>
                 <parameter name="rowIndex" type="sap.ui.core/int">
-                    <documentation>index of the expanded/collapsed row</documentation>
+                    <documentation>Index of the expanded/collapsed row</documentation>
                 </parameter>
                 <parameter name="rowContext" type="sap.ui.core/object">
-                    <documentation>binding context of the selected row</documentation>
+                    <documentation>Binding context of the expanded/collapsed row</documentation>
                 </parameter>
                 <parameter name="expanded" type="sap.ui.core/boolean">
-                    <documentation>flag whether the node has been expanded or collapsed</documentation>
+                    <documentation>Flag that indicates whether the row has been expanded or collapsed</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <methods>
         <method name="expand" type="sap.ui.table/TreeTable">
-            <documentation>expands the row for the given row index</documentation>
+            <documentation>Expands one or more rows.</documentation>
             <parameters>
                 <parameter name="rowIndex" type="sap.ui.core/int">
-                    <documentation>index of the row to expand</documentation>
+                    <documentation>A single index or an array of indices of the rows to be expanded</documentation>
                 </parameter>
             </parameters>
         </method>
         <method name="collapse" type="sap.ui.table/TreeTable">
-            <documentation>collapses the row for the given row index</documentation>
+            <documentation>Collapses one or more rows.</documentation>
             <parameters>
                 <parameter name="rowIndex" type="sap.ui.core/int">
-                    <documentation>index of the row to collapse</documentation>
+                    <documentation>A single index or an array of indices of the rows to be collapsed</documentation>
                 </parameter>
             </parameters>
         </method>
@@ -77,10 +93,10 @@ Please also see &lt;code&gt;sap.ui.model.odata.OperationMode&lt;/code&gt;.</docu
             </parameters>
         </method>
         <method name="isExpanded" type="sap.ui.core/boolean">
-            <documentation>Returns whether the row is expanded or collapsed.</documentation>
+            <documentation>Checks whether the row is expanded or collapsed.</documentation>
             <parameters>
                 <parameter name="rowIndex" type="sap.ui.core/int">
-                    <documentation>index of the row to check</documentation>
+                    <documentation>The index of the row to be checked</documentation>
                 </parameter>
             </parameters>
         </method>
@@ -93,7 +109,7 @@ Please also see &lt;code&gt;sap.ui.model.odata.OperationMode&lt;/code&gt;.</docu
             </parameters>
         </method>
         <method name="setSelectedIndex" type="sap.ui.table/TreeTable">
-            <documentation>Overriden from Table.js base class.
+            <documentation>Overridden from Table.js base class.
 In a TreeTable you can only select indices, which correspond to the currently visualized tree.
 Invisible tree nodes (e.g. collapsed child nodes) can not be selected via Index, because they do not
 correspond to a TreeTable row.</documentation>
@@ -127,7 +143,7 @@ Beware: The previous selection will be lost/overriden. If this is not wanted, pl
         <method name="addSelectionInterval" type="sap.ui.table/TreeTable">
             <documentation>Marks a range of tree nodes as selected, starting with iFromIndex going to iToIndex.
 The TreeNodes are referenced via their absolute row index.
-Please be aware, that the absolute row index only applies to the the tree which is visualized by the TreeTable.
+Please be aware, that the absolute row index only applies to the tree which is visualized by the TreeTable.
 Invisible nodes (collapsed child nodes) will not be regarded.
 
 Please also take notice of the fact, that "addSelectionInterval" does not change any other selection.
@@ -144,7 +160,7 @@ To override the current selection, please use "setSelctionInterval" or for a sin
         <method name="removeSelectionInterval" type="sap.ui.table/TreeTable">
             <documentation>All rows/tree nodes inside the range (including boundaries) will be deselected.
 Tree nodes are referenced with theit absolute row index inside the tree-
-Please be aware, that the absolute row index only applies to the the tree which is visualized by the TreeTable.
+Please be aware, that the absolute row index only applies to the tree which is visualized by the TreeTable.
 Invisible nodes (collapsed child nodes) will not be regarded.</documentation>
             <parameters>
                 <parameter name="fromIndex" type="sap.ui.core/int">
@@ -158,12 +174,11 @@ Invisible nodes (collapsed child nodes) will not be regarded.</documentation>
         <method name="selectAll" type="sap.ui.table/TreeTable">
             <documentation>Selects all available nodes/rows.
 
-Explanation of the SelectAll function and what to expect from its behavior:
-All rows/tree nodes locally stored on the client are selected.
-In addition all subsequent rows/tree nodes, which will be paged into view are also immediatly selected.
-However, due to obvious performance/network traffic reasons, the SelectAll function will NOT retrieve any data from the backend.</documentation>
+All rows/tree nodes that are locally stored on the client and that are part of the currently visible tree are selected.
+Additional rows or tree nodes that come into view through scrolling or paging are also selected immediately as soon as they get visible.
+However, &lt;code&gt;SelectAll&lt;/code&gt; does not retrieve any data from the back end in order to improve performance and reduce the network traffic.</documentation>
         </method>
-        <method name="getSelectedIndex" type="sap.ui.core/int[]">
+        <method name="getSelectedIndex" type="sap.ui.core/int">
             <documentation>Retrieves the lead selection index. The lead selection index is, among other things, used to determine the
 start/end of a selection range, when using Shift-Click to select multiple entries at once.</documentation>
         </method>

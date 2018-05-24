@@ -4,7 +4,7 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>CalloutBase is a building block for Callout. Do not use it directly. Use the Callout control instead</documentation>
-    <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.Popover&lt;/code&gt; control.</deprecation>
+    <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/TooltipBase</baseType>
     <events>
         <event name="open" allowPreventDefault="false">

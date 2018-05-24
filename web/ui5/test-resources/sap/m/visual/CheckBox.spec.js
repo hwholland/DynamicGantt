@@ -1,4 +1,7 @@
+/*global describe,it,element,by,takeScreenshot,expect*/
+
 describe("sap.m.CheckBox", function() {
+	"use strict";
 
 	it('should load test page',function(){
 		expect(takeScreenshot()).toLookAs('initial');
@@ -42,6 +45,12 @@ describe("sap.m.CheckBox", function() {
 		expect(takeScreenshot(element(by.id('cb_not_editable')))).toLookAs('not_editable_before_click');
 		element(by.id('cb_not_editable')).click();
 		expect(takeScreenshot(element(by.id('cb_not_editable')))).toLookAs('not_editable_after_click');
+	});
+
+	// verify checkBox is display only
+	it('should click on the display only checkbox', function() {
+		expect(takeScreenshot(element(by.id('cb_display_only')))).toLookAs('cb_display_only');
+		expect(takeScreenshot(element(by.id('cb_display_only_checked')))).toLookAs('cb_display_only_checked');
 	});
 
 	// verify warning checkBox is not selected and editable
@@ -92,5 +101,5 @@ describe("sap.m.CheckBox", function() {
 		element(by.id('cb_enable_disable_toolbar')).click();
 		expect(takeScreenshot(element(by.id('cb_in_toolbar')))).toLookAs('disabled_in_toolbar');
 	});
-	
+
 });

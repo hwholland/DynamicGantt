@@ -5,7 +5,11 @@ sap.ui.define([
 
 	return UIComponent.extend("sap.ui.table.sample.OData.Component", {
 		metadata : {
-			rootView : "sap.ui.table.sample.OData.View",
+			rootView : {
+				"viewName": "sap.ui.table.sample.OData.View",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.ui.table",
@@ -20,7 +24,6 @@ sap.ui.define([
 					files : [
 						"View.view.xml",
 						"Controller.controller.js",
-						"../TableExampleUtils.js",
 						"metadata.xml",
 						"ProductSet.json"
 					]

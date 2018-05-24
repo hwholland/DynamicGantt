@@ -1,31 +1,32 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // A static class to show a busy indicator
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', './Popup', './Core', './BusyIndicatorUtils'],
-	function(jQuery, Device, EventProvider, Popup, Core, BusyIndicatorUtils) {
+sap.ui.define(['jquery.sap.global', '../base/EventProvider', './Popup', './Core', './BusyIndicatorUtils', 'sap/ui/core/library'],
+	function(jQuery, EventProvider, Popup, Core, BusyIndicatorUtils, library) {
 	"use strict";
+
+	//shortcut for sap.ui.core.BusyIndicatorSize
+	var BusyIndicatorSize = library.BusyIndicatorSize;
 
 	/**
 	 * Provides methods to show or hide a waiting animation covering the whole
 	 * page and blocking user interaction.
 	 * @namespace
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @public
 	 * @alias sap.ui.core.BusyIndicator
 	 */
-	var BusyIndicator = jQuery.extend(jQuery.sap.newObject(EventProvider.prototype), {
+	var BusyIndicator = jQuery.extend( new EventProvider(), {
 		oPopup: null,
 		oDomRef: null,
 		bOpenRequested: false,
 		iDEFAULT_DELAY_MS: 1000,
 		sDOM_ID: "sapUiBusyIndicator"
 	});
-
-	EventProvider.apply(BusyIndicator);
 
 	BusyIndicator.M_EVENTS = {
 		Open: "Open",
@@ -40,11 +41,36 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', '.
 	BusyIndicator._bShowIsDelayed = undefined;
 
 	/**
-	 * Map of event names and ids, that are provided by this class
-	 * @private
-	 * @name sap.ui.core.BusyIndicator.M_EVENTS
+	 * The <code>Open</code> event is fired, after the <code>BusyIndicator</code>
+	 * has opened.
+	 *
+	 * @name sap.ui.core.BusyIndicator#Open
+	 * @event
+	 * @param {sap.ui.base.Event} oControlEvent is the event object
+	 * @param {sap.ui.base.EventProvider} oControlEvent.getSource is the instance
+	 *                                    that fired the event
+	 * @param {object} oControlEvent.getParameters provides all additional parameters
+	 *                                    that are delivered with the event
+	 * @param {jQuery} oControlEvent.getParameters.$Busy is the jQuery object
+	 *                                    of the BusyIndicator
+	 * @public
 	 */
-	BusyIndicator.M_EVENTS = {Open: "Open", Close: "Close"};
+
+	/**
+	 * The <code>Close</code> event is fired, <strong>before</strong> the
+	 * <code>BusyIndicator</code> has closed.
+	 *
+	 * @name sap.ui.core.BusyIndicator#Close
+	 * @event
+	 * @param {sap.ui.base.Event} oControlEvent is the event object
+	 * @param {sap.ui.base.EventProvider} oControlEvent.getSource is the instance
+	 *                                    that fired the event
+	 * @param {object} oControlEvent.getParameters provides all additional parameters
+	 *                                    that are delivered with the event
+	 * @param {jQuery} oControlEvent.getParameters.$Busy is the jQuery object
+	 *                                    of the BusyIndicator
+	 * @public
+	 */
 
 
 	/**
@@ -75,7 +101,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', '.
 		oBusyContainer.setAttribute("title", sTitle);
 		oRootDomRef.appendChild(oBusyContainer);
 
-		var oBusyElement = BusyIndicatorUtils.getElement("Big");
+		var oBusyElement = BusyIndicatorUtils.getElement(BusyIndicatorSize.Large);
 		oBusyElement.setAttribute("title", sTitle);
 		oRootDomRef.appendChild(oBusyElement);
 
@@ -115,61 +141,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', '.
 
 		jQuery("body").attr("aria-busy", true);
 
-		// since IE <9 isn't able to use CSS animations a JS-animation is needed
-		if (Device.browser.msie &&  Device.browser.version <= 9) {
-			this._iBusyPageWidth = jQuery(document.body).width();
-			this._iBusyLeft = 0;
-			this._iBusyDelta = 60;
-			this._iBusyTimeStep = 50;
-			this._iBusyWidth = 500;
-
-			/*
-			* Only wrap the DOM-node into a jQuery-object if needed. Before that
-			* every modification (adding classes and attributes) were done on a
-			* jQuery object unnecessarily
-			*/
-			var oBusyContainer = this.oDomRef.children[0];
-			var oBusyElement = this.oDomRef.children[1];
-			BusyIndicatorUtils.animateIE9.start(jQuery(oBusyElement));
-			this._IEAnimation(jQuery(oBusyContainer));
-		}
-
 		// allow an event handler to do something with the indicator
 		// and fire it after everything necessary happened
 		this.fireOpen({
 			$Busy: this.oPopup._$()
 		});
-	};
-
-	/**
-	 * Animates the BusyIndicator for InternetExplorer <=9
-	 *
-	 * @param {jQuery-object} $BusyIndicator is a jQuery-object for which the
-	 *                        JavaScript animation should be started
-	 * @private
-	 * @name sap.ui.core.BusyIndicator._IEAnimation
-	 * @function
-	 */
-	BusyIndicator._IEAnimation = function($BusyIndicator) {
-		if (!this._$BusyIndicator && $BusyIndicator) {
-			// save the DOM-Ref when function is called for the first time to save
-			// the expensive DOM-calls during animation
-			this._$BusyIndicator = $BusyIndicator;
-		}
-		jQuery.sap.clearDelayedCall(this._iAnimationTimeout);
-
-		this._iBusyLeft += this._iBusyDelta;
-		if (this._iBusyLeft > this._iBusyPageWidth) {
-			this._iBusyLeft = -this._iBusyWidth;
-		}
-		if (!this._$BusyIndicator) {
-			// DOM-Ref is removed when the BusyIndicator was hidden
-			// -> stop the animation and delayed calls
-			jQuery.sap.clearDelayedCall(this._iAnimationTimeout);
-		} else {
-			this._$BusyIndicator.css("background-position", this._iBusyLeft + "px 0px");
-			this._iAnimationTimeout = jQuery.sap.delayedCall(this._iBusyTimeStep, this, this._IEAnimation);
-		}
 	};
 
 	/**
@@ -220,8 +196,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', '.
 		// Initialize/create the BusyIndicator if this has not been done yet.
 		// This has to be done before calling '_showNowIfRequested' because within
 		// '_init' the BusyIndicator attaches itself to the Popup's open event and
-		// to keep the correct order of 'show -> _showNowIfRequested -> _onOpen ->
-		// -> _IEAnimation' the attaching has to happen earlier.
+		// to keep the correct order of 'show -> _showNowIfRequested -> _onOpen'
+		// the attaching has to happen earlier.
 		// Otherwise if an application attaches itself to the open event, this listener
 		// will be called before the BusyIndicator's open listener.
 		if (!this.oDomRef) {
@@ -310,7 +286,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', '../base/EventProvider', '.
 			bi.oPopup.close(0);
 		}
 
-		delete this._$BusyIndicator;
 	};
 
 

@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Bootstrap for the 'explored' app.
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/ComponentContainer', 'sap/m/Shell', 'sap/ui/demokit/library', './data'],
+	function(jQuery, ComponentContainer, Shell, library, data) {
 	"use strict";
 
 	jQuery("#busyIndicator").css({
@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global'],
 	var Bootstrap = {
 
 		run : function () {
-			sap.ui.demokit._loadAllLibInfo(
+			library._loadAllLibInfo(
 				"", "_getDocuIndex",
 				function (aLibs, oDocIndicies) {
 					Bootstrap._processAndStoreIndices(aLibs, oDocIndicies);
@@ -31,21 +31,22 @@ sap.ui.define(['jquery.sap.global'],
 			var aCategoryWhiteList = [
 				"Action",
 				"Application",
-				"Container",
-				"Display",
 				"Chart",
-				"Mini Chart",
+				"Container",
+				"Data Binding",
+				"Data Visualization",
+				"Display",
 				"Layout",
 				"List",
+				"Map",
+				"Mini Chart",
 				"Popup",
-				"Tile",
-				"User Input",
+				"Routing",
 				"Testing",
 				"Theming",
+				"Tile",
 				"Tutorial",
-				"Routing",
-				"Data Binding",
-				"Map"
+				"User Input"
 			];
 			var afilterProps = [ "namespace", "since", "category"]; // content density are set manually
 			var oFilterSets = {
@@ -71,11 +72,10 @@ sap.ui.define(['jquery.sap.global'],
 			};
 
 			// init data structures
-			sap.ui.demokit.explored.data = {};
-			sap.ui.demokit.explored.data.entityCount = 0;
-			sap.ui.demokit.explored.data.entities = [];
-			sap.ui.demokit.explored.data.filter = {};
-			sap.ui.demokit.explored.data.samples = {};
+			data.entityCount = 0;
+			data.entities = [];
+			data.filter = {};
+			data.samples = {};
 
 			// iterate docu indices
 			jQuery.each(oDocIndicies, function (i, oDoc) {
@@ -122,7 +122,7 @@ sap.ui.define(['jquery.sap.global'],
 					} else if (!oSample.name)  {
 						jQuery.sap.log.error("explored: cannot register sample '" + oSample.id + "'. missing 'name'");
 					} else {
-						sap.ui.demokit.explored.data.samples[oSample.id] = oSample;
+						data.samples[oSample.id] = oSample;
 					}
 				});
 
@@ -191,19 +191,19 @@ sap.ui.define(['jquery.sap.global'],
 					});
 
 					// add entity
-					sap.ui.demokit.explored.data.entities.push(oEnt);
+					data.entities.push(oEnt);
 				});
 			});
 
 			// iterate entities one more time and add the sample data
 			// (this must be done in a separate loop in order to map samples across libraries/docIndizes)
-			jQuery.each(sap.ui.demokit.explored.data.entities, function (sNamespace, oEnt) {
+			jQuery.each(data.entities, function (sNamespace, oEnt) {
 				var i = 0,
 					oStep,
 					fnPrependZero;
 
 				// define search tags
-				oEnt.searchTags = oEnt.name + " " + oEnt.name.replace(" ", "") + " " + oEnt.category;
+				oEnt.searchTags = oEnt.name + " " + oEnt.name.replace(/ /g, "") + " " + oEnt.category;
 
 				// check samples property
 				if (oEnt.samples && !(oEnt.samples instanceof Array)) {
@@ -247,7 +247,7 @@ sap.ui.define(['jquery.sap.global'],
 
 						// add generated sample to this entity and to the samples array
 						oEnt.samples.push(oStep);
-						sap.ui.demokit.explored.data.samples[oStep.id] = oStep;
+						data.samples[oStep.id] = oStep;
 						oEnt.searchTags += " " + oStep.name;
 					}
 				} else {
@@ -256,7 +256,7 @@ sap.ui.define(['jquery.sap.global'],
 						oPreviousSample;
 
 					jQuery.each(oEnt.samples, function (j, sId) {
-						var oSample = sap.ui.demokit.explored.data.samples[sId];
+						var oSample = data.samples[sId];
 
 						if (!oSample) {
 							jQuery.sap.log.warning("explored: cannot register sample '" + sId + "' for '" + oEnt.id + "'. not found in the available docu indizes");
@@ -281,19 +281,20 @@ sap.ui.define(['jquery.sap.global'],
 			});
 
 			// set count
-			sap.ui.demokit.explored.data.entityCount = sap.ui.demokit.explored.data.entities.length;
+			data.entityCount = data.entities.length;
 
 			// convert filter sets to arrays
 			jQuery.each(oFilterSets, function (setKey, setValue) {
-				sap.ui.demokit.explored.data.filter[setKey] = [];
+				data.filter[setKey] = [];
 				jQuery.each(setValue, function (key, value) {
-					sap.ui.demokit.explored.data.filter[setKey].push({ id: key });
+					data.filter[setKey].push({ id: key });
 				});
 			});
 
 			// call LibraryInfo API method for collecting all component info from the .library files
 			jQuery.sap.require("sap.ui.core.util.LibraryInfo");
-			var oLibInfo = new sap.ui.core.util.LibraryInfo();
+			var LibraryInfo = sap.ui.require("sap/ui/core/util/LibraryInfo");
+			var oLibInfo = new LibraryInfo();
 			var oLibComponents = {};
 			var oLibraryComponentInfo = function(oComponent) {
 				oLibComponents[oComponent.library] = oComponent.componentInfo;
@@ -301,16 +302,19 @@ sap.ui.define(['jquery.sap.global'],
 			for (var i = 0; i < aLibs.length; i++) {
 				oLibInfo._getLibraryInfo(aLibs[i], oLibraryComponentInfo);
 			}
-			sap.ui.demokit.explored.data.libComponentInfos = oLibComponents;
+			data.libComponentInfos = oLibComponents;
 		},
 
 		_loadUi : function () {
 			var sPath = jQuery.sap.getModulePath("sap.ui.demokit.explored");
-			new sap.m.Shell("Shell", {
+			new Shell("Shell", {
 				title : "SAPUI5 Explored",
 				showLogout : false,
-				app : new sap.ui.core.ComponentContainer({
-					name : 'sap.ui.demokit.explored'
+				app : new ComponentContainer({
+					name : 'sap.ui.demokit.explored',
+					settings : {
+						id : "explored"
+					}
 				}),
 				homeIcon : {
 					'phone' : sPath + '/img/57_iPhone_Desktop_Launch.png',

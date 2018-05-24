@@ -1,18 +1,22 @@
-/*
- * ! SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+/*!
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
+sap.ui.define([
+	'sap/ui/base/ManagedObject'
+], function(
+	ManagedObject
+) {
 	"use strict";
 
 	/**
 	 * Basic implementation for the command stack pattern.
-	 * 
+	 *
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @constructor
 	 * @private
 	 * @since 1.34
@@ -31,12 +35,20 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 				}
 			},
 			events : {
-				modified : {}
+				modified : {},
+				commandExecuted : {
+					parameters: {
+						command : {type: "object"},
+						undo: {type: "boolean"}
+					}
+				}
+
 			}
 		}
 	});
 
 	Stack.prototype._toBeExecuted = -1;
+	Stack.prototype._oLastCommand = Promise.resolve();
 
 	Stack.prototype._getCommandToBeExecuted = function() {
 		return this.getCommands()[this._toBeExecuted];
@@ -44,6 +56,9 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 
 	/**
 	 * Allows to push a command on the stack that has already been executed and shouldn't be executed next
+	 *
+	 * @param {sap.ui.rta.command.FlexCommand} oCommand command to push to the stack
+	 * @public
 	 */
 	Stack.prototype.pushExecutedCommand = function(oCommand) {
 		this.push(oCommand, true);
@@ -93,17 +108,30 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 	};
 
 	Stack.prototype.execute = function() {
-		var oCommand = this._getCommandToBeExecuted();
-		if (oCommand) {
-			try {
-				oCommand.execute();
-			} catch (oError) {
-				this.pop(); // remove failing command
-				throw (oError);
+		this._oLastCommand = this._oLastCommand.catch(function(){
+			//continue also if previous command failed
+		}).then(function(){
+			var oCommand = this._getCommandToBeExecuted();
+			if (oCommand) {
+				return oCommand.execute()
+
+				.then(function(){
+					this._toBeExecuted--;
+					this.fireCommandExecuted({
+						command: oCommand,
+						undo: false
+					});
+					this.fireModified();
+				}.bind(this))
+
+				.catch(function(oError) {
+					this.pop(); // remove failing command
+					return Promise.reject(oError);
+				}.bind(this));
 			}
-			this._toBeExecuted--;
-			this.fireModified();
-		}
+		}.bind(this));
+		return this._oLastCommand;
+
 	};
 
 	Stack.prototype._unExecute = function() {
@@ -112,10 +140,20 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 			this._toBeExecuted++;
 			var oCommand = this._getCommandToBeExecuted();
 			if (oCommand) {
-				oCommand.undo();
+				return oCommand.undo()
 
-				this.fireModified();
+				.then(function() {
+					this.fireCommandExecuted({
+						command: oCommand,
+						undo: true
+					});
+					this.fireModified();
+				}.bind(this));
+			} else {
+				return Promise.resolve();
 			}
+		} else {
+			return Promise.resolve();
 		}
 	};
 
@@ -124,7 +162,7 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 	};
 
 	Stack.prototype.undo = function() {
-		this._unExecute();
+		return this._unExecute();
 	};
 
 	Stack.prototype.canRedo = function() {
@@ -132,49 +170,48 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 	};
 
 	Stack.prototype.redo = function() {
-		this.execute();
+		return this.execute();
 	};
 
 	Stack.prototype.pushAndExecute = function(oCommand) {
 		this.push(oCommand);
-		this.execute();
+		return this.execute();
 	};
 
-	Stack.prototype.serialize = function() {
-		var aResult = [];
-		var aCommands = this.getSerializableCommands();
-		aCommands.forEach(function(oCommand) {
-			var vSerialize = oCommand.serialize();
-			if (Array.isArray(vSerialize)) {
-				aResult.concat(vSerialize);
-			} else {
-				aResult.push(vSerialize);
-			}
-		});
-		return aResult;
-	};
-
-	Stack.prototype.getSerializableCommands = function() {
-		var aSerializableCommands = [];
+	/**
+	 * Decomposite all executed commands from the stack
+	 *
+	 * @returns {object} list of all executed commands
+	 * @public
+	 */
+	Stack.prototype.getAllExecutedCommands = function() {
+		var aAllExecutedCommands = [];
 		var aCommands = this.getCommands();
 		for (var i = aCommands.length - 1; i > this._toBeExecuted; i--) {
-			var aSubCommands = this._getSubCommands(aCommands[i]);
-			aSerializableCommands = aSerializableCommands.concat(aSubCommands);
+			var aSubCommands = this.getSubCommands(aCommands[i]);
+			aAllExecutedCommands = aAllExecutedCommands.concat(aSubCommands);
 		}
-		return aSerializableCommands;
+		return aAllExecutedCommands;
 	};
 
-	Stack.prototype._getSubCommands = function(oCommand) {
-		var that = this;
+	/**
+	 * Decomposite command to subcommands (composite commands will be splitted into array of regular commands)
+	 *
+	 * @param {sap.ui.rta.command.FlexCommand} oCommand command to push to the stack
+	 * @returns {object} aCommands - list of sub commands
+	 * @private
+	 */
+	Stack.prototype.getSubCommands = function(oCommand) {
 		var aCommands = [];
 		if (oCommand.getCommands) {
 			oCommand.getCommands().forEach(function(oSubCommand) {
-				var aSubCommands = that._getSubCommands(oSubCommand);
+				var aSubCommands = this.getSubCommands(oSubCommand);
 				aCommands = aCommands.concat(aSubCommands);
-			});
+			}, this);
 		} else {
 			aCommands.push(oCommand);
 		}
+
 		return aCommands;
 	};
 

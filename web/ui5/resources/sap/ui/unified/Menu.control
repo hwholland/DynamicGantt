@@ -14,7 +14,7 @@ The enabled property of an item (@link sap.ui.unified.MenuItemBase#getEnabled) h
         </property>
         <property name="ariaDescription" type="sap.ui.core/string" group="Accessibility">
             <documentation>Accessible label / description of the menu for assistive technologies like screenreaders.</documentation>
-            <deprecation since="1.27.0">Please use association &lt;code&gt;ariaLabelledBy&lt;/code&gt; instead.</deprecation>
+            <deprecation since="1.27.0">replaced by &lt;code&gt;ariaLabelledBy&lt;/code&gt; association</deprecation>
         </property>
         <property name="maxVisibleItems" type="sap.ui.core/int" defaultValue="0" group="Behavior">
             <documentation>The maximum number of items which are displayed before an overflow mechanism takes effect.

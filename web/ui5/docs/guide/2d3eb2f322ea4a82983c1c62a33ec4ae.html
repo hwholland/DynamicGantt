@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="OpenUI5 can either be loaded locally with a relative path from a Web server or externally from a Content Delivery Network (CDN)."/>
+<meta name="description" content="OpenUI5 can either be loaded locally with a relative path from a Web server or externally from a Content Delivery Network (CDN)."/>
 
-
-
-
-
-<meta name="abstract" content="SAPUI5 can either be loaded locally with a relative path from a Web server or externally from a Content Delivery Network (CDN)."/>
-<meta name="description" content="SAPUI5 can either be loaded locally with a relative path from a Web server or externally from a Content Delivery Network (CDN)."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=417803393966087"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=511419994288789"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=511419994288789"/>
 <title>Variant for Bootstrapping from Content Delivery Network</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio2d3eb2f322ea4a82983c1c62a33ec4ae">
 <div id="wrapper"><div id="container">
@@ -33,151 +19,65 @@
     <h1 class="title topictitle1">Variant for Bootstrapping from Content Delivery Network</h1>
 
     
-    <div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">SAPUI5</span></span> can either be
+    <div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">OpenUI5</span></span> can either be
         loaded locally with a relative path from a Web server or externally from a Content Delivery
         Network (CDN).</p>
 
+        <div class="note note"><span class="notetitle">Note</span> 
+            <p class="p">Loading <span class="ph"><span class="ph pname">OpenUI5</span></span> from a
+                CDN improves your app performance: You can load from a server that (in most cases)
+                is much closer to your location, and you can benefit from the caching mechanism and
+                the language fallback logic.</p>
+
+        </div>
+
         <div class="section"><div class="section_title">Specific Version</div><div type="Specific Version">
             
-            <p class="p">Check the available versions with respective maintenance status at <span class="ph"><a class="xref" href="https://sapui5.hana.ondemand.com/versionoverview.html" alt="https://sapui5.hana.ondemand.com/versionoverview.html" title="https://sapui5.hana.ondemand.com/versionoverview.html">https://sapui5.hana.ondemand.com/versionoverview.html</a> and </span><a class="xref" href="https://openui5.hana.ondemand.com/versionoverview.html" alt="https://openui5.hana.ondemand.com/versionoverview.html" title="https://openui5.hana.ondemand.com/versionoverview.html">https://openui5.hana.ondemand.com/versionoverview.html</a>.</p>
+            <div class="p">Check the available versions with the respective maintenance status at <a class="xref" href="https://openui5.hana.ondemand.com/versionoverview.html" alt="https://openui5.hana.ondemand.com/versionoverview.html" title="https://openui5.hana.ondemand.com/versionoverview.html">https://openui5.hana.ondemand.com/versionoverview.html</a>.<div class="note note"><span class="notetitle">Note</span> 
+                    <p class="p">Only use a <span class="ph uicontrol">Stable</span> version for productive apps. But if
+                        you want to also test a <span class="ph uicontrol">Preview</span> version, we would
+                        really appreciate getting your feedback!</p>
 
-            <div class="p">You can
-                refer to a specific version by using a versioned URL as in the example below:
-<div class="table-wrapper tablenoborder"><table summary="" id="loio2d3eb2f322ea4a82983c1c62a33ec4ae__table_s4l_3mn_f5" class="table" width="100%" style="table-layout:auto;" frame="border" border="1" rules="all">
-<colgroup><col width="50%"/><col width="50%"/></colgroup>
-
-                        
-                        
-                        <thead class="thead" align="left">
-                            <tr class="row">
-                                <th class="entry" valign="top" width="50%" id="d2230324e50">
-                                    <p class="p"><span class="ph pname">SAPUI5</span></p>
-
-                                </th>
-
-                                <th class="entry" valign="top" width="50%" id="d2230324e57">
-                                    <p class="p"><span class="ph pname">OpenUI5</span></p>
-
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody class="tbody">
-                            <tr class="row">
-                                <td class="entry" valign="top" width="50%" headers="d2230324e50 ">
-                                    <div class="p">
-                                        <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;script id="sap-ui-bootstrap"
-    type="text/javascript"
-    src="https://sapui5.hana.ondemand.com/<span class="ph emphasis emphasis">1.32.7</span>/resources/sap-ui-core.js"
-    data-sap-ui-theme="sap_bluecrystal"
-    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
-
-</pre></div>
-
-                                    </div>
-
-                                </td>
-
-                                <td class="entry" valign="top" width="50%" headers="d2230324e57 ">
-                                    <div class="p">
-                                        <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;script id="sap-ui-bootstrap"
-    type="text/javascript"
-    src="https://openui5.hana.ondemand.com/<span class="ph emphasis emphasis">1.32.7</span>/resources/sap-ui-core.js"
-    data-sap-ui-theme="sap_bluecrystal"
-    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
-
-</pre></div>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-</div>
+                </div>
 </div>
 
             
+            <div class="p">You can refer to a specific version by using a
+                versioned URL as in the example
+                below:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">&lt;script id="sap-ui-bootstrap"
+    type="text/javascript"
+    src="https://openui5.hana.ondemand.com/<span class="ph emphasis emphasis">1.42.6</span>/resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_belize"
+    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
+
+</pre></div>
+</div>
+
             <p class="p">The first segment of the URL after the host name is used to specify a concrete
                 version.</p>
 
         </div></div>
 
-        <div class="section"><div class="section_title">Latest Released Version</div><div type="Latest Released Version">
+        <div class="section"><div class="section_title">Default Version</div><div type="Default Version">
             
-            <p class="p">The latest released version of our libraries can be found at <a class="xref" href="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" alt="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" title="https://openui5.hana.ondemand.com/resources/sap-ui-core.js">https://openui5.hana.ondemand.com/resources/sap-ui-core.js</a> (<span class="ph pname">OpenUI5</span>) and <span class="ph"><a class="xref" href="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js" alt="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js" title="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js">https://sapui5.hana.ondemand.com/resources/sap-ui-core.js</a> (<span class="ph pname">SAPUI5</span>)</span>.</p>
+            <p class="p">The default version of our libraries has the generic URL <a class="xref" href="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" alt="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" title="https://openui5.hana.ondemand.com/resources/sap-ui-core.js">https://openui5.hana.ondemand.com/resources/sap-ui-core.js</a> (<span class="ph pname">OpenUI5</span>).</p>
 
             <div class="note caution"><span class="cautiontitle">Caution</span> 
-                <p class="p">The latest released version is constantly being upgraded. Therefore, this might
-                    have an impact on the stability of your application. Use this version for
-                    testing purposes only.</p>
-
-                <div class="p"> If
-                    you want to use the latest released version, you can use the following bootstrap
-                    scripts: 
-<div class="table-wrapper tablenoborder"><table summary="" id="loio2d3eb2f322ea4a82983c1c62a33ec4ae__table_kb4_2mn_f5" class="table" width="100%" style="table-layout:auto;" frame="border" border="1" rules="all">
-<colgroup><col width="50%"/><col width="50%"/></colgroup>
-
-                            
-                            
-                            <thead class="thead" align="left">
-                                <tr class="row">
-                                    <th class="entry" valign="top" width="50%" id="d2230324e149">
-                                        <p class="p"><span class="ph pname">SAPUI5</span></p>
-
-                                    </th>
-
-                                    <th class="entry" valign="top" width="50%" id="d2230324e156">
-                                        <p class="p"><span class="ph pname">OpenUI5</span></p>
-
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody class="tbody">
-                                <tr class="row">
-                                    <td class="entry" valign="top" width="50%" headers="d2230324e149 ">
-                                        <div class="p">
-                                            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;script id="sap-ui-bootstrap"
-    type="text/javascript"
-    src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
-    data-sap-ui-theme="sap_bluecrystal"
-    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
-</pre></div>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td class="entry" valign="top" width="50%" headers="d2230324e156 ">
-                                        <div class="p">
-                                            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;script id="sap-ui-bootstrap"
-    type="text/javascript"
-    src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
-    data-sap-ui-theme="sap_bluecrystal"
-    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
-</pre></div>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-
-                            </tbody>
-
-                        </table>
-</div>
-</div>
+                <p class="p">The default version is constantly being upgraded and this might have an impact on
+                    the stability of your application. Use this version for testing purposes
+                    only.</p>
 
                 
+                <div class="p">If you want to use the default version, you
+                    can use the following bootstrap
+                    script:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">&lt;script id="sap-ui-bootstrap"
+    type="text/javascript"
+    src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_belize"
+    data-sap-ui-libs="sap.m"&gt;&lt;/script&gt;
+</pre></div>
+</div>
+
             </div>
 
         </div></div>
@@ -185,40 +85,29 @@
         <div class="section"><div class="section_title">Cache Control</div><div type="Cache Control">
             
             <p class="p">The cache control is different for dynamic and static resources. If you refer to the
-                latest stable version (dynamic), you have a maximum age of one week, if you refer to
-                a specific (static) version, you have a maximum age of 10 years. In both cases
-                cross-origin resource sharing (CORS) headers are set, so that you will be able to
+                latest maintenance version (dynamic), you have a maximum cache age of one week, if
+                you refer to a specific (static) version, you have a maximum cache age of 10 years.
+                In both cases, cross-origin resource sharing (CORS) headers are set, so that you can
                 consume resources from the central location without any proxy in between.</p>
 
-        </div></div>
+            <div class="note note"><span class="notetitle">Note</span> 
+                <p class="p">The Cache Buster is only needed if you consume <span class="ph"><span class="ph pname">OpenUI5</span></span> without a
+                    concrete version in the URL. When you consume <span class="ph"><span class="ph pname">OpenUI5</span></span> with the
+                    concrete version in the URL, this is not needed, as the content served by that
+                    unique URLs will never change and can be cached forever.</p>
 
+            </div>
+
+        </div></div>
 
     </div>
 
     <div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f021426f4d1014b6dd926db0e91070.html" title="As of SAPUI5 1.6 there is a close coupling of SAPUI5 core/runtime and SAPUI5 tools: It is required that within a running system both have the same version, that is, have the same major and minor version.">Versioning of SAPUI5</a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http://scn.sap.com/community/developer-center/front-end/blog/2015/04/01/sapui5-is-now-delivered-via-akamai-cdn" alt="http://scn.sap.com/community/developer-center/front-end/blog/2015/04/01/sapui5-is-now-delivered-via-akamai-cdn" title="http://scn.sap.com/community/developer-center/front-end/blog/2015/04/01/sapui5-is-now-delivered-via-akamai-cdn">"SAPUI5 is now delivered via Akamai CDN" in the SAPUI5 Developer
-                Center<img src="images/sap_link.png" class="link-sap" alt="Information published on SAP site" title="Information published on SAP site" border="0"/></a></div>
-<div><a class="link" href="https://sapui5.hana.ondemand.com/docs/maintenancestrategy.pdf" alt="https://sapui5.hana.ondemand.com/docs/maintenancestrategy.pdf" title="https://sapui5.hana.ondemand.com/docs/maintenancestrategy.pdf"><span class="ph pname">SAPUI5</span> Maintenance
-                Strategy on <span class="ph pname">SAP Cloud Platform</span></a></div>
+<div><a class="link" href="91f021426f4d1014b6dd926db0e91070.html" title="Versioning and maintenance strategy for OpenUI5.">Versioning of OpenUI5</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Variant for Bootstrapping from Content Delivery Network";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

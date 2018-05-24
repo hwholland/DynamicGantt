@@ -1,28 +1,130 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Input.
-sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List', './Popover', './StandardListItem', './Table', './Toolbar', './ToolbarSpacer', './library', 'sap/ui/core/IconPool', 'jquery.sap.strings'],
-	function(jQuery, Bar, Dialog, InputBase, List, Popover, StandardListItem, Table, Toolbar, ToolbarSpacer, library, IconPool/* , jQuerySap */) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./Bar',
+	'./Dialog',
+	'./InputBase',
+	'./List',
+	'./Popover',
+	'sap/ui/core/Item',
+	'./ColumnListItem',
+	'./StandardListItem',
+	'./DisplayListItem',
+	'sap/ui/core/ListItem',
+	'./Table',
+	'./Toolbar',
+	'./ToolbarSpacer',
+	'./library',
+	'sap/ui/core/IconPool',
+	'sap/ui/core/InvisibleText',
+	'sap/ui/Device',
+	'sap/ui/core/ResizeHandler',
+	'sap/ui/core/Control',
+	'./InputRenderer'
+],
+function(
+	jQuery,
+	Bar,
+	Dialog,
+	InputBase,
+	List,
+	Popover,
+	Item,
+	ColumnListItem,
+	StandardListItem,
+	DisplayListItem,
+	ListItem,
+	Table,
+	Toolbar,
+	ToolbarSpacer,
+	library,
+	IconPool,
+	InvisibleText,
+	Device,
+	ResizeHandler,
+	Control,
+	InputRenderer
+) {
 	"use strict";
 
 
 
+	// shortcut for sap.m.ListMode
+	var ListMode = library.ListMode;
+
+	// shortcut for sap.m.PlacementType
+	var PlacementType = library.PlacementType;
+
+	// shortcut for sap.m.ListType
+	var ListType = library.ListType;
+
+	// shortcut for sap.m.InputTextFormatMode
+	var InputTextFormatMode = library.InputTextFormatMode;
+
+	// shortcut for sap.m.InputType
+	var InputType = library.InputType;
+
+
+
 	/**
-	 * Constructor for a new Input.
+	 * Constructor for a new <code>Input</code>.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * Enables users to input data.
-	 * @extends sap.m.InputBase
+	 * Allows the user to enter and edit text or numeric values in one line.
 	 *
+	 * <h3>Overview</h3>
+	 *
+	 * You can enable the autocomplete suggestion feature and the value help option to easily enter a valid value.
+	 *
+	 * <h3>Guidelines</h3>
+	 *
+	 * <ul>
+	 * <li> Always provide a meaningful label for any input field </li>
+	 * <li> Limit the length of the input field. This will visually emphasize the constraints for the field. </li>
+	 * <li> Do not use the <code>placeholder</code> property as a label.</li>
+	 * <li> Use the <code>description</code> property only for small fields with no placeholders (i.e. for currencies).</li>
+	 * </ul>
+	 *
+	 * <h3>Structure</h3>
+	 *
+	 * The controls inherits from {@link sap.m.InputBase} which controls the core properties like:
+	 * <ul>
+	 * <li> editable / read-only </li>
+	 * <li> enabled / disabled</li>
+	 * <li> placeholder</li>
+	 * <li> text direction</li>
+	 * <li> value states</li>
+	 * </ul>
+	 * To aid the user during input, you can enable value help (<code>showValueHelp</code>) or autocomplete (<code>showSuggestion</code>).
+	 * <strong>Value help</strong> will open a new dialog where you can refine your input.
+	 * <strong>Autocomplete</strong> has three types of suggestions:
+	 * <ul>
+	 * <li> Single value - a list of suggestions of type <code>sap.ui.core.Item</code> or <code>sap.ui.core.ListItem</code> </li>
+	 * <li> Two values - a list of two suggestions (ID and description) of type <code>sap.ui.core.Item</code> or <code>sap.ui.core.ListItem</code> </li>
+	 * <li> Tabular suggestions of type <code>sap.m.ColumnListItem</code> </li>
+	 * </ul>
+	 * The suggestions are stored in two aggregations <code>suggestionItems</code> (for single and double values) and <code>suggestionRows</code> (for tabular values).
+	 *
+	 * <h3>Usage</h3>
+	 *
+	 * <b>When to use:</b>
+	 * Use the control for short inputs like emails, phones, passwords, fields for assisted value selection.
+	 *
+	 * <b>When not to use:</b>
+	 * Don't use the control for long texts, dates, designated search fields, fields for multiple selection.
+	 *
+	 * @extends sap.m.InputBase
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -43,7 +145,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 * <code>sap.ui.model</code> defines extended formats that are mostly incompatible with normal HTML
 			 * representations for numbers and dates.
 			 */
-			type : {type : "sap.m.InputType", group : "Data", defaultValue : sap.m.InputType.Text},
+			type : {type : "sap.m.InputType", group : "Data", defaultValue : InputType.Text},
 
 			/**
 			 * Maximum number of characters. Value '0' means the feature is switched off.
@@ -57,7 +159,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 * The data is displayed and the user input is parsed according to this format.
 			 * NOTE: The value property is always of the form RFC 3339 (YYYY-MM-dd).
 			 * @deprecated Since version 1.9.1.
-			 * <code>sap.m.DatePicker</code>, <code>sap.m.TimePicher</code> or <code>sap.m.DateTimePicker</code> should be used for date/time inputs and formating.
+			 * <code>sap.m.DatePicker</code>, <code>sap.m.TimePicker</code> or <code>sap.m.DateTimePicker</code> should be used for date/time inputs and formating.
 			 */
 			dateFormat : {type : "string", group : "Misc", defaultValue : 'YYYY-MM-dd', deprecated: true},
 
@@ -119,7 +221,36 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 * Indicates when the value gets updated with the user changes: At each keystroke (true) or first when the user presses enter or tabs out (false).
 			 * @since 1.24
 			 */
-			valueLiveUpdate : {type : "boolean", group : "Behavior", defaultValue : false}
+			valueLiveUpdate : {type : "boolean", group : "Behavior", defaultValue : false},
+
+			/**
+			 * Defines the key of the selected item.
+			 *
+			 * <b>Note:</b> If duplicate keys exist, the first item matching the key is used.
+			 * @since 1.44
+			 */
+			selectedKey: {type: "string", group: "Data", defaultValue: ""},
+			/**
+			 * Defines the display text format mode.
+			 * @since 1.44
+			 */
+			textFormatMode: {type: "sap.m.InputTextFormatMode", group: "Misc", defaultValue: InputTextFormatMode.Value},
+			/**
+			 * Defines the display text formatter function.
+			 * @since 1.44
+			 */
+			textFormatter: {type: "any", group: "Misc", defaultValue: ""},
+			/**
+			 * Defines the validation callback function called when a suggestion row gets selected.
+			 * @since 1.44
+			 */
+			suggestionRowValidator: {type: "any", group: "Misc", defaultValue: ""},
+
+			/**
+			 * Specifies whether the suggestions highlighting is enabled.
+			 * @since 1.46
+			 */
+			enableSuggestionsHighlighting: {type: "boolean", group: "Behavior", defaultValue: true}
 		},
 		defaultAggregation : "suggestionItems",
 		aggregations : {
@@ -134,7 +265,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 * The suggestionColumns and suggestionRows are for tabular input suggestions. This aggregation allows for binding the table columns; for more details see the aggregation "suggestionRows".
 			 * @since 1.21.1
 			 */
-			suggestionColumns : {type : "sap.m.Column", multiple : true, singularName : "suggestionColumn", bindable : "bindable"},
+			suggestionColumns : {type : "sap.m.Column", multiple : true, singularName : "suggestionColumn", bindable : "bindable", forwarding: {getter:"_getSuggestionsTable", aggregation: "columns"}},
 
 			/**
 			 * The suggestionColumns and suggestionRows are for tabular input suggestions. This aggregation allows for binding the table cells.
@@ -142,7 +273,26 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 * Note: If this aggregation is filled, the aggregation suggestionItems will be ignored.
 			 * @since 1.21.1
 			 */
-			suggestionRows : {type : "sap.m.ColumnListItem", multiple : true, singularName : "suggestionRow", bindable : "bindable"}
+			suggestionRows : {type : "sap.m.ColumnListItem", multiple : true, singularName : "suggestionRow", bindable : "bindable", forwarding: {getter: "_getSuggestionsTable", aggregation: "items"}},
+
+			/**
+			 * The icon on the right side of the Input
+			 */
+			_valueHelpIcon : {type : "sap.ui.core.Icon", multiple: false, visibility: "hidden"}
+		},
+		associations: {
+
+			/**
+			 * Sets or retrieves the selected item from the suggestionItems.
+			 * @since 1.44
+			 */
+			selectedItem: {type: "sap.ui.core.Item", multiple: false},
+
+			/**
+			 * Sets or retrieves the selected row from the suggestionRows.
+			 * @since 1.44
+			 */
+			selectedRow: {type: "sap.m.ColumnListItem", multiple: false}
 		},
 		events : {
 
@@ -151,11 +301,22 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			 */
 			liveChange : {
 				parameters : {
-
 					/**
 					 * The new value of the input.
 					 */
-					value : {type : "string"}
+					value : {type : "string"},
+
+					/**
+					 * Indicate that ESC key triggered the event.
+					 * @since 1.48
+					 */
+					escPressed : {type : "boolean"},
+
+					/**
+					 * The value of the input before pressing ESC key.
+					 * @since 1.48
+					 */
+					previousValue : {type : "string"}
 				}
 			},
 
@@ -233,48 +394,93 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					value: { type: "string" }
 				}
 			}
-		}
+		},
+		designtime: "sap/m/designtime/Input.designtime"
 	}});
 
 
 	IconPool.insertFontFaceStyle();
 
 	/**
-	 * The default filter function for one and two-value. It checks whether the item text begins with the typed value.
-	 * @param {string} sValue the current filter string
-	 * @param {sap.ui.core.Item} oItem the filtered list item
+	 * Returns true if some word from the text starts with specific value.
+	 *
+	 * @name sap.m.Input._wordStartsWithValue
+	 * @method
 	 * @private
-	 * @returns {boolean} true for items that start with the parameter sValue, false for non matching items
+	 * @param {string} sText The text of the word.
+	 * @param {string} sValue The value which must be compared to the word.
+	 * @returns {boolean} Indication if the word starts with the passed value.
 	 */
-	Input._DEFAULTFILTER = function(sValue, oItem) {
-		return jQuery.sap.startsWithIgnoreCase(oItem.getText(), sValue);
+	Input._wordStartsWithValue = function(sText, sValue) {
+
+		var index;
+
+		while (sText) {
+			if (jQuery.sap.startsWithIgnoreCase(sText, sValue)) {
+				return true;
+			}
+
+			index = sText.indexOf(' ');
+			if (index == -1) {
+				break;
+			}
+
+			sText = sText.substring(index + 1);
+		}
+
+		return false;
 	};
 
 	/**
-	 * The default filter function for tabular suggestions. It checks whether the first item text begins with the typed value.
-	 * @param {string} sValue the current filter string
-	 * @param {sap.m.ColumnListItem} oColumnListItem the filtered list item
+	 * The default filter function for one and two-value. It checks whether the item text begins with the typed value.
+	 *
+	 * @name sap.m.Input._DEFAULTFILTER
 	 * @private
-	 * @returns {boolean} true for items that start with the parameter sValue, false for non matching items
+	 * @param {string} sValue the current filter string.
+	 * @param {sap.ui.core.Item} oItem the filtered list item.
+	 * @returns {boolean} true for items that start with the parameter sValue, false for non matching items.
+	 */
+	Input._DEFAULTFILTER = function(sValue, oItem) {
+
+		if (oItem instanceof ListItem && Input._wordStartsWithValue(oItem.getAdditionalText(), sValue)) {
+			return true;
+		}
+
+		return Input._wordStartsWithValue(oItem.getText(), sValue);
+	};
+
+	/**
+	 * The default filter function for tabular suggestions. It checks whether some item text begins with the typed value.
+	 *
+	 * @name sap.m.Input._DEFAULTFILTER_TABULAR
+	 * @private
+	 * @param {string} sValue the current filter string.
+	 * @param {sap.m.ColumnListItem} oColumnListItem The filtered list item.
+	 * @returns {boolean} true for items that start with the parameter sValue, false for non matching items.
 	 */
 	Input._DEFAULTFILTER_TABULAR = function(sValue, oColumnListItem) {
 		var aCells = oColumnListItem.getCells(),
 			i = 0;
 
 		for (; i < aCells.length; i++) {
-			// take first cell with a text method and compare value
+
 			if (aCells[i].getText) {
-				return jQuery.sap.startsWithIgnoreCase(aCells[i].getText(), sValue);
+				if (Input._wordStartsWithValue(aCells[i].getText(), sValue)) {
+					return true;
+				}
 			}
 		}
+
 		return false;
 	};
 
 	/**
-	 * The default result function for tabular suggestions. It returns the value of the first cell with a "text" property
-	 * @param {sap.m.ColumnListItem} oColumnListItem the selected list item
+	 * The default result function for tabular suggestions. It returns the value of the first cell with a "text" property.
+	 *
+	 * @name sap.m.Input._DEFAULTRESULT_TABULAR
 	 * @private
-	 * @returns {string} the value to be displayed in the input field
+	 * @param {sap.m.ColumnListItem} oColumnListItem The selected list item.
+	 * @returns {string} The value to be displayed in the input field.
 	 */
 	Input._DEFAULTRESULT_TABULAR = function (oColumnListItem) {
 		var aCells = oColumnListItem.getCells(),
@@ -290,7 +496,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	};
 
 	/**
-	 * Initializes the control
+	 * Initializes the control.
+	 *
+	 * @name sap.m.Input.init
 	 * @private
 	 */
 	Input.prototype.init = function() {
@@ -298,17 +506,22 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		this._fnFilter = Input._DEFAULTFILTER;
 
 		// Show suggestions in a dialog on phones:
-		this._bUseDialog = sap.ui.Device.system.phone;
+		this._bUseDialog = Device.system.phone;
 
 		// Show suggestions in a full screen dialog on phones:
-		this._bFullScreen = sap.ui.Device.system.phone;
+		this._bFullScreen = Device.system.phone;
 
 		// Counter for concurrent issues with setValue:
 		this._iSetCount = 0;
+
+		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+
 	};
 
 	/**
-	 * Destroys the control
+	 * Destroys the Input.
+	 *
+	 * @name sap.m.Input.exit
 	 * @private
 	 */
 	Input.prototype.exit = function() {
@@ -334,11 +547,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			this._oList = null;
 		}
 
-		if (this._oValueHelpIcon) {
-			this._oValueHelpIcon.destroy();
-			this._oValueHelpIcon = null;
-		}
-
 		if (this._oSuggestionTable) {
 			this._oSuggestionTable.destroy();
 			this._oSuggestionTable = null;
@@ -356,13 +564,20 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	};
 
 	/**
-	 * Resizes the popup to the input width and makes sure that the input is never bigger as the popup
+	 * Resize the popup to the input width and makes sure that the input is never bigger than the popup.
+	 *
+	 * @name sap.m.Input._resizePopup
 	 * @private
 	 */
-	Input.prototype._resizePopup = function() {
+	Input.prototype._resizePopup = function(bForceResize) {
 		var that = this;
 
-		if (this._oList && this._oSuggestionPopup) {
+		if (bForceResize) {
+			this._shouldResizePopup = true;
+		}
+
+		if (this._oList && this._oSuggestionPopup && this._shouldResizePopup) {
+
 			if (this.getMaxSuggestionWidth()) {
 				this._oSuggestionPopup.setContentWidth(this.getMaxSuggestionWidth());
 			} else {
@@ -378,28 +593,58 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Overwrites the onBeforeRendering.
+	 *
+	 * @name sap.m.Input.onBeforeRendering
+	 * @public
+	 */
 	Input.prototype.onBeforeRendering = function() {
+		var sSelectedKey = this.getSelectedKey();
 		InputBase.prototype.onBeforeRendering.call(this);
+
 		this._deregisterEvents();
+
+		if (sSelectedKey) {
+			this.setSelectedKey(sSelectedKey);
+		}
+
+		if (this.getShowSuggestion()) {
+			if (this.getShowTableSuggestionValueHelp()) {
+				this._addShowMoreButton();
+			} else {
+				this._removeShowMoreButton();
+			}
+		}
 	};
 
+	/**
+	 * Overwrites the onAfterRendering.
+	 *
+	 * @name sap.m.Input.onAfterRendering
+	 * @public
+	 */
 	Input.prototype.onAfterRendering = function() {
 		var that = this;
 
 		InputBase.prototype.onAfterRendering.call(this);
 
 		if (!this._bFullScreen) {
-			this._resizePopup();
-			this._sPopupResizeHandler = sap.ui.core.ResizeHandler.register(this.getDomRef(), function() {
+			this._sPopupResizeHandler = ResizeHandler.register(this.getDomRef(), function() {
 				that._resizePopup();
 			});
 		}
 
-		if (this._bUseDialog && this.getEditable()) {
+		if (this._bUseDialog && this.getEditable() && this.getEnabled()) {
 			// click event has to be used in order to focus on the input in dialog
 			// do not open suggestion dialog by click over the value help icon
 			this.$().on("click", jQuery.proxy(function (oEvent) {
-				if (this.getShowSuggestion() && this._oSuggestionPopup && oEvent.target.id != this.getId() + "__vhi") {
+				if (this._onclick) {
+					this._onclick(oEvent);
+				}
+
+				if (this.getShowSuggestion() && this._oSuggestionPopup && oEvent.target.id != this.getId() + "-vhi") {
+					this._resizePopup(true);
 					this._oSuggestionPopup.open();
 				}
 			}, this));
@@ -407,63 +652,296 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	};
 
 	/**
-	 * Sets selection item.
+	 * Returns input display text.
 	 *
-	 * @param {sap.ui.core.Item} oItem Selected item
+	 * @name sap.m.Input._getDisplayText
+	 * @private
+	 * @param {sap.ui.core.Item} oItem The displayed item.
+	 * @returns {string} The key for the text format mode.
+	 */
+	Input.prototype._getDisplayText = function(oItem) {
+
+		var fTextFormatter = this.getTextFormatter();
+		if (fTextFormatter) {
+			return fTextFormatter(oItem);
+		}
+
+		var sText = oItem.getText(),
+			sKey = oItem.getKey(),
+			textFormatMode = this.getTextFormatMode();
+
+		switch (textFormatMode) {
+			case InputTextFormatMode.Key:
+				return sKey;
+			case InputTextFormatMode.ValueKey:
+				return sText + ' (' + sKey + ')';
+			case InputTextFormatMode.KeyValue:
+				return '(' + sKey + ') ' + sText;
+			default:
+				return sText;
+		}
+	};
+
+	/**
+	 * Handles value updates.
+	 *
+	 * @name sap.m.Input._onValueUpdated
+	 * @private
+	 * @param {string} newValue The new selected value.
+	 */
+	Input.prototype._onValueUpdated = function (newValue) {
+		if (this._bSelectingItem || newValue === this._sSelectedValue) {
+			return;
+		}
+
+		var sKey = this.getSelectedKey(),
+			bHasSelectedItem;
+
+		if (sKey === '') {
+			return;
+		}
+
+		if (this._hasTabularSuggestions()) {
+			bHasSelectedItem = !!this._oSuggestionTable.getSelectedItem();
+		} else {
+			bHasSelectedItem = !!this._oList.getSelectedItem();
+		}
+
+		if (bHasSelectedItem) {
+			return;
+		}
+
+		this.setProperty("selectedKey", '', true);
+		this.setAssociation("selectedRow", null, true);
+		this.setAssociation("selectedItem", null, true);
+
+		this.fireSuggestionItemSelected({
+			selectedItem: null,
+			selectedRow: null
+		});
+	};
+
+	/**
+	 * Updates selectedItem or selectedRow from the suggestion list or table.
 	 *
 	 * @private
+	 * @returns {boolean} Indicates if an item or row is selected
 	 */
-	Input.prototype.setSelectionItem = function (oItem) {
+	Input.prototype._updateSelectionFromList = function () {
+		if (this._iPopupListSelectedIndex  < 0) {
+			return false;
+		}
+
+		var oSelectedItem = this._oList.getSelectedItem();
+		if (oSelectedItem) {
+			if (this._hasTabularSuggestions()) {
+				this.setSelectionRow(oSelectedItem, true);
+			} else {
+				this.setSelectionItem(oSelectedItem._oItem, true);
+			}
+		}
+
+		return true;
+	};
+
+	/**
+	 * Updates and synchronizes the <code>selectedItem</code> association and <code>selectedKey</code> properties.
+	 *
+	 * @name sap.m.Input.setSelectionItem
+	 * @private
+	 * @param {sap.ui.core.Item | null} oItem Selected item.
+	 * @param {boolean} bInteractionChange Specifies if the change is triggered by user interaction.
+	 */
+	Input.prototype.setSelectionItem = function (oItem, bInteractionChange) {
+
+		if (!oItem) {
+			this.setAssociation("selectedItem", null, true);
+			this.setProperty("selectedKey", '', true);
+
+			this.setValue('');
+
+			return;
+		}
+
+		this._bSelectingItem = true;
+
 		var iCount = this._iSetCount,
 			sNewValue;
 
+		this.setAssociation("selectedItem", oItem, true);
+		this.setProperty("selectedKey", oItem.getKey(), true);
+
 		// fire suggestion item select event
-		this.fireSuggestionItemSelected({
-			selectedItem: oItem
-		});
+		if (bInteractionChange) {
+			this.fireSuggestionItemSelected({
+				selectedItem: oItem
+			});
+		}
 
 		// choose which field should be used for the value
 		if (iCount !== this._iSetCount) {
 			// if the event handler modified the input value we take this one as new value
 			sNewValue = this.getValue();
 		} else {
-			// otherwise use title
-			sNewValue = oItem.getText();
+			sNewValue = this._getDisplayText(oItem);
 		}
 
-		// update the input field
-		if (this._bUseDialog) {
-			this._oPopupInput.setValue(sNewValue);
-			this._oPopupInput._doSelect();
-		} else {
-			// call _getInputValue to apply the maxLength to the typed value
-			this._$input.val(this._getInputValue(sNewValue));
-			this.onChange();
-		}
+		this._sSelectedValue = sNewValue;
+
+		this.updateInputField(sNewValue);
+
 		this._iPopupListSelectedIndex = -1;
+
 		if (!(this._bUseDialog && this instanceof sap.m.MultiInput && this._isMultiLineMode)) {
 			this._closeSuggestionPopup();
 		}
-		if (!sap.ui.Device.support.touch) {
+
+		if (!Device.support.touch) {
 			this._doSelect();
+		}
+
+		this._bSelectingItem = false;
+	};
+
+	/**
+	 * Sets the <code>selectedItem</code> association.
+	 *
+	 *
+	 * @name sap.m.Input.setSelectedItem
+	 * @public
+	 * @param {sap.ui.core.Item} oItem New value for the <code>selectedItem</code> association.
+	 * Default value is <code>null</code>.
+	 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the
+	 * <code>selectedItem</code> association.
+	 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code> to clear
+	 * the selection.
+	 * @returns {sap.m.Input} <code>this</code> to allow method chaining.
+	 * @since 1.44
+	 */
+	Input.prototype.setSelectedItem = function(oItem) {
+
+		if (typeof oItem === "string") {
+			oItem = sap.ui.getCore().byId(oItem);
+		}
+
+		if (oItem !== null && !(oItem instanceof Item)) {
+			return this;
+		}
+
+		this.setSelectionItem(oItem);
+		return this;
+	};
+
+	/**
+	 * Sets the <code>selectedKey</code> property.
+	 *
+	 * Default value is an empty string <code>""</code> or <code>undefined</code>.
+	 *
+	 * @name sap.m.Input.setSelectedKey
+	 * @public
+	 * @param {string} sKey New value for property <code>selectedKey</code>.
+	 * If the provided <code>sKey</code> is an empty string <code>""</code> or <code>undefined</code>,
+	 * the selection is cleared.
+	 * If duplicate keys exist, the first item matching the key is selected.
+	 * @returns {sap.m.Input} <code>this</code> to allow method chaining.
+	 * @since 1.44
+	 */
+	Input.prototype.setSelectedKey = function(sKey) {
+		sKey = this.validateProperty("selectedKey", sKey);
+
+		if (this._hasTabularSuggestions()) {
+			this.setProperty("selectedKey", sKey, true);
+			return this;
+		}
+
+		if (!sKey) {
+			this.setSelectionItem();
+			return this;
+		}
+
+		var oItem = this.getSuggestionItemByKey(sKey);
+
+		if (oItem) {
+			this.setSelectionItem(oItem);
+		} else {
+			this.setProperty("selectedKey", sKey, true);
+		}
+
+		return this;
+	};
+
+	/**
+	 * Gets the item with the given key from the aggregation <code>suggestionItems</code>.
+	 * <b>Note:</b> If duplicate keys exist, the first item matching the key is returned.
+	 *
+	 * @public
+	 * @name sap.m.Input.getSuggestionItemByKey
+	 * @param {string} sKey An item key that specifies the item to retrieve.
+	 * @returns {sap.ui.core.Item} Suggestion item.
+	 * @since 1.44
+	 */
+	Input.prototype.getSuggestionItemByKey = function(sKey) {
+		var aItems = this.getSuggestionItems() || [],
+			oItem,
+			i;
+
+		for (i = 0; i < aItems.length; i++) {
+			oItem = aItems[i];
+			if (oItem.getKey() === sKey) {
+				return oItem;
+			}
 		}
 	};
 
 	/**
-	 * Sets selection item.
+	 * Updates and synchronizes the <code>selectedRow</code> association and <code>selectedKey</code> properties.
 	 *
-	 * @param {sap.m.ColumnListItem} oListItem Selected item
-	 *
+	 * @name sap.m.Input.setSelectionRow
 	 * @private
+	 * @param {sap.m.ColumnListItem} oListItem Selected item.
+	 * @param {boolean} bInteractionChange Specifies if the change is triggered by user interaction.
 	 */
-	Input.prototype.setSelectionRow = function (oListItem) {
+	Input.prototype.setSelectionRow = function (oListItem, bInteractionChange) {
+
+		if (!oListItem) {
+			this.setAssociation("selectedRow", null, true);
+			this.setProperty("selectedKey", '', true);
+
+			this.setValue('');
+
+			return;
+		}
+
+		this._bSelectingItem = true;
+
+		var oItem,
+			fSuggestionRowValidator = this.getSuggestionRowValidator();
+
+		if (fSuggestionRowValidator) {
+			oItem = fSuggestionRowValidator(oListItem);
+			if (!(oItem instanceof Item)) {
+				oItem = null;
+			}
+		}
+
 		var iCount = this._iSetCount,
+			sKey = "",
 			sNewValue;
 
+		this.setAssociation("selectedRow", oListItem, true);
+
+		if (oItem) {
+			sKey = oItem.getKey();
+		}
+
+		this.setProperty("selectedKey", sKey, true);
+
 		// fire suggestion item select event
-		this.fireSuggestionItemSelected({
-			selectedRow : oListItem
-		});
+		if (bInteractionChange) {
+			this.fireSuggestionItemSelected({
+				selectedRow: oListItem
+			});
+		}
 
 		// choose which field should be used for the value
 		if (iCount !== this._iSetCount) {
@@ -471,59 +949,101 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			sNewValue = this.getValue();
 		} else {
 			// for tabular suggestions we call a result filter function
-			sNewValue = this._fnRowResultFilter(oListItem);
+			if (oItem) {
+				sNewValue = this._getDisplayText(oItem);
+			} else {
+				sNewValue = this._fnRowResultFilter ? this._fnRowResultFilter(oListItem) : Input._DEFAULTRESULT_TABULAR(oListItem);
+			}
 		}
 
-		// update the input field
-		if (this._bUseDialog) {
-			this._oPopupInput.setValue(sNewValue);
-			this._oPopupInput._doSelect();
-		} else {
-			// call _getInputValue to apply the maxLength to the typed value
-			this._$input.val(this._getInputValue(sNewValue));
-			this.onChange();
-		}
+		this._sSelectedValue = sNewValue;
+
+		this.updateInputField(sNewValue);
+
 		this._iPopupListSelectedIndex = -1;
 
 		if (!(this._bUseDialog && this instanceof sap.m.MultiInput && this._isMultiLineMode)) {
 			this._closeSuggestionPopup();
 		}
 
-		if (!sap.ui.Device.support.touch) {
+		if (!Device.support.touch) {
 			this._doSelect();
 		}
+
+		this._bSelectingItem = false;
 	};
 
 	/**
-	 * Returns/Instantiates the value help icon control when needed
-	 * @private
+	 * Sets the <code>selectedRow</code> association.
+	 * Default value is <code>null</code>.
+	 *
+	 * @name sap.m.Input.setSelectedRow
+	 * @public
+	 * @param {sap.m.ColumnListItem} oListItem New value for the <code>selectedRow</code> association.
+	 * If an ID of a <code>sap.m.ColumnListItem</code> is given, the item with this ID becomes the
+	 * <code>selectedRow</code> association.
+	 * Alternatively, a <code>sap.m.ColumnListItem</code> instance may be given or <code>null</code> to clear
+	 * the selection.
+	 * @returns {sap.m.Input} <code>this</code> to allow method chaining.
+	 * @since 1.44
 	 */
-	Input.prototype._getValueHelpIcon = function () {
-		var that = this;
+	Input.prototype.setSelectedRow = function(oListItem) {
 
-		if (!this._oValueHelpIcon) {
-			var sURI = IconPool.getIconURI("value-help");
-			this._oValueHelpIcon = IconPool.createControlByURI({
-				id: this.getId() + "__vhi",
-				src: sURI,
-				useIconTooltip: false,
-				noTabStop: true
-			});
-
-			this._oValueHelpIcon.addStyleClass("sapMInputValHelpInner");
-			this._oValueHelpIcon.attachPress(function (evt) {
-				// if the property valueHelpOnly is set to true, the event is triggered in the ontap function
-				if (!that.getValueHelpOnly()) {
-					that.fireValueHelpRequest({fromSuggestions: false});
-				}
-			});
+		if (typeof oListItem === "string") {
+			oListItem = sap.ui.getCore().byId(oListItem);
 		}
 
-		return this._oValueHelpIcon;
+		if (oListItem !== null && !(oListItem instanceof ColumnListItem)) {
+			return this;
+		}
+
+		this.setSelectionRow(oListItem);
+		return this;
 	};
 
 	/**
-	 * Fire valueHelpRequest event if conditions for ValueHelpOnly property are met
+	 * Returns/Instantiates the value help icon control when needed.
+	 *
+	 * @name sap.m.Input._getValueHelpIcon
+	 * @private
+	 * @returns {object} Value help icon of the input.
+	 */
+	Input.prototype._getValueHelpIcon = function () {
+		var that = this,
+			valueHelpIcon = this.getAggregation("_valueHelpIcon"),
+			sURI;
+
+		if (valueHelpIcon) {
+			return valueHelpIcon;
+		}
+
+		sURI = IconPool.getIconURI("value-help");
+		valueHelpIcon = IconPool.createControlByURI({
+			id: this.getId() + "-vhi",
+			src: sURI,
+			useIconTooltip: false,
+			noTabStop: true
+		});
+
+		valueHelpIcon.addStyleClass("sapMInputValHelpInner");
+		valueHelpIcon.attachPress(function (evt) {
+			// if the property valueHelpOnly is set to true, the event is triggered in the ontap function
+			if (!that.getValueHelpOnly()) {
+				this.getParent().focus();
+				that.bValueHelpRequested = true;
+				that.fireValueHelpRequest({fromSuggestions: false});
+			}
+		});
+
+		this.setAggregation("_valueHelpIcon", valueHelpIcon);
+
+		return valueHelpIcon;
+	};
+
+	/**
+	 * Fire valueHelpRequest event if conditions for ValueHelpOnly property are met.
+	 *
+	 * @name sap.m.Input._fireValueHelpRequestForValueHelpOnly
 	 * @private
 	 */
 	Input.prototype._fireValueHelpRequestForValueHelpOnly = function() {
@@ -534,9 +1054,11 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	};
 
 	/**
-	 * Fire valueHelpRequest event on tap
+	 * Fire valueHelpRequest event on tap.
+	 *
+	 * @name sap.m.Input.ontap
 	 * @public
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent Ontap event.
 	 */
 	Input.prototype.ontap = function(oEvent) {
 		InputBase.prototype.ontap.call(this, oEvent);
@@ -544,9 +1066,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	};
 
 	/**
-	 * Defines the width of the input. Default value is 100%
+	 * Defines the width of the input. Default value is 100%.
+	 *
+	 * @name sap.m.Input.setWidth
 	 * @public
-	 * @param {string} sWidth
+	 * @param {string} sWidth The new width of the input.
+	 * @returns {void} Sets the width of the Input.
 	 */
 	Input.prototype.setWidth = function(sWidth) {
 		return InputBase.prototype.setWidth.call(this, sWidth || "100%");
@@ -554,8 +1079,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	/**
 	 * Returns the width of the input.
+	 *
+	 * @name sap.m.Input.getWidth
 	 * @public
-	 * @return {string} The current width or 100% as default
+	 * @return {string} The current width or 100% as default.
 	 */
 	Input.prototype.getWidth = function() {
 		return this.getProperty("width") || "100%";
@@ -563,10 +1090,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	/**
 	 * Sets a custom filter function for suggestions. The default is to check whether the first item text begins with the typed value. For one and two-value suggestions this callback function will operate on sap.ui.core.Item types, for tabular suggestions the function will operate on sap.m.ColumnListItem types.
+	 *
+	 * @name sap.m.Input.setFilterFunction
+	 * @public
 	 * @param {function} fnFilter The filter function is called when displaying suggestion items and has two input parameters: the first one is the string that is currently typed in the input field and the second one is the item that is being filtered. Returning true will add this item to the popup, returning false will not display it.
 	 * @returns {sap.m.Input} this pointer for chaining
 	 * @since 1.16.1
-	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	Input.prototype.setFilterFunction = function(fnFilter) {
@@ -583,13 +1112,18 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	/**
 	 * Sets a custom result filter function for tabular suggestions to select the text that is passed to the input field. Default is to check whether the first cell with a "text" property begins with the typed value. For one value and two-value suggestions this callback function is not called.
+	 *
+	 * @name sap.m.Input.setRowResultFunction
+	 * @method
+	 * @public
 	 * @param {function} fnFilter The result function is called with one parameter: the sap.m.ColumnListItem that is selected. The function must return a result string that will be displayed as the input field's value.
 	 * @returns {sap.m.Input} this pointer for chaining
-	 * @public
 	 * @since 1.21.1
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	Input.prototype.setRowResultFunction = function(fnFilter) {
+		var sSelectedRow;
+
 		// reset to default function when calling with null or undefined
 		if (fnFilter === null || fnFilter === undefined) {
 			this._fnRowResultFilter = Input._DEFAULTRESULT_TABULAR;
@@ -598,46 +1132,38 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		// set custom function
 		jQuery.sap.assert(typeof (fnFilter) === "function", "Input.setRowResultFunction: first argument fnFilter must be a function on " + this);
 		this._fnRowResultFilter = fnFilter;
-		return this;
-	};
 
-	Input.prototype.setShowValueHelp = function(bShowValueHelp) {
-
-		this.setProperty("showValueHelp", bShowValueHelp);
-
-		if (bShowValueHelp && !Input.prototype._sAriaValueHelpLabelId) {
-			// create an F4 ARIA announcement and remember its ID for later use in the renderer:
-			Input.prototype._sAriaValueHelpLabelId = new sap.ui.core.InvisibleText({
-				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_VALUEHELP")
-			}).toStatic().getId();
+		sSelectedRow = this.getSelectedRow();
+		if (sSelectedRow) {
+			this.setSelectedRow(sSelectedRow);
 		}
+
 		return this;
-
-	};
-
-	Input.prototype.setValueHelpOnly = function(bValueHelpOnly) {
-
-		this.setProperty("valueHelpOnly", bValueHelpOnly);
-
-		if (bValueHelpOnly && !Input.prototype._sAriaInputDisabledLabelId) {
-			// create an F4 ARIA announcement and remember its ID for later use in the renderer:
-			Input.prototype._sAriaInputDisabledLabelId = new sap.ui.core.InvisibleText({
-				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_DISABLED")
-			}).toStatic().getId();
-		}
-		return this;
-
 	};
 
 	/**
-	 * Selects the text of the InputDomRef in the given range
-	 * @param {int} [iStart=0] start position of the text selection
-	 * @param {int} [iEnd=<length of text>] end position of the text selection
-	 * @return {sap.m.Input} this Input instance for chaining
+	 * Closes the suggestion list.
+	 *
+	 * @name sap.m.Input.closeSuggestions
+	 * @method
+	 * @public
+	 * @since 1.48
+	 */
+	Input.prototype.closeSuggestions = function() {
+		this._closeSuggestionPopup();
+	};
+
+	/**
+	 * Selects the text of the InputDomRef in the given range.
+	 *
+	 * @name sap.m.Input._doSelect
 	 * @private
+	 * @param {int} iStart Start of selection.
+	 * @param {iEnd} iEnd End of selection.
+	 * @returns {sap.m.Input} this Input instance for chaining.
 	 */
 	Input.prototype._doSelect = function(iStart, iEnd) {
-		if (sap.ui.Device.support.touch) {
+		if (Device.support.touch) {
 			return;
 		}
 		var oDomRef = this._$input[0];
@@ -650,6 +1176,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		return this;
 	};
 
+	/**
+	 * Scrolls to item.
+	 *
+	 * @name sap.m.Input._scrollToItem
+	 * @method
+	 * @private
+	 * @param {int} iIndex Index of the item to scroll to.
+	 */
 	Input.prototype._scrollToItem = function(iIndex) {
 		var oPopup = this._oSuggestionPopup,
 			oList = this._oList,
@@ -683,22 +1217,62 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
-	// helper method for keyboard navigation in suggestion items
+	/**
+	 * Helper method for keyboard navigation in suggestion items.
+	 *
+	 * @name sap.m.Input._isSuggestionItemSelectable
+	 * @method
+	 * @private
+	 * @param {sap.ui.core.Item} oItem Suggestion item.
+	 * @returns {boolean} Is the suggestion item selectable.
+	 */
 	Input.prototype._isSuggestionItemSelectable = function(oItem) {
 		// CSN# 1390866/2014: The default for ListItemBase type is "Inactive", therefore disabled entries are only supported for single and two-value suggestions
 		// for tabular suggestions: only check visible
 		// for two-value and single suggestions: check also if item is not inactive
-		return oItem.getVisible() && (this._hasTabularSuggestions() || oItem.getType() !== sap.m.ListType.Inactive);
+		return oItem.getVisible() && (this._hasTabularSuggestions() || oItem.getType() !== ListType.Inactive);
 	};
 
+	/**
+	 *  Helper method for distinguishing between incremental and non-incremental types of input.
+	 *
+	 * @name sap.m.Input._isIncrementalType
+	 * @method
+	 * @private
+	 * @returns {boolean} Is it incremental type.
+	 */
+	Input.prototype._isIncrementalType = function () {
+		var sTypeOfInput = this.getType();
+		if (sTypeOfInput === "Number" || sTypeOfInput === "Date" ||
+			sTypeOfInput === "Datetime" || sTypeOfInput === "Month" ||
+			sTypeOfInput === "Time" || sTypeOfInput === "Week") {
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Keyboard handler helper.
+	 *
+	 * @name sap.m.Input._onsaparrowkey
+	 * @method
+	 * @private
+	 * @param {jQuery.Event} oEvent Arrow key event.
+	 * @param {string} sDir Arrow direction.
+	 * @param {int} iItems Items to be changed.
+	 */
 	Input.prototype._onsaparrowkey = function(oEvent, sDir, iItems) {
 		if (!this.getEnabled() || !this.getEditable()) {
 			return;
 		}
-		if (!this._oSuggestionPopup || !this._oSuggestionPopup.isOpen()) {
+		if (sDir !== "up" && sDir !== "down") {
 			return;
 		}
-		if (sDir !== "up" && sDir !== "down") {
+		if (this._isIncrementalType()){
+			oEvent.setMarked();
+		}
+
+		if (!this._oSuggestionPopup || !this._oSuggestionPopup.isOpen()) {
 			return;
 		}
 
@@ -789,16 +1363,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			this.$("inner").attr("aria-activedescendant", aListItems[iSelectedIndex].getId());
 		}
 
-		if (sap.ui.Device.system.desktop) {
+		if (Device.system.desktop) {
 			this._scrollToItem(iSelectedIndex);
 		}
 
 		// make sure the value doesn't exceed the maxLength
-		if (sap.m.ColumnListItem && aListItems[iSelectedIndex] instanceof sap.m.ColumnListItem) {
+		if (ColumnListItem && aListItems[iSelectedIndex] instanceof ColumnListItem) {
 			// for tabular suggestions we call a result filter function
 			sNewValue = this._getInputValue(this._fnRowResultFilter(aListItems[iSelectedIndex]));
 		} else {
-			var bListItem = (aItems[0] instanceof sap.ui.core.ListItem ? true : false);
+			var bListItem = (aItems[0] instanceof ListItem ? true : false);
 			if (bListItem) {
 				// for two value suggestions we use the item label
 				sNewValue = this._getInputValue(aListItems[iSelectedIndex].getLabel());
@@ -809,7 +1383,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 
 		// setValue isn't used because here is too early to modify the lastValue of input
-		this._$input.val(sNewValue);
+		this.setDOMValue(sNewValue);
 
 		// memorize the value set by calling jQuery.val, because browser doesn't fire a change event when the value is set programmatically.
 		this._sSelectedSuggViaKeyboard = sNewValue;
@@ -818,22 +1392,62 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		this._iPopupListSelectedIndex = iSelectedIndex;
 	};
 
+	/**
+	 * Keyboard handler for up arrow key.
+	 *
+	 * @name sap.m.Input.onsapup
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapup = function(oEvent) {
 		this._onsaparrowkey(oEvent, "up", 1);
 	};
 
+	/**
+	 * Keyboard handler for down arrow key.
+	 *
+	 * @name sap.m.Input.onsapdown
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapdown = function(oEvent) {
 		this._onsaparrowkey(oEvent, "down", 1);
 	};
 
+	/**
+	 * Keyboard handler for page up key.
+	 *
+	 * @name sap.m.Input.onsappageup
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsappageup = function(oEvent) {
 		this._onsaparrowkey(oEvent, "up", 5);
 	};
 
+	/**
+	 * Keyboard handler for page down key.
+	 *
+	 * @name sap.m.Input.onsappagedown
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsappagedown = function(oEvent) {
 		this._onsaparrowkey(oEvent, "down", 5);
 	};
 
+	/**
+	 * Keyboard handler for home key.
+	 *
+	 * @name sap.m.Input.onsaphome
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsaphome = function(oEvent) {
 
 		if (this._oList) {
@@ -842,6 +1456,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	};
 
+	/**
+	 * Keyboard handler for end key.
+	 *
+	 * @name sap.m.Input.onsapend
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapend = function(oEvent) {
 
 		if (this._oList) {
@@ -850,6 +1472,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	};
 
+	/**
+	 * Keyboard handler for escape key.
+	 *
+	 * @name sap.m.Input.onsapescape
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapescape = function(oEvent) {
 		var lastValue;
 
@@ -876,31 +1506,27 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Keyboard handler for enter key.
+	 *
+	 * @name sap.m.Input.onsapenter
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapenter = function(oEvent) {
-		if (InputBase.prototype.onsapenter) {
-			InputBase.prototype.onsapenter.apply(this, arguments);
-		}
 
 		// when enter is pressed before the timeout of suggestion delay, suggest event is cancelled
 		this.cancelPendingSuggest();
 
 		if (this._oSuggestionPopup && this._oSuggestionPopup.isOpen()) {
-			var oSelectedItem = this._oList.getSelectedItem();
-			if (oSelectedItem) {
-				if (this._hasTabularSuggestions()){
-					this.setSelectionRow(oSelectedItem, true);
-				} else {
-					this.setSelectionItem(oSelectedItem._oItem, true);
-				}
-			} else {
-				if (this._iPopupListSelectedIndex >= 0) {
-					this._fireSuggestionItemSelectedEvent();
-					this._doSelect();
-
-					this._iPopupListSelectedIndex = -1;
-				}
+			if (!this._updateSelectionFromList()) {
 				this._closeSuggestionPopup();
 			}
+		}
+
+		if (InputBase.prototype.onsapenter) {
+			InputBase.prototype.onsapenter.apply(this, arguments);
 		}
 
 		if (this.getEnabled() && this.getEditable() && !(this.getValueHelpOnly() && this.getShowValueHelp())) {
@@ -908,6 +1534,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Keyboard handler for the onFocusLeave event.
+	 *
+	 * @name sap.m.Input.onsapfocusleave
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapfocusleave = function(oEvent) {
 		var oPopup = this._oSuggestionPopup;
 
@@ -919,7 +1553,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			} else {
 				// When the input still has the value of the last jQuery.val call, a change event has to be
 				// fired manually because browser doesn't fire an input event in this case.
-				if (this._$input.val() === this._sSelectedSuggViaKeyboard) {
+				if (this.getDOMValue() === this._sSelectedSuggViaKeyboard) {
 					this._sSelectedSuggViaKeyboard = null;
 				}
 			}
@@ -933,8 +1567,18 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			)) {
 			InputBase.prototype.onsapfocusleave.apply(this, arguments);
 		}
+
+		this.bValueHelpRequested = false;
 	};
 
+	/**
+	 * Keyboard handler for the onMouseDown event.
+	 *
+	 * @name sap.m.Input.onmousedown
+	 * @method
+	 * @public
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onmousedown = function(oEvent) {
 		var oPopup = this._oSuggestionPopup;
 
@@ -943,9 +1587,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Removes events from the input.
+	 *
+	 * @name sap.m.Input._deregisterEvents
+	 * @method
+	 * @private
+	 */
 	Input.prototype._deregisterEvents = function() {
 		if (this._sPopupResizeHandler) {
-			sap.ui.core.ResizeHandler.deregister(this._sPopupResizeHandler);
+			ResizeHandler.deregister(this._sPopupResizeHandler);
 			this._sPopupResizeHandler = null;
 		}
 
@@ -954,13 +1605,41 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Update suggestion items.
+	 *
+	 * @name sap.m.Input.updateSuggestionItems
+	 * @method
+	 * @public
+	 * @return {sap.m.Input} this Input instance for chaining.
+	 */
 	Input.prototype.updateSuggestionItems = function() {
+		this._bSuspendInvalidate = true;
 		this.updateAggregation("suggestionItems");
 		this._bShouldRefreshListItems = true;
 		this._refreshItemsDelayed();
+		this._bSuspendInvalidate = false;
 		return this;
 	};
 
+	/**
+	 * Invalidates the control.
+	 * @override
+	 * @protected
+	 */
+	Input.prototype.invalidate = function() {
+		if (!this._bSuspendInvalidate) {
+			Control.prototype.invalidate.apply(this, arguments);
+		}
+	};
+
+		/**
+	 * Cancels any pending suggestions.
+	 *
+	 * @name sap.m.Input.cancelPendingSuggest
+	 * @method
+	 * @public
+	 */
 	Input.prototype.cancelPendingSuggest = function() {
 		if (this._iSuggestDelay) {
 			jQuery.sap.clearDelayedCall(this._iSuggestDelay);
@@ -968,6 +1647,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
+	/**
+	 * Triggers suggestions.
+	 *
+	 * @name sap.m.Input._triggerSuggest
+	 * @method
+	 * @private
+	 * @param {string} sValue User input.
+	 */
 	Input.prototype._triggerSuggest = function(sValue) {
 
 		this.cancelPendingSuggest();
@@ -979,15 +1666,23 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 		if (sValue.length >= this.getStartSuggestion()) {
 			this._iSuggestDelay = jQuery.sap.delayedCall(300, this, function(){
-				this._bBindingUpdated = false;
-				this.fireSuggest({
-					suggestValue: sValue
-				});
-				// if binding is updated during suggest event, the list items don't need to be refreshed here
-				// because they will be refreshed in updateItems function.
-				// This solves the popup blinking problem
-				if (!this._bBindingUpdated) {
-					this._refreshItemsDelayed();
+
+				// when using non ASCII characters the value might be the same as previous
+				// don't re populate the suggestion items in this case
+				if (this._sPrevSuggValue !== sValue) {
+
+					this._bBindingUpdated = false;
+					this.fireSuggest({
+						suggestValue: sValue
+					});
+					// if binding is updated during suggest event, the list items don't need to be refreshed here
+					// because they will be refreshed in updateItems function.
+					// This solves the popup blinking problem
+					if (!this._bBindingUpdated) {
+						this._refreshItemsDelayed();
+					}
+
+					this._sPrevSuggValue = sValue;
 				}
 			});
 		} else if (this._bUseDialog) {
@@ -998,12 +1693,28 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 				this._oList.destroyItems();
 			}
 		} else if (this._oSuggestionPopup && this._oSuggestionPopup.isOpen()) {
-			this._iPopupListSelectedIndex = -1;
-			this._closeSuggestionPopup();
+
+			// when compose a non ASCII character, in Chrome the value is updated in the next browser tick cycle
+			jQuery.sap.delayedCall(0, this, function () {
+				var sNewValue = this.getDOMValue() || '';
+				if (sNewValue < this.getStartSuggestion()) {
+					this._iPopupListSelectedIndex = -1;
+					this._closeSuggestionPopup();
+				}
+			});
 		}
 	};
 
 	(function(){
+		/**
+		 * Shows suggestions.
+		 *
+		 * @name sap.m.Input.setShowSuggestion
+		 * @method
+		 * @public
+		 * @param {boolean} bValue Show suggestions.
+		 * @return {sap.m.Input} this Input instance for chaining.
+	 	 */
 		Input.prototype.setShowSuggestion = function(bValue){
 			this.setProperty("showSuggestion", bValue, true);
 			this._iPopupListSelectedIndex = -1;
@@ -1015,6 +1726,15 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Shows value help suggestions in table.
+		 *
+		 * @name sap.m.Input.setShowTableSuggestionValueHelp
+		 * @method
+		 * @public
+		 * @param {boolean} bValue Show suggestions.
+		 * @return {sap.m.Input} this Input instance for chaining.
+	 	 */
 		Input.prototype.setShowTableSuggestionValueHelp = function(bValue) {
 			this.setProperty("showTableSuggestionValueHelp", bValue, true);
 
@@ -1030,9 +1750,17 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Gets show more button.
+		 *
+		 * @name sap.m.Input._getShowMoreButton
+		 * @method
+		 * @private
+		 * @return {sap.m.Button} Show more button.
+	 	 */
 		Input.prototype._getShowMoreButton = function() {
 			var that = this,
-				oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+				oMessageBundle = this._oRb;
 
 			return this._oShowMoreButton || (this._oShowMoreButton = new sap.m.Button({
 				text : oMessageBundle.getText("INPUT_SUGGESTIONS_SHOW_ALL"),
@@ -1046,6 +1774,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}));
 		};
 
+		/**
+		 * Gets button toolbar.
+		 *
+		 * @name sap.m.Input._getButtonToolbar
+		 * @method
+		 * @private
+		 * @return {sap.m.Toolbar} Button toolbar.
+	 	 */
 		Input.prototype._getButtonToolbar = function() {
 			var oShowMoreButton = this._getShowMoreButton();
 
@@ -1057,8 +1793,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}));
 		};
 
-		/*
-		 * Adds a more button to the footer of the tabular suggestion popup/dialog
+		/**
+		 * Adds a show more button to the footer of the tabular suggestion popup/dialog.
+		 *
+		 * @name sap.m.Input._addShowMoreButton
+		 * @method
+		 * @private
 		 * @param{boolean} [bTabular] optional parameter to force override the tabular suggestions check
 		 */
 		Input.prototype._addShowMoreButton = function(bTabular) {
@@ -1077,8 +1817,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		};
 
-		/*
-		 * Removes the more button from the footer of the tabular suggestion popup/dialog
+		/**
+		 * Removes the show more button from the footer of the tabular suggestion popup/dialog.
+		 *
+		 * @name sap.m.Input._removeShowMoreButton
+		 * @method
+		 * @private
 		 */
 		Input.prototype._removeShowMoreButton = function() {
 			if (!this._oSuggestionPopup || !this._hasTabularSuggestions()) {
@@ -1092,16 +1836,25 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		};
 
+		/**
+		 * Event handler for user input.
+		 *
+		 * @name sap.m.Input.oninput
+		 * @method
+		 * @public
+		 * @param {jQuery.Event} oEvent User input.
+		 */
 		Input.prototype.oninput = function(oEvent) {
 			InputBase.prototype.oninput.call(this, oEvent);
 			if (oEvent.isMarked("invalid")) {
 				return;
 			}
 
-			var value = this._$input.val();
+			var value = this.getDOMValue();
 
 			if (this.getValueLiveUpdate()) {
 				this.setProperty("value",value, true);
+				this._onValueUpdated(value);
 			}
 
 			this.fireLiveChange({
@@ -1117,15 +1870,39 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		};
 
+		/**
+		 * Gets the input value.
+		 *
+		 * @name sap.m.Input.getValue
+		 * @method
+		 * @public
+		 * @return {sap.m.Input} Value of the input.
+		 */
 		Input.prototype.getValue = function(){
-			return this.getDomRef("inner") && this._$input ? this._$input.val() : this.getProperty("value");
+			return this.getDomRef("inner") && this._$input ? this.getDOMValue() : this.getProperty("value");
 		};
 
+		/**
+		 * Refreshes delayed items.
+		 *
+		 * @name sap.m.Input._refreshItemsDelayed
+		 * @method
+		 * @public
+		 */
 		Input.prototype._refreshItemsDelayed = function() {
 			jQuery.sap.clearDelayedCall(this._iRefreshListTimeout);
 			this._iRefreshListTimeout = jQuery.sap.delayedCall(0, this, refreshListItems, [ this ]);
 		};
 
+		/**
+		 * Adds suggestion item.
+		 *
+		 * @name sap.m.Input.addSuggestionItem
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion item.
+		 * @return {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.addSuggestionItem = function(oItem) {
 			this.addAggregation("suggestionItems", oItem, true);
 			this._bShouldRefreshListItems = true;
@@ -1134,6 +1911,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Inserts suggestion item.
+		 *
+		 * @name sap.m.Input.insertSuggestionItem
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion item.
+		 * @param {int} iIndex Index to be inserted.
+		 * @returns {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.insertSuggestionItem = function(oItem, iIndex) {
 			this.insertAggregation("suggestionItems", iIndex, oItem, true);
 			this._bShouldRefreshListItems = true;
@@ -1142,6 +1929,15 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Removes suggestion item.
+		 *
+		 * @name sap.m.Input.removeSuggestionItem
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion item.
+		 * @returns {boolean} Determines whether the suggestion item has been removed.
+		 */
 		Input.prototype.removeSuggestionItem = function(oItem) {
 			var res = this.removeAggregation("suggestionItems", oItem, true);
 			this._bShouldRefreshListItems = true;
@@ -1149,6 +1945,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return res;
 		};
 
+		/**
+		 * Removes all suggestion items.
+		 *
+		 * @name sap.m.Input.removeAllSuggestionItems
+		 * @method
+		 * @public
+		 * @returns {boolean} Determines whether the suggestion items are removed.
+		 */
 		Input.prototype.removeAllSuggestionItems = function() {
 			var res = this.removeAllAggregation("suggestionItems", true);
 			this._bShouldRefreshListItems = true;
@@ -1156,6 +1960,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return res;
 		};
 
+		/**
+		 * Destroys suggestion items.
+		 *
+		 * @name sap.m.Input.destroySuggestionItems
+		 * @method
+		 * @public
+		 * @return {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.destroySuggestionItems = function() {
 			this.destroyAggregation("suggestionItems", true);
 			this._bShouldRefreshListItems = true;
@@ -1163,8 +1975,17 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Adds suggestion row.
+		 *
+		 * @name sap.m.Input.addSuggestionRow
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion item.
+		 * @return {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.addSuggestionRow = function(oItem) {
-			oItem.setType(sap.m.ListType.Active);
+			oItem.setType(ListType.Active);
 			this.addAggregation("suggestionRows", oItem);
 			this._bShouldRefreshListItems = true;
 			this._refreshItemsDelayed();
@@ -1172,15 +1993,34 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
+		/**
+		 * Inserts suggestion row.
+		 *
+		 * @name sap.m.Input.insertSuggestionRow
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion row
+		 * @param {int} iIndex Row index.
+		 * @return {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.insertSuggestionRow = function(oItem, iIndex) {
-			oItem.setType(sap.m.ListType.Active);
-			this.insertAggregation("suggestionRows", iIndex, oItem);
+			oItem.setType(ListType.Active);
+			this.insertAggregation("suggestionRows", oItem, iIndex);
 			this._bShouldRefreshListItems = true;
 			this._refreshItemsDelayed();
 			createSuggestionPopupContent(this);
 			return this;
 		};
 
+		/**
+		 * Removes suggestion row.
+		 *
+		 * @name sap.m.Input.removeSuggestionRow
+		 * @method
+		 * @public
+		 * @param {sap.ui.core.Item} oItem Suggestion row.
+		 * @returns {boolean} Determines whether the suggestion row is removed.
+		 */
 		Input.prototype.removeSuggestionRow = function(oItem) {
 			var res = this.removeAggregation("suggestionRows", oItem);
 			this._bShouldRefreshListItems = true;
@@ -1188,6 +2028,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return res;
 		};
 
+		/**
+		 * Removes all suggestion rows.
+		 *
+		 * @name sap.m.Input.removeAllSuggestionRows
+		 * @method
+		 * @public
+		 * @returns {boolean} Determines whether the suggestion rows are removed.
+		 */
 		Input.prototype.removeAllSuggestionRows = function() {
 			var res = this.removeAllAggregation("suggestionRows");
 			this._bShouldRefreshListItems = true;
@@ -1195,6 +2043,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return res;
 		};
 
+		/**
+		 * Destroys all suggestion rows.
+		 *
+		 * @name sap.m.Input.destroySuggestionRows
+		 * @method
+		 * @public
+		 * @return {sap.m.Input} this Input instance for chaining.
+		 */
 		Input.prototype.destroySuggestionRows = function() {
 			this.destroyAggregation("suggestionRows");
 			this._bShouldRefreshListItems = true;
@@ -1202,48 +2058,64 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			return this;
 		};
 
-		/**
-		 * Forwards aggregations with the name of items or columns to the internal table.
-		 * @overwrite
-		 * @public
-		 * @param {string} sAggregationName the name for the binding
-		 * @param {object} oBindingInfo the configuration parameters for the binding
-		 * @returns {sap.m.Input} this pointer for chaining
-		 */
 		Input.prototype.bindAggregation = function() {
-			var args = Array.prototype.slice.call(arguments);
-
-			if (args[0] === "suggestionRows" || args[0] === "suggestionColumns" || args[0] === "suggestionItems") {
-				createSuggestionPopupContent(this, args[0] === "suggestionRows" || args[0] === "suggestionColumns");
+			if (arguments[0] === "suggestionRows" || arguments[0] === "suggestionColumns" || arguments[0] === "suggestionItems") {
+				createSuggestionPopupContent(this, arguments[0] === "suggestionRows" || arguments[0] === "suggestionColumns");
 				this._bBindingUpdated = true;
 			}
-
-			// propagate the bind aggregation function to list
-			this._callMethodInManagedObject.apply(this, ["bindAggregation"].concat(args));
-			return this;
+			return InputBase.prototype.bindAggregation.apply(this, arguments);
 		};
 
+		/**
+		 * Initialize suggestion popup with lazy loading.
+		 *
+		 * @name sap.m.Input._lazyInitializeSuggestionPopup
+		 * @private
+		 * @method
+		 */
 		Input.prototype._lazyInitializeSuggestionPopup = function() {
 			if (!this._oSuggestionPopup) {
 				createSuggestionPopup(this);
 			}
 		};
 
+		/**
+		 * Closes suggestion popup.
+		 *
+		 * @name sap.m.Input._closeSuggestionPopup
+		 * @private
+		 * @method
+		 */
 		Input.prototype._closeSuggestionPopup = function() {
 
 			if (this._oSuggestionPopup) {
 				this._bShouldRefreshListItems = false;
 				this.cancelPendingSuggest();
 				this._oSuggestionPopup.close();
+
+				// Ensure the valueStateMessage is opened after the suggestion popup is closed.
+				// Only do this for desktop (not required for mobile) when the focus is on the input.
+				if (!this._bUseDialog && this.$().hasClass("sapMInputFocused")) {
+					this.openValueStateMessage();
+				}
 				this.$("SuggDescr").text(""); // initialize suggestion ARIA text
 				this.$("inner").removeAttr("aria-haspopup");
 				this.$("inner").removeAttr("aria-activedescendant");
+
+				this._sPrevSuggValue = null;
 			}
 
 		};
 
+		/**
+		 * Helper function that creates suggestion popup.
+		 *
+		 * @name createSuggestionPopup
+		 * @function
+		 * @param {sap.m.Input} oInput Input instance where the popup will be created.
+		 */
 		function createSuggestionPopup(oInput) {
-			var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			var oMessageBundle = oInput._oRb;
 
 			if (oInput._bUseDialog) {
 				oInput._oPopupInput = new Input(oInput.getId() + "-popup-input", {
@@ -1259,7 +2131,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					liveChange : function(oEvent) {
 						var sValue = oEvent.getParameter("newValue");
 						// call _getInputValue to apply the maxLength to the typed value
-						oInput._$input.val(oInput
+						oInput.setDOMValue(oInput
 								._getInputValue(oInput._oPopupInput
 										.getValue()));
 
@@ -1280,19 +2152,21 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			oInput._oSuggestionPopup = !oInput._bUseDialog ?
 				(new Popover(oInput.getId() + "-popup", {
 					showArrow: false,
-					showHeader : false,
-					placement : sap.m.PlacementType.Vertical,
-					initialFocus : oInput
+					showHeader: false,
+					placement: PlacementType.Vertical,
+					initialFocus: oInput,
+					horizontalScrolling: true
 				}).attachAfterClose(function() {
-					if (oInput._iPopupListSelectedIndex  >= 0) {
-						oInput._fireSuggestionItemSelectedEvent();
-					}
+
+					oInput._updateSelectionFromList();
+
 					// only destroy items in simple suggestion mode
 					if (oInput._oList instanceof Table) {
 						oInput._oList.removeSelections(true);
 					} else {
 						oInput._oList.destroyItems();
 					}
+					oInput._shouldResizePopup = false;
 				}).attachBeforeOpen(function() {
 					oInput._sBeforeSuggest = oInput.getValue();
 				}))
@@ -1323,7 +2197,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					oInput._oPopupInput.setMaxLength(oInput.getMaxLength());
 				}).attachBeforeClose(function(){
 					// call _getInputValue to apply the maxLength to the typed value
-					oInput._$input.val(oInput
+					oInput.setDOMValue(oInput
 							._getInputValue(oInput._oPopupInput
 									.getValue()));
 					oInput.onChange();
@@ -1337,11 +2211,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					if (oInput instanceof sap.m.MultiInput && oInput._isMultiLineMode) {
 
 						oInput._showIndicator();
-
-						setTimeout(function() {
-							oInput._setContainerSizes();
-						}, 0);
-
 					}
 
 					// only destroy items in simple suggestion mode
@@ -1363,6 +2232,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 				}));
 
 			oInput._oSuggestionPopup.addStyleClass("sapMInputSuggestionPopup");
+			oInput._oSuggestionPopup.addAriaLabelledBy(InvisibleText.getStaticId("sap.m", "INPUT_AVALIABLE_VALUES"));
 
 			// add popup as dependent to also propagate the model and bindings to the content of the popover
 			oInput.addDependent(oInput._oSuggestionPopup);
@@ -1379,23 +2249,35 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		}
 
+		/**
+		 * Helper function that creates content for the suggestion popup.
+		 *
+		 * @name createSuggestionPopupContent
+		 * @function
+		 * @param {sap.m.Input} oInput Input instance where the popup will be created.
+		 * @param {boolean | null } bTabular Content for the popup.
+		 */
 		function createSuggestionPopupContent(oInput, bTabular) {
 			// only initialize the content once
-			if (oInput._oList) {
+			if (oInput._bIsBeingDestroyed || oInput._oList) {
 				return;
 			}
 
 			if (!oInput._hasTabularSuggestions() && !bTabular) {
 				oInput._oList = new List(oInput.getId() + "-popup-list", {
-					width : "100%",
 					showNoData : false,
-					mode : sap.m.ListMode.SingleSelectMaster,
+					mode : ListMode.SingleSelectMaster,
 					rememberSelections : false,
 					itemPress : function(oEvent) {
 						var oListItem = oEvent.getParameter("listItem");
-						oInput.setSelectionItem(oListItem._oItem);
+						oInput.setSelectionItem(oListItem._oItem, true);
 					}
 				});
+
+				oInput._oList.addEventDelegate({
+					onAfterRendering: oInput._highlightListText.bind(oInput)
+				});
+
 			} else {
 				// tabular suggestions
 				// if no custom filter is set we replace the default filter function here
@@ -1433,6 +2315,13 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		}
 
+		/**
+		 * Helper function that destroys suggestion popup.
+		 *
+		 * @name destroySuggestionPopup
+		 * @function
+		 * @param {sap.m.Input} oInput Input instance.
+		 */
 		function destroySuggestionPopup(oInput) {
 
 			if (oInput._oSuggestionPopup) {
@@ -1454,6 +2343,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		}
 
+		/**
+		 * Helper function that overwrites popover in the Input.
+		 *
+		 * @name overwritePopover
+		 * @function
+		 * @param {sap.m.Popover} oPopover Popover instance.
+		 * @param {sap.m.Input} oInput Input instance.
+		 */
 		function overwritePopover(oPopover, oInput) {
 			oPopover.open = function() {
 				this.openBy(oInput, false, true);
@@ -1467,8 +2364,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			});
 		}
 
+		/**
+		 * Helper function that refreshes list all items.
+		 *
+		 * @name refreshListItems
+		 * @function
+		 * @param {sap.m.Input} oInput Input instance.
+		 */
 		function refreshListItems(oInput) {
 			var bShowSuggestion = oInput.getShowSuggestion();
+			var oRb = oInput._oRb;
 			oInput._iPopupListSelectedIndex = -1;
 
 			if (!bShowSuggestion ||
@@ -1481,7 +2386,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			var oItem,
 				aItems = oInput.getSuggestionItems(),
 				aTabularRows = oInput.getSuggestionRows(),
-				sTypedChars = oInput._$input.val() || "",
+				sTypedChars = oInput.getDOMValue() || "",
 				oList = oInput._oList,
 				bFilter = oInput.getFilterSuggests(),
 				aHitItems = [],
@@ -1518,6 +2423,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						oInput._oList.addStyleClass("sapMInputSuggestionTableHidden");
 					}
 				}
+
 				oInput.$("SuggDescr").text(""); // clear suggestion text
 				oInput.$("inner").removeAttr("aria-haspopup");
 				oInput.$("inner").removeAttr("aria-activedescendant");
@@ -1539,14 +2445,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						aTabularRows[i].setVisible(false);
 					}
 				}
+
+				oInput._oSuggestionTable.invalidate();
 			} else {
 				// filter standard items
-				var bListItem = (aItems[0] instanceof sap.ui.core.ListItem ? true : false);
+				var bListItem = (aItems[0] instanceof ListItem ? true : false);
 				for (i = 0; i < aItems.length; i++) {
 					oItem = aItems[i];
 					if (!bFilter || oInput._fnFilter(sTypedChars, oItem)) {
 						if (bListItem) {
-							oListItem = new sap.m.DisplayListItem(oItem.getId() + "-dli");
+							oListItem = new DisplayListItem(oItem.getId() + "-dli");
 							oListItem.setLabel(oItem.getText());
 							oListItem.setValue(oItem.getAdditionalText());
 						} else {
@@ -1554,7 +2462,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 							oListItem.setTitle(oItem.getText());
 						}
 
-						oListItem.setType(oItem.getEnabled() ? sap.m.ListType.Active : sap.m.ListType.Inactive);
+						oListItem.setType(oItem.getEnabled() ? ListType.Active : ListType.Inactive);
 						oListItem._oItem = oItem;
 						oListItem.addEventDelegate(oListItemDelegate);
 						aHitItems.push(oListItem);
@@ -1567,9 +2475,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			if (iItemsLength > 0) {
 				// add items to list
 				if (iItemsLength == 1) {
-					sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_ONE_HIT");
+					sAriaText = oRb.getText("INPUT_SUGGESTIONS_ONE_HIT");
 				} else {
-					sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_MORE_HITS", iItemsLength);
+					sAriaText = oRb.getText("INPUT_SUGGESTIONS_MORE_HITS", iItemsLength);
 				}
 				oInput.$("inner").attr("aria-haspopup", "true");
 
@@ -1587,14 +2495,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 					if (!oPopup.isOpen() && !oInput._sOpenTimer && (this.getValue().length >= this.getStartSuggestion())) {
 						oInput._sOpenTimer = setTimeout(function() {
-							oInput._resizePopup();
+							oInput._resizePopup(true);
 							oInput._sOpenTimer = null;
 							oPopup.open();
 						}, 0);
 					}
 				}
 			} else {
-				sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_NO_HIT");
+				sAriaText = oRb.getText("INPUT_SUGGESTIONS_NO_HIT");
 				oInput.$("inner").removeAttr("aria-haspopup");
 				oInput.$("inner").removeAttr("aria-activedescendant");
 
@@ -1619,27 +2527,134 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	})();
 
+	/**
+	 * Creates highlighted text.
+	 *
+	 * @name sap.m.Input._createHighlightedText
+	 * @private
+	 * @method
+	 * @param {sap.m.Label} label Label within the input.
+	 * @returns {string} newText Created text.
+	 */
+	Input.prototype._createHighlightedText = function(label) {
+		var text = label.innerText,
+			value = this.getValue().toLowerCase(),
+			count = value.length,
+			lowerText = text.toLowerCase(),
+			subString,
+			newText = '';
 
+		if (!Input._wordStartsWithValue(text, value)) {
+			return jQuery.sap.encodeHTML(text);
+		}
+
+		var index = lowerText.indexOf(value);
+
+		// search for the first word which starts with these characters
+		if (index > 0) {
+			index = lowerText.indexOf(' ' + value) + 1;
+		}
+
+		if (index > -1) {
+			newText += jQuery.sap.encodeHTML(text.substring(0, index));
+			subString = text.substring(index, index + count);
+			newText += '<span class="sapMInputHighlight">' + jQuery.sap.encodeHTML(subString) + '</span>';
+			newText += jQuery.sap.encodeHTML(text.substring(index + count));
+		} else {
+			newText = jQuery.sap.encodeHTML(text);
+		}
+
+		return newText;
+	};
+
+	/**
+	 * Highlights matched text in the suggestion list.
+	 *
+	 * @name sap.m.Input._highlightListText
+	 * @private
+	 * @method
+	 */
+	Input.prototype._highlightListText = function() {
+
+		if (!this.getEnableSuggestionsHighlighting()) {
+			return;
+		}
+
+		var i,
+			label,
+			labels = this._oList.$().find('.sapMDLILabel, .sapMSLITitleOnly, .sapMDLIValue');
+
+		for (i = 0; i < labels.length; i++) {
+			label = labels[i];
+			label.innerHTML = this._createHighlightedText(label);
+		}
+	};
+
+	/**
+	 * Highlights matched text in the suggestion table.
+	 *
+	 * @name sap.m.Input._highlightTableText
+	 * @private
+	 * @method
+	 */
+	Input.prototype._highlightTableText = function() {
+
+		if (!this.getEnableSuggestionsHighlighting()) {
+			return;
+		}
+
+		var i,
+			label,
+			labels = this._oSuggestionTable.$().find('tbody .sapMLabel');
+
+		for (i = 0; i < labels.length; i++) {
+			label = labels[i];
+			label.innerHTML = this._createHighlightedText(label);
+		}
+	};
+
+	/**
+	 * Event handler for the onFocusIn event.
+	 *
+	 * @name sap.m.Input.onfocusin
+	 * @public
+	 * @method
+	 * @param {jQuery.Event} oEvent On focus in event.
+	 */
 	Input.prototype.onfocusin = function(oEvent) {
 		InputBase.prototype.onfocusin.apply(this, arguments);
 		this.$().addClass("sapMInputFocused");
+
+		// Close the ValueStateMessage when the suggestion popup is being opened.
+		// Only do this in case a popup is used.
+		if (!this._bUseDialog && this._oSuggestionPopup
+			&& this._oSuggestionPopup.isOpen()) {
+			this.closeValueStateMessage();
+		}
 
 		// fires suggest event when startSuggestion is set to 0 and input has no text
 		if (!this._bPopupHasFocus && !this.getStartSuggestion() && !this.getValue()) {
 			this._triggerSuggest(this.getValue());
 		}
 		this._bPopupHasFocus = undefined;
+
+		this._sPrevSuggValue = null;
 	};
 
 	/**
 	 * Register F4 to trigger the valueHelpRequest event
+	 *
+	 * @name sap.m.Input.onsapshow
 	 * @private
+	 * @method
+	 * @param {jQuery.Event} oEvent Keyboard event.
 	 */
 	Input.prototype.onsapshow = function (oEvent) {
 		if (!this.getEnabled() || !this.getEditable() || !this.getShowValueHelp()) {
 			return;
 		}
 
+		this.bValueHelpRequested = true;
 		this.fireValueHelpRequest({fromSuggestions: false});
 		oEvent.preventDefault();
 		oEvent.stopPropagation();
@@ -1647,27 +2662,63 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	Input.prototype.onsaphide = Input.prototype.onsapshow;
 
+	/**
+	 * Event handler for input select.
+	 *
+	 * @name sap.m.Input.onsapselect
+	 * @private
+	 * @method
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onsapselect = function(oEvent) {
 		this._fireValueHelpRequestForValueHelpOnly();
 	};
 
+	/**
+	 * Event handler for the onFocusOut event.
+	 *
+	 * @name sap.m.Input.onfocusout
+	 * @private
+	 * @method
+	 * @param {jQuery.Event} oEvent Keyboard event.
+	 */
 	Input.prototype.onfocusout = function(oEvent) {
 		InputBase.prototype.onfocusout.apply(this, arguments);
 		this.$().removeClass("sapMInputFocused");
 		this.closeValueStateMessage(this);
 	};
 
+	/**
+	 * Check for tabular suggestions in the input.
+	 *
+	 * @name sap.m.Input._hasTabularSuggestions
+	 * @private
+	 * @method
+	 * @returns {boolean} Determines if the Input has tabular suggestions.
+	 */
 	Input.prototype._hasTabularSuggestions = function() {
 		return !!(this.getAggregation("suggestionColumns") && this.getAggregation("suggestionColumns").length);
 	};
 
-	/* lazy loading of the suggestions table */
+	/**
+	 * Gets suggestion table with lazy loading.
+	 *
+	 * @name sap.m.Input._getSuggestionsTable
+	 * @private
+	 * @method
+	 * @returns {sap.m.Table} Suggestion table.
+	 */
 	Input.prototype._getSuggestionsTable = function() {
+
+		if (this._bIsBeingDestroyed) {
+			return;
+		}
+
 		var that = this;
 
 		if (!this._oSuggestionTable) {
 			this._oSuggestionTable = new Table(this.getId() + "-popup-table", {
-				mode: sap.m.ListMode.SingleSelectMaster,
+				mode: ListMode.SingleSelectMaster,
 				showNoData: false,
 				showSeparators: "All",
 				width: "100%",
@@ -1675,9 +2726,14 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 				rememberSelections : false,
 				selectionChange: function (oEvent) {
 					var oSelectedListItem = oEvent.getParameter("listItem");
-					that.setSelectionRow(oSelectedListItem);
+					that.setSelectionRow(oSelectedListItem, true);
 				}
 			});
+
+			this._oSuggestionTable.addEventDelegate({
+				onAfterRendering: this._highlightTableText.bind(this)
+			});
+
 			// initially hide the table on phone
 			if (this._bUseDialog) {
 				this._oSuggestionTable.addStyleClass("sapMInputSuggestionTableHidden");
@@ -1693,11 +2749,18 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		return this._oSuggestionTable;
 	};
 
+	/**
+	 * Fires suggestion selected event.
+	 *
+	 * @name sap.m.Input._fireSuggestionItemSelectedEvent
+	 * @private
+	 * @method
+	 */
 	Input.prototype._fireSuggestionItemSelectedEvent = function () {
 		if (this._iPopupListSelectedIndex >= 0) {
 			var oSelectedListItem = this._oList.getItems()[this._iPopupListSelectedIndex];
 			if (oSelectedListItem) {
-				if (sap.m.ColumnListItem && oSelectedListItem instanceof sap.m.ColumnListItem) {
+				if (ColumnListItem && oSelectedListItem instanceof ColumnListItem) {
 					this.fireSuggestionItemSelected({selectedRow : oSelectedListItem});
 				} else {
 					this.fireSuggestionItemSelected({selectedItem : oSelectedListItem._oItem});
@@ -1707,91 +2770,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 	};
 
-	/* =========================================================== */
-	/*           begin: forward aggregation methods to table       */
-	/* =========================================================== */
-
-	/*
-	 * Forwards a function call to a managed object based on the aggregation name.
-	 * If the name is items, it will be forwarded to the table, otherwise called
-	 * locally
-	 * @private
-	 * @param {string} sFunctionName the name of the function to be called
-	 * @param {string} sAggregationName the name of the aggregation asociated
-	 * @returns {mixed} the return type of the called function
+	/**
+	 * Clones input.
+	 *
+	 * @name sap.m.Input.clone
+	 * @public
+	 * @method
+	 * @returns {sap.m.Input} Cloned input.
 	 */
-	Input.prototype._callMethodInManagedObject = function(sFunctionName, sAggregationName) {
-		var aArgs = Array.prototype.slice.call(arguments),
-			oSuggestionsTable;
-
-		if (sAggregationName === "suggestionColumns") {
-			// apply to the internal table (columns)
-			oSuggestionsTable = this._getSuggestionsTable();
-			return oSuggestionsTable[sFunctionName].apply(oSuggestionsTable, ["columns"].concat(aArgs.slice(2)));
-		} else if (sAggregationName === "suggestionRows") {
-			// apply to the internal table (rows = table items)
-			oSuggestionsTable = this._getSuggestionsTable();
-			return oSuggestionsTable[sFunctionName].apply(oSuggestionsTable, ["items"].concat(aArgs.slice(2)));
-		} else {
-			// apply to this control
-			return sap.ui.core.Control.prototype[sFunctionName].apply(this, aArgs .slice(1));
-		}
-	};
-
-	Input.prototype.validateAggregation = function(sAggregationName, oObject, bMultiple) {
-		return this._callMethodInManagedObject("validateAggregation", sAggregationName, oObject, bMultiple);
-	};
-
-	Input.prototype.setAggregation = function(sAggregationName, oObject, bSuppressInvalidate) {
-		this._callMethodInManagedObject("setAggregation", sAggregationName,	oObject, bSuppressInvalidate);
-		return this;
-	};
-
-	Input.prototype.getAggregation = function(sAggregationName, oDefaultForCreation) {
-		return this._callMethodInManagedObject("getAggregation", sAggregationName, oDefaultForCreation);
-	};
-
-	Input.prototype.indexOfAggregation = function(sAggregationName, oObject) {
-		return this._callMethodInManagedObject("indexOfAggregation", sAggregationName, oObject);
-	};
-
-	Input.prototype.insertAggregation = function(sAggregationName, oObject, iIndex, bSuppressInvalidate) {
-		this._callMethodInManagedObject("insertAggregation", sAggregationName, oObject, iIndex, bSuppressInvalidate);
-		return this;
-	};
-
-	Input.prototype.addAggregation = function(sAggregationName, oObject, bSuppressInvalidate) {
-		this._callMethodInManagedObject("addAggregation", sAggregationName,oObject, bSuppressInvalidate);
-		return this;
-	};
-
-	Input.prototype.removeAggregation = function(sAggregationName, oObject, bSuppressInvalidate) {
-		return this._callMethodInManagedObject("removeAggregation", sAggregationName, oObject, bSuppressInvalidate);
-	};
-
-	Input.prototype.removeAllAggregation = function(sAggregationName, bSuppressInvalidate) {
-		return this._callMethodInManagedObject("removeAllAggregation", sAggregationName, bSuppressInvalidate);
-	};
-
-	Input.prototype.destroyAggregation = function(sAggregationName, bSuppressInvalidate) {
-		this._callMethodInManagedObject("destroyAggregation", sAggregationName, bSuppressInvalidate);
-		return this;
-	};
-
-	Input.prototype.getBinding = function(sAggregationName) {
-		return this._callMethodInManagedObject("getBinding", sAggregationName);
-	};
-
-	Input.prototype.getBindingInfo = function(sAggregationName) {
-		return this._callMethodInManagedObject("getBindingInfo", sAggregationName);
-	};
-
-	Input.prototype.getBindingPath = function(sAggregationName) {
-		return this._callMethodInManagedObject("getBindingPath", sAggregationName);
-	};
-
 	Input.prototype.clone = function() {
-		var oInputClone = sap.ui.core.Control.prototype.clone.apply(this, arguments),
+		var oInputClone = Control.prototype.clone.apply(this, arguments),
 			bindingInfo;
 
 		// add suggestion columns
@@ -1814,6 +2802,8 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			});
 		}
 
+		oInputClone.setRowResultFunction(this._fnRowResultFilter);
+
 		return oInputClone;
 	};
 
@@ -1833,12 +2823,53 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	Input.prototype.setValue = function(sValue) {
 		this._iSetCount++;
 		InputBase.prototype.setValue.call(this, sValue);
+		this._onValueUpdated(sValue);
 		return this;
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * Sets the inner input DOM value.
+	 *
 	 * @protected
+	 * @param {string} value Dom value which will be set.
+	 */
+	Input.prototype.setDOMValue = function(value) {
+		this._$input.val(value);
+	};
+
+	/**
+	 * Gets the inner input DOM value.
+	 *
+	 * @protected
+	 * @returns {any} The value of the input.
+	 */
+	Input.prototype.getDOMValue = function() {
+		return this._$input.val();
+	};
+
+	/**
+	 * Updates the inner input field.
+	 *
+	 * @protected
+	 */
+	Input.prototype.updateInputField = function(sNewValue) {
+		if (this._oSuggestionPopup && this._oSuggestionPopup.isOpen() && this._bUseDialog) {
+			this._oPopupInput.setValue(sNewValue);
+			this._oPopupInput._doSelect();
+		} else {
+			// call _getInputValue to apply the maxLength to the typed value
+			sNewValue = this._getInputValue(sNewValue);
+			this.setDOMValue(sNewValue);
+			this.onChange(null, null, sNewValue);
+		}
+	};
+
+	/**
+	 * Gets accessibility information for the input.
+	 *
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @protected
+	 * @returns {object} Accesibility information.
 	 */
 	Input.prototype.getAccessibilityInfo = function() {
 		var oInfo = InputBase.prototype.getAccessibilityInfo.apply(this, arguments);
@@ -1872,18 +2903,18 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	 * @function
 	 */
 
-	 /**
-	 * Getter for property <code>showValueStateMessage</code>.
-	 * Whether the value state message should be shown. This property is already available for sap.m.Input since 1.16.0.
-	 *
-	 * Default value is <code>true</code>
-	 *
-	 * @return {boolean} the value of property <code>showValueStateMessage</code>
-	 * @public
-	 * @since 1.16
-	 * @name sap.m.Input#getShowValueStateMessage
-	 * @function
-	 */
+	/**
+	* Getter for property <code>showValueStateMessage</code>.
+	* Whether the value state message should be shown. This property is already available for sap.m.Input since 1.16.0.
+	*
+	* Default value is <code>true</code>
+	*
+	* @return {boolean} the value of property <code>showValueStateMessage</code>
+	* @public
+	* @since 1.16
+	* @name sap.m.Input#getShowValueStateMessage
+	* @function
+	*/
 
 	/**
 	 * Setter for property <code>showValueStateMessage</code>.
@@ -1898,8 +2929,19 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	 * @function
 	 */
 
+	/**
+	 * Hook method to prevent the change event from being fired when the text input field loses focus.
+	 *
+	 * @param {jQuery.Event} [oEvent] The event object.
+	 * @returns {boolean} Whether or not the change event should be prevented.
+	 * @protected
+	 * @since 1.46
+	 */
+	Input.prototype.preventChangeOnFocusLeave = function(oEvent) {
+		return this.bFocusoutDueRendering || this.bValueHelpRequested;
+	};
 
 
 	return Input;
 
-}, /* bExport= */ true);
+});

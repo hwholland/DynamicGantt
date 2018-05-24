@@ -1,12 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueStateSupport', 'sap/ui/core/IconPool', 'sap/m/library'],
-	function(jQuery, Renderer, ValueStateSupport, IconPool, library) {
+sap.ui.define(['sap/ui/core/Renderer', 'sap/ui/core/IconPool', 'sap/m/library', 'sap/ui/Device', 'sap/ui/core/InvisibleText', 'sap/ui/core/library'],
+	function(Renderer, IconPool, library, Device, InvisibleText, coreLibrary) {
 		"use strict";
+
+		// shortcut for sap.ui.core.TextDirection
+		var TextDirection = coreLibrary.TextDirection;
+
+		// shortcut for sap.ui.core.ValueState
+		var ValueState = coreLibrary.ValueState;
 
 		// shortcut for sap.m.SelectType
 		var SelectType = library.SelectType;
@@ -31,13 +37,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 * @param {sap.m.Select} oSelect An object representation of the control that should be rendered.
 		 */
 		SelectRenderer.render = function(oRm, oSelect) {
-			var	sTooltip = ValueStateSupport.enrichTooltip(oSelect, oSelect.getTooltip_AsString()),
+			var	sTooltip = oSelect.getTooltip_AsString(),
 				sType = oSelect.getType(),
 				bAutoAdjustWidth = oSelect.getAutoAdjustWidth(),
 				bEnabled = oSelect.getEnabled(),
-				vCSSWidth = oSelect.getWidth(),
-				bWidthPercentage = vCSSWidth.indexOf("%") > -1,
-				bSelectWithFlexibleWidth = bAutoAdjustWidth || vCSSWidth === "auto" || bWidthPercentage,
+				sCSSWidth = oSelect.getWidth(),
+				bWidthPercentage = sCSSWidth.indexOf("%") > -1,
+				bSelectWithFlexibleWidth = bAutoAdjustWidth || sCSSWidth === "auto" || bWidthPercentage,
 				CSS_CLASS = SelectRenderer.CSS_CLASS;
 
 			oRm.write("<div");
@@ -56,18 +62,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 			if (bAutoAdjustWidth) {
 				oRm.addClass(CSS_CLASS + "AutoAdjustedWidth");
 			} else {
-				oRm.addStyle("width", vCSSWidth);
+				oRm.addStyle("width", sCSSWidth);
 			}
 
 			if (oSelect.getIcon()) {
 				oRm.addClass(CSS_CLASS + "WithIcon");
 			}
 
-			if (bEnabled && sap.ui.Device.system.desktop) {
+			if (bEnabled && Device.system.desktop) {
 				oRm.addClass(CSS_CLASS + "Hoverable");
 			}
 
 			oRm.addClass(CSS_CLASS + "WithArrow");
+
+			if (oSelect.getValueState() !== ValueState.None) {
+				this.addValueStateClasses(oRm, oSelect);
+			}
+
 			oRm.addStyle("max-width", oSelect.getMaxWidth());
 			oRm.writeControlData(oSelect);
 			oRm.writeStyles();
@@ -103,8 +114,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 				// no default
 			}
 
-			if (oSelect._isRequiredSelectElement()) {
-				this.renderSelectElement(oRm, oSelect);
+			var oList = oSelect.getList();
+
+			if (oSelect._isShadowListRequired() && oList) {
+				this.renderShadowList(oRm, oList);
+			}
+
+			if (oSelect.getName()) {
+				this.renderInput(oRm, oSelect);
 			}
 
 			oRm.write("</div>");
@@ -120,18 +137,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		SelectRenderer.renderLabel = function(oRm, oSelect) {
 			var oSelectedItem = oSelect.getSelectedItem(),
 				sTextDir = oSelect.getTextDirection(),
-				sTextAlign = Renderer.getTextAlign(oSelect.getTextAlign(), sTextDir);
+				sTextAlign = Renderer.getTextAlign(oSelect.getTextAlign(), sTextDir),
+				CSS_CLASS = SelectRenderer.CSS_CLASS;
 
 			oRm.write("<label");
 			oRm.writeAttribute("id", oSelect.getId() + "-label");
 			oRm.writeAttribute("for", oSelect.getId());
-			oRm.addClass(SelectRenderer.CSS_CLASS + "Label");
+			oRm.writeAttribute("aria-live", "polite");
+			oRm.addClass(CSS_CLASS + "Label");
+
+			if (oSelect.getValueState() !== ValueState.None) {
+				oRm.addClass(CSS_CLASS + "LabelState");
+				oRm.addClass(CSS_CLASS + "Label" + oSelect.getValueState());
+			}
 
 			if (oSelect.getType() === SelectType.IconOnly) {
 				oRm.addClass("sapUiPseudoInvisibleText");
 			}
 
-			if (sTextDir !== sap.ui.core.TextDirection.Inherit) {
+			if (sTextDir !== TextDirection.Inherit) {
 				oRm.writeAttribute("dir", sTextDir.toLowerCase());
 			}
 
@@ -144,7 +168,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 			oRm.write(">");
 
 			// write the text of the selected item only if it has not been removed or destroyed
-			oRm.writeEscaped((oSelectedItem && oSelectedItem.getParent()) ? oSelectedItem.getText() : "");
+			// and when the Select isn't in IconOnly mode - BCP 1780431688
+			oRm.writeEscaped((oSelectedItem && oSelectedItem.getParent() && oSelect.getType() !== SelectType.IconOnly) ? oSelectedItem.getText() : "");
 
 			oRm.write("</label>");
 		};
@@ -157,8 +182,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 * @private
 		 */
 		SelectRenderer.renderArrow = function(oRm, oSelect) {
-			oRm.write('<span class="' + SelectRenderer.CSS_CLASS + 'Arrow"');
+			var CSS_CLASS = SelectRenderer.CSS_CLASS;
+
+			oRm.write("<span");
+			oRm.addClass(CSS_CLASS + "Arrow");
+
+			if (oSelect.getValueState() !== ValueState.None) {
+				oRm.addClass(CSS_CLASS + "ArrowState");
+			}
+
 			oRm.writeAttribute("id", oSelect.getId() + "-arrow");
+			oRm.writeClasses();
 			oRm.write("></span>");
 		};
 
@@ -176,55 +210,56 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 			});
 		};
 
-		/**
-		 * Renders the HTMLSelectElement for the select control, using the provided {@link sap.ui.core.RenderManager}.
-		 *
-		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
-		 * @param {sap.m.Select} oSelect An object representation of the select that should be rendered.
-		 * @private
-		 */
-		SelectRenderer.renderSelectElement = function(oRm, oSelect) {
-			var sName = oSelect.getName(),
-				oSelectedItem = oSelect.getSelectedItem(),
-				sSelectedItemText = oSelectedItem ? oSelectedItem.getText() : "";
-
-			oRm.write('<select class="' + SelectRenderer.CSS_CLASS + "Native" + '"');
-
-			if (sName) {
-				oRm.writeAttributeEscaped("name", sName);
-			}
-
-			oRm.writeAttribute("id", oSelect.getId() + "-select");
+		SelectRenderer.renderInput = function(oRm, oSelect) {
+			oRm.write("<input hidden");
+			oRm.writeAttribute("id", oSelect.getId() + "-input");
+			oRm.addClass(SelectRenderer.CSS_CLASS + "Input");
 			oRm.writeAttribute("aria-hidden", "true");
 			oRm.writeAttribute("tabindex", "-1");
-			oRm.write(">");
-			this.renderOptions(oRm, oSelect, sSelectedItemText);
-			oRm.write("</select>");
+
+			if (!oSelect.getEnabled()) {
+				oRm.write("disabled");
+			}
+
+			oRm.writeClasses();
+			oRm.writeAttributeEscaped("name", oSelect.getName());
+			oRm.writeAttributeEscaped("value", oSelect.getSelectedKey());
+			oRm.write("/>");
 		};
 
 		/**
-		 * Renders the HTMLOptionElement(s) for the select control, using the provided {@link sap.ui.core.RenderManager}.
+		 * Renders a shadow list control, using the provided {@link sap.ui.core.RenderManager}.
 		 *
 		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
-		 * @param {sap.m.Select} oSelect An object representation of the select that should be rendered.
-		 * @param {string} sSelectedItemText
+		 * @param {sap.m.SelectList} oList An object representation of the list that should be rendered.
 		 * @private
 		 */
-		SelectRenderer.renderOptions = function(oRm, oSelect, sSelectedItemText) {
-			var aItems = oSelect.getItems(),
-				aItemsLength = aItems.length,
-				i = 0;
+		SelectRenderer.renderShadowList = function(oRm, oList) {
+			var oListRenderer = oList.getRenderer();
+			oListRenderer.writeOpenListTag(oRm, oList, { elementData: false });
+			this.renderShadowItems(oRm, oList);
+			oListRenderer.writeCloseListTag(oRm, oList);
+		};
 
-			for (; i < aItemsLength; i++) {
-				oRm.write("<option>");
-				oRm.writeEscaped(aItems[i].getText());
-				oRm.write("</option>");
-			}
+		/**
+		 * Renders shadow items for the given control, using the provided {@link sap.ui.core.RenderManager}.
+		 *
+		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+		 * @param {sap.m.Select} oList An object representation of the select that should be rendered.
+		 * @private
+		 */
+		SelectRenderer.renderShadowItems = function(oRm, oList) {
+			var oListRenderer = oList.getRenderer(),
+				iSize = oList.getItems().length,
+				oSelectedItem = oList.getSelectedItem();
 
-			if (aItemsLength === 0) {
-				oRm.write("<option>");
-				oRm.writeEscaped(sSelectedItemText);
-				oRm.write("</option>");
+			for (var i = 0, aItems = oList.getItems(); i < aItems.length; i++) {
+				oListRenderer.renderItem(oRm, oList, aItems[i], {
+					selected: oSelectedItem === aItems[i],
+					setsize: iSize,
+					posinset: i + 1,
+					elementData: false // avoid duplicated IDs in the DOM when the select control is rendered inside a dialog
+				});
 			}
 		};
 
@@ -236,6 +271,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 * @protected
 		 */
 		SelectRenderer.addClass = function(oRm, oSelect) {};
+
+		/**
+		 * Add the CSS value state classes to the control's root element using the provided {@link sap.ui.core.RenderManager}.
+		 * To be overwritten by subclasses.
+		 *
+		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+		 * @param {sap.ui.core.Control} oSelect An object representation of the control that should be rendered.
+		 */
+		SelectRenderer.addValueStateClasses = function(oRm, oSelect) {
+			oRm.addClass(SelectRenderer.CSS_CLASS + "State");
+			oRm.addClass(SelectRenderer.CSS_CLASS + oSelect.getValueState());
+		};
 
 		/**
 		 * Gets accessibility role.
@@ -257,6 +304,27 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		};
 
 		/**
+		 * Returns the id of the InvisibleText containing information about the value state of the Select
+		 * @param oSelect
+		 * @returns {string}
+		 * @private
+		 */
+		SelectRenderer._getValueStateString = function(oSelect) {
+			var sCoreLib = "sap.ui.core";
+
+			switch (oSelect.getValueState()) {
+				case ValueState.Success:
+					return InvisibleText.getStaticId(sCoreLib, "VALUE_STATE_SUCCESS");
+				case ValueState.Warning:
+					return InvisibleText.getStaticId(sCoreLib, "VALUE_STATE_WARNING");
+				case ValueState.Error:
+					return InvisibleText.getStaticId(sCoreLib, "VALUE_STATE_ERROR");
+			}
+
+			return "";
+		};
+
+		/**
 		 * Writes the accessibility state.
 		 * To be overwritten by subclasses.
 		 *
@@ -264,17 +332,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 * @param {sap.ui.core.Control} oSelect An object representation of the control that should be rendered.
 		 */
 		SelectRenderer.writeAccessibilityState = function(oRm, oSelect) {
+			var sValueState = this._getValueStateString(oSelect);
+
+			if (sValueState) {
+				sValueState = " " + sValueState;
+			}
+
 			oRm.writeAccessibilityState(oSelect, {
 				role: this.getAriaRole(oSelect),
 				expanded: oSelect.isOpen(),
-				live: "polite",
+				invalid: (oSelect.getValueState() === ValueState.Error) ? true : undefined,
 				labelledby: {
-					value: oSelect.getId() + "-label",
+					value: oSelect.getId() + "-label" + sValueState,
 					append: true
-				}
+				},
+				haspopup: (oSelect.getType() === SelectType.IconOnly) ? true : undefined
 			});
 		};
 
 		return SelectRenderer;
-
 	}, /* bExport= */ true);

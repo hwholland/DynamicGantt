@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.Image.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', "./ImageRenderer"],
+	function(jQuery, library, Control, ImageRenderer) {
 	"use strict";
 
 
@@ -21,14 +21,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * A wrapper around the IMG tag. The image can be loaded from a remote or local server.
 	 * There are various size setting options available, and the images can be combined with actions.
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.commons.ToolbarItem,sap.ui.commons.FormattedTextViewControl
+	 * @implements sap.ui.commons.ToolbarItem,sap.ui.commons.FormattedTextViewControl, sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.Image</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.Image}
 	 * @alias sap.ui.commons.Image
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -36,7 +36,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 		interfaces : [
 			"sap.ui.commons.ToolbarItem",
-			"sap.ui.commons.FormattedTextViewControl"
+			"sap.ui.commons.FormattedTextViewControl",
+			"sap.ui.core.IFormContent"
 		],
 		library : "sap.ui.commons",
 		properties : {
@@ -99,6 +100,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	Image.prototype.onsapenter = Image.prototype.onclick;
 
+	/*
+	 * Image must not be stretched in Form because should have its original size.
+	 */
+	Image.prototype.getFormDoNotAdjustWidth = function() {
+		return true;
+	};
 
 	return Image;
 

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Theming is an important aspect for an OpenUI5 application. The different colors shown on the UI need to have a good contrast to each other in order to be easily distinguishable."/>
+<meta name="description" content="Theming is an important aspect for an OpenUI5 application. The different colors shown on the UI need to have a good contrast to each other in order to be easily distinguishable."/>
 
-
-
-
-
-<meta name="abstract" content="Theming is an important aspect for an SAPUI5 application. The different colors shown on the UI need to have a good contrast to each other in order to be easily distinguishable."/>
-<meta name="description" content="Theming is an important aspect for an SAPUI5 application. The different colors shown on the UI need to have a good contrast to each other in order to be easily distinguishable."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7573573263902741"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9242044943122024"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9242044943122024"/>
 <title>Colors and Theming</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio086c41c2441946219384197a6c82072b">
 <div id="wrapper"><div id="container">
@@ -33,7 +19,7 @@
 	<h1 class="title topictitle1">Colors and Theming</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">Theming is an important aspect for an <span class="ph"><span class="ph pname">SAPUI5</span></span> application. The different colors shown
+	<div class="body conbody"><p class="shortdesc">Theming is an important aspect for an <span class="ph"><span class="ph pname">OpenUI5</span></span> application. The different colors shown
 		on the UI need to have a good contrast to each other in order to be easily
 		distinguishable.</p>
 
@@ -41,14 +27,14 @@
 			
 			<div class="p">Different people perceive and interpret colors in different ways, which is something you must
 				take into account when developing your applications. A high-contrast theme is
-				already available for all <span class="ph"><span class="ph pname">SAPUI5</span></span> controls. <ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_jvx_1sd_vs">
+				already available for all <span class="ph"><span class="ph pname">OpenUI5</span></span> controls. <ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_jvx_1sd_vs">
 					<li class="li">
 						<p class="p">Applications need to provide the user with an option to switch
 							themes.</p>
 
 						<ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_nfx_rsd_vs">
 							<li class="li">
-								<p class="p">If the application runs in the SAP Fiori launchpad, this is
+								<p class="p">If the application runs in the <span class="ph pname">SAP Fiori launchpad</span>, this is
 									covered automatically.</p>
 
 							</li>
@@ -63,14 +49,14 @@
 						<ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_byv_ssd_vs">
 							<li class="li">
 								<div class="p">With the URL parameter
-									<samp class="ph codeph">sap-ui-theme</samp><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">sap-ui-theme=sap_hcb</pre></div>
+									<samp class="ph codeph">sap-ui-theme</samp><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">sap-ui-theme=sap_belize_hcb</pre></div>
 </div>
 
 							</li>
 
 							<li class="li">
 								<div class="p">From the API using the core method
-									<samp class="ph codeph">applyTheme</samp><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">sap.ui.getCore().applyTheme(“sap_hcb”);</pre></div>
+									<samp class="ph codeph">applyTheme</samp><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">sap.ui.getCore().applyTheme(“sap_belize_hcb”);</pre></div>
 </div>
 
 							</li>
@@ -104,13 +90,13 @@
 		<div class="section"><div class="section_title">DOs and DON'Ts</div><div type="DOs and DON'Ts">
 			
 			
-<div class="table-wrapper tablenoborder"><table summary="" id="loio086c41c2441946219384197a6c82072b__table_swb_3td_vs" class="table" frame="border" border="1" rules="all"><caption><span class="tablecap">DOs for <span class="ph"><span class="ph pname">SAPUI5</span></span> Application Theming</span></caption>
+<div class="table-wrapper tablenoborder"><table summary="" id="loio086c41c2441946219384197a6c82072b__table_swb_3td_vs" class="table" frame="border" border="1" rules="all"><caption><span class="tablecap">DOs for <span class="ph"><span class="ph pname">OpenUI5</span></span> Application Theming</span></caption>
 <colgroup><col width="100%"/></colgroup>
 
 					
 					<thead class="thead" align="left">
 						<tr class="row">
-							<th class="entry background_green" align="center" valign="top" width="100%" id="d367993e113">
+							<th class="entry background_green" align="center" valign="top" width="100%" id="d414144e116">
 								<p class="p">DO</p>
 
 							</th>
@@ -121,9 +107,9 @@
 
 					<tbody class="tbody">
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e113 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e116 ">
 								<div class="p">Use predefined CSS parameters in your CSS. You can find them in the following files
-									within the <span class="ph"><span class="ph pname">SAPUI5</span></span> library: <ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_l4g_5jl_vs">
+									within the <span class="ph"><span class="ph pname">OpenUI5</span></span> library: <ul class="ul" id="loio086c41c2441946219384197a6c82072b__ul_l4g_5jl_vs">
 										<li class="li">
 											<p class="p"><span class="ph filepath">resources/sap/m/themes/base/library-parameters.json</span></p>
 
@@ -142,7 +128,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e113 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e116 ">
 								<p class="p">Use <samp class="ph codeph">REM</samp>/<samp class="ph codeph">EM</samp> instead of <samp class="ph codeph">PX</samp> as a
 									unit.</p>
 
@@ -151,7 +137,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e113 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e116 ">
 								<p class="p">Use the Flexible Layout concept in CSS.</p>
 
 							</td>
@@ -159,7 +145,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e113 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e116 ">
 								<p class="p">Use media-queries when flexible layouts do not meet UX expectations.</p>
 
 							</td>
@@ -167,7 +153,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e113 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e116 ">
 								<p class="p">Don't forget the Retina display. You need to provide 2 versions for an icon
 										(<samp class="ph codeph">icon.png</samp> and
 									<samp class="ph codeph">icon@2x.png</samp>).</p>
@@ -182,13 +168,13 @@
 </div>
 
 			
-<div class="table-wrapper tablenoborder"><table summary="" id="loio086c41c2441946219384197a6c82072b__table_zcp_35d_vs" class="table" frame="border" border="1" rules="all"><caption><span class="tablecap">DON'Ts for <span class="ph"><span class="ph pname">SAPUI5</span></span> Application Theming</span></caption>
+<div class="table-wrapper tablenoborder"><table summary="" id="loio086c41c2441946219384197a6c82072b__table_zcp_35d_vs" class="table" frame="border" border="1" rules="all"><caption><span class="tablecap">DON'Ts for <span class="ph"><span class="ph pname">OpenUI5</span></span> Application Theming</span></caption>
 <colgroup><col width="100%"/></colgroup>
 
 					
 					<thead class="thead" align="left">
 						<tr class="row">
-							<th class="entry background_yellow" align="center" valign="top" width="100%" id="d367993e223">
+							<th class="entry background_yellow" align="center" valign="top" width="100%" id="d414144e226">
 								<p class="p">DON'T</p>
 
 							</th>
@@ -199,7 +185,7 @@
 
 					<tbody class="tbody">
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e223 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e226 ">
 								<p class="p">Define a custom color.</p>
 
 							</td>
@@ -207,7 +193,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e223 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e226 ">
 								<p class="p">Define a custom font family.</p>
 
 							</td>
@@ -215,7 +201,7 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e223 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e226 ">
 								<p class="p">Set fixed width/height (except for some exceptions like images).</p>
 
 							</td>
@@ -223,9 +209,9 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" align="center" valign="top" width="100%" headers="d367993e223 ">
+							<td class="entry" align="center" valign="top" width="100%" headers="d414144e226 ">
 								<p class="p">Define writing-modes (left-to-right or right-to-left), as this is handled by the
-											<span class="ph"><span class="ph pname">SAPUI5</span></span> control
+											<span class="ph"><span class="ph pname">OpenUI5</span></span> control
 									itself.</p>
 
 							</td>
@@ -276,19 +262,5 @@
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Colors and Theming";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

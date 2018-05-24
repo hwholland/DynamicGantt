@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Now we can easily spot shortages on our stock, but we also would like to take action and resolve it. Either we can decide to remove the product until the shortage is resolved or order new items of the product. In this step, we will add these actions to the footer of the worklist table."/>
 <meta name="description" content="Now we can easily spot shortages on our stock, but we also would like to take action and resolve it. Either we can decide to remove the product until the shortage is resolved or order new items of the product. In this step, we will add these actions to the footer of the worklist table."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4297186222201681"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=93047340065888"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=93047340065888"/>
 <title>Step 5: Adding Actions to the Worklist</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio2da220ff496c4b0f9ce29208cbd089f3">
 <div id="wrapper"><div id="container">
@@ -49,7 +35,7 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the
 				Demo Kit <span class="ph">at
 					<a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.worklist.05/preview" alt="../../explored.html#/sample/sap.m.tutorial.worklist.05/preview" title="../../explored.html#/sample/sap.m.tutorial.worklist.05/preview">Worklist App - Step 5</a></span>.</p>
 
@@ -57,7 +43,7 @@
 		<div class="sectiondiv subsection">
 			<p class="p subsectiontitle">webapp/view/Worklist.view.xml</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...
 &lt;Table
    id="table"
    busyIndicatorDelay="{worklistView&gt;/tableBusyDelay}"
@@ -91,7 +77,7 @@
 		<div class="sectiondiv subsection">
 			<p class="p subsectiontitle">webapp/view/Worklist.view.xml</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
    controllerName="myCompany.myApp.controller.Worklist"
    xmlns:mvc="sap.ui.core.mvc"
    xmlns:semantic="sap.m.semantic"
@@ -130,114 +116,130 @@
 		<div class="sectiondiv subsection">
 			<p class="p subsectiontitle">webapp/controller/Worklist.controller.js</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
-   "myCompany/myApp/controller/BaseController",
-   "sap/ui/model/json/JSONModel",
-   "myCompany/myApp/model/formatter",
-   "sap/ui/model/Filter",
-   "sap/ui/model/FilterOperator"<span class="ph emphasis emphasis">,
-   "sap/m/MessageToast",
-   "sap/m/MessageBox"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
+	"myCompany/myApp/controller/BaseController",
+	"sap/ui/model/json/JSONModel",
+	"myCompany/myApp/model/formatter",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator"<span class="ph emphasis emphasis">,
+	"sap/m/MessageToast",
+	"sap/m/MessageBox"
 </span>
 ], function(BaseController, JSONModel, formatter, Filter, FilterOperator<span class="ph emphasis emphasis">, MessageToast, MessageBox</span>) {
-   "use strict";
-   return BaseController.extend("myCompany.myApp.controller.Worklist", {
-      formatter: formatter,
-      <span class="ph emphasis emphasis">...
-      /**
-       * Displays an error message dialog. The displayed dialog is content density aware.
-       * @param {String} sMsg The error message to be displayed
-       * @private
-       */
-      _showErrorMessage: function(sMsg) {
-         MessageBox.error(sMsg, {
-            styleClass: this.getOwnerComponent().getContentDensityClass()
-         });
-      },
+	"use strict";
+
+	return BaseController.extend("myCompany.myApp.controller.Worklist", {
+
+		formatter: formatter,
+
+...
+
+<span class="ph emphasis emphasis">		/**
+		 * Displays an error message dialog. The displayed dialog is content density aware.
+		 * @param {string} sMsg The error message to be displayed
+		 * @private
+		 */
+		_showErrorMessage: function(sMsg) {
+			MessageBox.error(sMsg, {
+				styleClass: this.getOwnerComponent().getContentDensityClass()
+			});
+		},</span>
+
+		/**
+		 * Event handler when a filter tab gets pressed
+		 * @param {sap.ui.base.Event} oEvent the filter tab event
+		 * @public
+		 */
+		onQuickFilter: function(oEvent) {
+			var oBinding = this._oTable.getBinding("items"),
+				sKey = oEvent.getParameter("selectedKey");
+
+			oBinding.filter(this._mFilters[sKey]);
+		},
+
+<span class="ph emphasis emphasis">		/**
+		 * Error and success handler for the unlist action.
+		 * @param {string} sProductId the product ID for which this handler is called
+		 * @param {boolean} bSuccess true in case of a success handler, else false (for error handler)
+		 * @param {number} iRequestNumber the counter which specifies the position of this request
+		 * @param {number} iTotalRequests the number of all requests sent
+		 * @private
+		 */
+		_handleUnlistActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests){
+			// we could create a counter for successful and one for failed requests
+			// however, we just assume that every single request was successful and display a success message once
+			if (iRequestNumber === iTotalRequests) {
+				MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockRemovedSuccessMsg", [iTotalRequests]));
+			}
+		},
+
+		/**
+		 * Error and success handler for the reorder action.
+		 * @param {string} sProductId the product ID for which this handler is called
+		 * @param {boolean} bSuccess true in case of a success handler, else false (for error handler)
+		 * @param {number} iRequestNumber the counter which specifies the position of this request
+		 * @param {number} iTotalRequests the number of all requests sent
+		 * @private
+		 */
+		_handleReorderActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests){
+			// we could create a counter for successful and one for failed requests
+			// however, we just assume that every single request was successful and display a success message once
+			if (iRequestNumber === iTotalRequests) {
+				MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockUpdatedSuccessMsg", [iTotalRequests]));
+			}
+		},
+
+		/**
+		 * Event handler for the unlist button. Will delete the
+		 * product from the (local) model.
+		 * @public
+		 */
+		onUnlistObjects: function() {
+			var aSelectedProducts, i, sPath, oProduct, oProductId;
+
+			aSelectedProducts = this.byId("table").getSelectedItems();
+			if (aSelectedProducts.length) {
+				for (i = 0; i &lt; aSelectedProducts.length; i++) {
+					oProduct = aSelectedProducts[i];
+					oProductId = oProduct.getBindingContext().getProperty("ProductID");
+					sPath = oProduct.getBindingContext().getPath();
+					this.getModel().remove(sPath, {
+						success : this._handleUnlistActionResult.bind(this, oProductId, true, i+1, aSelectedProducts.length),
+						error : this._handleUnlistActionResult.bind(this, oProductId, false, i+1, aSelectedProducts.length)
+					});
+				}
+			} else {
+				this._showErrorMessage(this.getModel("i18n").getResourceBundle().getText("TableSelectProduct"));
+			}
+		},
+
+
+		/**
+		 * Event handler for the reorder button. Will reorder the
+		 * product by updating the (local) model
+		 * @public
+		 */
+		onUpdateStockObjects: function() {
+			var aSelectedProducts, i, sPath, oProductObject;
+
+			aSelectedProducts = this.byId("table").getSelectedItems();
+			if (aSelectedProducts.length) {
+				for (i = 0; i &lt; aSelectedProducts.length; i++) {
+					sPath = aSelectedProducts[i].getBindingContext().getPath();
+					oProductObject = aSelectedProducts[i].getBindingContext().getObject();
+					oProductObject.UnitsInStock += 10;
+					this.getModel().update(sPath, oProductObject, {
+						success : this._handleReorderActionResult.bind(this, oProductObject.ProductID, true, i+1, aSelectedProducts.length),
+						error : this._handleReorderActionResult.bind(this, oProductObject.ProductID, false, i+1, aSelectedProducts.length)
+					});
+				}
+			} else {
+				this._showErrorMessage(this.getModel("i18n").getResourceBundle().getText("TableSelectProduct"));
+			}
+		}
 </span>
-      ...
-<span class="ph emphasis emphasis">      /**
-       * Error and success handler for the unlist action.
-       * @param sProductId the product id for which this handler is called
-       * @param bSuccess true in case of a success handler, else false (for error handler)
-       * @param iRequestNumber the counter which specifies the position of this request
-       * @param iTotalRequests the number of all requests sent
-       * @param oData forwarded data object received from the remove/update OData API
-         * @param oResponse forwarded response object received from the remove/update OData API
-         * @private
-         */
-      _handleUnlistActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests, oData, oResponse){
-         // create a counter for successful and one for failed requests
-         // ...
-         // however, we just assume that every single request was successful and display a success message once
-         if (iRequestNumber === iTotalRequests) {
-            MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockRemovedSuccessMsg", [iTotalRequests]));
-         }
-      },
-      /**
-       * Error and success handler for the reorder action.
-       * @param sProductId the product id for which this handler is called
-       * @param bSuccess true in case of a success handler, else false (for error handler)
-       * @param iRequestNumber the counter which specifies the position of this request
-       * @param iTotalRequests the number of all requests sent
-       * @param oData forwarded data object received from the remove/update OData API
-       * @param oResponse forwarded response object received from the remove/update OData API
-       * @private
-       */
-      _handleReorderActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests, oData, oResponse){
-         // create a counter for successful and one for failed requests
-         // ...
-         // however, we just assume that every single request was successful and display a success message once
-         if (iRequestNumber === iTotalRequests) {
-            MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockUpdatedSuccessMsg", [iTotalRequests]));
-         }
-      },
-      /**
-       * Event handler for the unlist button. Will delete the
-       * product from the (local) model.
-       * @public
-       */
-      onUnlistObjects: function() {
-         var aSelectedProducts, i, sPath, oProduct, oProductId;
-         aSelectedProducts = this.byId("table").getSelectedItems();
-         if (aSelectedProducts.length) {
-            for (i = 0; i &lt; aSelectedProducts.length; i++) {
-               oProduct = aSelectedProducts[i];
-               oProductId = oProduct.getBindingContext().getProperty("ProductID");
-               sPath = oProduct.getBindingContextPath();
-               this.getModel().remove(sPath, {
-                  success : this._handleUnlistActionResult.bind(this, oProductId, true, i+1, aSelectedProducts.length),
-                  error : this._handleUnlistActionResult.bind(this, oProductId, false, i+1, aSelectedProducts.length)
-               });
-            }
-         } else {
-            this._showErrorMessage(this.getModel("i18n").getResourceBundle().getText("TableSelectProduct"));
-         }
-      },
-      /**
-       * Event handler for the order button. Will reorder the
-       * product by updating the (local) model
-       * @public
-       */
-      onUpdateStockObjects: function() {
-         var aSelectedProducts, i, sPath, oProductObject;
-         aSelectedProducts = this.byId("table").getSelectedItems();
-         if (aSelectedProducts.length) {
-            for (i = 0; i &lt; aSelectedProducts.length; i++) {
-               sPath = aSelectedProducts[i].getBindingContextPath();
-               oProductObject = aSelectedProducts[i].getBindingContext().getObject();
-               oProductObject.UnitsInStock += 10;
-               this.getModel().update(sPath, oProductObject, {
-                  success : this._handleReorderActionResult.bind(this, oProductObject.ProductID, true, i+1, aSelectedProducts.length),
-                  error : this._handleReorderActionResult.bind(this, oProductObject.ProductID, false, i+1, aSelectedProducts.length)
-               });
-            }
-         } else {
-            this._showErrorMessage(this.getModel("i18n").getResourceBundle().getText("TableSelectProduct"));
-         }
-      }
-</span>
-   });
+
+	});
 });</pre></div>
 
 			<p class="p">Let’s have a look at the implementation of the event handlers for the new actions. We
@@ -316,7 +318,7 @@ For each action we register both a <samp class="ph codeph">success</samp> handle
 		<div class="sectiondiv subsection">
 			<p class="p subsectiontitle">webapp/controller/Object.controller.js</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">...
 /*global location*/
 sap.ui.define([
    "myCompany/myApp/controller/BaseController",
@@ -376,7 +378,7 @@ sap.ui.define([
 		<div class="sectiondiv subsection">
 			<p class="p subsectiontitle">webapp/i18n/i18n.properties</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">
 ...
 <span class="ph emphasis emphasis">#text of the button for Products reordering
 TableProductsReorder=Order
@@ -413,7 +415,7 @@ StockUpdatedSuccessMsg=Product stock level updated</span>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using SAPUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
+<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using OpenUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="85ec3a9454ac4eb1a901745e773844d3.html" title="For easily detecting and managing product shortages in our app, we will add a quick filter for the worklist table. Users can press the filter tabs to display the products according to whether they are in stock, have low stock or no stock. The table will update accordingly and show only the products matching the criteria.">Step 4: Quick Filter for the Worklist</a><br/>
@@ -425,19 +427,5 @@ StockUpdatedSuccessMsg=Product stock level updated</span>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 5: Adding Actions to the Worklist";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

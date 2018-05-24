@@ -1,11 +1,11 @@
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
-	"sap/ui/table/sample/TableExampleUtils",
 	"sap/ui/model/json/JSONModel",
 	"sap/m/MessageToast",
 	"sap/ui/model/Filter",
-	"sap/ui/model/FilterOperator"
-], function(Controller, TableExampleUtils, JSONModel, MessageToast, Filter, FilterOperator) {
+	"sap/ui/model/FilterOperator",
+	"sap/ui/core/format/DateFormat"
+], function(Controller, JSONModel, MessageToast, Filter, FilterOperator, DateFormat) {
 	"use strict";
 
 	return Controller.extend("sap.ui.table.sample.Filtering.Controller", {
@@ -14,7 +14,7 @@ sap.ui.define([
 			var oView = this.getView();
 
 			// set explored app's demo model on this sample
-			var oJSONModel = TableExampleUtils.initSampleDataModel();
+			var oJSONModel = this.initSampleDataModel();
 			oView.setModel(oJSONModel);
 
 			oView.setModel(new JSONModel({
@@ -25,6 +25,47 @@ sap.ui.define([
 
 			this._oGlobalFilter = null;
 			this._oPriceFilter = null;
+		},
+
+		initSampleDataModel : function() {
+			var oModel = new JSONModel();
+
+			var oDateFormat = DateFormat.getDateInstance({source: {pattern: "timestamp"}, pattern: "dd/MM/yyyy"});
+
+			jQuery.ajax(jQuery.sap.getModulePath("sap.ui.demo.mock", "/products.json"), {
+				dataType: "json",
+				success: function (oData) {
+					var aTemp1 = [];
+					var aTemp2 = [];
+					var aSuppliersData = [];
+					var aCategoryData = [];
+					for (var i = 0; i < oData.ProductCollection.length; i++) {
+						var oProduct = oData.ProductCollection[i];
+						if (oProduct.SupplierName && jQuery.inArray(oProduct.SupplierName, aTemp1) < 0) {
+							aTemp1.push(oProduct.SupplierName);
+							aSuppliersData.push({Name: oProduct.SupplierName});
+						}
+						if (oProduct.Category && jQuery.inArray(oProduct.Category, aTemp2) < 0) {
+							aTemp2.push(oProduct.Category);
+							aCategoryData.push({Name: oProduct.Category});
+						}
+						oProduct.DeliveryDate = (new Date()).getTime() - (i % 10 * 4 * 24 * 60 * 60 * 1000);
+						oProduct.DeliveryDateStr = oDateFormat.format(new Date(oProduct.DeliveryDate));
+						oProduct.Heavy = oProduct.WeightMeasure > 1000 ? "true" : "false";
+						oProduct.Available = oProduct.Status == "Available" ? true : false;
+					}
+
+					oData.Suppliers = aSuppliersData;
+					oData.Categories = aCategoryData;
+
+					oModel.setData(oData);
+				},
+				error: function () {
+					jQuery.sap.log.error("failed to load json");
+				}
+			});
+
+			return oModel;
 		},
 
 		_filter : function () {
@@ -38,7 +79,7 @@ sap.ui.define([
 				oFilter = this._oPriceFilter;
 			}
 
-			this.getView().byId("table").getBinding("rows").filter(oFilter, "Application");
+			this.byId("table").getBinding("rows").filter(oFilter, "Application");
 		},
 
 		filterGlobally : function(oEvent) {
@@ -49,7 +90,7 @@ sap.ui.define([
 				this._oGlobalFilter = new Filter([
 					new Filter("Name", FilterOperator.Contains, sQuery),
 					new Filter("Category", FilterOperator.Contains, sQuery)
-				], false)
+				], false);
 			}
 
 			this._filter();
@@ -57,7 +98,7 @@ sap.ui.define([
 
 		filterPrice : function(oEvent) {
 			var oColumn = oEvent.getParameter("column");
-			if (oColumn != this.getView().byId("price")) {
+			if (oColumn != this.byId("price")) {
 				return;
 			}
 
@@ -79,10 +120,12 @@ sap.ui.define([
 			var fValue = null;
 			try {
 				fValue = parseFloat(sValue, 10);
-			} catch(e){}
+			} catch (e){
+				// nothing
+			}
 
 			if (!isNaN(fValue)) {
-				this._oPriceFilter = new Filter("Price", FilterOperator.BT, fValue-20, fValue+20);
+				this._oPriceFilter = new Filter("Price", FilterOperator.BT, fValue - 20, fValue + 20);
 				oColumn.setFiltered(true);
 				this._filter();
 			} else {
@@ -91,7 +134,7 @@ sap.ui.define([
 		},
 
 		clearAllFilters : function(oEvent) {
-			var oTable = this.getView().byId("table");
+			var oTable = this.byId("table");
 
 			var oUiModel = this.getView().getModel("ui");
 			oUiModel.setProperty("/globalFilter", "");
@@ -102,17 +145,26 @@ sap.ui.define([
 			this._filter();
 
 			var aColumns = oTable.getColumns();
-			for (var i=0; i<aColumns.length; i++) {
+			for (var i = 0; i < aColumns.length; i++) {
 				oTable.filter(aColumns[i], null);
 			}
 		},
 
 		toggleAvailabilityFilter : function(oEvent) {
-			this.getView().byId("availability").filter(oEvent.getParameter("pressed") ? "X" : "");
+			this.byId("availability").filter(oEvent.getParameter("pressed") ? "X" : "");
+		},
+
+		formatAvailableToObjectState : function (bAvailable) {
+			return bAvailable ? "Success" : "Error";
 		},
 
 		showInfo : function(oEvent) {
-			TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.Filtering", "/info.json"), oEvent.getSource());
+			try {
+				jQuery.sap.require("sap.ui.table.sample.TableExampleUtils");
+				sap.ui.table.sample.TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.Filtering", "/info.json"), oEvent.getSource());
+			} catch (e) {
+				// nothing
+			}
 		}
 
 	});

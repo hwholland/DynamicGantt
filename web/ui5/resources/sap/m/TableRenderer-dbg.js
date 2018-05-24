@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer', './ColumnListItemRenderer'],
-	function(jQuery, Renderer, ListBaseRenderer, ColumnListItemRenderer) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer', './ColumnListItemRenderer', './ColumnHeader', 'sap/m/library'],
+	function(jQuery, Renderer, ListBaseRenderer, ColumnListItemRenderer, ColumnHeader, library) {
 	"use strict";
+
+
+	// shortcut for sap.m.ListKeyboardMode
+	var ListKeyboardMode = library.ListKeyboardMode;
+
+	// shortcut for sap.m.Sticky
+	var Sticky = library.Sticky;
 
 
 	/**
@@ -35,7 +42,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 			clsPrefix = "sapMListTbl",
 			idPrefix = oTable.getId("tbl"),
 			cellTag = (type == "Head") ? "th" : "td",
-			cellRole = (type == "Head") ? "columnheader" : "gridcell",
 			groupTag = "t" + type.toLowerCase(),
 			aColumns = oTable.getColumns(),
 			isHeaderHidden = (type == "Head") && aColumns.every(function(oColumn) {
@@ -53,7 +59,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 			createBlankCell = function(cls, id, bAriaHidden) {
 				rm.write("<");
 				rm.write(cellTag);
-				rm.writeAttribute("role", cellRole);
+				if (cellTag === "th") {
+					rm.addClass("sapMTableTH");
+				}
 				bAriaHidden && rm.writeAttribute("aria-hidden", "true");
 				id && rm.writeAttribute("id", idPrefix + id);
 				rm.addClass(clsPrefix + cls);
@@ -66,25 +74,35 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 
 		rm.write("<" + groupTag + ">");
 		rm.write("<tr");
+
 		rm.writeAttribute("tabindex", -1);
-		rm.writeAttribute("role", "row");
 		rm.writeAttribute("id", oTable.addNavSection(idPrefix + type + "er" ));
 
 		if (isHeaderHidden) {
 			rm.addClass("sapMListTblHeaderNone");
 		} else {
-			rm.addClass("sapMListTblRow sapMListTbl" + type + "er");
+			if (type === "Head" && oTable.getSticky() === Sticky.ColumnHeaders) {
+				rm.addClass("sapMListTblStickyColHdr");
+			}
+			rm.addClass("sapMListTblRow sapMLIBFocusable sapMListTbl" + type + "er");
+			ColumnListItemRenderer.addLegacyOutlineClass.call(ColumnListItemRenderer, rm);
 		}
 
 		rm.writeClasses();
 		rm.write(">");
 
+		createBlankCell("HighlightCol", type + "Highlight", !oTable._iItemNeedsHighlight);
+
 		if (iModeOrder == -1) {
 			if (mode == "MultiSelect" && type == "Head" && !isHeaderHidden) {
-				rm.write("<th role='columnheader' class='" + clsPrefix + "SelCol'>");
-				rm.write("<div class='sapMLIBSelectM'>");
+				rm.write("<th");
+				rm.addClass("sapMTableTH");
+				rm.writeAttribute("aria-hidden", "true");
+				rm.addClass(clsPrefix + "SelCol");
+				rm.writeClasses();
+				rm.write(">");
 				rm.renderControl(oTable._getSelectAllCheckbox());
-				rm.write("</div></th>");
+				rm.write("</th>");
 				index++;
 			} else {
 				createBlankCell("SelCol");
@@ -115,11 +133,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 
 			rm.write("<" + cellTag);
 			cls && rm.addClass(jQuery.sap.encodeHTML(cls));
+
+			if (type === "Head") {
+				rm.writeElementData(oColumn);
+				rm.addClass("sapMTableTH");
+				// adding ColumnHeader specific class in order to overwrite the padding of the cell
+				if (control instanceof ColumnHeader) {
+					rm.addClass(clsPrefix + "CellCH");
+				}
+			}
+
 			rm.addClass(clsPrefix + "Cell");
 			rm.addClass(clsPrefix + type + "erCell");
-			rm.writeAttribute("id", idPrefix + type + index);
 			rm.writeAttribute("data-sap-width", oColumn.getWidth());
-			rm.writeAttribute("role", cellRole);
 			width && rm.addStyle("width", width);
 
 			if (align) {
@@ -167,15 +193,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 	 * render table tag and add required classes
 	 */
 	TableRenderer.renderListStartAttributes = function(rm, oControl) {
-		rm.write("<div");
-		rm.writeAttribute("id", oControl.getId() + "-labelledby");
-		rm.writeAttribute("aria-hidden", "true");
-		rm.addClass("sapUiInvisibleText");
-		rm.writeClasses();
-		rm.write(">");
-		rm.writeEscaped(sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("LIST_VIEW"));
-		rm.write("</div>");
-
 		rm.write("<table");
 		rm.addClass("sapMListTbl");
 		if (oControl.getFixedLayout() === false) {
@@ -192,17 +209,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 	 * returns aria accessibility role
 	 */
 	TableRenderer.getAriaRole = function(oControl) {
-		return "grid";
-	};
-
-	/**
-	 * returns the additional aria-labelledby assosiation
-	 */
-	TableRenderer.getAriaLabelledBy = function(oControl) {
-		var sAriaLabelledBy = oControl.getId() + "-labelledby",
-			sBaseLabelledBy = ListBaseRenderer.getAriaLabelledBy.call(this, oControl);
-
-		return sBaseLabelledBy ? (sAriaLabelledBy + " " + sBaseLabelledBy) : sAriaLabelledBy;
+		return "";
 	};
 
 	/**
@@ -212,6 +219,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 		this.renderColumns(rm, oControl, "Head");
 		rm.write("<tbody");
 		rm.writeAttribute("id", oControl.addNavSection(oControl.getId("tblBody")));
+		if (oControl.getAlternateRowColors()) {
+			rm.addClass(oControl._getAlternateRowColorsClass());
+			rm.writeClasses();
+		}
 		rm.write(">");
 	};
 
@@ -229,8 +240,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 	 */
 	TableRenderer.renderNoData = function(rm, oControl) {
 		rm.write("<tr");
-		rm.writeAttribute("role", "row");
-		rm.writeAttribute("tabindex", oControl.getKeyboardMode() == sap.m.ListKeyboardMode.Navigation ? -1 : 0);
+		rm.writeAttribute("tabindex", oControl.getKeyboardMode() == ListKeyboardMode.Navigation ? -1 : 0);
 		rm.writeAttribute("id", oControl.getId("nodata"));
 		rm.addClass("sapMLIB sapMListTblRow sapMLIBTypeInactive");
 		ColumnListItemRenderer.addFocusableClasses.call(ColumnListItemRenderer, rm);
@@ -241,7 +251,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './ListBaseRenderer'
 		rm.write(">");
 
 		rm.write("<td");
-		rm.writeAttribute("role", "gridcell");
 		rm.writeAttribute("id", oControl.getId("nodata-text"));
 		rm.writeAttribute("colspan", oControl.getColCount());
 		rm.addClass("sapMListTblCell sapMListTblCellNoData");

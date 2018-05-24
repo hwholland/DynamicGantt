@@ -51,22 +51,22 @@
 				</header>
 			</Column>
 			<Column
-				minScreenWidth="Tablet"
+				minScreenWidth="Desktop"
 				demandPopin="true"
-				hAlign="Right">
+				hAlign="End">
 				<header>
 					<Text text="Dimensions" />
 				</header>
 			</Column>
 			<Column
-				minScreenWidth="Tablet"
+				minScreenWidth="Desktop"
 				demandPopin="true"
 				hAlign="Center">
 				<header>
 					<Text text="Weight" />
 				</header>
 			</Column>
-			<Column hAlign="Right">
+			<Column hAlign="End">
 				<header>
 					<Text text="Product" />
 				</header>

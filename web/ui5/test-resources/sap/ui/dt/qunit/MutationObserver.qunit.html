@@ -1,69 +1,31 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta http-equiv='X-UA-Compatible' content='IE=edge'>
 		<title>Test Page for sap.ui.dt.MutationObserver</title>
-
-		<script id="sap-ui-bootstrap"
-				data-sap-ui-theme="sap_bluecrystal"
-				type="text/javascript"
-				data-sap-ui-noConflict="true"
-				data-sap-ui-resourceroots='{"dt.view": "testdata/designtime/"}'
-				data-sap-ui-libs="sap.ui.dt,sap.m,sap.ui.layout"
-				src="../../../../../resources/sap-ui-core.js">
+		<script src="../shared-config.js"></script>
+		<script>
+			window['sap-ui-config'].libs = 'sap.m, sap.ui.dt, sap.ui.layout';
+			window['sap-ui-config'].resourceroots = {
+				'dt.view': 'testdata/designtime/'
+			};
+			document.write('<script src="' + document.location.pathname.match(/(.*)\/test-resources\//)[1] + '/resources/sap-ui-core.js"><' + '/script>');
 		</script>
-		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-		<script type="text/javascript">
+		<script>
+			jQuery.sap.includeStyleSheet(jQuery.sap.getModulePath('sap.ui.thirdparty.qunit') + '.css');
+			jQuery.sap.require('sap.ui.thirdparty.qunit');
+			jQuery.sap.require('sap.ui.qunit.qunit-junit');
+			jQuery.sap.require('sap.ui.qunit.QUnitUtils');
+			jQuery.sap.require('sap.ui.qunit.qunit-coverage');
 
-			jQuery.sap.require("sap.ui.qunit.qunit-coverage");
+			// code coverage report only for sap.ui.dt namespace
+			window.blanket && window.blanket.options('sap-ui-cover-only', '[sap/ui/dt/MutationObserver.js]');
 
-			jQuery.sap.require("sap.ui.dt.MutationObserver");
-
-			QUnit.module("Given that a MutationObserver is created", {
-				beforeEach : function() {
-					this.oLabel = new sap.m.Label();
-					this.oMutationObserver = new sap.ui.dt.MutationObserver();
-					this.oLabel.placeAt("content");
-					sap.ui.getCore().applyChanges();
-				},
-				afterEach : function() {
-					this.oMutationObserver.destroy();
-					this.oLabel.destroy();
-				}
-			});
-
-			QUnit.test("when window is resized", function(assert) {
-				var done = assert.async();
-
-				this.oMutationObserver.attachEventOnce("domChanged", function(oEvent) {
-					assert.ok(oEvent, 'DomChanged event is fired');
-					done();
-				});
-				jQuery(window).trigger("resize");
-			});
-
-			QUnit.test("when the text node of a control is modified", function(assert) {
-				var done = assert.async();
-
-				this.oMutationObserver.attachEventOnce("domChanged", function(oEvent) {
-					assert.ok(oEvent, 'then a "domChanged" event is fired because of the mutation observer');
-					done();
-				});
-
-				this.oLabel.setText("test");
-			});
-
+			jQuery.sap.includeScript('./MutationObserver.qunit.js');
 		</script>
 	</head>
 	<body>
-		<h1 id="qunit-header">QUnit page for sap.ui.dt.MutationObserver</h1>
-		<h2 id="qunit-banner"></h2>
-	 	<h2 id="qunit-userAgent"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<ol id="qunit-tests"></ol>
-		<div id="content"></div>
+		<div id="qunit"></div>
+		<div id="qunit-fixture" style="position: fixed; top: auto; right: 0; bottom: 0; left: auto; width: 600px; height: 600px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);"></div>
 	</body>
 </html>

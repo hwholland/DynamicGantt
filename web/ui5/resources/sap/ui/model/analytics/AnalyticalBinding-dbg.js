@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,9 +9,188 @@
 /*eslint camelcase:0, valid-jsdoc:0, no-warning-comments:0 */
 
 // Provides class sap.ui.model.odata.ODataListBinding
-sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/ChangeReason', 'sap/ui/model/Sorter', 'sap/ui/model/FilterOperator', './odata4analytics', './BatchResponseCollector', './AnalyticalVersionInfo'],
-	function(jQuery, TreeBinding, ChangeReason, Sorter, FilterOperator, odata4analytics, BatchResponseCollector, AnalyticalVersionInfo) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/model/TreeBinding',
+	'sap/ui/model/ChangeReason',
+	'sap/ui/model/Filter',
+	'sap/ui/model/FilterOperator',
+	'sap/ui/model/FilterType',
+	'sap/ui/model/Sorter',
+	'sap/ui/model/odata/CountMode',
+	'./odata4analytics',
+	'./BatchResponseCollector',
+	'./AnalyticalVersionInfo'
+], function(jQuery, TreeBinding, ChangeReason, Filter, FilterOperator, FilterType, Sorter,
+		CountMode, odata4analytics, BatchResponseCollector, AnalyticalVersionInfo) {
 	"use strict";
+
+	var sClassName = "sap.ui.model.analytics.AnalyticalBinding";
+
+	/**
+	 * Checks whether the select binding parameter fits to the current analytical info and returns
+	 * an array of properties that need to be added to leaf requests. If the select binding
+	 * parameter does not fit to the current analytical info a warning is logged and the select
+	 * binding parameter is ignored.
+	 * Select binding parameter does not fit to the analytical info,
+	 * <ul>
+	 * <li>if an additional dimension is contained in the select binding parameter
+	 * <li>if an associated property (e.g. text property or attribute) of an additional dimension
+	 * is contained in the select binding parameter
+	 * <li>if an additional measure is contained in the select binding parameter
+	 * <li>if an associated property (e.g. text property) of an additional measure is contained in
+	 * the select binding parameter
+	 * <li>if a dimension or a measure of the current analytical info is not contained in the select
+	 * binding parameter
+	 * </ul>
+	 *
+	 * @param {sap.ui.model.analytics.AnalyticalBinding} oBinding
+	 *   The analytical binding instance
+	 * @returns {string[]} An array of additional properties that need to be selected or an empty
+	 *   array if there are no additional select properties needed
+	 */
+	function getAdditionalSelects(oBinding) {
+		var oAnalyticalQueryRequest
+				= new odata4analytics.QueryResultRequest(oBinding.oAnalyticalQueryResult),
+			aComputedSelect,
+			sComputedSelect,
+			oDimension,
+			i,
+			j,
+			oMeasure,
+			n,
+			sPropertyName,
+			aSelect = oBinding.mParameters.select.split(","),
+			bError = trimAndCheckForDuplicates(aSelect, oBinding.sPath);
+
+		// prepare oAnalyticalQueryRequest to be able to call getURIQueryOptionValue("$select")
+		oAnalyticalQueryRequest.setAggregationLevel(oBinding.aMaxAggregationLevel);
+		oAnalyticalQueryRequest.setMeasures(oBinding.aMeasureName);
+
+		// update dimension's key, text and attributes as done in relevant _prepare... functions
+		Object.keys(oBinding.oDimensionDetailsSet).forEach(function (sDimensionKey) {
+			oDimension = oBinding.oDimensionDetailsSet[sDimensionKey];
+
+			oAnalyticalQueryRequest.includeDimensionKeyTextAttributes(sDimensionKey,
+				true, oDimension.textPropertyName !== undefined, oDimension.aAttributeName);
+		});
+
+		// update measure's raw value, formatted value and unit property as done in relevant
+		// _prepare... functions
+		Object.keys(oBinding.oMeasureDetailsSet).forEach(function (sMeasureKey) {
+			oMeasure = oBinding.oMeasureDetailsSet[sMeasureKey];
+
+			oAnalyticalQueryRequest.includeMeasureRawFormattedValueUnit(sMeasureKey,
+				oMeasure.rawValuePropertyName !== undefined,
+				oMeasure.formattedValuePropertyName !== undefined,
+				oMeasure.unitPropertyName !== undefined);
+		});
+
+		// at least all selected properties, computed by the binding, are contained in select
+		// binding parameter
+		sComputedSelect = oAnalyticalQueryRequest.getURIQueryOptionValue("$select");
+		if (sComputedSelect) {
+			aComputedSelect = sComputedSelect.split(",");
+			for (i = 0, n = aComputedSelect.length; i < n; i++) {
+				sPropertyName = aComputedSelect[i];
+				j = aSelect.indexOf(sPropertyName);
+				if (j < 0) {
+					jQuery.sap.log.warning("Ignored the 'select' binding parameter, because"
+							+ " it does not contain the property '" + sPropertyName + "'",
+						oBinding.sPath, sClassName);
+					bError = true;
+				} else {
+					aSelect.splice(j, 1);
+				}
+			}
+		}
+
+		// check additionally selected properties, no new dimensions and new measures or
+		// associated properties for new dimensions or measures are allowed
+		for (i = 0, n = aSelect.length; i < n; i++) {
+			sPropertyName = aSelect[i];
+
+			oDimension = oBinding.oAnalyticalQueryResult.findDimensionByPropertyName(sPropertyName);
+			if (oDimension && oBinding.oDimensionDetailsSet[oDimension.getName()] === undefined) {
+				logUnsupportedPropertyInSelect(oBinding.sPath, sPropertyName, oDimension);
+				bError = true;
+			}
+
+			oMeasure = oBinding.oAnalyticalQueryResult.findMeasureByPropertyName(sPropertyName);
+			if (oMeasure && oBinding.oMeasureDetailsSet[oMeasure.getName()] === undefined) {
+				logUnsupportedPropertyInSelect(oBinding.sPath, sPropertyName, oMeasure);
+				bError = true;
+			}
+		}
+		return bError ? [] : aSelect;
+	}
+
+	/**
+	 * Logs a warning that the given select property is not supported. Either it is a dimension or
+	 * a measure or it is associated with a dimension or a measure which is not part of the
+	 * analytical info.
+	 *
+	 * @param {string} sPath The binding path
+	 * @param {string} sSelectedProperty The name of the selected property
+	 * @param {sap.ui.model.analytics.odata4analytics.Dimension
+	 *         |sap.ui.model.analytics.odata4analytics.Measure} oDimensionOrMeasure
+	 *   The dimension or measure that causes the issue
+	 */
+	function logUnsupportedPropertyInSelect(sPath, sSelectedProperty, oDimensionOrMeasure) {
+		var sDimensionOrMeasure = oDimensionOrMeasure
+				instanceof sap.ui.model.analytics.odata4analytics.Dimension
+					? "dimension" : "measure";
+
+		if (oDimensionOrMeasure.getName() === sSelectedProperty) {
+			jQuery.sap.log.warning("Ignored the 'select' binding parameter, because it contains"
+					+ " the " + sDimensionOrMeasure + " property '"
+					+ sSelectedProperty
+					+ "' which is not contained in the analytical info (see updateAnalyticalInfo)",
+				sPath, sClassName);
+
+		} else {
+			jQuery.sap.log.warning("Ignored the 'select' binding parameter, because the property '"
+					+ sSelectedProperty + "' is associated with the "
+					+ sDimensionOrMeasure + " property '"
+					+ oDimensionOrMeasure.getName() + "' which is not contained in the analytical"
+					+ " info (see updateAnalyticalInfo)",
+				sPath, sClassName);
+		}
+	}
+
+	/**
+	 * Iterate over the given array, trim each value and check whether there are duplicate entries
+	 * in the array. If there are duplicate entries a warning is logged and the duplicate is removed
+	 * from the array.
+	 *
+	 * @param {string[]} aSelect An array of strings
+	 * @param {string} sPath The binding path
+	 * @returns {boolean} <code>true</code> if there is at least one duplicate entry in the array.
+	 */
+	function trimAndCheckForDuplicates(aSelect, sPath) {
+		var sCurrentProperty,
+			bError = false,
+			i,
+			n;
+
+		// replace all white-spaces before and after the value
+		for (i = 0, n = aSelect.length; i < n; i++) {
+			aSelect[i] = aSelect[i].trim();
+		}
+		// check for duplicate entries and remove from list
+		for (i = aSelect.length - 1; i >= 0; i--) {
+			sCurrentProperty = aSelect[i];
+			if (aSelect.indexOf(sCurrentProperty) !== i) {
+				// found duplicate
+				jQuery.sap.log.warning("Ignored the 'select' binding parameter, because it"
+						+ " contains the property '" + sCurrentProperty + "' multiple times",
+					sPath, sClassName);
+				aSelect.splice(i, 1);
+				bError = true;
+			}
+		}
+		return bError;
+	}
 
 	/**
 	 * @class
@@ -36,16 +215,33 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 *            [aSorter=null] predefined sorter/s contained in an array
 	 * @param {array}
 	 *            [aFilters=null] predefined filter/s contained in an array
-	 * @param {object}
-	 *            [mParameters=null] additional control parameters. Supported parameters are:
-	 *            <ul>
-	 *            <li>entitySet: if set, it explicitly specifies the entity set addressed by the last segment of the given binding path</li>
-	 *            <li>useBatchRequests: if true, multiple OData requests will be wrapped into a single batch request, wherever possible</li>
-	 *            <li>provideGrandTotals: if true, grand total values will be provided for all bound measure properties</li>
-	 *            <li>provideTotalResultSize: if true, the total number of matching entries in the bound OData entity set will be provided</li>
-	 *            <li>reloadSingleUnitMeasures: if true, the binding will check aggregated entries with multi-unit occurrences, if
-	 *            some measure properties have a unique unit and will trigger separate OData requests to fetch them</li>
-	 *            </ul>
+	 * @param {object} [mParameters=null] a map which contains additional control parameters.
+	 * @param [mParameters.entitySet] if set, it explicitly specifies the entity set addressed by
+	 *            the last segment of the given binding path
+	 * @param [mParameters.useBatchRequests] if true, multiple OData requests will be wrapped into a
+	 *            single batch request, wherever possible
+	 * @param [mParameters.provideGrandTotals] if true, grand total values will be provided for all
+	 *            bound measure properties
+	 * @param [mParameters.provideTotalResultSize] if true, the total number of matching entries in
+	 *            the bound OData entity set will be provided
+	 * @param [mParameters.reloadSingleUnitMeasures] if true, the binding will check aggregated
+	 *            entries with multi-unit occurrences, if some measure properties have a unique unit
+	 *            and will trigger separate OData requests to fetch them
+	 * @param {string} [mParameters.select] a comma separated list of property names that need to be
+	 *            selected.<br/>
+	 *            If the <code>select</code> parameter is given, it has to contain all properties
+	 *            that are contained in the analytical information (see
+	 *            {@link sap.ui.model.analytics.AnalyticalBinding#updateAnalyticalInfo}) and their
+	 *            associated dimensions and measures. It must not contain additional dimensions or
+	 *            measures or associated properties for additional dimensions or measures. But it
+	 *            may contain additional properties like a text property of a dimension that is also
+	 *            selected.<br/>
+	 *            All properties of the <code>select</code> parameter are also considered in
+	 *            {@link sap.ui.model.analytics.AnalyticalBinding#getDownloadUrl}.<br/>
+	 *            The <code>select</code> parameter must not contain any duplicate entry.<br/>
+	 *            If the <code>select</code> parameter does not fit to the analytical information or
+	 *            if the <code>select</code> parameter contains duplicates, a warning is logged and
+	 *            the <code>select</code> parameter is ignored.
 	 *
 	 * @throws Will throw an error if no analytic query result object could be determined from the bound OData entity set, either from an explicitly
 	 *         given EntitySet (via optional mParameters.entitySet argument), or by default implicitly from
@@ -61,6 +257,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		constructor : function(oModel, sPath, oContext, aSorter, aFilters, mParameters) {
 			TreeBinding.call(this, oModel, sPath, oContext, aFilters, mParameters);
 
+			this.aAdditionalSelects = [];
 			// attribute members for addressing the requested entity set
 			this.sEntitySetName = (mParameters && mParameters.entitySet) ? mParameters.entitySet : undefined;
 			// attribute members for maintaining aggregated OData requests
@@ -94,9 +291,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			this.mMultiUnitKey = {}; // keys of multi-currency entities
 			this.aMultiUnitLoadFactor = {}; // compensate discarded multi-unit entities by a load factor per aggregation level to increase number of loaded entities
 			this.bNeedsUpdate = false;
-			    /* entity keys of loaded group Id's */
+			/* entity keys of loaded group Id's */
 			this.mEntityKey = {};
-			    /* increased load factor due to ratio of non-multi-unit entities versus loaded entities */
+			/* increased load factor due to ratio of non-multi-unit entities versus loaded entities */
 
 			// custom parameters which will be send with every request
 			// the custom parameters are extracted from the mParameters object, because the SmartTable does some weird things to the parameters
@@ -112,13 +309,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			this.aBatchRequestQueue = [];
 
 			// considering different count mode settings
-			if (mParameters && mParameters.countMode == sap.ui.model.odata.CountMode.None) {
+			if (mParameters && mParameters.countMode == CountMode.None) {
 				jQuery.sap.log.fatal("requested count mode is ignored; OData requests will include $inlinecout options");
 			} else if (mParameters
-					&& (mParameters.countMode == sap.ui.model.odata.CountMode.Request
-						|| mParameters.countMode == sap.ui.model.odata.CountMode.Both)) {
+					&& (mParameters.countMode == CountMode.Request
+						|| mParameters.countMode == CountMode.Both)) {
 				jQuery.sap.log.warning("default count mode is ignored; OData requests will include $inlinecout options");
-			} else if (this.oModel.sDefaultCountMode == sap.ui.model.odata.CountMode.Request) {
+			} else if (this.oModel.sDefaultCountMode == CountMode.Request) {
 				jQuery.sap.log.warning("default count mode is ignored; OData requests will include $inlinecout options");
 			}
 
@@ -144,6 +341,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 	});
 
+
+	// Creates Information for SupportTool (see e.g. library.support.js of sap.ui.table library)
+	function createSupportInfo(oAnalyticalBinding, sErrorId) {
+		return function() {
+			if (!oAnalyticalBinding.__supportUID) {
+				oAnalyticalBinding.__supportUID = jQuery.sap.uid();
+			}
+			return {
+				type: sClassName,
+				analyticalError: sErrorId,
+				analyticalBindingId: oAnalyticalBinding.__supportUID
+			};
+		};
+	}
+
+
 	/**
 	 * Setter for context
 	 * @param {Object} oContext the new context object
@@ -153,10 +366,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			this.oContext = oContext;
 			this.oDataState = null;
 
-			if (this.isRelative()) {
-				if (!this.bInitial) {
-					this.refresh();
-				}
+			// If binding is not a relative binding, nothing to do here
+			if (!this.isRelative()) {
+				return;
+			}
+
+			// resolving the path makes sure that we can safely analyze the metadata,
+			// as we have a resourcepath for the QueryResult
+			var sResolvedPath = this.oModel.resolve(this.sPath, this.oContext);
+			if (sResolvedPath) {
+				this.resetData();
+				this._initialize(); // triggers metadata/annotation check
+				this._fireChange({ reason: ChangeReason.Context });
 			}
 		}
 	};
@@ -173,7 +394,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @function
 	 */
 	AnalyticalBinding.prototype.initialize = function() {
-		if (this.oModel.oMetadata && this.oModel.oMetadata.isLoaded() && this.bInitial) {
+		if (this.oModel.oMetadata && this.oModel.oMetadata.isLoaded() && this.isInitial()) {
+
+			// relative bindings will be properly initialized once the context is set
+			var bIsRelative = this.isRelative();
+			if (!bIsRelative || (bIsRelative && this.oContext)) {
+				this._initialize();
+			}
+
+			this._fireRefresh({reason: ChangeReason.Refresh});
+		}
+		return this;
+	};
+
+	/**
+	 * Performs the actual initialization.
+	 * Called either by sap.ui.model.analytics.v2.AnalyticalBinding#initialize or
+	 * sap.ui.model.analytics.v2.AnalyticalBinding#setContext.
+	 */
+	AnalyticalBinding.prototype._initialize = function() {
+		if (this.oModel.oMetadata && this.oModel.oMetadata.isLoaded()) {
 			this.bInitial = false;
 			//first fetch the analyticalQueryResult object from the adapted Model (see ODataModelAdapter.js)
 			this.oAnalyticalQueryResult = this.oModel.getAnalyticalExtensions().findQueryResultByName(this._getEntitySet());
@@ -191,7 +431,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 			this._fireRefresh({reason: ChangeReason.Refresh});
 		}
-		return this;
 	};
 
 	/* *******************************
@@ -226,7 +465,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 */
 	AnalyticalBinding.prototype.getRootContexts = function(mParameters) {
 
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return [];
 		}
 
@@ -314,7 +553,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 */
 	AnalyticalBinding.prototype.getNodeContexts = function(oContext, mParameters) {
 
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return [];
 		}
 
@@ -518,7 +757,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.providesGrandTotal
 	 * @return {boolean}
 	 *            true if and only if the binding provides a context for the grand totals of all selected measure properties.
-     *
+	 *
 	 * @public
 	 */
 	AnalyticalBinding.prototype.providesGrandTotal = function() {
@@ -537,7 +776,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getProperty = function(sPropertyName) {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return {};
 		}
 		return this.oAnalyticalQueryResult.getEntityType().findPropertyByName(sPropertyName);
@@ -554,7 +793,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getFilterablePropertyNames = function() {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return [];
 		}
 		return this.oAnalyticalQueryResult.getEntityType().getFilterablePropertyNames();
@@ -571,7 +810,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getSortablePropertyNames = function() {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return [];
 		}
 		return this.oAnalyticalQueryResult.getEntityType().getSortablePropertyNames();
@@ -590,7 +829,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getPropertyLabel = function(sPropertyName) {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return "";
 		}
 		return this.oAnalyticalQueryResult.getEntityType().getLabelOfProperty(sPropertyName);
@@ -609,7 +848,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getPropertyHeading = function(sPropertyName) {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return "";
 		}
 		return this.oAnalyticalQueryResult.getEntityType().getHeadingOfProperty(sPropertyName);
@@ -628,7 +867,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getPropertyQuickInfo = function(sPropertyName) {
-		if (this.bInitial) {
+		if (this.isInitial()) {
 			return "";
 		}
 		return this.oAnalyticalQueryResult.getEntityType().getQuickInfoOfProperty(sPropertyName);
@@ -673,13 +912,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			aFilter = [];
 		}
 		// wrap filter argument in an array if it's a single instance
-		if (aFilter instanceof sap.ui.model.Filter) {
+		if (aFilter instanceof Filter) {
 			aFilter = [aFilter];
 		}
 
 		aFilter = this._convertDeprecatedFilterObjects(aFilter);
 
-		if (sFilterType == sap.ui.model.FilterType.Application) {
+		if (sFilterType == FilterType.Application) {
 			this.aApplicationFilter = aFilter;
 		} else {
 			this.aControlFilter = aFilter;
@@ -706,7 +945,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.sort
 	 * @param {sap.ui.model.Sorter|array}
-	 *            aSorter an sorter object or an array of sorter objects which define the sort order.
+	 *            aSorter a sorter object or an array of sorter objects which define the sort order.
 	 * @return {sap.ui.model.analytics.AnalyticalBinding}
 	 *            returns <code>this</code> to facilitate method chaining.
 	 *
@@ -756,7 +995,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		var sGroupProperty = this.aAggregationLevel[iLevel - 1],
 			oDimension = this.oAnalyticalQueryResult.findDimensionByPropertyName(sGroupProperty),
-			fValueFormatter = this.mAnalyticalInfoByProperty[sGroupProperty].formatter,
+			// it might happen that grouped property is not contained in the UI (e.g. if grouping is
+			// done with a dimension's text property)
+			fValueFormatter = this.mAnalyticalInfoByProperty[sGroupProperty]
+				&& this.mAnalyticalInfoByProperty[sGroupProperty].formatter,
 			sPropertyValue = oContext.getProperty(sGroupProperty),
 			oTextProperty, sFormattedPropertyValue, sGroupName;
 
@@ -767,16 +1009,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		var sTextProperty, sTextPropertyValue, fTextValueFormatter;
 		if (oTextProperty) {
 			sTextProperty = oDimension.getTextProperty().name;
-			fTextValueFormatter = this.mAnalyticalInfoByProperty[sTextProperty].formatter;
+			// it might happen that text property is not contained in the UI
+			fTextValueFormatter = this.mAnalyticalInfoByProperty[sTextProperty]
+				&& this.mAnalyticalInfoByProperty[sTextProperty].formatter;
 			sTextPropertyValue = oContext.getProperty(sTextProperty);
 		}
 
 		if (!oTextProperty) {
 			sFormattedPropertyValue = fValueFormatter ? fValueFormatter(sPropertyValue) : sPropertyValue;
-			sGroupName = ((oDimension.getLabelText()) ? oDimension.getLabelText() + ': ' : '') + sFormattedPropertyValue;
+			sGroupName = (oDimension.getLabelText ? oDimension.getLabelText() + ': ' : '')
+				+ sFormattedPropertyValue;
 		} else {
 			sFormattedPropertyValue = fValueFormatter ? fValueFormatter(sPropertyValue, sTextPropertyValue) : sPropertyValue;
-			sGroupName = ((oDimension.getLabelText()) ? oDimension.getLabelText() + ': ' : '') + sFormattedPropertyValue;
+			sGroupName = (oDimension.getLabelText ? oDimension.getLabelText() + ': ' : '')
+				+ sFormattedPropertyValue;
 
 			var sFormattedTextPropertyValue = fTextValueFormatter ? fTextValueFormatter(sTextPropertyValue, sPropertyValue) : sTextPropertyValue;
 			if (sFormattedTextPropertyValue) {
@@ -806,6 +1052,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 *       <li>total: totals and sub-totals will be provided for the measure at all aggregation levels</li>
 	 *     </ul>
 	 *   </li>
+	 *   <li>A column bound to a hierarchy property has further properties:
+	 *     <ul>
+	 *       <li>grouped: boolean value; indicates whether the hierarchy will be used for building
+	 *           groups</li>
+	 *       <li>level: integer value; the hierarchy level is mandatory for at least one of those
+	 *           columns that represent the same hierarchy.</li>
+	 *     </ul>
+	 *   </li>
 	 * </ol>
 	 *
 	 * Invoking this function resets the state of the binding and subsequent data requests such as calls to getNodeContexts() will
@@ -821,7 +1075,91 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @protected
 	 */
 	AnalyticalBinding.prototype.updateAnalyticalInfo = function(aColumns, bForceChange) {
-		if (!this.oModel.oMetadata || !this.oModel.oMetadata.isLoaded() || this.bInitial) {
+		var oDimensionDetails,
+			oEntityType,
+			aHierarchyProperties,
+			that = this;
+
+		/*
+		 * If the given analytical column is related to a hierarchy, add or update the corresponding
+		 * entry in <code>that.mHierarchyDetailsByName</code>.
+		 * @param {object} The analytical info for an analytical column
+		 */
+		function addOrUpdateHierarchy(oColumn) {
+			var iLevel = oColumn.level,
+				sName = oColumn.name;
+
+			aHierarchyProperties = aHierarchyProperties
+				|| oEntityType.getAllHierarchyPropertyNames();
+
+			aHierarchyProperties.forEach(function (sHierarchyName) {
+				var oHierarchy = that.oAnalyticalQueryResult
+						.findDimensionByPropertyName(sHierarchyName).getHierarchy(),
+					oHierarchyDetails = null,
+					// each hierarchy has a node ID property, see post processing in
+					// sap.ui.model.analytics.odata4analytics.EntityType.prototype._init
+					sNodeIDName = oHierarchy.getNodeIDProperty().name,
+					oProperty;
+
+				if (sNodeIDName === sName) {
+					oHierarchyDetails = getOrCreateHierarchyDetails(oHierarchy);
+				} else {
+					oProperty = oHierarchy.getNodeExternalKeyProperty();
+					if (oProperty && oProperty.name === sName) {
+						oHierarchyDetails = getOrCreateHierarchyDetails(oHierarchy);
+						oHierarchyDetails.nodeExternalKeyName = sName;
+					} else {
+						oProperty = oEntityType.getTextPropertyOfProperty(sNodeIDName);
+						if (oProperty && oProperty.name === sName) {
+							oHierarchyDetails = getOrCreateHierarchyDetails(oHierarchy);
+							oHierarchyDetails.nodeTextName = sName;
+						}
+					}
+				}
+				if (oHierarchyDetails && "level" in oColumn) {
+					// add level restriction and check that aColumns is properly defined
+					if (typeof iLevel === "number") {
+						if ("level" in oHierarchyDetails && oHierarchyDetails.level !== iLevel) {
+							throw new Error("Multiple different level filter for hierarchy '"
+								+ sNodeIDName + "' defined");
+						}
+						oHierarchyDetails.level = iLevel;
+						// the property which defines the level also defines the grouping
+						oHierarchyDetails.grouped = !!oColumn.grouped;
+					} else {
+						throw new Error("The level of '" + sNodeIDName
+							+ "' has to be an integer value");
+					}
+				}
+			});
+		}
+
+		/*
+		 * Get the hierarchy details for the given name from
+		 * <code>that.mHierarchyDetailsByName</code>. If there is no entry in the set, a new empty
+		 * object is added to the hierarchy details map and returned.
+		 * @param {object} oHierarchy The hierarchy for which to get the details
+		 * @returns {object} The hierarchy details object.
+		 */
+		function getOrCreateHierarchyDetails(oHierarchy) {
+			var sName = oHierarchy.getNodeIDProperty().name,
+				oNodeLevelProperty,
+				oHierarchyDetails = that.mHierarchyDetailsByName[sName];
+
+			if (!oHierarchyDetails) {
+				oNodeLevelProperty = oHierarchy.getNodeLevelProperty();
+				// add hierarchy information
+				oHierarchyDetails = {
+					dimensionName : oHierarchy.getNodeValueProperty().name,
+					nodeIDName : sName,
+					nodeLevelName : oNodeLevelProperty && oNodeLevelProperty.name
+				};
+				that.mHierarchyDetailsByName[sName] = oHierarchyDetails;
+			}
+			return oHierarchyDetails;
+		}
+
+		if (!this.oModel.oMetadata || !this.oModel.oMetadata.isLoaded() || this.isInitial()) {
 			this.aInitialAnalyticalInfo = aColumns;
 			return;
 		}
@@ -836,6 +1174,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			return;
 		}
 
+		oEntityType = this.oAnalyticalQueryResult.getEntityType();
 		// make a deep copy of the column definition, so we can ignore duplicate calls the next time, see above
 		// copy is necessary because the original analytical info will be changed and used internally, through out the binding "coding"
 		this._aLastChangedAnalyticalInfo = [];
@@ -859,6 +1198,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		this.oMeasureDetailsSet = {}; // properties with structure {rawValueProperty,unitProperty,formattedValueProperty}
 		this.oDimensionDetailsSet = {}; // properties with structure {name,keyProperty,textProperty,aAttributeName}
+		this.aAdditionalSelects = [];
+		// Maps the nodeIDName to an object with the structure: {dimensionName, grouped, level,
+		// nodeExternalKeyName, nodeIDName, nodeLevelName, nodeTextName}
+		this.mHierarchyDetailsByName = {}; //
 
 		// process column settings for dimensions and measures part of the result or visible
 		for (var i = 0; i < aColumns.length; i++) {
@@ -866,7 +1209,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			var oDimension = this.oAnalyticalQueryResult.findDimensionByPropertyName(aColumns[i].name);
 			if (oDimension && (aColumns[i].inResult == true || aColumns[i].visible == true)) {
 				aColumns[i].dimensionPropertyName = oDimension.getName();
-				var oDimensionDetails = this.oDimensionDetailsSet[oDimension.getName()];
+				oDimensionDetails = this.oDimensionDetailsSet[oDimension.getName()];
 				if (!oDimensionDetails) {
 					oDimensionDetails = {};
 					oDimensionDetails.name = oDimension.getName();
@@ -918,8 +1261,39 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				}
 				oMeasureDetails.analyticalInfo = aColumns[i];
 			}
+
+			// determine requested hierarchy information from columns representing hierarchy-related
+			// information (column properties are not considered)
+			if (!oDimension && !oMeasure) {
+				addOrUpdateHierarchy(aColumns[i]);
+			}
 			this.mAnalyticalInfoByProperty[aColumns[i].name] = aColumns[i];
 		}
+		// for compatibility reasons remove hierarchy elements without a level information
+		Object.keys(this.mHierarchyDetailsByName).forEach(function (sNodeIDName) {
+			var oHierarchyDetails = that.mHierarchyDetailsByName[sNodeIDName];
+			if (!("level" in oHierarchyDetails)) {
+				delete that.mHierarchyDetailsByName[sNodeIDName];
+				if (jQuery.sap.log.isLoggable(jQuery.sap.log.Level.INFO, sClassName)) {
+					jQuery.sap.log.info("No level specified for hierarchy node '" + sNodeIDName
+						+ "'; ignoring hierarchy", "", sClassName);
+				}
+			} else if (!that.oDimensionDetailsSet[sNodeIDName]) {
+				// also add it as regular dimension, which is a precondition to integrate
+				// hierarchies with regular processing of data requests and responses
+				that.oDimensionDetailsSet[sNodeIDName] = {
+					aAttributeName : [],
+					grouped : oHierarchyDetails.grouped,
+					isHierarchyDimension : true, // mark it as hierarchy dimension
+					name : sNodeIDName
+				};
+				that.aMaxAggregationLevel.push(sNodeIDName);
+				if (oHierarchyDetails.grouped) {
+					that.aAggregationLevel.push(sNodeIDName);
+				}
+			}
+		});
+
 		// finalize measure information with unit properties also being part of the table
 		for ( var measureName in this.oMeasureDetailsSet) {
 			var oUnitProperty = this.oAnalyticalQueryResult.findMeasureByName(measureName).getUnitProperty();
@@ -948,6 +1322,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		this.bNeedsUpdate = false;
 
+		if (this.mParameters.select) {
+			this.aAdditionalSelects = getAdditionalSelects(this);
+		}
+
 		if (bForceChange) {
 			this._fireChange({reason: ChangeReason.Change});
 		}
@@ -959,7 +1337,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 *
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.getAnalyticalInfoForColumn
-	 * @param sColumnName the column name.
+	 * @param {string} sColumnName the column name.
 	 * @return {object}
 	 *            analytical information for the column; see {@link #updateAnalyticalInfo}
 	 *            for an explanation of the object structure
@@ -1038,6 +1416,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			};
 
 	AnalyticalBinding._artificialRootContextGroupId = "artificialRootContext";
+
+	/**
+	 * Iterates over the given array of hierarchy level filters. For each level filter removes an
+	 * already existing entry from given filter expression and adds a new entry to the filter
+	 * expression.
+	 *
+	 * @param {object[]} aFilters
+	 *   An array of hierarchy level filter objects. Each object has a <code>propertyName</code>
+	 *   property of type string and a <code>level</code> property of type number.
+	 * @param {sap.ui.model.analytics.odata4analytics.FilterExpression} oFilterExpression
+	 *   The FilterExpression to which to add the hierarchy level filters
+	 * @private
+	 */
+	AnalyticalBinding._addHierarchyLevelFilters = function (aFilters, oFilterExpression) {
+		// add level restrictions, if hierarchy is included in request
+		aFilters.forEach(function (oFilter) {
+			oFilterExpression.removeConditions(oFilter.propertyName);
+			oFilterExpression.addCondition(oFilter.propertyName, FilterOperator.EQ, oFilter.level);
+		});
+	};
 
 	/**
 	 * @private
@@ -1228,6 +1626,70 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		return aContext;
 	};
 
+
+	/**
+	 * Computes the hierarchy level filters for all entries in <code>mHierarchyDetailsByName</code>
+	 * and adds for each entry a recursive hierarchy to the given analytical query request.
+	 * If the given group ID is null nothing is done and if the given group ID is not "/" an error
+	 * is logged and an empty array is returned.
+	 *
+	 * @param {sap.ui.model.analytics.odata4analytics.QueryResultRequest} oAnalyticalQueryRequest
+	 *   The analytical query request to which to add the recursive hierarchy
+	 * @param {string} sGroupId
+	 *   The group ID; has to be "/" or null otherwise an error is logged and an empty array is
+	 *   returned
+	 * @returns {object[]} An array of hierarchy level filters. Each filter has a
+	 *   <code>propertyName</code> property of type string and a <code>level</code> property of type
+	 *   number.
+	 * @private
+	 */
+	AnalyticalBinding.prototype._getHierarchyLevelFiltersAndAddRecursiveHierarchy
+			= function (oAnalyticalQueryRequest, sGroupId) {
+		var aHierarchyKeys,
+			aHierarchyLevelFilters = [],
+			that = this;
+
+		if (sGroupId === null) {
+			return aHierarchyLevelFilters;
+		}
+
+		aHierarchyKeys = Object.keys(this.mHierarchyDetailsByName);
+		if (aHierarchyKeys.length > 0 && sGroupId !== "/") {
+			jQuery.sap.log.error("Hierarchy cannot be requested for members of a group",
+				sGroupId, sClassName);
+			return aHierarchyLevelFilters;
+		}
+
+		aHierarchyKeys.forEach(function (sHierarchyKey) {
+			var oHierarchyDetails = that.mHierarchyDetailsByName[sHierarchyKey];
+
+			oAnalyticalQueryRequest.addRecursiveHierarchy(oHierarchyDetails.dimensionName,
+				!!oHierarchyDetails.nodeExternalKeyName,
+				!!oHierarchyDetails.nodeTextName);
+			aHierarchyLevelFilters.push({
+				propertyName : oHierarchyDetails.nodeLevelName,
+				level : oHierarchyDetails.level
+			});
+		});
+		return aHierarchyLevelFilters;
+	};
+
+	/**
+	 * Filters out hierarchy dimensions from given aggregation level.
+	 *
+	 * @param {string[]} aAggregationLevel
+	 *   Array of dimension property names which define the aggregation level
+	 * @returns {string[]} Array of non hierarchy dimensions
+	 * @private
+	 */
+	AnalyticalBinding.prototype._getNonHierarchyDimensions = function (aAggregationLevel) {
+		var that = this;
+
+		return aAggregationLevel.filter(function (sDimension) {
+			return !that.oDimensionDetailsSet[sDimension].isHierarchyDimension;
+		});
+	};
+
 	AnalyticalBinding.prototype._processRequestQueue = function(aRequestQueue) {
 		// if no argument is given: use the shared member aBatchRequestQueue
 		if (aRequestQueue === undefined || aRequestQueue === null) {
@@ -1301,7 +1763,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @private
 	 */
 	AnalyticalBinding.prototype._prepareGroupMembersQueryRequest = function(iRequestType, sGroupId, iStartIndex, iLength) {
-		var aGroupId = [];
+		var aGroupId = [],
+			aHierarchyLevelFilters;
 
 		// (0) set up analytical OData request object
 		var oAnalyticalQueryRequest = new odata4analytics.QueryResultRequest(this.oAnalyticalQueryResult);
@@ -1346,11 +1809,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		var bIsLeafGroupsRequest = iChildGroupToLevel >= this.aMaxAggregationLevel.length - 1;
 
 		// (3) set aggregation level for child nodes
+		// need to distinguish between regular dimensions and hierarchy dimensions
+		aHierarchyLevelFilters
+			= this._getHierarchyLevelFiltersAndAddRecursiveHierarchy(oAnalyticalQueryRequest,
+				sGroupId);
+
 		var aAggregationLevel = this.aMaxAggregationLevel.slice(0, iChildGroupToLevel + 1);
-		oAnalyticalQueryRequest.setAggregationLevel(aAggregationLevel);
-		for (var i = 0; i < aAggregationLevel.length; i++) {
+		var aAggregationLevelNoHierarchy = this._getNonHierarchyDimensions(aAggregationLevel);
+		oAnalyticalQueryRequest.setAggregationLevel(aAggregationLevelNoHierarchy);
+		for (var i = 0; i < aAggregationLevelNoHierarchy.length; i++) {
 			// specify components requested for this level (key, text, attributes)
-			var oDimensionDetails = this.oDimensionDetailsSet[aAggregationLevel[i]];
+			var oDimensionDetails = this.oDimensionDetailsSet[aAggregationLevelNoHierarchy[i]];
 			// as we combine the key and text in the group header we also need the text!
 			var bIncludeText = (oDimensionDetails.textPropertyName != undefined);
 			oAnalyticalQueryRequest.includeDimensionKeyTextAttributes(oDimensionDetails.name, // bIncludeKey: No, always needed!
@@ -1358,7 +1827,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 			// define a default sort order in case no sort criteria have been provided externally
 			if (oDimensionDetails.grouped) {
-				oAnalyticalQueryRequest.getSortExpression().addSorter(aAggregationLevel[i], odata4analytics.SortOrder.Ascending);
+				oAnalyticalQueryRequest.getSortExpression().addSorter(aAggregationLevelNoHierarchy[i], odata4analytics.SortOrder.Ascending);
 			}
 		}
 
@@ -1378,6 +1847,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				oFilterExpression.addCondition(this.aAggregationLevel[k], FilterOperator.EQ, aGroupId[k]);
 			}
 		}
+		AnalyticalBinding._addHierarchyLevelFilters(aHierarchyLevelFilters, oFilterExpression);
 
 		// (5) set measures as requested per column
 		var bIncludeRawValue;
@@ -1412,9 +1882,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 						bIncludeFormattedValue, bIncludeUnitProperty);
 			}
 			// exclude those unit properties from the selected that are included in the current aggregation level
-			for (var n in aAggregationLevel) {
+			for (var n in aAggregationLevelNoHierarchy) {
 				var iMatchingIndex;
-				if ((iMatchingIndex = jQuery.inArray(aAggregationLevel[n], aSelectedUnitPropertyName)) != -1) {
+				if ((iMatchingIndex = jQuery.inArray(aAggregationLevelNoHierarchy[n], aSelectedUnitPropertyName)) != -1) {
 					aSelectedUnitPropertyName.splice(iMatchingIndex, 1);
 				}
 			}
@@ -1459,13 +1929,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @private
 	 */
 	AnalyticalBinding.prototype._prepareTotalSizeQueryRequest = function(iRequestType) {
+		var aHierarchyLevelFilters;
 
 		// (0) set up analytical OData request object
 		var oAnalyticalQueryRequest = new odata4analytics.QueryResultRequest(this.oAnalyticalQueryResult);
 		oAnalyticalQueryRequest.setResourcePath(this._getResourcePath());
 
 		// (1) set aggregation level
-		oAnalyticalQueryRequest.setAggregationLevel(this.aMaxAggregationLevel);
+		// need to distinguish between regular dimensions and hierarchy dimensions
+		aHierarchyLevelFilters
+			= this._getHierarchyLevelFiltersAndAddRecursiveHierarchy(oAnalyticalQueryRequest, "/");
+		oAnalyticalQueryRequest
+			.setAggregationLevel(this._getNonHierarchyDimensions(this.aMaxAggregationLevel));
+
 		oAnalyticalQueryRequest.setMeasures([]);
 
 		// (2) set filter
@@ -1477,6 +1953,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		if (this.aControlFilter) {
 			oFilterExpression.addUI5FilterConditions(this.aControlFilter);
 		}
+		AnalyticalBinding._addHierarchyLevelFilters(aHierarchyLevelFilters, oFilterExpression);
 
 		// (2) fetch no data
 		oAnalyticalQueryRequest.setRequestOptions(null, null, true);
@@ -1539,7 +2016,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				var sGroupProperty = that.aAggregationLevel[i];
 				var sValue = aGroupIdComponents_Missing[i];
 				var sFilterOperator = that._getFilterOperatorMatchingPropertySortOrder(sGroupProperty);
-				aTemplateFilter[i] = new sap.ui.model.Filter(sGroupProperty, sFilterOperator, sValue);
+				aTemplateFilter[i] = new Filter(sGroupProperty, sFilterOperator, sValue);
 			}
 
 			// if first missing member start within a partially loaded group, an extra condition will be needed below
@@ -1551,7 +2028,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				var sFirstMissingMemberStartIndexAggregationLevel = that.aAggregationLevel[iGroupIdLevel_Missing];
 				var sFirstMissingMemberStartIndexLastKnownValue = oFirstMissingMemberStartIndexLastKnownObject
 					[sFirstMissingMemberStartIndexAggregationLevel];
-				oFirstMissingMemberStartIndexLastKnownFilterCondition = new sap.ui.model.Filter(sFirstMissingMemberStartIndexAggregationLevel,
+				oFirstMissingMemberStartIndexLastKnownFilterCondition = new Filter(sFirstMissingMemberStartIndexAggregationLevel,
 						that._getFilterOperatorMatchingPropertySortOrder(sFirstMissingMemberStartIndexAggregationLevel, false),
 						sFirstMissingMemberStartIndexLastKnownValue);
 			}
@@ -1568,26 +2045,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 						oGroupExpansionFirstMissingMember.startIndex_Missing > 0;
 					for (var iLevelCondition = 0; iLevelCondition < iNumberOfLevelConditions; iLevelCondition++) {
 						// create filter condition from template
-						var oFilterCondition = new sap.ui.model.Filter("x", sap.ui.model.FilterOperator.EQ, "x");
+						var oFilterCondition = new Filter("x", FilterOperator.EQ, "x");
 						oFilterCondition = jQuery.extend(true, oFilterCondition, aTemplateFilter[iLevelCondition]);
 
 						if (iNumberOfLevelConditions > 1 && iLevelCondition < iNumberOfLevelConditions - 1) {
-							oFilterCondition.sOperator = sap.ui.model.FilterOperator.EQ;
+							oFilterCondition.sOperator = FilterOperator.EQ;
 						}
 						if (iLevelCondition == iGroupIdLevel_Missing - 1
 							&& iLevel > iGroupIdLevel_Missing - 1
 							&& !bAddExtraConditionForFirstMissingMemberStartIndexLastKnown) { // rule (R1)
-							if (oFilterCondition.sOperator == sap.ui.model.FilterOperator.GT) {
-								oFilterCondition.sOperator = sap.ui.model.FilterOperator.GE;
+							if (oFilterCondition.sOperator == FilterOperator.GT) {
+								oFilterCondition.sOperator = FilterOperator.GE;
 							} else { // it must be LT
-								oFilterCondition.sOperator = sap.ui.model.FilterOperator.LE;
+								oFilterCondition.sOperator = FilterOperator.LE;
 							}
 						}
 						aIntermediateLevelFilterCondition.push(oFilterCondition);
 					}
 					// create the instance for ( P_1 = A and P_2 = B and .. P_(l-1) > W )
 					if (aIntermediateLevelFilterCondition.length > 0) {
-						aLevelFilterCondition.push(new sap.ui.model.Filter(aIntermediateLevelFilterCondition, true));
+						aLevelFilterCondition.push(new Filter(aIntermediateLevelFilterCondition, true));
 						// add an extra intermediate filter condition to reflect start position at oGroupExpansionFirstMissingMember.startIndex_Missing
 						if (iLevel > iGroupIdLevel_Missing - 1
 							&& iIntermediateLevel == iGroupIdLevel_Missing - 1
@@ -1595,21 +2072,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 							// create a copy of the constructed intermediate filter condition
 							var aStartIndexFilterCondition = [];
 							for (var j = 0; j < aIntermediateLevelFilterCondition.length; j++) {
-								var oConditionCopy = new sap.ui.model.Filter("x", sap.ui.model.FilterOperator.EQ, "x");
+								var oConditionCopy = new Filter("x", FilterOperator.EQ, "x");
 								oConditionCopy = jQuery.extend(true, oConditionCopy, aIntermediateLevelFilterCondition[j]);
 								aStartIndexFilterCondition.push(oConditionCopy);
 							}
-							aStartIndexFilterCondition[iGroupIdLevel_Missing - 1].sOperator = sap.ui.model.FilterOperator.EQ; // (R2.1)
+							aStartIndexFilterCondition[iGroupIdLevel_Missing - 1].sOperator = FilterOperator.EQ; // (R2.1)
 							aStartIndexFilterCondition.push(oFirstMissingMemberStartIndexLastKnownFilterCondition); // (R2.2)
 
-							aLevelFilterCondition.push(new sap.ui.model.Filter(aStartIndexFilterCondition, true));
+							aLevelFilterCondition.push(new Filter(aStartIndexFilterCondition, true));
 							break;
 						}
 					}
 				}
 				// create the entire filter expression
 				if (aLevelFilterCondition.length > 0) {
-					aFilterArray[iLevel] = new sap.ui.model.Filter(aLevelFilterCondition, false);
+					aFilterArray[iLevel] = new Filter(aLevelFilterCondition, false);
 				} else {
 					aFilterArray[iLevel] = null;
 				}
@@ -1621,6 +2098,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		// local helper function for requesting members of a given level (across groups) - copied from _prepareGroupMembersQueryRequest & adapted
 		var prepareLevelMembersQueryRequest = function(iRequestType, sGroupId, iLevel, oGroupContextFilter,
 				iStartIndex, iLength, bAvoidLengthUpdate, bUseStartIndexForSkip) {
+			var aHierarchyLevelFilters;
 
 			// (1) set up analytical OData request object
 			var oAnalyticalQueryRequest = new odata4analytics.QueryResultRequest(that.oAnalyticalQueryResult);
@@ -1661,6 +2139,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			var bIsLeafGroupsRequest = iChildGroupToLevel >= that.aMaxAggregationLevel.length - 1;
 
 			// (3) set aggregation level for child nodes
+			aHierarchyLevelFilters
+				= that._getHierarchyLevelFiltersAndAddRecursiveHierarchy(oAnalyticalQueryRequest,
+					sGroupId);
+
 			var aAggregationLevel = that.aMaxAggregationLevel.slice(0, iChildGroupToLevel + 1);
 			oAnalyticalQueryRequest.setAggregationLevel(aAggregationLevel);
 
@@ -1688,6 +2170,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			if (oGroupContextFilter) {
 				oFilterExpression.addUI5FilterConditions([oGroupContextFilter]);
 			}
+			AnalyticalBinding._addHierarchyLevelFilters(aHierarchyLevelFilters, oFilterExpression);
 
 			// (5) set measures as requested per column
 			var bIncludeRawValue;
@@ -1885,7 +2368,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			// add conditions for aggregated dimension key
 		var aAggregationDimensionKeyFilter = [];
 		for (var i = 0; i < aAggregationLevel.length; i++) {
-			var oFilter = new sap.ui.model.Filter(aAggregationLevel[i], sap.ui.model.FilterOperator.EQ, oMultiUnitRepresentative.oEntry[aAggregationLevel[i]]);
+			var oFilter = new Filter(aAggregationLevel[i], FilterOperator.EQ, oMultiUnitRepresentative.oEntry[aAggregationLevel[i]]);
 			aAggregationDimensionKeyFilter.push(oFilter);
 		}
 		oFilterExpression.addUI5FilterConditions(aAggregationDimensionKeyFilter);
@@ -1959,9 +2442,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	};
 
 	/**
+	 * @param {boolean} bAddAdditionalSelects
+	 *   Whether additional selects, computed from select binding parameter, shall be added to the
+	 *   $select query option.
 	 * @private
 	 */
-	AnalyticalBinding.prototype._getQueryODataRequestOptions = function(oAnalyticalQueryRequest, mParameters) {
+	AnalyticalBinding.prototype._getQueryODataRequestOptions = function(oAnalyticalQueryRequest,
+			bAddAdditionalSelects, mParameters) {
+		var i;
+
 		mParameters = mParameters || {};
 
 		try {
@@ -1978,8 +2467,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		var sTop = oAnalyticalQueryRequest.getURIQueryOptionValue("$top");
 		var sInlineCount = oAnalyticalQueryRequest.getURIQueryOptionValue("$inlinecount");
 
+		if (bAddAdditionalSelects && this.aAdditionalSelects.length > 0) {
+			sSelect = (sSelect ? sSelect.split(",") : [])
+				.concat(this.aAdditionalSelects).join(",");
+		}
+
 		if (this.mParameters && this.mParameters["filter"]) {
-			sFilter += "and (" + this.mParameters["filter"] + ")";
+			if (sFilter === null) {
+				sFilter = this.mParameters["filter"];
+			} else {
+				sFilter += "and (" + this.mParameters["filter"] + ")";
+			}
 		}
 
 		// construct OData request option parameters
@@ -2005,7 +2503,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		//encode if necessary
 		if (mParameters.encode === true) {
-			for (var i = 0; i < aParam.length; i++) {
+			for (i = 0; i < aParam.length; i++) {
 				aParam[i] = aParam[i].replace(/\ /g, "%20");
 			}
 		}
@@ -2017,9 +2515,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @private
 	 */
 	AnalyticalBinding.prototype._executeBatchRequest = function(aRequestDetails) {
-		var iCurrentAnalyticalInfoVersion = this.iAnalyticalInfoVersionNumber;
-
-		var that = this;
+		var iCurrentAnalyticalInfoVersion = this.iAnalyticalInfoVersionNumber,
+			iRequestHandleId,
+			that = this;
 
 		var aBatchQueryRequest = [], aExecutedRequestDetails = [];
 
@@ -2038,6 +2536,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 			oResponseCollector.error(oResponse || oData);
 		}
 
+		// BCP: 1770008178
+
+		// Legacy Support:
+		// We set the bNeedsUpdate flag to "true" if ALL request details are empty.
+		// This happens when the initial analyticalInfo is empty and is not set correctly
+		// before the control calls getRootContexts etc.
+		// If at a later point the analyticalInfo is correctly set AND the bNeedsUpdate flag is still true
+		// we falsly force a change event in checkUpdate --> this might lead to an unnecessary re-rendering of the control.
+
+		// In case we have at least 1 valid request (including measures and/or dimensions)
+		// we set the bNeedsUpdate flag to false, because the update flag is set to true ANYWAY during the response-processing.
+		this.bNeedsUpdate = true;
+		for (var iDetail = 0; iDetail < aRequestDetails.length; iDetail++) {
+			var oDetail = aRequestDetails[iDetail];
+			if (oDetail.aAggregationLevel && oDetail.aAggregationLevel.length > 0) {
+				this.bNeedsUpdate = false;
+			}
+		}
+
 		//create sub-requests for all defined requestDetails
 		for (var i = -1, oRequestDetails; (oRequestDetails = aRequestDetails[++i]) !== undefined;) {
 			var oAnalyticalQueryRequest = oRequestDetails.oAnalyticalQueryRequest, sGroupId = oRequestDetails.sGroupId;
@@ -2051,7 +2568,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				this.mServiceLength[sGroupId] = this.mLength[sGroupId] = 1;
 				this.mServiceFinalLength[sGroupId] = true;
 				this._setServiceKey(this._getKeyIndexMapping(sGroupId, 0), AnalyticalBinding._artificialRootContextGroupId);
-				this.bNeedsUpdate = true;
+				// BCP: 1770008178, see comment above
+				// this.bNeedsUpdate = true;
 				// simulate the async behavior, dataRequested and dataReceived have to be fired in pairs
 				setTimeout(triggerDataReceived);
 
@@ -2082,7 +2600,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 					//V1 - use createBatchOperation
 					aBatchQueryRequest.push(this.oModel.createBatchOperation(sPath.replace(/\ /g, "%20"), "GET"));
 				}else if (this.iModelVersion === AnalyticalVersionInfo.V2) {
-					var aUrlParameters = this._getQueryODataRequestOptions(oAnalyticalQueryRequest, {encode: true});
+					var aUrlParameters = this._getQueryODataRequestOptions(oAnalyticalQueryRequest,
+							oRequestDetails.bIsLeafGroupsRequest,  {encode: true});
 					if (this.sCustomParams) {
 						aUrlParameters.push(this.sCustomParams);
 					}
@@ -2105,7 +2624,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 //			this._trace_message("ReqExec", "submitting batch with " + aExecutedRequestDetails.length + " operations");
 
 			var oBatchRequestHandle;
-			var iRequestHandleId = this._getIdForNewRequestHandle();
+
+			iRequestHandleId = this._getIdForNewRequestHandle();
 
 			// fire events to indicate sending of a new request
 			this.fireDataRequested();
@@ -2286,7 +2806,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		// determine relevant request query options
 		var sPath = oAnalyticalQueryRequest.getURIToQueryResultEntitySet();
-		var aParam = this._getQueryODataRequestOptions(oAnalyticalQueryRequest);
+		var aParam = this._getQueryODataRequestOptions(oAnalyticalQueryRequest,
+				oRequestDetails.bIsLeafGroupsRequest);
 
 		if (!aParam) {
 			// parameters could not be determined correctly
@@ -2422,20 +2943,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @private
 	 */
 	AnalyticalBinding.prototype._processGroupMembersQueryResponse = function(oRequestDetails, oData) {
-		var sGroupId = oRequestDetails.sGroupId,
+		var sEntryGroupId,
+			sGroupId = oRequestDetails.sGroupId,
 			aSelectedUnitPropertyName = oRequestDetails.aSelectedUnitPropertyName,
 			aAggregationLevel = oRequestDetails.aAggregationLevel,
 			iStartIndex = oRequestDetails.oKeyIndexMapping.iIndex,
 			iServiceStartIndex = oRequestDetails.oKeyIndexMapping.iServiceKeyIndex,
 			iLength = oRequestDetails.iLength,
 			oKeyIndexMapping = oRequestDetails.oKeyIndexMapping,
-			iGroupMembersLevel = sGroupId == null ? 0 : this._getGroupIdLevel(sGroupId) + 1;
-		var bUnitCheckRequired = (aSelectedUnitPropertyName.length > 0);
-		var sPreviousEntryDimensionKeyString, sDimensionKeyString;
-		var iFirstMatchingEntryIndex;
-		var iDiscardedEntriesCount = 0;
-		var bLastServiceKeyWasNew;
-		var oReloadMeasuresRequestDetails, aReloadMeasuresRequestDetails = [];
+			iGroupMembersLevel = sGroupId == null ? 0 : this._getGroupIdLevel(sGroupId) + 1,
+			bUnitCheckRequired = (aSelectedUnitPropertyName.length > 0),
+			sPreviousEntryDimensionKeyString, sDimensionKeyString,
+			iFirstMatchingEntryIndex,
+			iDiscardedEntriesCount = 0,
+			bLastServiceKeyWasNew,
+			oReloadMeasuresRequestDetails, aReloadMeasuresRequestDetails = [];
 
 // 		this._trace_enter("ReqExec", "_processGroupMembersQueryResponse", "groupId=" + oRequestDetails.sGroupId, { startIndex: iStartIndex, serviceStartIndex: iServiceStartIndex, length: iLength, resultCount: oData.__count, resultLength: oData.results.length }, ["startIndex","serviceStartIndex","length","resultCount","resultLength"]); // DISABLED FOR PRODUCTION
 
@@ -2490,7 +3012,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 					}
 					if (iDeviatingUnitPropertyNameIndex == -1) {
 // 						this._trace_debug_if(true, "assertion failed: no deviating units found for result entries " + (h - 1) + " and " + h);
-						jQuery.sap.log.fatal("assertion failed: no deviating units found for result entries " + (h - 1) + " and " + h);
+						jQuery.sap.log.fatal("assertion failed: no deviating units found for result entries " + (h - 1) + " and " + h, null, null, createSupportInfo(this, "NO_DEVIATING_UNITS"));
 					}
 				}
 				if ((sPreviousEntryDimensionKeyString != sDimensionKeyString || h == iODataResultsLength - 1)
@@ -2554,7 +3076,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 					var sMultiUnitKey = this.oModel._getKey(oMultiUnitRepresentative.oEntry);
 					var oMultiUnitContext = this.oModel.getContext('/' + sMultiUnitKey);
 					this._getGroupIdFromContext(oMultiUnitContext, iGroupMembersLevel);
-					this.mEntityKey[sEntryGroupId] =  sMultiUnitKey;
+					this.mEntityKey[sEntryGroupId] = sMultiUnitKey;
 
 					// reset multi-unit indicator
 					iFirstMatchingEntryIndex = undefined;
@@ -2577,8 +3099,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 			// remember mapping between entry key and group Id
 			if (!oRequestDetails.bIsLeafGroupsRequest) {
-				var sLastEntryKey = this._getKey(sGroupId, oKeyIndexMapping.iIndex - 1),
-					sEntryGroupId = this._getGroupIdFromContext(this.oModel.getContext('/' + sLastEntryKey), iGroupMembersLevel);
+				var sLastEntryKey = this._getKey(sGroupId, oKeyIndexMapping.iIndex - 1);
+
+				sEntryGroupId = this._getGroupIdFromContext(this.oModel.getContext('/' + sLastEntryKey), iGroupMembersLevel);
 /* during development only
 				if (this.mEntityKey[sEntryGroupId]) {
 					if (this.mEntityKey[sEntryGroupId] != sLastEntryKey)
@@ -2866,7 +3389,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 				}
 			}
 			processSingleGroupFromLevelSubset(bProcessFirstLoadedGroup,
-											  oData.results.length == oRequestDetails.iLength && i == oData.results.length - 1);
+											oData.results.length == oRequestDetails.iLength && i == oData.results.length - 1);
 			// setup for processing next parent group
 			bProcessFirstLoadedGroup = false;
 			if (sPreviousParentGroupId != sParentGroupId) {
@@ -2916,7 +3439,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @private
 	 */
 	AnalyticalBinding.prototype._getLoadedContextsForGroup = function(sGroupId, iStartIndex, iLength, bFetchAll) {
-		var aContext = [], oContext, fKey = this._getKeys(sGroupId), sKey;
+		var aContext = [], oContext, i, fKey = this._getKeys(sGroupId), sKey;
 
 		if (!fKey) {
 			return aContext;
@@ -2947,7 +3470,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		}
 
 		// Loop through known data and check whether we already have all rows loaded
-		for (var i = iStartIndex; i < iStartIndex + iLength; i++) {
+		for (i = iStartIndex; i < iStartIndex + iLength; i++) {
 			sKey = fKey(i);
 			if (!sKey) {
 				break;
@@ -3223,21 +3746,21 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		switch (this._getEffectiveSortOrder(sPropertyName)) {
 			case odata4analytics.SortOrder.Ascending:
 				if (bWithEqual) {
-					sFilterOperator = sap.ui.model.FilterOperator.GE;
+					sFilterOperator = FilterOperator.GE;
 				} else {
-					sFilterOperator = sap.ui.model.FilterOperator.GT;
+					sFilterOperator = FilterOperator.GT;
 				}
 				break;
 			case odata4analytics.SortOrder.Descending:
 				if (bWithEqual) {
-					sFilterOperator = sap.ui.model.FilterOperator.LE;
+					sFilterOperator = FilterOperator.LE;
 				} else {
-					sFilterOperator = sap.ui.model.FilterOperator.LT;
+					sFilterOperator = FilterOperator.LT;
 				}
 				break;
 			default: // null
 				 // default if no sort order applied - matches the default ascending order set for grouped dimensions in prepare...QueryRequest()
-				sFilterOperator = sap.ui.model.FilterOperator.GT;
+				sFilterOperator = FilterOperator.GT;
 		}
 		return sFilterOperator;
 	};
@@ -3252,10 +3775,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		// check if some filter object use the deprecated class sap.ui.model.odata.Filter;
 		// if so, convert them to sap.ui.model.Filter
-		for (var i = 0, l = aFilter.length; i < l; i++) {
-			if (sap.ui.model.odata && typeof sap.ui.model.odata.Filter === "function"
-				&& aFilter[i] instanceof sap.ui.model.odata.Filter) {
-				aFilter[i] = aFilter[i].convert();
+		var ODataFilter = sap.ui.require("sap/ui/model/odata/Filter");
+		if ( typeof ODataFilter === 'function' ) {
+			for (var i = 0, l = aFilter.length; i < l; i++) {
+				if (aFilter[i] instanceof ODataFilter) {
+					aFilter[i] = aFilter[i].convert();
+				}
 			}
 		}
 		return aFilter;
@@ -4018,7 +4543,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		for (var l = 0; l < this.aAllDimensionSortedByName.length; l++) {
 			var sDimVal = oMultiUnitEntry[this.aAllDimensionSortedByName[l]];
-			sMultiUnitEntryKey += (sDimVal === undefined ? "" : sDimVal) + ",";
+			// if the value is an empty string, it should be treated as such in the generated key
+			var sSaveDimVal = sDimVal === "" ? '""' : sDimVal;
+			sSaveDimVal = sSaveDimVal === undefined ? "" : sSaveDimVal;
+			sMultiUnitEntryKey += (sSaveDimVal + ",");
 		}
 		sMultiUnitEntryKey += "-multiple-units-not-dereferencable";
 
@@ -4033,7 +4561,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		delete oMultiUnitEntry.__metadata["self"];
 		delete oMultiUnitEntry.__metadata["self_link_extensions"];
 		oMultiUnitEntry["^~volatile"] = true; // mark entry to distinguish it from others contained in the regular OData result
-		this.oModel._importData(oMultiUnitEntry, {});
+
+		// 3rd argument: empty response, needed by the ODataModel, but we do not have a response, as we did not perform any requests.
+		this.oModel._importData(oMultiUnitEntry, {}, {});
+
 		// mark the context for this entry as volatile to facilitate special treatment by consumers
 		var sMultiUnitEntryModelKey = this.oModel._getKey(oMultiUnitEntry);
 		this.oModel.getContext('/' + sMultiUnitEntryModelKey)["_volatile"] = true;
@@ -4188,6 +4719,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 	 * @public
 	 */
 	AnalyticalBinding.prototype.getDownloadUrl = function(sFormat) {
+		var aSelectProperties, sProperty, z;
 
 		// create a new request
 		var oAnalyticalQueryRequest = new odata4analytics.QueryResultRequest(this.oAnalyticalQueryResult);
@@ -4242,7 +4774,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 
 		// determine the entityset path incl. the required params (sort, filter, ...)
 		var sPath = oAnalyticalQueryRequest.getURIToQueryResultEntitySet();
-		var aParam = this._getQueryODataRequestOptions(oAnalyticalQueryRequest);
+		// always consider additional selects for download URL
+		var aParam = this._getQueryODataRequestOptions(oAnalyticalQueryRequest, true);
 
 		if (!aParam) {
 			// parameters could not be determined correctly
@@ -4253,7 +4786,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		var aExportCols = [];
 		for (var k = 0, m = this.aAnalyticalInfo.length; k < m; k++) {
 			var oCol = this.aAnalyticalInfo[k];
-			if ((oCol.visible || oCol.inResult) && oCol.name !== "") {
+			if ((oCol.visible || oCol.inResult)
+					&& oCol.name !== ""
+					&& oCol.name !== aExportCols[aExportCols.length - 1]) {
 				aExportCols.push(oCol.name);
 
 				// add belonging currency column implicitly if present
@@ -4267,6 +4802,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Ch
 		// search and replace the $select
 		for (var j = 0, l = aParam.length; j < l; j++) {
 			if (/^\$select/i.test(aParam[j])) {
+				if (this.mParameters.select) {
+					// merge export columns with the computed $select only if select binding
+					// parameter is given
+					aSelectProperties = aParam[j].slice(8).split(",");
+					for (z = 0; z < aSelectProperties.length; z++) {
+						sProperty = aSelectProperties[z];
+						if (aExportCols.indexOf(sProperty) === -1) {
+							aExportCols.push(sProperty);
+						}
+					}
+				}
 				aParam[j] = "$select=" + aExportCols.join(",");
 				break;
 			}

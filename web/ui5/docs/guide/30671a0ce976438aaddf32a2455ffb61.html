@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The use of the JSDoc toolkit has some pitfalls. By following the guidelines outlined below, these issues can be avoided."/>
 <meta name="description" content="The use of the JSDoc toolkit has some pitfalls. By following the guidelines outlined below, these issues can be avoided."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7078845661504469"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=7064691223331081"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7064691223331081"/>
 <title>Common Pitfalls in JSDoc</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio30671a0ce976438aaddf32a2455ffb61">
 <div id="wrapper"><div id="container">
@@ -45,7 +31,7 @@
 				To avoid this, move the TODOs, either within the function or before the
 				documentation comment.</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 /**
  * Maps the UI filter objects to the internal Filter object.
  *
@@ -69,7 +55,7 @@ sap.ui.table.internal.BehaviorManager.prototype.adjustFilters = function(filtere
 				JavaScript modules, and using a multiline comment consisting of asterisks is just
 				one example for such decorative
 			comments:</p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 // Update aggregation
   this.insertSection(oSection, iTargetIndex, true);
 
@@ -108,7 +94,7 @@ For
 			<p class="p">In the example, note the escaped <samp class="ph codeph">&lt;TR&gt;</samp> in the first and the
 				third line of the documentation comment:</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 /**
  * This function return the rowNumber given a row&amp;lt;TR&gt;.
  *
@@ -126,19 +112,5 @@ sap.ui.table.Table.prototype.getRowNumber = function(oDomRow) {
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Common Pitfalls in JSDoc";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

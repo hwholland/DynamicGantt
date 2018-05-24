@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // This is internal control dedicated for Demo Kit application usage
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', 'sap/ui/core/Icon'],
-	function(jQuery, Element, Icon) {
+sap.ui.define(['sap/ui/core/Element', 'sap/ui/core/Icon'],
+	function(Element, Icon) {
 		"use strict";
 
 		var SimpleTreeNode = Element.extend("sap.ui.demokit.SimpleTreeNode", { metadata : {
@@ -25,7 +25,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', 'sap/ui/core/Icon'],
 			defaultAggregation : "nodes",
 
 			aggregations : {
-
 				nodes : {type : "sap.ui.demokit.SimpleTreeNode", multiple : true, singularName : "node", bindable : "bindable"},
 
 				_iconControl : {type : "sap.ui.core.Icon", multiple : false, visibility : "hidden"}
@@ -172,12 +171,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', 'sap/ui/core/Icon'],
 				this.fireSelected();
 
 				this._refreshNodeSelection(this.$());
+			} else if (bShouldExpand) {
+				this.expand();
 			} else {
-				if (bShouldExpand) {
-					this.expand();
-				} else {
-					this.collapse();
-				}
+				this.collapse();
 			}
 
 			oEvent.preventDefault();

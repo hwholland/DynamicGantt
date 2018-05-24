@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="For a flexible box layout, create a FlexBox control and add any kind of controls to it."/>
 <meta name="description" content="For a flexible box layout, create a FlexBox control and add any kind of controls to it."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7046576810156111"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=5006678036090504"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5006678036090504"/>
 <title>Getting Started With FlexBox</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio988d2c7652684dea98f9d6dbc94000c0">
 <div id="wrapper"><div id="container">
@@ -41,14 +27,14 @@
 
 		<p class="p">Option 1</p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var oMyFlexbox = new sap.m.FlexBox();
 oMyFlexbox.addItem( new sap.m.Button({text: "Button 1"}) );
 oMyFlexbox.addItem( new sap.m.Button({text: "Button 2"}) ); </pre></div>
 
 		<p class="p">Option 2 </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var oMyFlexbox = new sap.m.FlexBox({
   items: [
     new sap.m.Button({text: "Button 1"}),
@@ -60,14 +46,14 @@ var oMyFlexbox = new sap.m.FlexBox({
 			app page. The necessary code is not shown here. </p>
 
 		<img class="image" id="loio988d2c7652684dea98f9d6dbc94000c0__image_vxt_gzj_hj" src="loioe6a78df297d448fb88f8280e81a50b9a_LowRes.png" alt="SAPUI5 Mobile FlexBox Buttons" title="SAPUI5 Mobile FlexBox Buttons"/>
-		<div class="section" id="loio988d2c7652684dea98f9d6dbc94000c0__section_N1003F_N10011_N10001"><div class="section_title">Layout properties</div><div type="Layout properties"><p class="p">Some
-				properties that affect the layout need to be set in the <samp class="ph codeph">FlexBox</samp>
-				control. Other properties can be attached to the controls which are placed inside
-				the <samp class="ph codeph">FlexBox</samp> by means of the <samp class="ph codeph">layoutData</samp>
+		<div class="section" id="loio988d2c7652684dea98f9d6dbc94000c0__section_N1003F_N10011_N10001"><div class="section_title">Layout properties</div><div type="Layout properties"><p class="p">Some properties that
+				affect the layout need to be set in the <samp class="ph codeph">FlexBox</samp> control. Other
+				properties can be attached to the controls which are placed inside the
+					<samp class="ph codeph">FlexBox</samp> by means of the <samp class="ph codeph">layoutData</samp>
 				aggregation. The layout direction, for example is set in the
 					<samp class="ph codeph">FlexBox</samp> as follows:
 				</p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var oMyFlexbox = new sap.m.FlexBox({
   items: [
     new sap.m.Button({text: "Button 1"}),
@@ -75,10 +61,10 @@ var oMyFlexbox = new sap.m.FlexBox({
   ],
   direction: "Column"
 });</pre></div>
-<img class="image" id="loio988d2c7652684dea98f9d6dbc94000c0__image_iyh_jzj_hj" src="loiod37cdf08a6e84172b6499f05512b54ba_LowRes.png" alt="SAPUI5 Mobile FlexBox Buttons Vertical" title="SAPUI5 Mobile FlexBox Buttons Vertical"/><p class="p">The order is
-				attached to the button inside a <samp class="ph codeph">FlexItemData</samp> object as follows:
+<img class="image" id="loio988d2c7652684dea98f9d6dbc94000c0__image_iyh_jzj_hj" src="loiod37cdf08a6e84172b6499f05512b54ba_LowRes.png" alt="SAPUI5 Mobile FlexBox Buttons Vertical" title="SAPUI5 Mobile FlexBox Buttons Vertical"/><p class="p">The order is attached to the
+				button inside a <samp class="ph codeph">FlexItemData</samp> object as follows:
 				</p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var oMyFlexbox = new sap.m.FlexBox({
   items: [
     new sap.m.Button({
@@ -100,11 +86,13 @@ var oMyFlexbox = new sap.m.FlexBox({
 				wrapped in a <samp class="ph codeph">DIV</samp> or <samp class="ph codeph">LI</samp> element, depending on the
 					<samp class="ph codeph">renderType</samp> property. All elements are placed inside another
 					<samp class="ph codeph">DIV</samp> or <samp class="ph codeph">UL</samp> container, again depending on the
-					<samp class="ph codeph">renderType</samp>. The outermost element represents the so-called
-					<em class="ph i">flex container</em> while its child elements are <em class="ph i">flex items</em>. The HTML
-				structure resulting from all of the examples above looks as follows:
+					<samp class="ph codeph">renderType</samp>. If you use <samp class="ph codeph">Bare</samp> as
+					<samp class="ph codeph">renderType</samp>, elements will be rendered without a wrapping HTML
+				tag.  The outermost element represents the so-called <em class="ph i">flex container</em> while its
+				child elements are <em class="ph i">flex items</em>. The HTML structure resulting from all of the
+				examples above looks as follows:
 					</p>
-<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>
+<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">
 &lt;div class="sapMFlexBox"&gt;
 
        &lt;div class="sapMFlexItem"&gt;
@@ -133,19 +121,5 @@ The
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Getting Started With FlexBox";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

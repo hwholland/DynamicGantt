@@ -1,7 +1,7 @@
 <mvc:View
 	controllerName="sap.m.sample.Table.Table"
-	xmlns:l="sap.ui.layout"
 	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core"
 	xmlns="sap.m">
 	<Table id="idProductsTable"
 		inset="false"
@@ -13,7 +13,25 @@
 		}">
 		<headerToolbar>
 			<Toolbar>
-				<Title text="Products" level="H2"/>
+				<content>
+					<Title text="Products" level="H2"/>
+					<ToolbarSpacer />
+					<ToggleButton id="stickyColHdr"
+						text="Sticky Column Headers"
+						press="onToggleStickyColHdr" />
+					<ComboBox id="idPopinLayout"
+						placeholder="Popin layout options"
+						change="onPopinLayoutChanged">
+						<items>
+							<core:Item  text="Block"
+								key="Block"/>
+							<core:Item  text="Grid Large"
+								key="GridLarge"/>
+							<core:Item  text="Grid Small"
+								key="GridSmall"/>
+						</items>
+					</ComboBox>
+				</content>
 			</Toolbar>
 		</headerToolbar>
 		<columns>
@@ -27,19 +45,19 @@
 				<Text text="Supplier" />
 			</Column>
 			<Column
-				minScreenWidth="Tablet"
+				minScreenWidth="Desktop"
 				demandPopin="true"
-				hAlign="Right">
+				hAlign="End">
 				<Text text="Dimensions" />
 			</Column>
 			<Column
-				minScreenWidth="Tablet"
+				minScreenWidth="Desktop"
 				demandPopin="true"
 				hAlign="Center">
 				<Text text="Weight" />
 			</Column>
 			<Column
-				hAlign="Right">
+				hAlign="End">
 				<Text text="Price" />
 			</Column>
 		</columns>
@@ -57,7 +75,10 @@
 						number="{WeightMeasure}"
 						unit="{WeightUnit}"
 						state="{
-							path: 'WeightMeasure',
+							parts: [
+								{path: 'WeightMeasure'},
+								{path: 'WeightUnit'}
+							],
 							formatter: 'sap.m.sample.Table.Formatter.weightState'
 						}" />
 					<ObjectNumber

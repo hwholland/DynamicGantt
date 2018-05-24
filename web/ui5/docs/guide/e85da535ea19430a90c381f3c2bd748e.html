@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step we will make the search bookmarkable. This allows users to search for employees in the Employees table and they can bookmark their search query or share the URL."/>
 <meta name="description" content="In this step we will make the search bookmarkable. This allows users to search for employees in the Employees table and they can bookmark their search query or share the URL."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=21881265280011242"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=3291582765436263"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3291582765436263"/>
 <title>Step 12: Make a Search Bookmarkable</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioe85da535ea19430a90c381f3c2bd748e">
 <div id="wrapper"><div id="container">
@@ -41,14 +27,14 @@
 			
 			<div class="fig fignone" id="loioe85da535ea19430a90c381f3c2bd748e__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loioe85da535ea19430a90c381f3c2bd748e__image_nsr_scw_zs" src="loiofeb2ddddf2e347e9893512419fe11355_HiRes.png"/>
+				<img class="image" id="loioe85da535ea19430a90c381f3c2bd748e__image_nsr_scw_zs" src="loiofeb2ddddf2e347e9893512419fe11355_LowRes.png"/>
 			<div class="figcap">Search and sorting bookmarkable</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.12/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.12/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.12/preview">Routing and Navigation - Step 12</a></span>
 				.</p>
 
@@ -56,8 +42,8 @@
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -120,7 +106,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/overview/EmployeeOverviewContent.controller.js</div><div type="webapp/controller/employee/overview/EmployeeOverviewContent.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
@@ -130,7 +116,7 @@
 	return BaseController.extend("sap.ui.demo.nav.controller.employee.overview.EmployeeOverviewContent", {
 		onInit: function () {
 			<span class="ph emphasis emphasis">var oRouter = this.getRouter();</span>
-			this._oTable = this.getView().byId("employeesTable");
+			this._oTable = this.byId("employeesTable");
 			this._oVSD = null; 
 			this._sSortField = null; 
 			this._bSortDescending = false; 
@@ -213,7 +199,7 @@ When you change the value in the search field, you see that the hash updates
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="b01840ec42ef48e6bfd2bc12612f501f.html" title="In this step, we will add a new button to the home page to illustrate the usage of multiple targets for a route. When the button is pressed, a new page opens that contains two parts: a header part at the top and a content part. The content part displays a table of employees that can be sorted and searched. We will use the array notation in the routing configuration to assign multiple targets to a route - a feature that we have not yet introduced.">Step 11: Assign Multiple Targets</a><br/>
@@ -225,19 +211,5 @@ When you change the value in the search field, you see that the hash updates
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 12: Make a Search Bookmarkable";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

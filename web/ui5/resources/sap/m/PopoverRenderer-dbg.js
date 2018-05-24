@@ -1,11 +1,14 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['jquery.sap.global'],
-	function (jQuery) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/m/library'],
+	function (jQuery, Device, library) {
 		"use strict";
+
+		// shortcut for sap.m.PlacementType
+		var PlacementType = library.PlacementType;
 
 		/**
 		 * Popover renderer.
@@ -16,8 +19,8 @@ sap.ui.define(['jquery.sap.global'],
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
 		 *
-		 * @param {sap.ui.core.RenderManager} oRenderManager the RenderManager that can be used for writing to the Render-Output-Buffer
-		 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
+		 * @param {sap.ui.core.RenderManager} rm The RenderManager that can be used for writing to the Render-Output-Buffer
+		 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered
 		 */
 		PopoverRenderer.render = function(rm, oControl) {
 			var aClassNames;
@@ -38,20 +41,14 @@ sap.ui.define(['jquery.sap.global'],
 			}
 
 			rm.writeAttribute("tabindex", "-1");
-			rm.writeAccessibilityState(oControl, {
-				role: "dialog"
-			});
 
-			if (oControl.getShowHeader() && oControl._getAnyHeader()) {
-				rm.writeAccessibilityState(oControl, {
-					labelledby: oControl._getAnyHeader().getId()
-				});
-			}
+			// ARIA
+			rm.writeAccessibilityState(oControl, oControl._getAccessibilityOptions());
 
 			rm.write(">");
 
 			if (oControl.getResizable()) {
-				rm.write('<div class="sapMPopoverResizeHandle"></div>');
+				rm.writeIcon("sap-icon://resize-corner", ["sapMPopoverResizeHandle"], { "title" : ""});
 			}
 
 			this.renderContent(rm, oControl);
@@ -95,7 +92,7 @@ sap.ui.define(['jquery.sap.global'],
 				oHeader = oControl._getAnyHeader();
 			}
 
-			if (sap.ui.Device.system.desktop) {
+			if (Device.system.desktop) {
 
 				// invisible element for cycling keyboard navigation
 				rm.write("<span class='sapMPopoverHiddenFocusable' id='" + oControl.getId() + "-firstfe' tabindex='0'></span>");
@@ -104,23 +101,33 @@ sap.ui.define(['jquery.sap.global'],
 			// header
 			if (oHeader) {
 
-				if (oHeader.applyTagAndContextClassFor) {
-					oHeader.applyTagAndContextClassFor("header");
-				}
+				rm.write("<header");
+				rm.addClass("sapMPopoverHeader");
+				rm.writeClasses();
+				rm.write(">");
 
-				oHeader.addStyleClass("sapMPopoverHeader");
+				if (oHeader._applyContextClassFor) {
+					oHeader._applyContextClassFor("header");
+
+				}
 				rm.renderControl(oHeader);
+				rm.write("</header>");
 			}
 
 			// sub header
 			if (oSubHeader) {
 
-				if (oSubHeader.applyTagAndContextClassFor) {
-					oSubHeader.applyTagAndContextClassFor("subheader");
+				rm.write("<header");
+				rm.addClass("sapMPopoverSubHeader");
+				rm.writeClasses();
+				rm.write(">");
+
+				if (oSubHeader._applyContextClassFor) {
+					oSubHeader._applyContextClassFor("subheader");
 				}
 
-				oSubHeader.addStyleClass("sapMPopoverSubHeader");
 				rm.renderControl(oSubHeader);
+				rm.write("</header>");
 			}
 
 			// content container
@@ -169,19 +176,23 @@ sap.ui.define(['jquery.sap.global'],
 
 			// footer
 			if (oFooter) {
-
-				if (oFooter.applyTagAndContextClassFor) {
-					oFooter.applyTagAndContextClassFor("footer");
-
-					// TODO: check if this should also be added to a bar instance
-					oFooter.addStyleClass("sapMTBNoBorders");
-				}
-
 				if (this.isButtonFooter(oFooter)) {
 					sFooterClass += "sapMPopoverSpecialFooter";
 				}
 
-				rm.renderControl(oFooter.addStyleClass(sFooterClass));
+				rm.write("<footer");
+				rm.addClass(sFooterClass);
+				rm.writeClasses();
+				rm.write(">");
+
+				if (oFooter._applyContextClassFor) {
+					oFooter._applyContextClassFor("footer");
+					oFooter.addStyleClass("sapMTBNoBorders");
+				}
+
+				rm.renderControl(oFooter);
+
+				rm.write("</footer>");
 			}
 
 			// arrow
@@ -193,7 +204,7 @@ sap.ui.define(['jquery.sap.global'],
 				rm.write("></span>");	// arrow tip
 			}
 
-			if (sap.ui.Device.system.desktop) {
+			if (Device.system.desktop) {
 
 				// invisible element for desktop keyboard navigation
 				rm.write("<span class='sapMPopoverHiddenFocusable' id='" + oControl.getId() + "-lastfe' tabindex='0'></span>");
@@ -238,7 +249,7 @@ sap.ui.define(['jquery.sap.global'],
 				aClassNames.push("sapMPopoverWithoutFooter");
 			}
 
-			if (oControl.getPlacement() === sap.m.PlacementType.Top) {
+			if (oControl.getPlacement() === PlacementType.Top) {
 				aClassNames.push("sapMPopoverPlacedTop");
 			}
 
@@ -285,5 +296,4 @@ sap.ui.define(['jquery.sap.global'],
 		};
 
 		return PopoverRenderer;
-
 	}, /* bExport= */ true);

@@ -3,7 +3,23 @@
     <name>Page</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A page is a basic container for a mobile application screen. Usually one page is displayed at a time (in landscape mode or on tablets depending on the layout two pages might be displayed side-by-side).</documentation>
+    <documentation>A container control that holds one whole screen of an application.
+
+&lt;h3&gt;Overview&lt;/h3&gt;
+The sap.m.Page is a container control that holds one whole screen of an application.
+The page has three distinct areas that can hold content - a header, content area and a footer.
+&lt;h3&gt;Structure&lt;/h3&gt;
+&lt;h4&gt;Header&lt;/h4&gt;
+The top most area of the page is occupied by the header. The standard header includes a navigation button and a title.
+Alternatively, you can create your own custom header, which is defined in the &lt;code&gt;customHeader&lt;/code&gt; aggregation.
+&lt;h4&gt;Content&lt;/h4&gt;
+The content occupies the main part of the page. Only the content area is scrollable by default.
+This can be prevented by setting  &lt;code&gt;enableScrolling&lt;/code&gt; to &lt;code&gt;false&lt;/code&gt;.
+&lt;h4&gt;Footer&lt;/h4&gt;
+The footer is optional and occupies the fixed bottom part of the page. Alternatively, the footer can be floating above the bottom part of the content.
+This is enabled with the &lt;code&gt;floatingFooter&lt;/code&gt; property.
+
+&lt;b&gt;Note:&lt;/b&gt; All accessibility information for the different areas and their corresponding ARIA roles is set in the aggregation &lt;code&gt;landmarkInfo&lt;/code&gt; of type {@link sap.m.PageAccessibleLandmarkInfo}</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Data">
@@ -54,6 +70,10 @@ The Page only allows vertical scrolling because horizontal scrolling is discoura
         </property>
         <property name="contentOnlyBusy" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.29.0">
             <documentation>Decides which area is covered by the local BusyIndicator when &lt;code&gt;page.setBusy()&lt;/code&gt; is called. By default the entire page is covered, including headers and footer. When this property is set to "true", only the content area is covered (not header/sub header and footer), which is useful e.g. when there is a SearchField in the sub header and live search continuously updates the content area while the user is still able to type.</documentation>
+        </property>
+        <property name="floatingFooter" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+            <documentation>Decides whether the footer can float.
+When set to true, the footer is not fixed below the content area anymore, but rather floats over it with a slight offset from the bottom.</documentation>
         </property>
     </properties>
     <events>

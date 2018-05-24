@@ -1,15 +1,29 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.layout.MatrixLayout.
-sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', 'sap/ui/commons/library', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator'],
-	function(jQuery, MatrixLayoutCell, MatrixLayoutRow, library, Control, EnabledPropagator) {
+sap.ui.define([
+    'jquery.sap.global',
+    './MatrixLayoutCell',
+    './MatrixLayoutRow',
+    'sap/ui/commons/library',
+    'sap/ui/core/Control',
+    'sap/ui/core/EnabledPropagator',
+    "./MatrixLayoutRenderer"
+],
+	function(
+	    jQuery,
+		MatrixLayoutCell,
+		MatrixLayoutRow,
+		library,
+		Control,
+		EnabledPropagator,
+		MatrixLayoutRenderer
+	) {
 	"use strict";
-
-
 
 	/**
 	 * Constructor for a new layout/MatrixLayout.
@@ -41,7 +55,7 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -55,7 +69,7 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 		properties : {
 			/**
 			 * CSS width of the matrix layout.
-			 * If the LayoutFixed = true a adequate width should be provided.
+			 * If the LayoutFixed = true an adequate width should be provided.
 			 */
 			width : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : null},
 
@@ -68,7 +82,7 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 			/**
 			 * Sets the table layout. If fixed the width parameter of a column has priority, if not the width of the content of the colums has priority.
 			 * The default is "fixed".
-			 * If the fixed layout is used a adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.
+			 * If the fixed layout is used an adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.
 			 */
 			layoutFixed : {type : "boolean", group : "Appearance", defaultValue : true},
 
@@ -104,12 +118,12 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 	 * "as is", or an arbitrary content control, which is wrapped with a new
 	 * (default) matrix layout cell first and then added to the row.
 	 *
-	 * @param {sap.ui.core.Control|sap.ui.commons.layout.MatrixLayoutCell|string} rowContent to add
 	 * @return {sap.ui.commons.layout.MatrixLayout} <code>this</code> to allow method chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	MatrixLayout.prototype.createRow = function() {
+
 		var oRow = new MatrixLayoutRow();
 		this.addRow(oRow);
 		for (var i = 0; i < arguments.length; i++) {
@@ -120,18 +134,19 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 				oCell = oContent;
 			} else if (oContent instanceof Control) {
 				// any control given, wrap with matrix layout cell first
-				   oCell = new MatrixLayoutCell({content : oContent});
+				oCell = new MatrixLayoutCell({content : oContent});
 			} else if (oContent instanceof Object && oContent.height) {
 				oRow.setHeight(oContent.height);
 			} else {
 				// any string(?) given, display it
 				var sText = oContent ? oContent.toString() : "";
-					oCell = new MatrixLayoutCell({
-						content : new sap.ui.commons.TextView({text : sText})});
+				oCell = new MatrixLayoutCell({
+					content : new sap.ui.commons.TextView({text : sText})});
 			}
-				oRow.addCell(oCell);
+			oRow.addCell(oCell);
 		}
 		return this;
+
 	};
 
 	/*
@@ -163,6 +178,7 @@ sap.ui.define(['jquery.sap.global', './MatrixLayoutCell', './MatrixLayoutRow', '
 		this.setProperty("widths", aSetWidths);
 
 		return this;
+
 	};
 
 	return MatrixLayout;

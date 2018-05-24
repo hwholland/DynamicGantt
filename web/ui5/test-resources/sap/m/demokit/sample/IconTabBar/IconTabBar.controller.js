@@ -20,7 +20,7 @@ sap.ui.define([
 			});
 			oComp.setModel(this.getView().getModel());
 			this._oTable = oComp.getTable();
-			this.getView().byId("idIconTabBar").insertContent(this._oTable);
+			this.byId("idIconTabBar").insertContent(this._oTable);
 
 			// update table
 			this._oTable.setHeaderText(null);
@@ -30,22 +30,32 @@ sap.ui.define([
 		handleIconTabBarSelect: function (oEvent) {
 			var oBinding = this._oTable.getBinding("items"),
 				sKey = oEvent.getParameter("key"),
-				oFilter;
+				// Array to combine filters
+				aFilters = [],
+				oCombinedFilterG,
+				oCombinedFilterKG,
+				// Boarder values for Filter
+				fMaxOkWeightKG = 1,
+				fMaxOkWeightG = fMaxOkWeightKG * 1000,
+				fMaxHeavyWeightKG = 5,
+				fMaxHeavyWeightG = fMaxHeavyWeightKG * 1000;
+
 			if (sKey === "Ok") {
-				oFilter = new Filter("WeightMeasure", "LE", 1000);
-				oBinding.filter([oFilter]);
+				oCombinedFilterG = new Filter([new Filter("WeightMeasure", "LT", fMaxOkWeightG), new Filter("WeightUnit", "EQ", "G")], true);
+				oCombinedFilterKG = new Filter([new Filter("WeightMeasure", "LT", fMaxOkWeightKG), new Filter("WeightUnit", "EQ", "KG")], true);
+				aFilters.push(new Filter([oCombinedFilterKG, oCombinedFilterG], false));
 			} else if (sKey === "Heavy") {
-				oFilter = new Filter("WeightMeasure", "BT", 1001, 2000);
-				oBinding.filter([oFilter]);
+				oCombinedFilterG = new Filter([new Filter("WeightMeasure", "BT", fMaxOkWeightG, fMaxHeavyWeightG), new Filter("WeightUnit", "EQ", "G")], true);
+				oCombinedFilterKG = new Filter([new Filter("WeightMeasure", "BT", fMaxOkWeightKG, fMaxHeavyWeightKG), new Filter("WeightUnit", "EQ", "KG")], true);
+				aFilters.push(new Filter([oCombinedFilterKG, oCombinedFilterG], false));
 			} else if (sKey === "Overweight") {
-				oFilter = new Filter("WeightMeasure", "GT", 2000);
-				oBinding.filter([oFilter]);
-			} else {
-				oBinding.filter([]);
+				oCombinedFilterKG = new Filter([new Filter("WeightMeasure", "GT", fMaxHeavyWeightKG), new Filter("WeightUnit", "EQ", "KG")], true);
+				oCombinedFilterG = new Filter([new Filter("WeightMeasure", "GT", fMaxHeavyWeightG), new Filter("WeightUnit", "EQ", "G")], true);
+				aFilters.push(new Filter([oCombinedFilterKG, oCombinedFilterG], false));
 			}
+			oBinding.filter(aFilters);
 		}
 	});
-
 
 	return IconTabBarController;
 

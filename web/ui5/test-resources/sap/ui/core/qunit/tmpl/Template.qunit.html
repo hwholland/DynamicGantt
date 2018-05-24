@@ -7,19 +7,18 @@
 
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>qUnit Page for sap.ui.core.tmpl.Template</title>
+		<title>QUnit Page for sap.ui.core.tmpl.Template</title>
 
+		<script src="../../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true" >
 		</script>
 
 		<link rel="stylesheet" href="../../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+		<script src="../../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
 		<script id="theTemplate" type="text/x-handlebars-template">
 			<code>Hello {{value}}</code>
@@ -31,54 +30,58 @@
 
 		<script>
 
-			module("Basic Template Tests");
+			QUnit.module("Basic Template Tests");
 
-			test("Basic Lookup", 9, function() {
+			QUnit.test("Basic Lookup", function(assert) {
+				assert.expect(9);
 
 				// find and load all existing known templates
 				var aTemplates = sap.ui.template();
-				equal(aTemplates.length, 2, "2 Templates have been found!");
+				assert.equal(aTemplates.length, 2, "2 Templates have been found!");
 
 				// check the first template to be a valid template
 				var oTemplate = sap.ui.getCore().getTemplate("theTemplate");
-				ok(oTemplate !== undefined, "Template has been found!");
-				ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Template is a sap.ui.core.tmpl.Template!");
-				ok(oTemplate === sap.ui.template("theTemplate"), "Same instance retrieved by sap.ui.template!");
+				assert.ok(oTemplate !== undefined, "Template has been found!");
+				assert.ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Template is a sap.ui.core.tmpl.Template!");
+				assert.ok(oTemplate === sap.ui.template("theTemplate"), "Same instance retrieved by sap.ui.template!");
 
 				// check the second template to be ignored
 				oTemplate = sap.ui.getCore().getTemplate("theSecondTemplate");
-				ok(oTemplate === undefined, "Second Template has not been found!");
+				assert.ok(oTemplate === undefined, "Second Template has not been found!");
 
 				// check the first embedded template to be a valid template
 				oTemplate = sap.ui.getCore().getTemplate("theEmbeddedTemplate");
-				ok(oTemplate !== undefined, "Embedded Template has been found!");
-				ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Embedded Template is a sap.ui.core.tmpl.Template!");
-				ok(oTemplate === sap.ui.template("theEmbeddedTemplate"), "Same instance retrieved by sap.ui.template!");
+				assert.ok(oTemplate !== undefined, "Embedded Template has been found!");
+				assert.ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Embedded Template is a sap.ui.core.tmpl.Template!");
+				assert.ok(oTemplate === sap.ui.template("theEmbeddedTemplate"), "Same instance retrieved by sap.ui.template!");
 
 				// check the second embedded template to be ignored
 				oTemplate = sap.ui.getCore().getTemplate("theSecondTemplate");
-				ok(oTemplate === undefined, "Second Embedded Template has not been found!");
+				assert.ok(oTemplate === undefined, "Second Embedded Template has not been found!");
 
 			});
 
-			test("ID Lookup", 4, function() {
+			QUnit.test("ID Lookup", function(assert) {
+				assert.expect(4);
 
 				// lookup an existing template
 				var oTemplate = sap.ui.template("theTemplate");
-				ok(oTemplate !== undefined, "Template has been found!");
-				ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Template is a sap.ui.core.tmpl.Template!");
-				ok(oTemplate === sap.ui.template("theTemplate"), "Same instance retrieved by sap.ui.template!");
-				ok(oTemplate === sap.ui.getCore().getTemplate("theTemplate"), "Same instance retrieved by sap.ui.template!");
+				assert.ok(oTemplate !== undefined, "Template has been found!");
+				assert.ok(oTemplate instanceof sap.ui.core.tmpl.Template, "Template is a sap.ui.core.tmpl.Template!");
+				assert.ok(oTemplate === sap.ui.template("theTemplate"), "Same instance retrieved by sap.ui.template!");
+				assert.ok(oTemplate === sap.ui.getCore().getTemplate("theTemplate"), "Same instance retrieved by sap.ui.template!");
 
 			});
 
-			test("Inline Templates", 1, function() {
+			QUnit.test("Inline Templates", function(assert) {
+				assert.expect(1);
 
-				equal(jQuery("#theEmbeddedTemplate > code").length, 1, "Inline Template doesn't create extra DOM");
+				assert.equal(jQuery("#theEmbeddedTemplate > code").length, 1, "Inline Template doesn't create extra DOM");
 
 			});
 
-			test("Unsupported Type", 1, function() {
+			QUnit.test("Unsupported Type", function(assert) {
+				assert.expect(1);
 				var theEx;
 				try {
 					sap.ui.template("theSecondTemplate");
@@ -86,12 +89,14 @@
 					theEx = ex;
 				}
 
-				ok(theEx !== undefined, "Unknown template type not found. Exception was raised!");
+				assert.ok(theEx !== undefined, "Unknown template type not found. Exception was raised!");
 			});
 
-			module("Binding Template Tests");
+			QUnit.module("Binding Template Tests");
 
-			asyncTest("Binding Path in Template", 1, function() {
+			QUnit.test("Binding Path in Template", function(assert) {
+				assert.expect(1);
+				var done = assert.async();
 				var sTitle = "Test123";
 
 				sap.ui.controller("test.myController", {
@@ -123,15 +128,15 @@
 					});
 
 					setTimeout(function() {
-						start();
 						var sResult = jQuery(document.getElementById("templateContent")).text()
-						ok(sResult === sTitle, "Binding resolved properly");
+						assert.ok(sResult === sTitle, "Binding resolved properly");
+						done();
 					}, 10);
 				}, 10);
 
 			});
 
-			test("Rerendering on aggregation change", function(assert) {
+			QUnit.test("Rerendering on aggregation change", function(assert) {
 
 				// create a model to validate data binding
 				jQuery.sap.require("sap.ui.model.json.JSONModel");
@@ -190,7 +195,7 @@
 
 			});
 
-			test("Mixing Helpers and Controls", function(assert) {
+			QUnit.test("Mixing Helpers and Controls", function(assert) {
 
 				sap.ui.define("my/Control", ["sap/ui/core/Control"], function(Control) {
 					return Control.extend("my.Control", {
@@ -248,7 +253,7 @@
 	</head>
 	<body>
 
-		<h1 id="qunit-header">qUnit Page for sap.ui.core.tmpl.Template</h1>
+		<h1 id="qunit-header">QUnit Page for sap.ui.core.tmpl.Template</h1>
 		<h2 id="qunit-banner"></h2>
 		<h2 id="qunit-userAgent"></h2>
 		<ol id="qunit-tests"></ol>

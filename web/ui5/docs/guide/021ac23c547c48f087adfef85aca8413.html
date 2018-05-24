@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Code samples for triggering telephone, text and e-mail applications."/>
 <meta name="description" content="Code samples for triggering telephone, text and e-mail applications."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7981511925428748"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6595626259646139"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6595626259646139"/>
 <title>Examples for Triggering Telephone, Text and E-Mail Applications</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio021ac23c547c48f087adfef85aca8413">
 <div id="wrapper"><div id="container">
@@ -37,7 +23,7 @@
 
 		<p class="p">Sample data used in the examples: </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var person = {
     name : "John Smith",
     tel : "+49 62227
@@ -55,7 +41,7 @@ var person = {
             
             <p class="p">The following button can be used to place a call. </p>
 
-            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 new sap.m.Button({
     text : person.tel,
     icon : "images/action.png", /* Depends where your images are located */
@@ -71,7 +57,7 @@ new sap.m.Button({
 			<p class="p">The following code snippet gives an example for triggering an e-mail application. You can also
 				set the subject and message of the e-mail application:</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 new sap.m.Image({
     src : "images/website.png", /* Depends where your images are located */
     tap : function() {
@@ -86,7 +72,7 @@ new sap.m.Image({
             <p class="p"><samp class="ph codeph">DisplayListItem</samp> with active feedback is the most popular use case
                 for the following example.</p>
 
-            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 new sap.m.DisplayListItem({
     label : "Sms",
     value : "( " + person.sms + " )",
@@ -98,7 +84,7 @@ new sap.m.DisplayListItem({
 
             <p class="p">To use any other control inside the list, use <samp class="ph codeph">InputListItem</samp>:</p>
 
-            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+            <div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 new sap.m.InputListItem({
     label : "Website",
     content : new sap.m.Button({
@@ -115,19 +101,5 @@ new sap.m.InputListItem({
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Examples for Triggering Telephone, Text and E-Mail Applications";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

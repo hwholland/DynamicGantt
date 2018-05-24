@@ -17,7 +17,7 @@
             <documentation>Message has no specific level</documentation>
         </value>
         <value name="Success">
-            <documentation>Message is an success message</documentation>
+            <documentation>Message is a success message</documentation>
         </value>
     </enumeration>
 </simple-type>

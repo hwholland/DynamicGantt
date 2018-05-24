@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>StandardTileType</name>
     <derived/>
-    <documentation>Types for StandardTile</documentation>
+    <documentation>Types for StandardTile.</documentation>
     <enumeration>
         <value name="Create">
             <documentation>Tile representing that something needs to be created</documentation>

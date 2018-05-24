@@ -1,12 +1,42 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ObjectMarker.
-sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer'], function(jQuery, Control, Renderer) {
+sap.ui.define([
+	"sap/ui/core/Control",
+	"sap/ui/core/Renderer",
+	"sap/ui/Device",
+	"sap/m/library",
+	"sap/ui/core/library",
+	"sap/ui/core/Icon",
+	"sap/m/TextRenderer",
+	"sap/m/Text",
+	"sap/m/LinkRenderer",
+	"sap/m/Link",
+	"./ObjectMarkerRenderer"
+], function(
+	Control,
+	Renderer,
+	Device,
+	library,
+	coreLibrary,
+	Icon,
+	TextRenderer,
+	Text,
+	LinkRenderer,
+	Link,
+	ObjectMarkerRenderer
+) {
 	"use strict";
+
+	// shortcut for sap.ui.core.TextAlign
+	var TextAlign = coreLibrary.TextAlign;
+
+	// shortcut for sap.m.ObjectMarkerVisibility
+	var ObjectMarkerVisibility = library.ObjectMarkerVisibility;
 
 	/**
 	 * Constructor for a new ObjectMarker.
@@ -21,13 +51,18 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	 * <li><code>Favorite</code>
 	 * <li><code>Draft</code>
 	 * <li><code>Locked</code>
-	 * <li><code>Unsaved Changes</code>
+	 * <li><code>LockedBy</code>
+	 * <li><code>Unsaved</code>
+	 * <li><code>UnsavedBy</code>
 	 * </ul>
+	 * <b>Note</b>: Use the <code>LockedBy/UnsavedBy</code> type along with the <code>additionalInfo</code> property to display the name of the user who locked/changed the object.
+	 * If <code>additionalInfo</code> property is not set when using <code>LockedBy/UnsavedBy</code> types, the string "Locked by another user"/"Unsaved changes by another user" will be displayed.
+	 * If you don't want to display name of the user, simply use the <code>Locked/Unsaved</code> types.
 	 *
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -38,17 +73,39 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	var ObjectMarker = Control.extend("sap.m.ObjectMarker", /** @lends sap.m.ObjectMarker.prototype */ {
 		metadata: {
 			library: "sap.m",
+			designtime: "sap/m/designtime/ObjectMarker.designtime",
 			properties: {
 
 				/**
 				 * Sets one of the predefined types.
+				 *
+				 * <b>Note</b>: If the <code>visibility</code> property is not specified explicitly, every <code>type</code> comes with predefined one as follows:
+				 * <ul>
+				 *                 <li>For <code>Flagged</code> and <code>Favorite</code> the icon is visible and the text is not displayed</li>
+				 *                 <li>For <code>Draft</code> the text is visible and the icon is not displayed</li>
+				 *                 <li>For <code>Locked</code>, <code>LockedBy</code>, <code>Unsaved</code> and <code>UnsavedBy</code> - on screens larger than 600px both icon and text are visible, otherwise only the icon</li>
+				 *
+				 * </ul>
 				 */
 				type: {type: "sap.m.ObjectMarkerType", group: "Misc"},
 
 				/**
 				 * Sets one of the visibility states.
+				 * Visibility states are as follows:
+				 * <ul>
+				 *                 <li><code>IconOnly</code> - displays only icon, regardless of the screen size</li>
+				 *                 <li><code>TextOnly</code> - displays only text, regardless of the screen size</li>
+				 *                 <li><code>IconAndText</code> - displays both icon and text, regardless of the screen size</li>
+				 * </ul>
 				 */
-				visibility: {type: "sap.m.ObjectMarkerVisibility", group: "Misc"}
+				visibility: {type: "sap.m.ObjectMarkerVisibility", group: "Misc"},
+
+				/**
+				 * Sets additional information to the displayed <code>type</code>.
+				 *
+				 * <b>Note:</b> If no type is set, the additional information will not be displayed.
+				 */
+				additionalInfo: {type: "string", group: "Misc", defaultValue: ""}
 			},
 			aggregations: {
 
@@ -123,14 +180,14 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 			icon: {
 				src: "sap-icon://request",
 				visibility: {
-					small: true,
-					large: true
+					small: false,
+					large: false
 				}
 			},
 			text: {
 				value: oRB.getText("OM_DRAFT"),
 				visibility: {
-					small: false,
+					small: true,
 					large: true
 				}
 			}
@@ -155,14 +212,46 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 			icon: {
 				src: "sap-icon://user-edit",
 				visibility: {
-					small: false,
+					small: true,
 					large: true
 				}
 			},
 			text: {
 				value: oRB.getText("OM_UNSAVED"),
 				visibility: {
+					small: false,
+					large: true
+				}
+			}
+		},
+		LockedBy: {
+			icon: {
+				src: "sap-icon://private",
+				visibility: {
 					small: true,
+					large: true
+				}
+			},
+			text: {
+				value: oRB.getText("OM_LOCKED_BY"),
+				visibility: {
+					small: false,
+					large: true
+				}
+			}
+		},
+		UnsavedBy: {
+			icon: {
+				src: "sap-icon://user-edit",
+				visibility: {
+					small: true,
+					large: true
+				}
+			},
+			text: {
+				value: oRB.getText("OM_UNSAVED_BY"),
+				visibility: {
+					small: false,
 					large: true
 				}
 			}
@@ -176,7 +265,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	 */
 	ObjectMarker.prototype.init = function() {
 		// Defines custom screen range set: smaller or equal 600px defines 'small' and bigger that defines 'large' screen
-		sap.ui.Device.media.initRangeSet("DeviceSet", [600], "px", ["small", "large"]);
+		Device.media.initRangeSet("DeviceSet", [600], "px", ["small", "large"]);
 	};
 
 	/**
@@ -185,7 +274,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	 * @override
 	 */
 	ObjectMarker.prototype.onAfterRendering = function() {
-		sap.ui.Device.media.attachHandler(this._handleMediaChange, this, "DeviceSet");
+		this._attachMediaContainerWidthChange(this._handleMediaChange, this, "DeviceSet");
 	};
 
 	/**
@@ -196,6 +285,9 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	ObjectMarker.prototype.onBeforeRendering = function() {
 		// Cleanup resize event registration before re-rendering
 		this._cleanup();
+
+		// Inner control can be determined here as all property values are known
+		this._adjustControl();
 	};
 
 	/**
@@ -208,7 +300,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 		this._cleanup();
 	};
 
-	/**
+	/*
 	 * Intercepts <code>attachPress</code> to be able to re-render.
 	 * If <code>press</code> event is attached and the control is rendered as text, than the control will be
 	 * re-rendered as link.
@@ -230,7 +322,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 		return this;
 	};
 
-	/**
+	/*
 	 * Intercepts <code>detachPress</code> to be able to re-render.
 	 * If <code>press</code> event is detached and the control is rendered as a link, than the control will be
 	 * re-rendered as a text.
@@ -253,41 +345,13 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	};
 
 	/**
-	 * Intercepts <code>setVisibility</code> in order to adjust some control properties.
-	 *
-	 * @override
-	 * @param sVisibility value of the <code>sap.m.ObjectMarkerVisibility</code> enumeration
-	 * @returns {sap.m.ObjectMarker} <code>this</code> pointer for chaining
-	 */
-	ObjectMarker.prototype.setVisibility = function(sVisibility) {
-		this.setProperty("visibility", sVisibility);
-		this._adjustControl();
-
-		return this;
-	};
-
-	/**
-	 * Intercepts <code>setType</code> in order to adjust some control properties.
-	 *
-	 * @override
-	 * @param sType value of the <code>sap.m.ObjectMarkerType</code> enumeration
-	 * @returns {sap.m.ObjectMarker} <code>this</code> pointer for chaining
-	 */
-	ObjectMarker.prototype.setType = function(sType) {
-		this.setProperty("type", sType);
-		this._adjustControl();
-
-		return this;
-	};
-
-	/**
 	 * Cleans up the control.
 	 *
 	 * @private
 	 */
 	ObjectMarker.prototype._cleanup = function() {
 		// Device Media Change handler
-		sap.ui.Device.media.detachHandler(this._handleMediaChange, this, "DeviceSet");
+		this._detachMediaContainerWidthChange(this._handleMediaChange, this, "DeviceSet");
 	};
 
 	/**
@@ -302,11 +366,25 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	/**
 	 * Determines if the icon/text should be visible, etc.
 	 *
+	 * @returns {boolean} <code>true</code> if the adjustment is done and <code>false</code> if there is no inner control and no adjustment happened.
 	 * @private
 	 */
 	ObjectMarker.prototype._adjustControl  = function() {
+
 		var oType = ObjectMarker.M_PREDEFINED_TYPES[this.getType()],
-			oInnerControl = this._getInnerControl();
+			oInnerControl = this._getInnerControl(),
+			sAdditionalInfo = this.getAdditionalInfo(),
+			sType = this.getType(),
+			sText;
+
+		// If we have no inner control at this stage we don't need to adjust
+		if (!oInnerControl) {
+			return false;
+		}
+
+		if (oType) {
+			sText = this._getMarkerText(oType, sType, sAdditionalInfo);
+		}
 
 		if (this._isIconVisible()) {
 			oInnerControl.setIcon(oType.icon.src);
@@ -318,14 +396,37 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 
 		if (this._isTextVisible()) {
 			oInnerControl.setTooltip(null);
-			oInnerControl.setText(oType.text.value);
+			oInnerControl.setText(sText);
 			this.addStyleClass("sapMObjectMarkerText");
 		} else {
 			if (oInnerControl.getIcon()) {
-				oInnerControl.setTooltip(oType.text.value);
+				oInnerControl.setTooltip(sText);
 			}
 			oInnerControl.setText(null);
 			this.removeStyleClass("sapMObjectMarkerText");
+		}
+
+		return true;
+	};
+
+	/**
+	 * Gets the marker text.
+	 *
+	 * @param {object} oType The object type
+	 * @param {string} sType The string type
+	 * @param {string} sAdditionalInfo The additional information
+	 * @returns {String} concatenated from type and additionalInfo text
+	 * @private
+	 */
+	ObjectMarker.prototype._getMarkerText = function (oType, sType, sAdditionalInfo) {
+
+		switch (sType) {
+			case "LockedBy":
+				return (sAdditionalInfo === "") ? oRB.getText('OM_LOCKED_BY_ANOTHER_USER') : oRB.getText('OM_LOCKED_BY', [sAdditionalInfo]);
+			case "UnsavedBy":
+				return (sAdditionalInfo === "") ? oRB.getText('OM_UNSAVED_BY_ANOTHER_USER') : oRB.getText('OM_UNSAVED_BY', [sAdditionalInfo]);
+			default:
+				return (sAdditionalInfo === "") ? oType.text.value : oType.text.value + " " + sAdditionalInfo;
 		}
 	};
 
@@ -341,9 +442,9 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 			sDeviceType = this._getDeviceType(),
 			bTypeIconVisibility = oType && oType.icon.visibility[sDeviceType] || false;
 
-		return sVisibility === sap.m.ObjectMarkerVisibility.IconOnly ||
-			sVisibility === sap.m.ObjectMarkerVisibility.IconAndText ||
-			(sVisibility !== sap.m.ObjectMarkerVisibility.TextOnly && bTypeIconVisibility);
+		return sVisibility === ObjectMarkerVisibility.IconOnly ||
+			sVisibility === ObjectMarkerVisibility.IconAndText ||
+			(sVisibility !== ObjectMarkerVisibility.TextOnly && bTypeIconVisibility);
 	};
 
 	/**
@@ -358,9 +459,9 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 			sDeviceType = this._getDeviceType(),
 			bTypeTextVisibility = oType && oType.text.visibility[sDeviceType] || false;
 
-		return sVisibility === sap.m.ObjectMarkerVisibility.TextOnly ||
-			sVisibility === sap.m.ObjectMarkerVisibility.IconAndText ||
-			(sVisibility !== sap.m.ObjectMarkerVisibility.IconOnly && bTypeTextVisibility);
+		return sVisibility === ObjectMarkerVisibility.TextOnly ||
+			sVisibility === ObjectMarkerVisibility.IconAndText ||
+			(sVisibility !== ObjectMarkerVisibility.IconOnly && bTypeTextVisibility);
 	};
 
 	/**
@@ -370,12 +471,12 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	 * @private
 	 */
 	ObjectMarker.prototype._getDeviceType = function () {
-		return sap.ui.Device.media.getCurrentRange("DeviceSet").name.toLowerCase();
+		return this._getCurrentMediaContainerRange("DeviceSet").name.toLowerCase();
 	};
 
 	/**
 	 * Returns the inner control.
-	 *
+	 * @returns {object} The inner control
 	 * @private
 	 */
 	ObjectMarker.prototype._getInnerControl = function () {
@@ -393,7 +494,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	/**
 	 * Returns an inner control: <code>sap.m.Text</code> if <code>ObjectMarker</code> is non-interactive or
 	 * <code>sap.m.Link</code> - if interactive.
-	 *
+	 * @returns {object} The inner control
 	 * @private
 	 */
 	ObjectMarker.prototype._createInnerControl = function () {
@@ -431,19 +532,21 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 	 * @private
 	 */
 	ObjectMarker.prototype._createCustomText = function () {
-		return new CustomText(this.getId() + "-text");
+		return new CustomText(this.getId() + "-text", {
+			textAlign: TextAlign.Initial
+		});
 	};
 
 	/****************************************** CUSTOM TEXT CONTROL ****************************************************/
 
-	var CustomTextRenderer = Renderer.extend(sap.m.TextRenderer);
+	var CustomTextRenderer = Renderer.extend(TextRenderer);
 
 	CustomTextRenderer.renderText = function(oRm, oControl) {
 		oRm.renderControl(oControl._getIconAggregation());
-		sap.m.TextRenderer.renderText(oRm, oControl);
+		TextRenderer.renderText(oRm, oControl);
 	};
 
-	var CustomText = sap.m.Text.extend("CustomText", {
+	var CustomText = Text.extend("CustomText", {
 		metadata: {
 			properties: {
 				icon: {type : "sap.ui.core.URI", group : "Data", defaultValue : null}
@@ -466,7 +569,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 		var oIcon = this.getAggregation("_iconControl");
 
 		if (!oIcon) {
-			oIcon = new sap.ui.core.Icon();
+			oIcon = new Icon();
 			this.setAggregation("_iconControl", oIcon);
 		}
 
@@ -479,14 +582,14 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 
 	/****************************************** CUSTOM LINK CONTROL ****************************************************/
 
-	var CustomLinkRenderer = Renderer.extend(sap.m.LinkRenderer);
+	var CustomLinkRenderer = Renderer.extend(LinkRenderer);
 
 	CustomLinkRenderer.renderText = function(oRm, oControl) {
 		oRm.renderControl(oControl._getIconAggregation());
-		sap.m.LinkRenderer.renderText(oRm, oControl);
+		LinkRenderer.renderText(oRm, oControl);
 	};
 
-	var CustomLink = sap.m.Link.extend("CustomLink", {
+	var CustomLink = Link.extend("CustomLink", {
 		metadata: {
 			properties: {
 				icon: {type : "sap.ui.core.URI", group : "Data", defaultValue : null}
@@ -510,7 +613,7 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 		var oIcon = this.getAggregation("_iconControl");
 
 		if (!oIcon) {
-			oIcon = new sap.ui.core.Icon();
+			oIcon = new Icon();
 			this.setAggregation("_iconControl", oIcon);
 		}
 
@@ -523,5 +626,4 @@ sap.ui.define(['jquery.sap.global', "sap/ui/core/Control", 'sap/ui/core/Renderer
 
 
 	return ObjectMarker;
-
-}, /* bExport= */ true);
+});

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Recommended guidelines for message handling."/>
 <meta name="description" content="Recommended guidelines for message handling."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3357123258812533"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9633041330821664"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9633041330821664"/>
 <title>Message Handling</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiof5df293b96dc41699b8b357e9bcf7ed6">
 <div id="wrapper"><div id="container">
@@ -42,7 +28,7 @@
 
 			<li class="li">A message should always contain a 'Call for Action'.</li>
 
-			<li class="li">To achieve the above you need to map error messages from a backend system. </li>
+			<li class="li">To achieve the above, you need to map error messages from a back-end system. </li>
 
 			<li class="li">Focus on the most common error situations and improve the messages there. </li>
 
@@ -54,7 +40,7 @@
 		<div class="section" id="loiof5df293b96dc41699b8b357e9bcf7ed6__section_N10035_N10011_N10001"><div class="section_title">Messages Related to a Page</div><div type="Messages Related to a Page"><p class="p">For showing
 				messages to the user that are related to the currrent page, you have several
 				possible controls. Each of these offers a different type of interaction from the
-				user. Choose the control that fits best in you interaction pattern.  </p>
+				user. Choose the control that fits best in you interaction pattern. </p>
 <div class="sectiondiv subsection">
 				<p class="p subsectiontitle">Message Dialog</p>
 
@@ -79,17 +65,19 @@
 				</ul>
 
 				<div class="note sap-example example"><span class="exampletitle">Example</span> 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-*   jQuery.sap.require("sap.m.MessageBox");
-*   sap.m.MessageBox.show(
-*       "This message should appear in the message box.", {
-*           icon: sap.m.MessageBox.Icon.INFORMATION,
-*           title: "My message box title",
-*           actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-*           onClose: function(oAction) { / * do something * / }
-*       }
-*     );
-</pre></div>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">	// load MessageBox asynchronously
+	sap.ui.require(['sap/m/MessageBox'], function(MessageBox) {
+	
+		// and display message
+		MessageBox.show(
+			"This message should appear in the message box.", {
+				icon: MessageBox.Icon.INFORMATION,
+				title: "My message box title",
+				actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+				onClose: function(oAction) { / * do something * / }
+			}
+		);
+	});</pre></div>
 
 				</div>
 
@@ -112,9 +100,15 @@
 				</ul>
 
 				<div class="note sap-example example"><span class="exampletitle">Example</span> 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
-sap.m.MessageToast.show("Item deleted");
-			</pre></div>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">	// add MessageToast as import
+	sap.ui.define([..., 'sap/m/MessageTost', ...], function(..., MessageToast, ...) {
+
+		...
+		// show toast when needed
+		MessageToast.show("Item deleted");
+		...
+
+	});</pre></div>
 
 				</div>
 
@@ -128,13 +122,22 @@ sap.m.MessageToast.show("Item deleted");
 						<samp class="ph codeph">Warning</samp> and <samp class="ph codeph">Error</samp>. </p>
 
 				<div class="note sap-example example"><span class="exampletitle">Example</span> 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">	  var msg = new sap.m.MessageStrip({
-				id: "importantMessage",
-				text: "This is a sample text",
-				type: sap.ui.core.MessageType.Error,
-				showIcon: true,
-				showCloseButton: true
-			});</pre></div>
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">	// add MessageStrip and MessageType as imports
+	sap.ui.define([..., 'sap/m/MessageStrip', 'sap/ui/core/library', ...], function(..., MessageToast, coreLibrary, ...) {
+	
+	...
+		var MessageType = coreLibrary.MessageType;
+		
+		var msg = new MessageStrip({
+			id: "importantMessage",
+			text: "This is a sample text",
+			type: MessageType.Error,
+			showIcon: true,
+			showCloseButton: true
+		});
+		
+	...
+	});</pre></div>
 
 				</div>
 
@@ -150,6 +153,68 @@ sap.m.MessageToast.show("Item deleted");
 					systemized way to navigate and explore details for every message. You can find
 					more information on <samp class="ph codeph">MessagePopover</samp>
 					<a class="xref" href="52824a6c316a413dbd7bd5f29522dce2.html" title="Message Popover is used to display a summarized list of different types of messages (errors, warnings, success and information). It provides a handy and systemized way to navigate and explore details for every message.">here</a>. </p>
+
+			</div><div class="sectiondiv subsection">
+				<p class="p subsectiontitle">MessageView</p>
+
+				<p class="p"><samp class="ph codeph">MessageView</samp> displays the same type of summarized messages list as the
+						<samp class="ph codeph">MessagePopover</samp>. The main difference between the controls is
+					that the <samp class="ph codeph">MessageView</samp> can be embedded in any suitable control
+					(for example a <samp class="ph codeph">Dialog</samp>). This allows displaying of the message
+					summary in any part of the application. As of version 1.46, the
+						<samp class="ph codeph">MessagePopover</samp> has been refactored to automatically
+					instantiate and use a <samp class="ph codeph">MessageView</samp> for its content. All other
+					controls need to instantiate it themselves. Here is a sample for a
+						<samp class="ph codeph">MessageView</samp> in a <samp class="ph codeph">Dialog:</samp></p>
+
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">...
+	sap.ui.require(['sap/m/Dialog', 'sap/m/MessageView', 'sap/m/Bar', 'sap/m/Button', 'sap/m/Text'], 
+		function(Dialog, MessageView, Bar, Button, Text) {
+	
+			// create message view 
+			var oMessageView = new MessageView({
+				showDetailsPageHeader: false,
+				itemSelect: function () {
+					that._oBackButton.setVisible(true);
+				},
+				items: {
+					path: "/",
+					template: oMessageTemplate
+				}
+			});
+
+			...
+
+			var oDialog = new Dialog({
+				title: "Messages",
+				resizable: true,
+				content: oMessageView,
+				state: 'Error',
+				beginButton: new Button({
+					press: function () {
+						oDialog.close();
+					},
+					text: "Close"
+				}),
+				customHeader: new Bar({
+					contentMiddle: [
+						new Text({ text: "Error"})
+					],
+					contentLeft: [
+						oBackButton
+					]
+				}),
+				contentHeight: "300px",
+				contentWidth: "500px",
+				verticalScrolling: false
+			});
+	
+			oDialog.open();
+			...
+		
+		}
+	);
+...</pre></div>
 
 			</div></div></div>
 
@@ -169,7 +234,7 @@ sap.m.MessageToast.show("Item deleted");
 
 		<div class="section" id="loiof5df293b96dc41699b8b357e9bcf7ed6__section_N100AF_N10011_N10001"><div class="section_title">Multiple Messages</div><div type="Multiple Messages">
 			
-			<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> Mobile does <strong class="ph b">not</strong> support multiple messages at the same time.  Mobile Designs
+			<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> Mobile does <strong class="ph b">not</strong> support multiple messages at the same time.  Mobile Designs
 				recommend to be 'more sparse' with messages, that is, only show one message at a
 				time. This can also be achieved by combining and reducing multiple messages.</p>
 
@@ -184,19 +249,5 @@ sap.m.MessageToast.show("Item deleted");
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Message Handling";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

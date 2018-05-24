@@ -1,23 +1,21 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([
-	"sap/ui/fl/Utils", "jquery.sap.global"
-], function(Utils, $) {
+sap.ui.define(function() {
 	"use strict";
 
 	/**
 	 * Base functionality for all change handler which provides some reuse methods
 	 * @alias sap.ui.fl.changeHandler.Base
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @experimental Since 1.27.0
 	 *
 	 */
-	var Base = { };
+	var Base = {};
 
 	/**
 	 * Sets a text in a change.

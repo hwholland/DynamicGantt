@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,9 +14,26 @@ sap.ui.define([
 	"sap/ui/core/delegate/ItemNavigation",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/IconPool",
-	"sap/ui/Device"
-], function (Control, Text, Link, Select, Item, ItemNavigation, ResizeHandler, IconPool, Device) {
+	"sap/ui/Device",
+	"sap/m/library",
+	"./BreadcrumbsRenderer"
+], function(
+	Control,
+	Text,
+	Link,
+	Select,
+	Item,
+	ItemNavigation,
+	ResizeHandler,
+	IconPool,
+	Device,
+	library,
+	BreadcrumbsRenderer
+) {
 	"use strict";
+
+	// shortcut for sap.m.SelectType
+	var SelectType = library.SelectType;
 
 	/**
 	 * Constructor for a new Breadcrumbs
@@ -31,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -43,6 +60,8 @@ sap.ui.define([
 	var Breadcrumbs = Control.extend("sap.m.Breadcrumbs", {
 		metadata: {
 			library: "sap.m",
+			interfaces: ["sap.m.IBreadcrumbs"],
+			designtime: "sap/m/designtime/Breadcrumbs.designtime",
 			properties: {
 
 				/**
@@ -75,18 +94,31 @@ sap.ui.define([
 	/*************************************** Framework lifecycle events ******************************************/
 
 	Breadcrumbs.prototype.onBeforeRendering = function () {
+		this.bRenderingPhase = true;
+
+		if (this._sResizeListenerId) {
+			ResizeHandler.deregister(this._sResizeListenerId);
+			this._sResizeListenerId = null;
+		}
+
 		if (this._bControlsInfoCached) {
 			this._updateSelect(true);
 		}
 	};
 
 	Breadcrumbs.prototype.onAfterRendering = function () {
+		if (!this._sResizeListenerId) {
+			this._sResizeListenerId = ResizeHandler.register(this, this._handleScreenResize.bind(this));
+		}
+
 		if (!this._bControlsInfoCached) {
 			this._updateSelect(true);
 			return;
 		}
 
 		this._configureKeyboardHandling();
+
+		this.bRenderingPhase = false;
 	};
 
 	Breadcrumbs.prototype.onThemeChanged = function () {
@@ -102,10 +134,6 @@ sap.ui.define([
 
 	Breadcrumbs.PAGEUP_AND_PAGEDOWN_JUMP_SIZE = 5;
 
-	Breadcrumbs._getResourceBundle = function () {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
-	};
-
 	/*************************************** Internal aggregation handling  ******************************************/
 
 	Breadcrumbs.prototype._getAugmentedId = function (sSuffix) {
@@ -120,7 +148,8 @@ sap.ui.define([
 				forceSelection: false,
 				autoAdjustWidth: true,
 				icon: IconPool.getIconURI("slim-arrow-down"),
-				type: sap.m.SelectType.IconOnly
+				type: SelectType.IconOnly,
+				tooltip: BreadcrumbsRenderer._getResourceBundleText("BREADCRUMB_SELECT_TOOLTIP")
 			})));
 		}
 		return this.getAggregation("_select");
@@ -165,7 +194,7 @@ sap.ui.define([
 	};
 
 	Breadcrumbs.prototype.removeAllLinks = function () {
-		var aLinks = this.getAggregation("links");
+		var aLinks = this.getAggregation("links", []);
 		var vResult = this.removeAllAggregation.apply(this, fnConvertArguments("links", arguments));
 		aLinks.forEach(this._deregisterControlListener, this);
 		this._resetControl();
@@ -173,7 +202,7 @@ sap.ui.define([
 	};
 
 	Breadcrumbs.prototype.destroyLinks = function () {
-		var aLinks = this.getAggregation("links");
+		var aLinks = this.getAggregation("links", []);
 		var vResult = this.destroyAggregation.apply(this, fnConvertArguments("links", arguments));
 		aLinks.forEach(this._deregisterControlListener, this);
 		this._resetControl();
@@ -205,8 +234,6 @@ sap.ui.define([
 			oSelect.setSelectedIndex(0);
 		} else {
 			oSelect.setSelectedItem(null);
-			/* this is a fix for a bug in the select, this line should be romeved after it has been fixed in the select */
-			oSelect.getPicker().getCustomHeader().getContentLeft()[0].setValue(null);
 		}
 
 		Select.prototype._onBeforeOpenDialog.call(oSelect);
@@ -306,7 +333,7 @@ sap.ui.define([
 			oControlsDistribution = this._getControlDistribution();
 
 		if (!this._bControlDistributionCached || bInvalidateDistribution) {
-			oSelect.removeAllItems();
+			oSelect.destroyItems();
 			aControlsForSelect = Device.system.phone ? this._getItemsForMobile() : oControlsDistribution.aControlsForSelect;
 			aControlsForSelect.map(this._createSelectItem).reverse().forEach(oSelect.insertItem, oSelect);
 			this._bControlDistributionCached = true;
@@ -315,7 +342,7 @@ sap.ui.define([
 
 		oSelect.setVisible(!!oControlsDistribution.aControlsForSelect.length);
 
-		if (!this._sResizeListenerId) {
+		if (!this._sResizeListenerId && !this.bRenderingPhase) {
 			this._sResizeListenerId = ResizeHandler.register(this, this._handleScreenResize.bind(this));
 		}
 	};
@@ -351,11 +378,15 @@ sap.ui.define([
 		return this._oDistributedControls;
 	};
 
+	Breadcrumbs.prototype._getSelectWidth = function() {
+		return this._getSelect().getVisible() && this._iSelectWidth || 0;
+	};
+
 	Breadcrumbs.prototype._determineControlDistribution = function (iMaxContentSize) {
 		var index,
 			oControlInfo,
 			aControlInfo = this._getControlsInfo().aControlInfo,
-			iSelectWidth = this._iSelectWidth,
+			iSelectWidth = this._getSelectWidth(),
 			aControlsForSelect = [],
 			aControlsForBreadcrumbTrail = [],
 			iUsedSpace = iSelectWidth; // account for the selectWidth initially;
@@ -390,8 +421,9 @@ sap.ui.define([
 	};
 
 	/**
-	 * Stores the sizes and other info of controls so they don't need to be recalculated again until they change
+	 * Stores the sizes and other info of controls so they don't need to be recalculated again until they change.
 	 * @private
+	 * @returns {Object} The <code>Breadcrumbs</code> control information
 	 */
 	Breadcrumbs.prototype._getControlsInfo = function () {
 		if (!this._bControlsInfoCached) {
@@ -472,6 +504,10 @@ sap.ui.define([
 			aItemsToNavigate = this._getItemsToNavigate(),
 			aNavigationDomRefs = [];
 
+		if (aItemsToNavigate.length === 0) {
+			return;
+		}
+
 		aItemsToNavigate.forEach(function (oItem, iIndex) {
 			if (iIndex === 0) {
 				oItem.$().attr("tabIndex", "0");
@@ -481,6 +517,12 @@ sap.ui.define([
 		});
 
 		this.addDelegate(oItemNavigation);
+		oItemNavigation.setDisabledModifiers({
+			sapnext : ["alt"],
+			sapprevious : ["alt"],
+			saphome : ["alt"],
+			sapend : ["alt"]
+		});
 		oItemNavigation.setCycling(false);
 		oItemNavigation.setPageSize(Breadcrumbs.PAGEUP_AND_PAGEDOWN_JUMP_SIZE);
 		oItemNavigation.setRootDomRef(this.getDomRef());
@@ -548,4 +590,4 @@ sap.ui.define([
 
 	return Breadcrumbs;
 
-}, /* bExport= */ true);
+});

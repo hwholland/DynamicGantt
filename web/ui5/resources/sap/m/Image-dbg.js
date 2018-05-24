@@ -1,13 +1,24 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Image.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'./ImageRenderer',
+	'jquery.sap.keycodes'
+],
+	function(jQuery, library, Control, ImageRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.m.ImageMode
+	var ImageMode = library.ImageMode;
 
 
 
@@ -27,9 +38,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * From version 1.30, new image mode sap.m.ImageMode.Background is added. When this mode is set, the src property is set using the css style 'background-image'. The properties 'backgroundSize', 'backgroundPosition', 'backgroundRepeat' have effect only when image is in sap.m.ImageMode.Background mode. In order to make the high density image correctly displayed, the 'backgroundSize' should be set to the dimension of the normal density version.
 	 *
 	 * @extends sap.ui.core.Control
+	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -38,7 +50,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	var Image = Control.extend("sap.m.Image", /** @lends sap.m.Image.prototype */ { metadata : {
 
+		interfaces : ["sap.ui.core.IFormContent"],
 		library : "sap.m",
+		designtime: "sap/m/designtime/Image.designtime",
 		properties : {
 
 			/**
@@ -113,6 +127,26 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			*/
 			backgroundRepeat : {type : "string", group : "Appearance", defaultValue : "no-repeat"}
 		},
+		aggregations : {
+			/**
+			 * A <code>sap.m.LightBox</code> instance, that will be opened automatically when the user interacts with the <code>Image</code> control.
+			 *
+			 * The <code>tap</code> event will still be fired.
+			 * @public
+			 */
+			detailBox: {type: 'sap.m.LightBox', multiple: false, bindable: "bindable"}
+		},
+		associations : {
+			/**
+			 * Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).
+			 */
+			ariaDescribedBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"},
+
+			/**
+			 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledBy).
+			 */
+			ariaLabelledBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"}
+		},
 		events : {
 
 			/**
@@ -169,6 +203,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @private
 	 */
 	Image.prototype.onload = function(oEvent) {
+		var iWidth,
+			iHeight;
+
 		// This is used to fix the late load event handler problem on ios platform, if the event handler
 		// has not been called right after image is loaded, event is triggered manually in onAfterRendering
 		// method.
@@ -183,15 +220,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			oDomRef = $DomNode[0];
 
 		// set the src to the real dom node
-		if (this.getMode() === sap.m.ImageMode.Background) {
+		if (this.getMode() === ImageMode.Background) {
 			// In Background mode, the src is applied to the output DOM element only when the source image is finally loaded to the client side
-			$DomNode.css("background-image", "url(" + this._oImage.src + ")");
+			$DomNode.css("background-image", "url(\"" + this._oImage.src + "\")");
 		}
 
 		if (!this._isWidthOrHeightSet()) {
 			if (this._iLoadImageDensity > 1) {
-				if (($DomNode.width() === oDomRef.naturalWidth) && ($DomNode.height() === oDomRef.naturalHeight)) {
-					$DomNode.width($DomNode.width() / this._iLoadImageDensity);
+				iWidth = Math.round(oDomRef.getBoundingClientRect().width);
+				iHeight = Math.round(oDomRef.getBoundingClientRect().height);
+
+				if ((iWidth === oDomRef.naturalWidth) && (iHeight === oDomRef.naturalHeight)) {
+					$DomNode.width(iWidth / this._iLoadImageDensity);
 				}
 			}
 		}
@@ -219,7 +259,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		var $DomNode = this.$(),
 			sMode = this.getMode(),
 			// In Background mode, the src property should be read from the temp Image object
-			sSrc = (sMode === sap.m.ImageMode.Image) ? $DomNode.attr("src") : this._oImage.src,
+			sSrc = (sMode === ImageMode.Image) ? $DomNode.attr("src") : this._oImage.src,
 			d = Image._currentDevicePixelRatio,
 			sCurrentSrc = this._isActiveState ? this.getActiveSrc() : this.getSrc();
 
@@ -257,6 +297,61 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
+	 * Sets the <code>detailBox</code> aggregation.
+	 * @param {sap.m.LightBox|undefined} oLightBox - Instance of the <code>LightBox</code> control or undefined
+	 * @returns {object} <code>this</code> for chaining
+	 * @override
+	 * @public
+	 */
+	Image.prototype.setDetailBox = function (oLightBox) {
+		var oCurrentDetailBox = this.getDetailBox();
+
+		if (oLightBox) {
+			// In case someone try's to set the same LightBox twice we don't do anything
+			if (oLightBox === oCurrentDetailBox) {
+				return this;
+			}
+
+			// If we already have a LightBox detach old one's event
+			if (oCurrentDetailBox) {
+				this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
+			}
+
+			// Bind the LightBox open method to the press event of the Image
+			this._fnLightBoxOpen = oLightBox.open;
+			this.attachPress(this._fnLightBoxOpen, oLightBox);
+		} else if (this._fnLightBoxOpen) {
+			// If there was a LightBox - cleanup
+			this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
+			this._fnLightBoxOpen = null;
+		}
+
+		return this.setAggregation("detailBox", oLightBox);
+	};
+
+	/**
+	 * @override
+	 */
+	Image.prototype.clone = function () {
+		var oClone = Control.prototype.clone.apply(this, arguments),
+			oCloneDetailBox = oClone.getDetailBox();
+
+		// Handle press event if DetailBox is available
+		if (oCloneDetailBox) {
+
+			// Detach the old event
+			oClone.detachPress(this._fnLightBoxOpen, this.getDetailBox());
+
+			// Attach new event with the cloned detail box
+			oClone._fnLightBoxOpen = oCloneDetailBox.open;
+			oClone.attachPress(oClone._fnLightBoxOpen, oCloneDetailBox);
+
+		}
+
+		return oClone;
+	};
+
+	/**
 	 * the 'beforeRendering' event handler
 	 * @private
 	 */
@@ -276,7 +371,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			sMode = this.getMode(),
 			oDomImageRef;
 
-		if (sMode === sap.m.ImageMode.Image) {
+		if (sMode === ImageMode.Image) {
 			// bind the load and error event handler
 			$DomNode.on("load", jQuery.proxy(this.onload, this));
 			$DomNode.on("error", jQuery.proxy(this.onerror, this));
@@ -284,7 +379,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			oDomImageRef = $DomNode[0];
 		}
 
-		if (sMode === sap.m.ImageMode.Background) {
+		if (sMode === ImageMode.Background) {
 			oDomImageRef = this._oImage;
 		}
 
@@ -307,6 +402,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			this._oImage = null;
 		} else {
 			this.$().off("load", this.onload).off("error", this.onerror);
+		}
+
+		if (this._fnLightBoxOpen) {
+			this._fnLightBoxOpen = null;
 		}
 	};
 
@@ -343,12 +442,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 
-	/**
-	 * This overrides the default setter of the src property and update the dom node.
-	 *
-	 * @param {sap.ui.core.URI} sSrc
-	 * @public
-	 */
 	Image.prototype.setSrc = function(sSrc) {
 		if (sSrc === this.getSrc()) {
 			return this;
@@ -364,22 +457,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return this;
 	};
 
-	/**
-	 * This overrides the default setter of the activeSrc property in order to avoid the rerendering.
-	 *
-	 * @param {sap.ui.core.URI} sActiveSrc
-	 * @public
-	 */
 	Image.prototype.setActiveSrc = function(sActiveSrc) {
 		if (!sActiveSrc) {
 			sActiveSrc = "";
 		}
-		this.setProperty("activeSrc", sActiveSrc, true);
+		return this.setProperty("activeSrc", sActiveSrc, true);
 	};
 
 	Image.prototype.attachPress = function() {
 		Array.prototype.unshift.apply(arguments, ["press"]);
-		sap.ui.core.Control.prototype.attachEvent.apply(this, arguments);
+		Control.prototype.attachEvent.apply(this, arguments);
 
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", "0");
@@ -391,7 +478,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	Image.prototype.detachPress = function() {
 		Array.prototype.unshift.apply(arguments, ["press"]);
-		sap.ui.core.Control.prototype.detachEvent.apply(this, arguments);
+		Control.prototype.detachEvent.apply(this, arguments);
 
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex");
@@ -442,7 +529,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		if ($DomNode.length) {
 			// the src is updated on the output DOM element when mode is set to Image
 			// the src is updated on the temp Image object when mode is set to Background
-			if (sMode === sap.m.ImageMode.Image) {
+			if (sMode === ImageMode.Image) {
 				$DomNode.attr("src", sSrc);
 			} else {
 				$DomNode.addClass("sapMNoImg");
@@ -459,7 +546,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	* @private
 	*/
 	Image.prototype._preLoadImage = function(sSrc) {
-		if (this.getMode() !== sap.m.ImageMode.Background) {
+		if (this.getMode() !== ImageMode.Background) {
 			return;
 		}
 
@@ -568,8 +655,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * Returns the <code>sap.m.Image</code>  accessibility information.
+	 *
+	 * @see sap.ui.core.Control#getAccessibilityInfo
 	 * @protected
+	 * @returns {Object} The <code>sap.m.Image</code> accessibility information
 	 */
 	Image.prototype.getAccessibilityInfo = function() {
 		var bHasPressListeners = this.hasListeners("press");
@@ -586,6 +676,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		};
 	};
 
+	/*
+	 * Image must not be stretched in Form because should have its original size.
+	 */
+	Image.prototype.getFormDoNotAdjustWidth = function() {
+		return true;
+	};
+
+
 	return Image;
 
-}, /* bExport= */ true);
+});

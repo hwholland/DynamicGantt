@@ -1,16 +1,28 @@
-jQuery.sap.require("sap.ui.fl.changeHandler.UnhideControl");
-jQuery.sap.require("sap.ui.core.Control");
-jQuery.sap.require("sap.ui.core.Element");
-jQuery.sap.require("sap.ui.fl.Change");
-jQuery.sap.require("sap.ui.fl.changeHandler.JsControlTreeModifier");
-jQuery.sap.require("sap.ui.fl.changeHandler.XmlTreeModifier");
+/*global QUnit*/
 
+QUnit.config.autostart = false;
 
-(function(UnhideControlChangeHandler, Control, Element, Change, JsControlTreeModifier, XmlTreeModifier) {
+sap.ui.require([
+	'sap/ui/core/Control',
+	'sap/ui/core/Element',
+	'sap/ui/fl/changeHandler/UnhideControl',
+	'sap/ui/fl/Change',
+	'sap/ui/fl/changeHandler/JsControlTreeModifier',
+	'sap/ui/fl/changeHandler/XmlTreeModifier'
+],
+function(
+	Control,
+	Element,
+	UnhideControlChangeHandler,
+	Change,
+	JsControlTreeModifier,
+	XmlTreeModifier
+) {
+	'use strict';
+	QUnit.start();
 
 	QUnit.module("sap.ui.fl.changeHandler.UnhideControl", {
-		setup: function() {
-			this.stubs = [];
+		beforeEach: function() {
 			this.oChangeHandler = UnhideControlChangeHandler;
 			var oChangeJson = {
 				"selector": {
@@ -22,58 +34,47 @@ jQuery.sap.require("sap.ui.fl.changeHandler.XmlTreeModifier");
 
 			this.oChange = new Change(oChangeJson);
 		},
-		teardown: function() {
-			this.stubs.forEach(function(stub) {
-				stub.restore();
-			});
+		afterEach: function() {
+			this.oChange = null;
 		}
 	});
 
-	QUnit.test("applyChange on a js control tree", function() {
+	QUnit.test('applyChange on a js control tree', function(assert) {
 		var oControl = new Control();
+
 		oControl.setVisible(false);
+		this.oChangeHandler.applyChange(this.oChange, oControl, {modifier: JsControlTreeModifier});
+		assert.equal(oControl.getVisible(), true);
 
-		assert.ok(this.oChangeHandler.applyChange(this.oChange, oControl, {modifier: JsControlTreeModifier}));
-
+		oControl.setVisible(true);
+		this.oChangeHandler.applyChange(this.oChange, oControl, {modifier: JsControlTreeModifier});
 		assert.equal(oControl.getVisible(), true);
 	});
 
-	QUnit.test("applyChange on a xml tree", function() {
+	QUnit.test('revertChange functionality with state persistence', function(assert) {
+		var oControl = new Control();
+
+		oControl.setVisible(true);
+		this.oChangeHandler.applyChange(this.oChange, oControl, {modifier: JsControlTreeModifier});
+		this.oChangeHandler.revertChange(this.oChange, oControl, {modifier: JsControlTreeModifier});
+		assert.equal(oControl.getVisible(), true, 'should be visible');
+	});
+
+	QUnit.test('applyChange on a xml tree', function(assert) {
 		var oDOMParser = new DOMParser();
-		var oXmlDocument = oDOMParser.parseFromString("<Button text='" + this.OLD_VALUE + "' enabled='true' />", "application/xml");
+		var oXmlDocument = oDOMParser.parseFromString("<Button xmlns='sap.m' text='" + this.OLD_VALUE + "' enabled='true' />", "application/xml");
 		this.oXmlButton = oXmlDocument.childNodes[0];
 
 		assert.ok(this.oChangeHandler.applyChange(this.oChange, this.oXmlButton, {modifier: XmlTreeModifier}));
 
-		assert.equal(this.oXmlButton.getAttribute("visible"), "true", "xml button node has the visible attribute added and set to false");
+		assert.strictEqual(this.oXmlButton.getAttribute("visible"), null, "xml button node has no longer the visible attribute");
 	});
 
-	QUnit.test("applyChange throws an error if the change is not applyable", function() {
+	QUnit.test('applyChange throws an error if the change is not applyable', function(assert) {
 		assert.throws(function () {
 			var oElement = new Element();
 			this.oChangeHandler.applyChange(this.oChange, oElement, {modifier: JsControlTreeModifier});
 		}, new Error("Provided control instance has no setVisible method"), "change handler throws an error that the control has no setter for visible");
-
-
 	});
 
-	QUnit.test("completeChangeContent", function(assert) {
-
-		var oChangeJson = {
-			"selector": {
-				"id": "key"
-			}
-		};
-
-		var oChange = new Change(oChangeJson);
-		var oSpecificChangeInfo = {};
-
-		this.oChangeHandler.completeChangeContent(oChange, oSpecificChangeInfo, JsControlTreeModifier);
-
-		oChangeJson = oChange.getDefinition();
-
-		assert.equal(Object.keys(oChangeJson.content).length, 0);
-
-	});
-
-}(sap.ui.fl.changeHandler.UnhideControl, sap.ui.core.Control, sap.ui.core.Element, sap.ui.fl.Change, sap.ui.fl.changeHandler.JsControlTreeModifier, sap.ui.fl.changeHandler.XmlTreeModifier));
+});

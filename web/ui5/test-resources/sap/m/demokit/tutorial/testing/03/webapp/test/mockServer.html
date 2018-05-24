@@ -11,7 +11,7 @@
 	<script id="sap-ui-bootstrap"
 			src="../../../../../../../../../resources/sap-ui-core.js"
 			data-sap-ui-libs="sap.m"
-			data-sap-ui-theme="sap_bluecrystal"
+			data-sap-ui-theme="sap_belize"
 			data-sap-ui-compatVersion="edge"
 			data-sap-ui-preload="async"
 			data-sap-ui-resourceroots='{
@@ -33,9 +33,12 @@
 
 				// initialize the shell
 				new Shell({
-					app: new ComponentContainer({
-						height: "100%",
-						name: "sap.ui.demo.bulletinboard"
+					app : new ComponentContainer({
+						height : "100%",
+						name : "sap.ui.demo.bulletinboard",
+						settings : {
+							id : "bulletinboard"
+						}
 					})
 				}).placeAt("content");
 			});

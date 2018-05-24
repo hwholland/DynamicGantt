@@ -14,7 +14,7 @@
             <documentation>An input control for specifying a time value. The user can select the hour, minute, and optionally AM or PM.</documentation>
         </value>
         <value name="Integer">
-            <documentation>&gt;An input control for specifying a Integer value</documentation>
+            <documentation>&gt;An input control for specifying an Integer value</documentation>
         </value>
         <value name="Float">
             <documentation>&gt;An input control for specifying a Float value</documentation>

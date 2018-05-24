@@ -1,6 +1,6 @@
 /*
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,11 +14,6 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 
 
 	/**
-	 * Base Class for UIComponent.
-	 *
-	 * If you are extending an UIComponent make sure you read the {@link #.extend} documentation since the metadata is special.
-	 *
-	 * @class
 	 * Creates and initializes a new UIComponent with the given <code>sId</code> and
 	 * settings.
 	 *
@@ -28,17 +23,21 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 *
 	 * @param {string}
 	 *            [sId] Optional ID for the new control; generated automatically if
-	 *            no non-empty ID is given Note: this can be omitted, no matter
-	 *            whether <code>mSettings</code> will be given or not!
+	 *            no non-empty ID is given; Note: this can be omitted, no matter
+	 *            whether <code>mSettings</code> will be given or not
 	 * @param {object}
-	 *            [mSettings] optional map/JSON-object with initial settings for the
+	 *            [mSettings] Optional map/JSON-object with initial settings for the
 	 *            new component instance
-	 * @public
 	 *
+	 * @class Base Class for UIComponent.
+	 *
+	 * If you are extending a UIComponent make sure you read the {@link #.extend} documentation since the metadata is special.
+	 *
+	 * @public
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
@@ -48,11 +47,14 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	{
 		constructor : function(sId, mSettings) {
 
+			var bCreated = false;
 			try {
 				Component.apply(this, arguments);
-			} catch (e) {
-				this._destroyCreatedInstances();
-				throw e;
+				bCreated = true;
+			} finally {
+				if (!bCreated) {
+					this._destroyCreatedInstances();
+				}
 			}
 
 		},
@@ -69,6 +71,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 				 */
 				"rootControl": { type: "sap.ui.core.Control", multiple: false, visibility: "hidden" }
 			},
+			designtime: "sap/ui/core/designtime/UIComponent.designtime",
 			routing: {
 			}
 			//autoDestroy: false // TODO: destroy component when view should be destroyed (not implemented yet!)
@@ -117,7 +120,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 *             "controlId": "App",
 	 *             "controlAggregation": "pages",
 	 *             "viewNamespace": "myApplication.namespace",
-	 *             // If you are using the mobile library, you have to use a sap.m.Router, to get support for
+	 *             // If you are using the mobile library, you have to use an sap.m.Router, to get support for
 	 *             // the controls sap.m.App, sap.m.SplitApp, sap.m.NavContainer and sap.m.SplitContainer.
 	 *             "routerClass": "sap.m.routing.Router"
 	 *             // What happens if no route matches the hash?
@@ -191,9 +194,11 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 * <p>
 	 * Example usage:
 	 * <pre>
-	 * sap.ui.core.UIComponent._fnOnInstanceInitialized = function(oComponent) {
-	 *   // do some logic with the Component
-	 * }
+	 * sap.ui.require(['sap/ui/core/UIComponent'], function(UIComponent) {
+	 *   UIComponent._fnOnInstanceInitialized = function(oComponent) {
+	 *     // do some logic with the Component
+	 *   }
+	 * });
 	 * </pre>
 	 * <p>
 	 * <b>ATTENTION:</b> This hook must only be used by Fiori 2.0 adapter.
@@ -210,9 +215,11 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 * <p>
 	 * Example usage:
 	 * <pre>
-	 * sap.ui.core.UIComponent._fnOnInstanceDestroy = function(oComponent) {
-	 *   // do some logic with the Component
-	 * }
+	 * sap.ui.require(['sap/ui/core/UIComponent'], function(UIComponent) {
+	 *   UIComponent._fnOnInstanceDestroy = function(oComponent) {
+	 *     // do some logic with the Component
+	 *   }
+	 * });
 	 * </pre>
 	 * <p>
 	 * <b>ATTENTION:</b> This hook must only be used by Fiori 2.0 adapter.
@@ -256,7 +263,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 		// create the router for the component instance
 		if (vRoutes) {
 			var Router = sap.ui.requireSync("sap/ui/core/routing/Router");
-			var fnRouterConstructor = getConstructorFunctionFor(oRoutingConfig.routerClass || Router);
+			var fnRouterConstructor = getConstructorFunctionFor(this._getRouterClassName() || Router);
 			this._oRouter = new fnRouterConstructor(vRoutes, oRoutingConfig, this, oRoutingManifestEntry.targets);
 			this._oTargets = this._oRouter.getTargets();
 			this._oViews = this._oRouter.getViews();
@@ -282,7 +289,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 		});
 
 		// only for root "views" we automatically define the target parent
-		var oRootControl = this.getAggregation("rootControl");
+		var oRootControl = this.getRootControl();
 		if (oRootControl instanceof View) {
 			if (oRoutingConfig.targetParent === undefined) {
 				oRoutingConfig.targetParent = oRootControl.getId();
@@ -454,8 +461,8 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 *
 	 * @param {string} sId Prefixed ID
 	 * @return {string} ID without prefix or <code>null</code>
-	 * @private
-	 * @since 1.38.9
+	 * @public
+	 * @since 1.39.0
 	 */
 	UIComponent.prototype.getLocalId = function(sId) {
 		var sPrefix = this.getId() + "---";
@@ -473,10 +480,22 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	};
 
 	/**
-	 * The method to create the content (UI Control Tree) of the Component.
-	 * This method has to be overwritten in the implementation of the component
-	 * if the root view is not declared in the component metadata.
+	 * Hook method to create the content (UI Control Tree) of this component.
 	 *
+	 * The default implementation in this class reads the name (and optionally type) of a root view from the
+	 * descriptor for this component (path <code>/sap.ui5/rootView</code>) or, for backward compatibility,
+	 * just the name from static component metadata (property <code>rootView</code>). When no type is specified,
+	 * it defaults to XML. The method then calls the {@link sap.ui.view view factory} to instantiate the root
+	 * view and returns the result.
+	 *
+	 * When there is no root view configuration, <code>null</code> will be returned.
+	 *
+	 * This method can be overwritten by subclasses if the default implementation doesn't fit their needs.
+	 * Subclasses are not limited to views as return type but may return any control, but only a single control
+	 * (can be the root of a larger control tree, however).
+	 *
+	 * @returns {sap.ui.core.mvc.View|sap.ui.core.Control} Root control of the UI tree or <code>null</code> if none is configured
+	 * @throws {Error} When the root view configuration could not be interpreted; subclasses might throw errors also for other reasons
 	 * @public
 	 */
 	UIComponent.prototype.createContent = function() {
@@ -503,13 +522,41 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	};
 
 	/**
-	 * Renders the the root control of the UIComponent.
+	 * Returns the content of {@link sap.ui.core.UIComponent#createContent}.
+	 * If you specified a <code>rootView</code> in your metadata or in the descriptor file (manifest.json),
+	 * you will get the instance of the root view.
+	 * This getter will only return something if the {@link sap.ui.core.UIComponent#init} function was invoked.
+	 * If <code>createContent</code> is not implemented, and there is no root view, it will return <code>null</code>. Here is an example:
+	 * <code>
+	 *     <pre>
+	 *          var MyExtension = UIComponent.extend("my.Component", {
+	 *               metadata: {
+	 *                    rootView: "my.View"
+	 *               },
+	 *               init: function () {
+	 *                    this.getRootControl(); // returns null
+	 *                    UIComponent.prototype.init.apply(this, arguments);
+	 *                    this.getRootControl(); // returns the view "my.View"
+	 *               }
+	 *          });
+	 *     </pre>
+	 * </code>
+	 * @protected
+	 * @since 1.44.0
+	 * @returns {sap.ui.core.Control} the control created by {@link sap.ui.core.UIComponent#createContent}
+	 */
+	UIComponent.prototype.getRootControl = function() {
+		return this.getAggregation("rootControl");
+	};
+
+	/**
+	 * Renders the root control of the UIComponent.
 	 *
 	 * @param {sap.ui.core.RenderManager} oRenderManager a RenderManager instance
 	 * @public
 	 */
 	UIComponent.prototype.render = function(oRenderManager) {
-		var oControl = this.getAggregation("rootControl");
+		var oControl = this.getRootControl();
 		if (oControl && oRenderManager) {
 			oRenderManager.renderControl(oControl);
 		}
@@ -543,6 +590,19 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 */
 	UIComponent.prototype.setContainer = function(oContainer) {
 		this.oContainer = oContainer;
+		if (oContainer) {
+			this._applyContextualSettings(oContainer._getContextualSettings());
+		} else {
+			this._oContextualSettings = ManagedObject._defaultContextualSettings;
+			if (!this._bIsBeingDestroyed) {
+				setTimeout(function() {
+					// if object is being destroyed or container is set again (move) no propagation is needed
+					if (!this.oContainer) {
+						this._propagateContextualSettings();
+					}
+				}.bind(this), 0);
+			}
+		}
 		return this;
 	};
 
@@ -568,6 +628,19 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './l
 	 */
 	UIComponent.prototype.onAfterRendering = function() {};
 
+	/**
+	 * Determines the router class name by checking the "routing" configuration manifest entry.
+	 * Override to change the criteria for determining the router class.
+	 * @sap-restricted sap.suite.ui.generic.template
+	 * @private
+	 * @returns {string|undefined} Name of the router class to be used, or <code>undefined</code> for the default router.
+	 */
+	UIComponent.prototype._getRouterClassName = function() {
+		var oRoutingManifestEntry = this._getManifestEntry("/sap.ui5/routing", true) || {},
+			oRoutingConfig = oRoutingManifestEntry.config || {};
+
+		return oRoutingConfig.routerClass;
+	};
 
 	return UIComponent;
 

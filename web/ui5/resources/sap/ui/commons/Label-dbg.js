@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.Label.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/Popup', 'sap/ui/core/LabelEnablement'],
-	function(jQuery, library, Control, Popup, LabelEnablement) {
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/Popup',
+    'sap/ui/core/LabelEnablement',
+    "./LabelRenderer"
+],
+	function(jQuery, library, Control, Popup, LabelEnablement, LabelRenderer) {
 	"use strict";
 
 
@@ -24,7 +31,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @implements sap.ui.commons.ToolbarItem, sap.ui.core.Label
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -69,7 +76,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 			/**
 			 * Determines the icon to be displayed in the control.
-			 * This can be an URI to an image or an icon font URI.
+			 * This can be a URI to an image or an icon font URI.
 			 */
 			icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : null},
 
@@ -115,8 +122,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				}
 			}
 
-			// attach to change of required flag of labeled control
-			oFor.attachEvent("requiredChanged",this._handleRequiredChanged, this);
 			this._oFor = oFor;
 		}
 	};
@@ -129,7 +134,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		if (this._oFor) {
-			this._oFor.detachEvent("requiredChanged",this._handleRequiredChanged, this);
 			this._oFor = undefined;
 		}
 	};
@@ -141,32 +145,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		if (this._oFor) {
-			this._oFor.detachEvent("requiredChanged",this._handleRequiredChanged, this);
 			this._oFor = undefined;
 		}
-	};
-
-	/**
-	 * Checks whether the Label itself or the associated control is marked as required (they are mutually exclusive).
-	 *
-	 * @protected
-	 * @returns {Boolean} Returns if the Label or the labelled control are required
-	 */
-	Label.prototype.isRequired = function(){
-		// the value of the local required flag is ORed with the result of a "getRequired"
-		// method of the associated "labelFor" control. If the associated control doesn't
-		// have a getRequired method, this is treated like a return value of "false".
-		var oFor = this._getLabeledControl();
-		return this.getRequired() || (oFor && oFor.getRequired && oFor.getRequired() === true);
-
-	};
-
-	/**
-	 * If required flag of labeled control changes after Label is rendered, the Label must be rendered again.
-	 * @private
-	 */
-	Label.prototype._handleRequiredChanged = function(){
-		this.invalidate();
 	};
 
 	/**
@@ -211,7 +191,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
 	 * @protected
 	 */
 	Label.prototype.getAccessibilityInfo = function() {

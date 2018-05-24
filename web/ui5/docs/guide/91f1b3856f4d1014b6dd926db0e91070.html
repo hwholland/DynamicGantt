@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="To react to browser events, a control needs to register for the event either explicitly, or by implementing the event handler."/>
 <meta name="description" content="To react to browser events, a control needs to register for the event either explicitly, or by implementing the event handler."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=44116755448553513"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=4343098090716091"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4343098090716091"/>
 <title>Browser Events</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio91f1b3856f4d1014b6dd926db0e91070">
 <div id="wrapper"><div id="container">
@@ -34,7 +20,7 @@
 	<div class="body"><p class="shortdesc">To react to browser events, a control needs to register for the event either explicitly,
 		or by implementing the event handler.</p>
 
-			<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> applications can have the following two event types:</p>
+			<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> applications can have the following two event types:</p>
 
 	<ul class="ul">
 		<li class="li">
@@ -44,7 +30,7 @@
 		</li>
 
 		<li class="li">
-			<p class="p">Control events: These events are fired by <span class="ph"><span class="ph pname">SAPUI5</span></span> controls. They contain more semantic
+			<p class="p">Control events: These events are fired by <span class="ph"><span class="ph pname">OpenUI5</span></span> controls. They contain more semantic
 					information than browser events and relate to the control functionality. An
 					example for a control event is when a browser's  a <samp class="ph codeph">click</samp> event
 					on an icon in a panel header that triggers a <samp class="ph codeph">maximize</samp> or
@@ -71,8 +57,7 @@
 
 	<p class="p">Example for explicit registration of browser events:</p>
 
-	<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"> <samp class="ph codeph">#!js</samp>
-MyControl.prototype.onAfterRendering = function() {
+	<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">MyControl.prototype.onAfterRendering = function() {
 
         this.$().bind("click", jQuery.proxy(this.handleClick, this));  // could also be:  jQuery.sap.byId(this.getId).bind("click", jQuery.proxy(this.handleClick, this));
      }
@@ -93,9 +78,9 @@ MyControl.prototype.onAfterRendering = function() {
 
 	<p class="p">Instead of explicitly registering for browser events, you can implement the event handler
 			directly for certain common event types by using a naming convention for the handler
-			method. <span class="ph"><span class="ph pname">SAPUI5</span></span>
+			method. <span class="ph"><span class="ph pname">OpenUI5</span></span>
 			automatically registers event handlers for a list of commonly used event types on the
-			root element of a complete tree of <span class="ph"><span class="ph pname">SAPUI5</span></span> controls. If the
+			root element of a complete tree of <span class="ph"><span class="ph pname">OpenUI5</span></span> controls. If the
 			respective event occurs at any position in the tree and the respective control
 			implements the <samp class="ph codeph">on&lt;eventName&gt;</samp> method, this method is invoked as if
 			it had been registered with <samp class="ph codeph">jQuery.bind()</samp>.</p>
@@ -107,15 +92,12 @@ MyControl.prototype.onAfterRendering = function() {
 
 	<p class="p"> Example for registering the event handler directly:</p>
 
-	<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+	<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 MyControl.prototype.onclick = function(oEvent) {
    // do something...
 }</pre></div>
 
-			<p class="p"><span class="ph">For a list of supported browser events that can be handled by just implementing an
-				<samp class="ph codeph">on&lt;eventName&gt;</samp> method, see <a class="xref" href="../../docs/api/symbols/jQuery.sap.html#.ControlEvents" alt="../../docs/api/symbols/jQuery.sap.html#.ControlEvents" title="../../docs/api/symbols/jQuery.sap.html#.ControlEvents">jQuery.sap.html#ControlEvents</a></span>.</p>
-
-			<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> also provides so-called
+			<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> also provides so-called
 			pseudo events. Pseudo events are semantically enriched and can be handled by just
 			implementing an <samp class="ph codeph">on&lt;eventName&gt;</samp> method. They
 				<span class="ph emphasis emphasis">cannot</span> be used with <samp class="ph codeph">jQuery.bind()</samp>. By using
@@ -125,19 +107,5 @@ MyControl.prototype.onclick = function(oEvent) {
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Browser Events";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

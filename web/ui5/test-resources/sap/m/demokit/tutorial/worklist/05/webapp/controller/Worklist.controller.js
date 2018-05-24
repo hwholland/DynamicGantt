@@ -1,7 +1,7 @@
 sap.ui.define([
-	"myCompany/myApp/controller/BaseController",
+	"mycompany/myapp/controller/BaseController",
 	"sap/ui/model/json/JSONModel",
-	"myCompany/myApp/model/formatter",
+	"mycompany/myapp/model/formatter",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/m/MessageToast",
@@ -9,7 +9,7 @@ sap.ui.define([
 ], function(BaseController, JSONModel, formatter, Filter, FilterOperator, MessageToast, MessageBox) {
 	"use strict";
 
-	return BaseController.extend("myCompany.myApp.controller.Worklist", {
+	return BaseController.extend("mycompany.myapp.controller.Worklist", {
 
 		formatter: formatter,
 
@@ -182,7 +182,7 @@ sap.ui.define([
 		},
 
 		/* =========================================================== */
-		/* internal methods                                            */
+		/* internal methods											*/
 		/* =========================================================== */
 
 		/**
@@ -199,6 +199,7 @@ sap.ui.define([
 
 		/**
 		 * Internal helper method to apply both filter and search state together on the list binding
+		 * @param {array} oTableSearchState an array of filters for the search
 		 * @private
 		 */
 		_applySearch: function(oTableSearchState) {
@@ -212,7 +213,7 @@ sap.ui.define([
 
 		/**
 		 * Displays an error message dialog. The displayed dialog is content density aware.
-		 * @param {String} sMsg The error message to be displayed
+		 * @param {string} sMsg The error message to be displayed
 		 * @private
 		 */
 		_showErrorMessage: function(sMsg) {
@@ -235,18 +236,14 @@ sap.ui.define([
 
 		/**
 		 * Error and success handler for the unlist action.
-		 * @param sProductId the product id for which this handler is called
-		 * @param bSuccess true in case of a success handler, else false (for error handler)
-		 * @param iRequestNumber the counter which specifies the position of this request
-		 * @param iTotalRequests the number of all requests sent
-		 * @param oData forwarded data object received from the remove/update OData API
-         * @param oResponse forwarded response object received from the remove/update OData API
-         * @private
-         */
-		_handleUnlistActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests, oData, oResponse){
-			// create a counter for successful and one for failed requests
-			// ...
-
+		 * @param {string} sProductId the product ID for which this handler is called
+		 * @param {boolean} bSuccess true in case of a success handler, else false (for error handler)
+		 * @param {number} iRequestNumber the counter which specifies the position of this request
+		 * @param {number} iTotalRequests the number of all requests sent
+		 * @private
+		 */
+		_handleUnlistActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests){
+			// we could create a counter for successful and one for failed requests
 			// however, we just assume that every single request was successful and display a success message once
 			if (iRequestNumber === iTotalRequests) {
 				MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockRemovedSuccessMsg", [iTotalRequests]));
@@ -255,18 +252,14 @@ sap.ui.define([
 
 		/**
 		 * Error and success handler for the reorder action.
-		 * @param sProductId the product id for which this handler is called
-		 * @param bSuccess true in case of a success handler, else false (for error handler)
-		 * @param iRequestNumber the counter which specifies the position of this request
-		 * @param iTotalRequests the number of all requests sent
-		 * @param oData forwarded data object received from the remove/update OData API
-		 * @param oResponse forwarded response object received from the remove/update OData API
+		 * @param {string} sProductId the product ID for which this handler is called
+		 * @param {boolean} bSuccess true in case of a success handler, else false (for error handler)
+		 * @param {number} iRequestNumber the counter which specifies the position of this request
+		 * @param {number} iTotalRequests the number of all requests sent
 		 * @private
 		 */
-		_handleReorderActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests, oData, oResponse){
-			// create a counter for successful and one for failed requests
-			// ...
-
+		_handleReorderActionResult : function (sProductId, bSuccess, iRequestNumber, iTotalRequests){
+			// we could create a counter for successful and one for failed requests
 			// however, we just assume that every single request was successful and display a success message once
 			if (iRequestNumber === iTotalRequests) {
 				MessageToast.show(this.getModel("i18n").getResourceBundle().getText("StockUpdatedSuccessMsg", [iTotalRequests]));
@@ -286,10 +279,10 @@ sap.ui.define([
 				for (i = 0; i < aSelectedProducts.length; i++) {
 					oProduct = aSelectedProducts[i];
 					oProductId = oProduct.getBindingContext().getProperty("ProductID");
-					sPath = oProduct.getBindingContextPath();
+					sPath = oProduct.getBindingContext().getPath();
 					this.getModel().remove(sPath, {
-						success : this._handleUnlistActionResult.bind(this, oProductId, true, i+1, aSelectedProducts.length),
-						error : this._handleUnlistActionResult.bind(this, oProductId, false, i+1, aSelectedProducts.length)
+						success : this._handleUnlistActionResult.bind(this, oProductId, true, i + 1, aSelectedProducts.length),
+						error : this._handleUnlistActionResult.bind(this, oProductId, false, i + 1, aSelectedProducts.length)
 					});
 				}
 			} else {
@@ -309,12 +302,12 @@ sap.ui.define([
 			aSelectedProducts = this.byId("table").getSelectedItems();
 			if (aSelectedProducts.length) {
 				for (i = 0; i < aSelectedProducts.length; i++) {
-					sPath = aSelectedProducts[i].getBindingContextPath();
+					sPath = aSelectedProducts[i].getBindingContext().getPath();
 					oProductObject = aSelectedProducts[i].getBindingContext().getObject();
 					oProductObject.UnitsInStock += 10;
 					this.getModel().update(sPath, oProductObject, {
-						success : this._handleReorderActionResult.bind(this, oProductObject.ProductID, true, i+1, aSelectedProducts.length),
-						error : this._handleReorderActionResult.bind(this, oProductObject.ProductID, false, i+1, aSelectedProducts.length)
+						success : this._handleReorderActionResult.bind(this, oProductObject.ProductID, true, i + 1, aSelectedProducts.length),
+						error : this._handleReorderActionResult.bind(this, oProductObject.ProductID, false, i + 1, aSelectedProducts.length)
 					});
 				}
 			} else {

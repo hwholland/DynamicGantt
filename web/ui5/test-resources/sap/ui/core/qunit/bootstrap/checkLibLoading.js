@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -57,6 +57,12 @@ function checkLibrary(sLibraryName, bExpectLazyStubs, assert) {
 
 	// ensure that assert.* even works if a test page doesn't provide 'assert' as a param (e.g. pages outside openui5 repo)
 	assert = assert || window;
+
+	// skip the bootstrap library checks 
+	if (/[?&]sap-ui-skip(B|-b)ootstrap(T|-t)ests=(true|x|X)/.test(top.location.search)) {
+		assert.ok(true, "Skipped checkLibrary(\"" + sLibraryName + "\", " + bExpectLazyStubs + ") due to availability of URL parameter!");
+		return;
+	}
 
 	ajaxCallsReset();
 

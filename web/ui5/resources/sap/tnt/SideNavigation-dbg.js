@@ -1,343 +1,422 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.t.SideNavigation.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/ResizeHandler',
-        'sap/ui/core/Icon', 'sap/ui/core/delegate/ScrollEnablement'],
-    function (jQuery, library, Control, ResizeHandler,
-              Icon, ScrollEnablement) {
-        'use strict';
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/ResizeHandler',
+    'sap/ui/core/Icon',
+    'sap/ui/core/delegate/ScrollEnablement',
+    "./SideNavigationRenderer"
+],
+	function(
+	    jQuery,
+		library,
+		Control,
+		ResizeHandler,
+		Icon,
+		ScrollEnablement,
+		SideNavigationRenderer
+	) {
+		'use strict';
 
-        /**
-         * Constructor for a new SideNavigation.
-         *
-         * @param {string} [sId] ID for the new control, generated automatically if no ID is given
-         * @param {object} [mSettings] Initial settings for the new control
-         *
-         * @class
-         * The SideNavigation control is a container, which consists of flexible and fixed parts on top of each other. The flexible part adapts its size to the fixed one.
-         * The flexible part has a scrollbar when the content is larger than the available space.
-         * Whenever the height of the whole control is less than 256 pixels, the scrollbar becomes joint for the two parts.
-         *
-         * <b>Note:</b> In order for the SideNavigation to stretch properly, its parent layout control should only be the sap.tnt.ToolPage.
-         * @extends sap.ui.core.Control
-         *
-         * @author SAP SE
-         * @version 1.38.33
-         *
-         * @constructor
-         * @public
-         * @since 1.34
-         * @alias sap.tnt.SideNavigation
-         * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
-         */
-        var SideNavigation = Control.extend('sap.tnt.SideNavigation', /** @lends sap.t.SideNavigation.prototype */ {
-            metadata: {
-                library: 'sap.tnt',
-                properties: {
-                    /**
-                     * Specifies if the control is expanded.
-                     */
-                    expanded: {type: 'boolean', group: 'Misc', defaultValue: true}
-                },
-                defaultAggregation: "item",
-                aggregations: {
-                    /**
-                     * Defines the content inside the flexible part.
-                     */
-                    item: {type: 'sap.tnt.NavigationList', multiple: false, bindable: "bindable"},
-                    /**
-                     * Defines the content inside the fixed part.
-                     */
-                    fixedItem: {type: 'sap.tnt.NavigationList', multiple: false},
-                    /**
-                     * Defines the content inside the footer.
-                     */
-                    footer: {type: 'sap.tnt.NavigationList', multiple: false},
-                    /**
-                     * The top arrow, used for scrolling throw items when SideNavigation is collapsed.
-                     */
-                    _topArrowControl: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"},
-                    /**
-                     * The bottom arrow, used for scrolling throw items when SideNavigation is collapsed.
-                     */
-                    _bottomArrowControl: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"}
-                },
-                events: {
-                    /**
-                     * Fired when an item is selected.
-                     */
-                    itemSelect: {
-                        parameters: {
-                            /**
-                             * The selected item.
-                             */
-                            item: {type: 'sap.ui.core.Item'}
-                        }
-                    }
-                }
-            }
-        });
+		/**
+		 * Constructor for a new SideNavigation.
+		 *
+		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+		 * @param {object} [mSettings] Initial settings for the new control
+		 *
+		 * @class
+		 * The SideNavigation control is a container, which consists of flexible and fixed parts on top of each other.
+		 * <h4>Responsive Behavior</h4>
+		 * <ul>
+		 * <li>The flexible part adapts its size to the fixed one.</li>
+		 * <li>The flexible part has a scrollbar when the content is larger than the available space.</li>
+		 * </ul>
+		 *<b>Note:</b> In order for the SideNavigation to stretch properly, its parent layout control should only be the sap.tnt.ToolPage.
+		 * @extends sap.ui.core.Control
+		 *
+		 * @author SAP SE
+		 * @version 1.54.5
+		 *
+		 * @constructor
+		 * @public
+		 * @since 1.34
+		 * @alias sap.tnt.SideNavigation
+		 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+		 */
+		var SideNavigation = Control.extend('sap.tnt.SideNavigation', /** @lends sap.t.SideNavigation.prototype */ {
+			metadata: {
+				library: 'sap.tnt',
+				properties: {
+					/**
+					 * Specifies if the control is expanded.
+					 */
+					expanded: {type: 'boolean', group: 'Misc', defaultValue: true}
+				},
+				defaultAggregation: "item",
+				aggregations: {
+					/**
+					 * Defines the content inside the flexible part.
+					 */
+					item: {type: 'sap.tnt.NavigationList', multiple: false, bindable: "bindable"},
+					/**
+					 * Defines the content inside the fixed part.
+					 */
+					fixedItem: {type: 'sap.tnt.NavigationList', multiple: false},
+					/**
+					 * Defines the content inside the footer.
+					 */
+					footer: {type: 'sap.tnt.NavigationList', multiple: false},
+					/**
+					 * The top arrow, used for scrolling throw items when SideNavigation is collapsed.
+					 */
+					_topArrowControl: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"},
+					/**
+					 * The bottom arrow, used for scrolling throw items when SideNavigation is collapsed.
+					 */
+					_bottomArrowControl: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"}
+				},
+				associations : {
+					/**
+					 * The selected <code>NavigationListItem</code>.
+					 *
+					 * @since 1.52.0
+					 */
+					selectedItem: {type: "sap.tnt.NavigationListItem", multiple: false}
+				},
+				events: {
+					/**
+					 * Fired when an item is selected.
+					 */
+					itemSelect: {
+						parameters: {
+							/**
+							 * The selected item.
+							 */
+							item: {type: 'sap.ui.core.Item'}
+						}
+					}
+				}
+			}
+		});
 
-        SideNavigation.prototype.init = function () {
+		SideNavigation.prototype.init = function () {
 
-            this._scroller = new ScrollEnablement(this, this.getId() + "-Flexible-Content", {
-                horizontal: false,
-                vertical: true
-            });
+			this._scroller = new ScrollEnablement(this, this.getId() + "-Flexible-Content", {
+				horizontal: false,
+				vertical: true
+			});
 
-            // Define group for F6 handling
-            this.data('sap-ui-fastnavgroup', 'true', true);
-        };
+			// Define group for F6 handling
+			this.data('sap-ui-fastnavgroup', 'true', true);
+		};
 
-        SideNavigation.prototype.setAggregation = function (aggregationName, object, suppressInvalidate) {
-            if (object && object.attachItemSelect) {
-                object.attachItemSelect(this._itemSelectionHandler.bind(this));
-            }
+		SideNavigation.prototype.setAggregation = function (aggregationName, object, suppressInvalidate) {
+			if (object && object.attachItemSelect) {
+				object.attachItemSelect(this._itemSelectionHandler.bind(this));
+			}
 
-            return sap.ui.base.ManagedObject.prototype.setAggregation.apply(this, arguments);
-        };
+			return sap.ui.base.ManagedObject.prototype.setAggregation.apply(this, arguments);
+		};
 
-        /**
-         * Sets if the control is in expanded or collapsed mode.
-         */
-        SideNavigation.prototype.setExpanded = function (isExpanded) {
+		/**
+		 * Sets if the control is in expanded or collapsed mode.
+		 *
+		 * @name sap.tnt.SideNavigation.setExpanded
+		 * @method
+		 * @public
+		 * @param {boolean} isExpanded Indication if the SideNavigation is expanded.
+		 * @returns {sap.tnt.SideNavigation} this SideNavigation reference for chaining.
+		 */
+		SideNavigation.prototype.setExpanded = function (isExpanded) {
 
-            if (this.getExpanded() === isExpanded) {
-                return this;
-            }
+			if (this.getExpanded() === isExpanded) {
+				return this;
+			}
 
-            this.setProperty('expanded', isExpanded, true);
+			this.setProperty('expanded', isExpanded, true);
 
-            if (!this.getDomRef()) {
-                return this;
-            }
+			if (!this.getDomRef()) {
+				return this;
+			}
 
-            var that = this,
-                $this = this.$(),
-                width;
+			var that = this,
+				$this = this.$(),
+				width;
 
-            if (that._hasActiveAnimation) {
-                that._finishAnimation(!isExpanded);
-                $this.stop();
-            }
+			if (that._hasActiveAnimation) {
+				that._finishAnimation(!isExpanded);
+				$this.stop();
+			}
 
-            if (isExpanded) {
-                that.$().toggleClass('sapTntSideNavigationNotExpanded', !isExpanded);
+			if (isExpanded) {
+				that.$().toggleClass('sapTntSideNavigationNotExpanded', !isExpanded);
 
-                if (that.getAggregation('item')) {
-                    that.getAggregation('item').setExpanded(isExpanded);
-                }
+				if (that.getAggregation('item')) {
+					that.getAggregation('item').setExpanded(isExpanded);
+				}
 
-                if (that.getAggregation('fixedItem')) {
-                    that.getAggregation('fixedItem').setExpanded(isExpanded);
-                }
-            }
+				if (that.getAggregation('fixedItem')) {
+					that.getAggregation('fixedItem').setExpanded(isExpanded);
+				}
+			}
 
-            that._hasActiveAnimation = true;
+			that._hasActiveAnimation = true;
+			width = isExpanded ? '15rem' : '3rem';
 
-            var isCompact = $this.parents('.sapUiSizeCompact').length > 0;
+			$this.animate({
+					width: width
+				},
+				{
+					duration: 300,
+					complete: function () {
+						var isExpanded = that.getExpanded();
+						that._finishAnimation(isExpanded);
+					}
+				});
 
-            if (isCompact) {
-                width = isExpanded ? '15rem' : '2rem';
-            } else {
-                width = isExpanded ? '15rem' : '3rem';
-            }
+			return this;
+		};
 
-            $this.animate({
-                    width: width
-                },
-                {
-                    duration: 300,
-                    complete: function () {
-                        var isExpanded = that.getExpanded();
-                        that._finishAnimation(isExpanded);
-                    }
-                });
+		/**
+		 * @private
+		 */
+		SideNavigation.prototype._finishAnimation = function (isExpanded) {
+			if (!this._hasActiveAnimation || !this.getDomRef()) {
+				return;
+			}
 
-            return this;
-        };
+			this.$().toggleClass('sapTntSideNavigationNotExpandedWidth', !isExpanded);
 
-        /**
-         * @private
-         */
-        SideNavigation.prototype._finishAnimation = function (isExpanded) {
-            if (!this._hasActiveAnimation || !this.getDomRef()) {
-                return;
-            }
+			if (!isExpanded) {
+				this.$().toggleClass('sapTntSideNavigationNotExpanded', !isExpanded);
 
-            this.$().toggleClass('sapTntSideNavigationNotExpandedWidth', !isExpanded);
+				if (this.getAggregation('item')) {
+					this.getAggregation('item').setExpanded(isExpanded);
+				}
 
-            if (!isExpanded) {
-                this.$().toggleClass('sapTntSideNavigationNotExpanded', !isExpanded);
+				if (this.getAggregation('fixedItem')) {
+					this.getAggregation('fixedItem').setExpanded(isExpanded);
+				}
+			}
 
-                if (this.getAggregation('item')) {
-                    this.getAggregation('item').setExpanded(isExpanded);
-                }
+			this.$().css('width', '');
+			this._hasActiveAnimation = false;
 
-                if (this.getAggregation('fixedItem')) {
-                    this.getAggregation('fixedItem').setExpanded(isExpanded);
-                }
-            }
+			this._toggleArrows();
+		};
 
-            this.$().css('width', '');
-            this._hasActiveAnimation = false;
+		/**
+		 * @private
+		 */
+		SideNavigation.prototype.onBeforeRendering = function () {
+			var selectedItem = this.getSelectedItem();
 
-            this._toggleArrows();
-        };
+			if (selectedItem) {
+			    this.setSelectedItem(selectedItem, true);
+			}
 
-        /**
-         * @private
-         */
-        SideNavigation.prototype.onBeforeRendering = function () {
-            this._deregisterControl();
-        };
+			this._deregisterControl();
+		};
 
-        /**
-         * @private
-         */
-        SideNavigation.prototype.onAfterRendering = function () {
-            this._ResizeHandler = ResizeHandler.register(this.getDomRef(), this._toggleArrows.bind(this));
-            this._toggleArrows();
-        };
+		/**
+		 * @private
+		 */
+		SideNavigation.prototype.onAfterRendering = function () {
+			this._ResizeHandler = ResizeHandler.register(this.getDomRef(), this._toggleArrows.bind(this));
+			this._toggleArrows();
+		};
 
-        /**
-         * @private
-         */
-        SideNavigation.prototype.exit = function () {
+		/**
+		 * Sets the association for selectedItem
+		 * @public
+		 * @param {string|sap.tnt.NavigationListItem} selectedItem The control to be set as selected
+		 * @param {boolean} suppressInvalidate If true, the managed object's invalidate method is not called
+		 * @return {sap.tnt.SideNavigation|null} The <code>selectedItem</code> association
+		 */
+		SideNavigation.prototype.setSelectedItem = function (selectedItem, suppressInvalidate) {
+			var navigationList = this.getAggregation('item');
+			var fixedNavigationList = this.getAggregation('fixedItem');
+			var listItemToSelect;
 
-            if (this._scroller) {
-                this._scroller.destroy();
-                this._scroller = null;
-            }
+			if (!selectedItem) {
+				if (navigationList.setSelectedItem) {
+					navigationList.setSelectedItem(null, true);
+				}
+				if (fixedNavigationList.setSelectedItem) {
+					fixedNavigationList.setSelectedItem(null, true);
+				}
+			}
 
-            this._deregisterControl();
-        };
+			if (typeof selectedItem === 'string') {
+				listItemToSelect = sap.ui.getCore().byId(selectedItem);
+			} else {
+				listItemToSelect = selectedItem;
+			}
 
-        /**
-         *
-         * @param event
-         * @private
-         */
-        SideNavigation.prototype._itemSelectionHandler = function (event) {
-            var listId = event.getSource().getId();
-            var itemAggregation = this.getAggregation('item');
-            var fixedItemAggregation = this.getAggregation('fixedItem');
+			var selectedInFlexibleList = listItemToSelect && listItemToSelect.getNavigationList && listItemToSelect.getNavigationList() === navigationList;
+			var selectedInFixedList = listItemToSelect && listItemToSelect.getNavigationList && listItemToSelect.getNavigationList() === fixedNavigationList;
 
-            if (itemAggregation && fixedItemAggregation && listId === itemAggregation.getId()) {
-                fixedItemAggregation.setSelectedItem(null);
-            }
+			if (selectedInFlexibleList) {
+				navigationList.setSelectedItem(listItemToSelect, suppressInvalidate);
+				if (fixedNavigationList) {
+					fixedNavigationList.setSelectedItem(null, true);
+				}
+			}
 
-            if (itemAggregation && fixedItemAggregation && listId === fixedItemAggregation.getId()) {
-                itemAggregation.setSelectedItem(null);
-            }
+			if (selectedInFixedList) {
+				fixedNavigationList.setSelectedItem(listItemToSelect, suppressInvalidate);
+				navigationList.setSelectedItem(null, true);
+			}
 
-            this.fireItemSelect({
-                item: event.getParameter('item')
-            });
-        };
 
-        /**
-         * @private
-         */
-        SideNavigation.prototype._deregisterControl = function () {
-            if (this._ResizeHandler) {
-                ResizeHandler.deregister(this._ResizeHandler);
-                this._ResizeHandler = null;
-            }
-        };
 
-        /**
-         * Returns the sap.ui.core.Icon control used to display the group icon.
-         * @returns {sap.ui.core.Icon}
-         * @private
-         */
-        SideNavigation.prototype._getTopArrowControl = function () {
-            var iconControl = this.getAggregation('_topArrowControl');
-            var that = this;
+			return sap.ui.core.Control.prototype.setAssociation.call(this, 'selectedItem', listItemToSelect, true);
+		};
 
-            if (!iconControl) {
-                iconControl = new Icon({
-                    src: 'sap-icon://navigation-up-arrow',
-                    noTabStop: true,
-                    useIconTooltip: false,
-                    tooltip: '',
-                    press: this._arrowPress.bind(that)
-                }).addStyleClass('sapTntSideNavigationScrollIcon sapTntSideNavigationScrollIconUp');
-                this.setAggregation("_topArrowControl", iconControl, true);
-            }
+		/**
+		 * @private
+		 */
+		SideNavigation.prototype.exit = function () {
 
-            return iconControl;
-        };
+			if (this._scroller) {
+				this._scroller.destroy();
+				this._scroller = null;
+			}
 
-        /**
-         * Returns the sap.ui.core.Icon control used to display the group icon.
-         * @returns {sap.ui.core.Icon}
-         * @private
-         */
-        SideNavigation.prototype._getBottomArrowControl = function () {
-            var iconControl = this.getAggregation('_bottomArrowControl');
-            var that = this;
+			this._deregisterControl();
+		};
 
-            if (!iconControl) {
-                iconControl = new Icon({
-                    src: 'sap-icon://navigation-down-arrow',
-                    noTabStop: true,
-                    useIconTooltip: false,
-                    tooltip: '',
-                    press: this._arrowPress.bind(that)
-                }).addStyleClass('sapTntSideNavigationScrollIcon sapTntSideNavigationScrollIconDown');
+		/**
+		 *
+		 * @param event
+		 * @private
+		 */
+		SideNavigation.prototype._itemSelectionHandler = function (event) {
+			var listId = event.getSource().getId();
+			var itemAggregation = this.getAggregation('item');
+			var fixedItemAggregation = this.getAggregation('fixedItem');
+			var item = event.getParameter('item');
 
-                this.setAggregation("_bottomArrowControl", iconControl, true);
-            }
+			if (itemAggregation && fixedItemAggregation && listId === itemAggregation.getId()) {
+				fixedItemAggregation.setSelectedItem(null);
+			}
 
-            return iconControl;
-        };
+			if (itemAggregation && fixedItemAggregation && listId === fixedItemAggregation.getId()) {
+				itemAggregation.setSelectedItem(null);
+			}
 
-        SideNavigation.prototype._toggleArrows = function () {
-            var domRef = this.getDomRef();
+			sap.ui.core.Control.prototype.setAssociation.call(this, 'selectedItem', item, true);
 
-            if (!domRef) {
-                return;
-            }
+			this.fireItemSelect({
+				item: item
+			});
+		};
 
-            var scrollContainerWrapper = this.$('Flexible')[0];
-            var scrollContainerContent = this.$('Flexible-Content')[0];
-            var isAsideExpanded = this.getExpanded();
+		/**
+		 * @private
+		 */
+		SideNavigation.prototype._deregisterControl = function () {
+			if (this._ResizeHandler) {
+				ResizeHandler.deregister(this._ResizeHandler);
+				this._ResizeHandler = null;
+			}
+		};
 
-            if (this._hasActiveAnimation) {
-                domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'none';
-                domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'none';
-                return;
-            }
+		/**
+		 * Returns the sap.ui.core.Icon control used to display the group icon.
+		 * @returns {sap.ui.core.Icon}
+		 * @private
+		 */
+		SideNavigation.prototype._getTopArrowControl = function () {
+			var iconControl = this.getAggregation('_topArrowControl');
+			var that = this;
 
-            if ((scrollContainerContent.offsetHeight > scrollContainerWrapper.offsetHeight) && !isAsideExpanded) {
-                domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'block';
-                domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'block';
+			if (!iconControl) {
+				iconControl = new Icon({
+					src: 'sap-icon://navigation-up-arrow',
+					noTabStop: true,
+					useIconTooltip: false,
+					tooltip: '',
+					press: this._arrowPress.bind(that)
+				}).addStyleClass('sapTntSideNavigationScrollIcon sapTntSideNavigationScrollIconUp');
+				this.setAggregation("_topArrowControl", iconControl, true);
+			}
 
-                domRef.querySelector('.sapTntSideNavigationScrollIconDown').classList.remove('sapTntSideNavigationScrollIconDisabled');
-            } else {
-                domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'none';
-                domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'none';
-            }
-        };
+			return iconControl;
+		};
 
-        SideNavigation.prototype._arrowPress = function (event, step) {
-            event.preventDefault();
+		/**
+		 * Returns the sap.ui.core.Icon control used to display the group icon.
+		 * @returns {sap.ui.core.Icon}
+		 * @private
+		 */
+		SideNavigation.prototype._getBottomArrowControl = function () {
+			var iconControl = this.getAggregation('_bottomArrowControl');
+			var that = this;
 
-            var source = document.getElementById(event.oSource.sId);
-            var isDirectionForward = source.classList.contains('sapTntSideNavigationScrollIconDown') ? true : false;
+			if (!iconControl) {
+				iconControl = new Icon({
+					src: 'sap-icon://navigation-down-arrow',
+					noTabStop: true,
+					useIconTooltip: false,
+					tooltip: '',
+					press: this._arrowPress.bind(that)
+				}).addStyleClass('sapTntSideNavigationScrollIcon sapTntSideNavigationScrollIconDown');
 
-            var $container = this.$('Flexible');
+				this.setAggregation("_bottomArrowControl", iconControl, true);
+			}
 
-            var step = isDirectionForward ? 40 : -40;
-            $container[0].scrollTop += step;
-        };
+			return iconControl;
+		};
 
-        return SideNavigation;
+		SideNavigation.prototype._toggleArrows = function () {
+			var domRef = this.getDomRef();
 
-    }, /* bExport= */ true
+			if (!domRef) {
+				return;
+			}
+
+			var scrollContainerWrapper = this.$('Flexible')[0];
+			var scrollContainerContent = this.$('Flexible-Content')[0];
+			var isAsideExpanded = this.getExpanded();
+
+			if (this._hasActiveAnimation) {
+				domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'none';
+				domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'none';
+				return;
+			}
+
+			if ((scrollContainerContent.offsetHeight > scrollContainerWrapper.offsetHeight) && !isAsideExpanded) {
+				domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'block';
+				domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'block';
+
+				domRef.querySelector('.sapTntSideNavigationScrollIconDown').classList.remove('sapTntSideNavigationScrollIconDisabled');
+			} else {
+				domRef.querySelector('.sapTntSideNavigationScrollIconUp').style.display = 'none';
+				domRef.querySelector('.sapTntSideNavigationScrollIconDown').style.display = 'none';
+			}
+		};
+
+		SideNavigation.prototype._arrowPress = function (event) {
+			event.preventDefault();
+
+			var source = document.getElementById(event.oSource.sId);
+			var isDirectionForward = source.classList.contains('sapTntSideNavigationScrollIconDown') ? true : false;
+
+			var $container = this.$('Flexible');
+
+			var step = isDirectionForward ? 40 : -40;
+			$container[0].scrollTop += step;
+		};
+
+		return SideNavigation;
+
+	}, /* bExport= */ true
 );

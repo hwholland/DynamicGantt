@@ -1,3 +1,5 @@
+/*global QUnit,sinon*/
+
 (function () {
 	"use strict";
 
@@ -5,7 +7,7 @@
 
 	QUnit.module("sap.m.WizardProgressNavigator API", {
 		oSpies: {},
-		setup: function () {
+		beforeEach: function () {
 			this.oSpies.stepChanged = sinon.spy();
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator({
 				stepChanged: this.oSpies.stepChanged,
@@ -14,7 +16,7 @@
 
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 		}
 	});
@@ -59,51 +61,30 @@
 			"Should be on step 3.");
 	});
 
-	QUnit.test("NestStep() should fire stepChanged event", function (assert) {
+	QUnit.test("NextStep() should not fire stepChanged event", function (assert) {
 		this.oProgressNavigator.nextStep();
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, true, "Event should be fired");
+		assert.strictEqual(!this.oSpies.stepChanged.calledOnce, true, "Event should not be fired");
 	});
 
-	QUnit.test("NestStep(true) should suppress stepChanged event", function (assert) {
-		this.oProgressNavigator.nextStep(true);
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, false, "Event should be suppressed");
-	});
-
-	QUnit.test("PreviousStep() should fire stepChanged event", function (assert) {
+	QUnit.test("PreviousStep() should not fire stepChanged event", function (assert) {
 		this.oProgressNavigator.nextStep(true);
 		this.oProgressNavigator.previousStep();
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, true, "Event should be fired");
+		assert.strictEqual(!this.oSpies.stepChanged.calledOnce, true, "Event should not be fired");
 	});
 
-	QUnit.test("PreviousStep(true) should suppress stepChanged event", function (assert) {
-		this.oProgressNavigator.nextStep(true);
-		this.oProgressNavigator.previousStep(true);
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, false, "Event should be suppressed");
-	});
-
-	QUnit.test("DiscardProgress(true) should suppress stepChanged event", function (assert) {
-		this.oProgressNavigator.nextStep(true);
-		this.oProgressNavigator.nextStep(true);
-		this.oProgressNavigator.discardProgress(1, true);
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, false, "Event should be suppressed");
-	});
-
-	QUnit.test("DiscardProgress() should fire stepChanged event", function (assert) {
+	QUnit.test("DiscardProgress() should not fire stepChanged event", function (assert) {
 		this.oProgressNavigator.nextStep(true);
 		this.oProgressNavigator.nextStep(true);
 		this.oProgressNavigator.discardProgress(1);
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, true, "Event should be fire");
+		assert.strictEqual(!this.oSpies.stepChanged.calledOnce, true, "Event should not be fired");
 	});
 
-	QUnit.test("Call count test of stepChange event", function (assert) {
-		this.oProgressNavigator.nextStep();
-		this.oProgressNavigator.nextStep(true);
-		this.oProgressNavigator.previousStep(true);
-		this.oProgressNavigator.previousStep();
-		this.oProgressNavigator.nextStep();
-		this.oProgressNavigator.nextStep();
-		this.oProgressNavigator.discardProgress(1);
-		assert.strictEqual(this.oSpies.stepChanged.callCount, 5, "Event should be fired 5 times");
+	QUnit.test("alt + right/left is not handled", function(assert) {
+		var oModifiers = this.oProgressNavigator._anchorNavigation.getDisabledModifiers();
+		assert.ok(oModifiers["sapnext"], "sapnext has disabled modifiers");
+		assert.ok(oModifiers["sapprevious"], "sapprevious has disabled modifiers");
+		assert.equal(oModifiers["sapnext"][0], "alt", "alt is not handled when right is pressed");
+		assert.equal(oModifiers["sapprevious"][0], "alt", "alt is not handled when left is pressed");
 	});
 
 	QUnit.test("NextStep() should not overflow", function (assert) {
@@ -161,7 +142,7 @@
 	});
 
 	QUnit.module("sap.m.WizardProgressNavigator Data binding", {
-		setup: function () {
+		beforeEach: function () {
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator();
 			this.oModel = new sap.ui.model.json.JSONModel({
 				steps: 5
@@ -170,7 +151,7 @@
 			this.oProgressNavigator.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 			this.oProgressNavigator = null;
 			this.oModel = null;
@@ -187,7 +168,7 @@
 	});
 
 	QUnit.module("sap.m.WizardProgressNavigator CSS Classes", {
-		setup: function () {
+		beforeEach: function () {
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator({
 				stepCount: 5
 			});
@@ -195,7 +176,7 @@
 			this.oProgressNavigator.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 			this.oProgressNavigator = null;
 		}
@@ -293,15 +274,11 @@
 	});
 
 	QUnit.module("sap.m.WizardProgressNavigator Events", {
-		setup: function () {
+		beforeEach: function () {
 			var that = this;
 
 			this.oSpies = {};
 			this.oParams = {};
-
-			this.oSpies.stepActivated = sinon.spy(function(event){
-				that.oParams.activatedIndex = event.getParameter("index");
-			});
 
 			this.oSpies.stepChanged = sinon.spy(function(event) {
 				that.oParams.prevIndex = event.getParameter("previous");
@@ -310,43 +287,20 @@
 
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator({
 				stepCount: 5,
-				stepActivated: this.oSpies.stepActivated,
 				stepChanged: this.oSpies.stepChanged
 			});
 
 			this.oProgressNavigator.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 			this.oProgressNavigator = null;
 		}
 	});
 
-	QUnit.test("Activation of new steps", function(assert) {
-		this.oProgressNavigator.nextStep();
-		this.oProgressNavigator.previousStep();
-		this.oProgressNavigator.nextStep();
-		this.oProgressNavigator.nextStep();
-
-		assert.strictEqual(this.oSpies.stepActivated.calledTwice, true, "2 news step should be activated");
-	});
-
-	QUnit.test("StepChanged() should fire on each step change", function(assert) {
-		this.oProgressNavigator.nextStep();
-		assert.strictEqual(this.oSpies.stepChanged.calledOnce, true, "Step changed should fire");
-		assert.strictEqual(this.oSpies.stepActivated.calledOnce, true, "Step changed should fire");
-	});
-
-	QUnit.test("Parameters test after nextStep()", function(assert) {
-		this.oProgressNavigator.nextStep();
-		assert.strictEqual(this.oParams.activatedIndex, 2, "StepActivated() should be called with parameter=2");
-		assert.strictEqual(this.oParams.prevIndex, 1, "StepChanged() should be called with parameter prev=1");
-		assert.strictEqual(this.oParams.currentIndex, 2, "StepChanged() should be called with parameter current=2");
-	});
-
 	QUnit.module("sap.m.WizardProgressNavigator Interaction", {
-		setup: function () {
+		beforeEach: function () {
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator({
 				stepCount: 7
 			});
@@ -354,10 +308,35 @@
 			this.oProgressNavigator.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 			this.oProgressNavigator = null;
 		}
+	});
+
+	QUnit.test("Tapping on action sheet on mobile should fire stepChanged", function(assert) {
+
+		this.stub(sap.ui.Device, "system", {
+			desktop: false,
+			phone: true,
+			tablet: false
+		});
+
+		var stepChangedSpy = sinon.spy(),
+			$anchors = this.oProgressNavigator.$().find(".sapMWizardProgressNavAnchor");
+		this.oProgressNavigator.attachStepChanged(stepChangedSpy);
+
+		// navigate to next wizard steps
+		this.oProgressNavigator.nextStep().nextStep().nextStep();
+		assert.strictEqual(this.oProgressNavigator.getCurrentStep(), 4, "currentStep should change");
+
+		// open action sheet
+		this.oProgressNavigator._showActionSheet($anchors[0]);
+
+		this.oProgressNavigator._actionSheet.getButtons()[0].firePress();
+
+		assert.strictEqual(stepChangedSpy.callCount, 1, "stepChanged event should be fired");
+		assert.strictEqual(this.oProgressNavigator.getCurrentStep(), 1, "currentStep should change after interaction with the progress navigator");
 	});
 
 	QUnit.test("Tapping on NON ACTIVE step", function(assert) {
@@ -384,7 +363,7 @@
 	});
 
 	QUnit.module("sap.m.WizardProgressNavigator ARIA Support", {
-		setup: function () {
+		beforeEach: function () {
 			this.oProgressNavigator = new sap.m.WizardProgressNavigator({
 				stepCount: 5
 			});
@@ -394,7 +373,7 @@
 
 			this.oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oProgressNavigator.destroy();
 			this.oProgressNavigator = null;
 		}
@@ -504,17 +483,17 @@
 
 	QUnit.test("WizardProgressNavigator li element role attribute", function (assert) {
 		var $steps = this.oProgressNavigator.$().find(".sapMWizardProgressNavStep");
-		for(var i=0; i<$steps.length; i++){
-			assert.strictEqual($steps.eq(i).attr("role"), "listitem", "'role' attribute of the list item No" + (i+1) + " should be set to 'listitem'");
+		for (var i = 0; i < $steps.length; i++){
+			assert.strictEqual($steps.eq(i).attr("role"), "listitem", "'role' attribute of the list item No" + (i + 1) + " should be set to 'listitem'");
 		}
 	});
 
 	QUnit.test("WizardProgressNavigator anchor element title attribute", function (assert) {
 		var $anchors = this.oProgressNavigator.$().find(".sapMWizardProgressNavAnchor"),
 			sStepText = this.oResourceBundle.getText("WIZARD_PROG_NAV_STEP_TITLE");
-		for(var i=0; i<$anchors.length; i++){
-			var sStepTitle = sStepText + " " + (i+1);
-			assert.strictEqual($anchors.eq(i).attr("title"), sStepTitle, "'title' attribute of the WizardProgressNavigator's list item No" + (i+1) + " should be set to '" + sStepTitle + "'");
+		for (var i = 0; i < $anchors.length; i++){
+			var sStepTitle = sStepText + " " + (i + 1);
+			assert.strictEqual($anchors.eq(i).attr("title"), sStepTitle, "'title' attribute of the WizardProgressNavigator's list item No" + (i + 1) + " should be set to '" + sStepTitle + "'");
 		}
 	});
 }());

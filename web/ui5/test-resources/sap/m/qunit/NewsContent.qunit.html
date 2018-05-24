@@ -4,23 +4,21 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>sap.m.NewsContent</title>
 
-<script id="sap-ui-bootstrap" type="text/javascript"
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap"
 	src="../../../../resources/sap-ui-core.js"
-	data-sap-ui-theme="sap_bluecrystal"
 	data-sap-ui-libs="sap.m" data-sap-ui-language="en">
 </script>
 <!-- QUnit libraries -->
 <link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+<script src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
-<script type="text/javascript">
-	if (!(sap.ui.Device.browser.msie && sap.ui.Device.browser.version <= 8)) {
-		jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-	}
+<script>
 
 	QUnit.module("Basic rendering", {
 		beforeEach : function() {
@@ -29,7 +27,7 @@
 				contentText : "SAP Unveils Powerful New Player Comparison Tool Exclusively on NFL.com",
 				subheader : "August 21, 2013",
 				tooltip : "Test tooltip",
-				press : function(oEvent) {
+				press : function() {
 					sap.m.MessageToast.show("The news content is pressed.");
 				}
 			});
@@ -53,17 +51,26 @@
 		assert.equal(oSpy.callCount, 1, "During rendering _setPointerOnContentText has been called");
 	});
 
-	QUnit.module("Functional tests - sap.m.NewsContent", {
-		setup : function() {
+	QUnit.module("Functional tests", {
+		beforeEach : function() {
 			this.oNewsContent = new sap.m.NewsContent({
-				size : sap.m.Size.M,
+				size : sap.m.Size.M
 			}).placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown : function () {
+		afterEach : function () {
 			this.oNewsContent.destroy();
 			this.oNewsContent = null;
 		}
+	});
+
+	QUnit.test("Setter method 'setContentText'", function(assert) {
+		//Act
+		var oResult = this.oNewsContent.setContentText("My new Text");
+		//Assert
+		assert.deepEqual(oResult, this.oNewsContent, "Instance is returned");
+		assert.equal(this.oNewsContent.getProperty("contentText"), "My new Text", "Control property updated");
+		assert.equal(this.oNewsContent._oContentText.getText(), "My new Text", "Inner control property updated");
 	});
 
 	QUnit.test("Alternative text tests", function(assert) {
@@ -116,16 +123,16 @@
 	 * See 'Hooks stack on nested modules' sample at https://api.qunitjs.com/QUnit.module/ */
 	(function() {
 		QUnit.module("Events test", {
-			setup : function() {
+			beforeEach : function() {
 				this.oNewsContent = new sap.m.NewsContent({
 					size : sap.m.Size.M,
 					contentText : "SAP Unveils Powerful New Player Comparison Tool Exclusively on NFL.com",
 					subheader : "August 21, 2013",
-					tooltip : "Test tooltip",
+					tooltip : "Test tooltip"
 				}).placeAt("qunit-fixture");
 				sap.ui.getCore().applyChanges();
 			},
-			teardown : function() {
+			afterEach : function() {
 				this.oNewsContent.destroy();
 				this.oNewsContent = null;
 			}
@@ -179,10 +186,10 @@
 		/* --- Helpers --- */
 
 		fnHoverHandler = function() {
-		}
+		};
 
 		fnPressHandler = function() {
-		}
+		};
 
 		hasAttribute = function(sAttribute, oCurrentObject) {
 			var sAttributeValue = oCurrentObject.$().attr(sAttribute);

@@ -3,8 +3,9 @@
     <name>ShellOverlay</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>ShellOverlay to be opened in front of a sap.ui.unified.Shell</documentation>
+    <documentation>ShellOverlay to be opened in front of an sap.ui.unified.Shell</documentation>
     <since>1.16.3</since>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <events>
         <event name="closed" allowPreventDefault="false">

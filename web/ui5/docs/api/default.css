@@ -327,17 +327,72 @@ div.sectionItem .signature {
 
 /* --- Details data -------------------------------------------------------- */
 table.methodItem {
-  font-size: 0.8em;
+	font-size: 0.8em;
+	margin-left: 0.5rem;
 }
+
 table.methodItem p {
-  margin: 0;
+	margin: 0;
 }
 table.methodItem td {
-  padding: 0 0.1em 0.1em;
-  vertical-align: text-top;
+	padding: 0 0.4em 0.1em 1em;
+	vertical-align: text-top;
 }
+
+table.methodItem td.caption, table.methodItem td.heading {
+	margin-top: 1.25em;
+	padding-top: 0.5rem;
+	padding-left: 0;
+	color: #6277AA;
+	font-size: 12px;
+	font-weight: bold;
+	font-style: italic;
+}
+
+table.methodItem .methodItemName {
+	min-width: 10rem;
+	font-weight: bold;
+}
+
+table.methodItem .methodItemName.indent1 {
+	padding-left: 1.8em;
+}
+
+table.methodItem .methodItemName.indent1::before {
+	content: '.';
+}
+
+table.methodItem .methodItemName.indent2 {
+	padding-left: 3.0em;
+}
+
+table.methodItem .methodItemName.indent2::before {
+	content: '.';
+}
+
+table.methodItem .methodItemName.indent3 {
+	padding-left: 4.5em;
+}
+
+table.methodItem .methodItemName.indent3::before {
+	content: '.';
+}
+
+table.methodItem .methodItemName.indent4 {
+	padding-left: 6em;
+}
+
+table.methodItem .methodItemName.indent4::before {
+	content: '.';
+}
+
+table.methodItem .methodItemDefault {
+	font-style: italic;
+}
+
 table.methodItem .methodItemType {
-  text-align: center;
+	min-width: 10rem;
+	text-align: center;
 }
 div.heading {
 	margin-top: 1.25em;

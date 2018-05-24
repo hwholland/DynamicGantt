@@ -1,28 +1,28 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/base/EventProvider", "sap/ui/fl/registry/ChangeRegistry", "sap/ui/fl/core/FlexVisualizer"
-], function(jQuery, Utils, EventProvider, ChangeRegistry, FlexVisualizer) {
+], function (jQuery, Utils, EventProvider, ChangeRegistry, FlexVisualizer) {
 	"use strict";
 
 	/**
-	 * 
-	 * @constructor	 	 
+	 *
+	 * @constructor
 	 * @param {sap.ui.core.Control} oControl Control reference of the control which is currently in focus
-	 * @param {Object} oSupportedRegistryItems Object with supported changes as registry items. Structure matches the returnvalue of @see sap.ui.fl.registry.ChangeRegistry#getRegistryItems	 * 
+	 * @param {Object} oSupportedRegistryItems Object with supported changes as registry items. Structure matches the returnvalue of @see sap.ui.fl.registry.ChangeRegistry#getRegistryItems	 *
 	 * @alias sap.ui.fl.core.EventDelegate
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @experimental Since 1.27.0
 	 * @private
 	 *
 	 */
-	var EventDelegate = function(oControl, oSupportedRegistryItems) {
+	var EventDelegate = function (oControl, oSupportedRegistryItems) {
 		if (!oControl) {
 			Utils.log.error("sap.ui.fl.core.EventDelegate: Control required");
 		}
@@ -42,9 +42,9 @@ sap.ui.define([
 	 * Register a control for using flexibility
 	 * @param {sap.ui.core.Control} oControl Control which should be registered
 	 *
-	 * @public	 
+	 * @public
 	 */
-	EventDelegate.registerControl = function(oControl) {
+	EventDelegate.registerControl = function (oControl) {
 		if (oControl) {
 			// check if the control is already registered
 			var i = 0;
@@ -67,9 +67,9 @@ sap.ui.define([
 	 * Register a control for explicit changes - changes which use a dialog or similar to do the change and can only be activated in a certain mode
 	 * @param {sap.ui.core.Control} oControl Control which should be registered
 	 *
-	 * @public	 
+	 * @public
 	 */
-	EventDelegate.registerExplicitChanges = function(oControl) {
+	EventDelegate.registerExplicitChanges = function (oControl) {
 		var oRegistry = ChangeRegistry.getInstance();
 		var mParam = {
 			controlType: Utils.getControlType(oControl)
@@ -83,21 +83,21 @@ sap.ui.define([
 	};
 
 	/**
-	 * Unregister the control which was registered before	
+	 * Unregister the control which was registered before
 	 *
-	 * @public	 
+	 * @public
 	 */
-	EventDelegate.unregisterControl = function() {
+	EventDelegate.unregisterControl = function () {
 
 	};
 
 	/**
 	 * Function which is called on mouse-over on the registered control to trigger the flexibility framework
-	 * @param {sap.ui.core.Event} oEvent Event parameters
+	 * @param {jQuery.Event} oEvent Event parameters
 	 *
-	 * @public	 
+	 * @public
 	 */
-	EventDelegate.prototype.onmouseover = function(oEvent) {
+	EventDelegate.prototype.onmouseover = function (oEvent) {
 		oEvent.stopPropagation();
 		// stopPropagation unfortunately kills column resize of table
 		// therefore custom property on the event
@@ -117,11 +117,11 @@ sap.ui.define([
 
 	/**
 	 * Function which is called on mouse-out on the registered control to notify that the control is not in scope anymore for flexibility
-	 * @param {sap.ui.core.Event} oEvent Event parameters
+	 * @param {jQuery.Event} oEvent Event parameters
 	 *
-	 * @public	 
+	 * @public
 	 */
-	EventDelegate.prototype.onmouseout = function(oEvent) {
+	EventDelegate.prototype.onmouseout = function (oEvent) {
 		//TODO: Get from FlexController, once checked-in
 		if (FlexVisualizer.isPersonalizationMode()) {
 			if (this._oControl) {

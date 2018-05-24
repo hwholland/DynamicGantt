@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In the previous steps, we have implemented a Resume view that uses tabs to display data. The complete content of the tabs is loaded once, no matter which tab is currently displayed. We can increase the performance of our app by avoiding to load content that is not visible. Therefore, we implement a “lazy loading” feature that only loads the view and data when requested by the user."/>
 <meta name="description" content="In the previous steps, we have implemented a Resume view that uses tabs to display data. The complete content of the tabs is loaded once, no matter which tab is currently displayed. We can increase the performance of our app by avoiding to load content that is not visible. Therefore, we implement a “lazy loading” feature that only loads the view and data when requested by the user."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2728068002290944"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=13604031254691773"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=13604031254691773"/>
 <title>Step 10: Implement “Lazy Loading”</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiocdab0a1123514cc08cf2c8deb22f312e">
 <div id="wrapper"><div id="container">
@@ -43,14 +29,14 @@
 			
 			<div class="fig fignone" id="loiocdab0a1123514cc08cf2c8deb22f312e__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loiocdab0a1123514cc08cf2c8deb22f312e__image_zdy_m1p_ns" src="loiocb0405649d5345f882892e0ee691d4f1_HiRes.png"/>
+				<img class="image" id="loiocdab0a1123514cc08cf2c8deb22f312e__image_zdy_m1p_ns" src="loiocb0405649d5345f882892e0ee691d4f1_LowRes.png"/>
 			<div class="figcap">Tabs with lazy loading</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.10/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.10/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.10/preview">Routing and Navigation - Step 10</a></span>
 				.</p>
 
@@ -63,7 +49,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/Resume.view.xml</div><div type="webapp/view/employee/Resume.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.Resume"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
@@ -117,7 +103,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/ResumeHobbies.view.xml (New)</div><div type="webapp/view/employee/ResumeHobbies.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
 	&lt;Text text="{Hobbies}" /&gt;
 &lt;/mvc:View&gt;</span></pre></div>
 
@@ -129,7 +115,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/ResumeNotes.view.xml (New)</div><div type="webapp/view/employee/ResumeNotes.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
 	&lt;Text text="{Notes}" /&gt;
 &lt;/mvc:View&gt;</span></pre></div>
 
@@ -140,7 +126,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/Resume.controller.js</div><div type="webapp/controller/employee/Resume.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController",
 	"sap/ui/model/json/JSONModel"
 ], function (BaseController, JSONModel) {
@@ -195,8 +181,8 @@
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -227,19 +213,21 @@
 			"targets": {
 				...
 				"employeeResume": {
+					"viewId": "resume",
 					"viewName": "employee.Resume",
 					"viewLevel" : 4,
 					"transition": "flip"
 				}<span class="ph emphasis emphasis">,
 				"resumeTabHobbies": {
+					"viewId": "resumeHobbies",
 					"parent": "employeeResume",
 					"viewPath": "sap.ui.demo.nav.view.employee",
 					"viewName": "ResumeHobbies",
-					"viewId": "thisIsMyCustomIdToBeUsedForResumeHobbies",
 					"controlId": "hobbiesTab",
 					"controlAggregation": "content"
 				},
 				"resumeTabNotes": {
+					"viewId": "resumeNotes",
 					"parent": "employeeResume",
 					"viewPath": "sap.ui.demo.nav.view.employee",
 					"viewName": "ResumeNotes",
@@ -269,7 +257,7 @@
 				also set a parameter <samp class="ph codeph">viewId</samp> to a custom ID to  illustrate how you
 				could overrule a hard-coded ID inside a view.<div class="note note"><span class="notetitle">Note</span> 
 					<p class="p">Each target can define only one parent with its parent property. This is
-						similar to the <span class="ph"><span class="ph pname">SAPUI5</span></span> control
+						similar to the <span class="ph"><span class="ph pname">OpenUI5</span></span> control
 						tree where each control can have only one parent control (accessed with the
 						method <samp class="ph codeph">getParent()</samp> of
 							<samp class="ph codeph">sap.ui.base.ManagedObject</samp>). The
@@ -317,7 +305,7 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="b8561ff6f4c34c85a91ed06d20814cd3.html" title="The resume view contains four tabs as we have seen in the previous steps. However, when the user navigates to the resume page, only the first tab is displayed initially. Navigating directly to a specific tab or bookmarking a tab is not yet supported in our current app.">Step 9: Allow Bookmarkable Tabs with Optional Query Parameters</a><br/>
@@ -332,19 +320,5 @@
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 10: Implement “Lazy Loading”";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

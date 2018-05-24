@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>RatingIndicatorVisualMode</name>
     <derived/>
-    <documentation>Possible values for the visualization of float values in the RatingIndicator Control.</documentation>
+    <documentation>Possible values for the visualization of float values in the RatingIndicator control.</documentation>
     <enumeration>
         <value name="Full">
             <documentation>Values are rounded to the nearest integer value (e.g. 1.7 -&gt; 2).</documentation>

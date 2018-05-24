@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.HexagonButton.
-sap.ui.define(['sap/ui/core/Control', './library'],
-	function(Control, library) {
+sap.ui.define(['sap/ui/core/Control', './library', "./HexagonButtonRenderer"],
+	function(Control, library, HexagonButtonRenderer) {
 	"use strict";
 
 
@@ -19,12 +19,12 @@ sap.ui.define(['sap/ui/core/Control', './library'],
 	 * @class
 	 * A custom button with a 'hexagon' shape
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.HexagonButton
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var HexagonButton = Control.extend("sap.ui.demokit.HexagonButton", /** @lends sap.ui.demokit.HexagonButton.prototype */ { metadata : {
 

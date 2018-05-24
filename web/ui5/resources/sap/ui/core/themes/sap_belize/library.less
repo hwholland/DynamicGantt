@@ -2,7 +2,7 @@
 
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -108,7 +108,7 @@ html.sap-tablet:not(.sap-desktop) input, html.sap-tablet:not(.sap-desktop) texta
 	font-family: @sapUiFontHeaderFamily !important;
 	font-weight: @sapUiFontHeaderWeight !important;
 	color: @sapUiGroupTitleTextColor !important;
-	text-shadow: 0 0.0625rem 0 fade(@sapUiContentContrastShadowColor, 50) !important;
+	text-shadow: @sapUiShadowText !important;
 }
 
 
@@ -137,13 +137,21 @@ html.sap-tablet:not(.sap-desktop) input, html.sap-tablet:not(.sap-desktop) texta
 .sapUiBody {
 	background-color: transparent;
 	background-image: none;
+	background: none;
 }
 
 /********************************************************************************************************************************/
 
+.sapUiRootBackground,
+.sapMShellGlobalOuterBackground {
+	background: @sapUiShellBackgroundImage;
+}
+
+.sapUshellShell .sapMShellGlobalOuterBackground {
+	background: transparent;
+}
 
 .sapUiGlobalBackgroundColor,
-.sapMShellGlobalOuterBackground,
 .sapMShellGlobalInnerBackground {
 	background-color: @sapUiGlobalBackgroundColor;
 }
@@ -212,5 +220,145 @@ html.sap-tablet:not(.sap-desktop) input, html.sap-tablet:not(.sap-desktop) texta
 	display: none;
 }
 
+// =====================================
+// Font "72"
+// =====================================
+
+@font-face {
+	font-family: '72';
+	font-style: normal;
+	font-weight: 400;
+	src: local('72'),
+		url('fonts/72-Regular.woff2') format('woff2'),
+		url('fonts/72-Regular.woff') format('woff');
+}
+
+@font-face {
+	font-family: '72';
+	font-style: normal;
+	font-weight: 700;
+	src: local('72-Bold'),
+		url('fonts/72-Bold.woff2') format('woff2'),
+		url('fonts/72-Bold.woff') format('woff');
+}
+
 /* END "shared.less" */
 
+
+/* START "BrowserScrollbar.less" */
+/* ============================================= */
+/* CSS for control sap.ui.core/BrowserScrollbar  */
+/* Belize theme                                  */
+/* ============================================= */
+
+/****** IE ******/
+
+html[data-sap-ui-browser*="ie"] .sapUiBody {
+	scrollbar-face-color: @sapUiScrollBarFaceColor;
+	scrollbar-highlight-color: @sapUiScrollBarFaceColor;
+	scrollbar-shadow-color: @sapUiScrollBarFaceColor;
+	scrollbar-track-color: @sapUiScrollBarTrackColor;
+}
+
+/****** Safari + Chrome on Desktop ******/
+
+html.sap-desktop ::-webkit-scrollbar:horizontal {
+	height: 0.75rem;
+}
+
+html.sap-desktop ::-webkit-scrollbar:vertical {
+	width: 0.75rem;
+}
+
+html.sap-desktop ::-webkit-scrollbar {
+	background-color: @sapUiScrollBarTrackColor;
+}
+
+html.sap-desktop ::-webkit-scrollbar-thumb {
+	background-color: @sapUiScrollBarFaceColor;
+}
+
+html.sap-desktop ::-webkit-scrollbar-thumb:hover {
+	background-color: @sapUiScrollBarHoverFaceColor;
+}
+
+html.sap-desktop ::-webkit-scrollbar-corner {
+	background-color: @sapUiScrollBarTrackColor;
+}
+/* END "BrowserScrollbar.less" */
+
+/* START "DatePicker.less" */
+/* ======================================= */
+/* CSS for control sap.ui.core/DatePicker  */
+/* Belize theme                            */
+/* ======================================= */
+
+.sapUiDP{
+	width: 190px;
+}
+
+.sapUiDPHead > button{
+	width: 16px;
+}
+/* END "DatePicker.less" */
+
+/* START "Icon.less" */
+/* ================================= */
+/* CSS for control sap.ui.core/Icon  */
+/* Belize theme                      */
+/* ================================= */
+
+html:not([data-sap-ui-browser^="ie"]):not([data-sap-ui-browser^="ed"]) .sapUiIcon:focus {
+	outline-color: @sapUiContentFocusColor;
+}
+
+html[data-sap-ui-browser^="ie"] .sapUiIcon:focus::after,
+html[data-sap-ui-browser^="ed"] .sapUiIcon:focus::after {
+	border-color: @sapUiContentFocusColor;
+}
+
+.sapMTB-Info-CTX > .sapUiIcon {
+	width: 1rem;
+	font-size: 1rem;
+	color: contrast(@sapUiInfobarBackground, @sapUiListActiveTextColor, @sapUiListTextColor, @sapUiContentContrastTextThreshold);
+}
+
+.sapUiIconColorNeutral {
+	color: @sapUiNeutralElement;
+}
+
+.sapUiIconColorCritical {
+	color: @sapUiCriticalElement;
+}
+
+.sapUiIconColorPositive {
+	color: @sapUiPositiveElement;
+}
+
+.sapUiIconColorNegative {
+	color: @sapUiNegativeElement;
+}
+
+.sapUiIconBGColorNeutral {
+	background-color: @sapUiPositiveElement;
+}
+
+.sapUiIconBGColorCritical {
+	background-color: @sapUiCriticalElement;
+}
+
+.sapUiIconBGColorPositive {
+	background-color: @sapUiPositiveElement;
+}
+
+.sapUiIconBGColorNegative {
+	background-color: @sapUiNegativeElement;
+}
+/* END "Icon.less" */
+
+/* START "parameterClasses.less" */
+/* ============================================= */
+/* CSS for control sap.ui.core/parameterClasses  */
+/* Belize theme                                  */
+/* ============================================= */
+/* END "parameterClasses.less" */

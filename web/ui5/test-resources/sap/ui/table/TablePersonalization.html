@@ -5,11 +5,11 @@
 	<meta charset="utf-8">
 
 	<title>sap.ui.table.Table Personalization Test</title>
+	<script src="shared-config.js"></script>
 	<script src="../../../../resources/sap-ui-core.js"
-		type="text/javascript"
 		id="sap-ui-bootstrap"
-		data-sap-ui-libs="sap.ui.commons,sap.ui.table"
-		data-sap-ui-theme="sap_bluecrystal">
+		data-sap-ui-theme="sap_bluecrystal"
+		data-sap-ui-libs="sap.ui.commons,sap.ui.table">
 	</script>
 
 	<style type="text/css">
@@ -32,7 +32,7 @@
 
 	</style>
 
-	<script type="text/javascript">
+	<script>
 
 	jQuery(function() {
 
@@ -58,7 +58,7 @@
 						press: function(oEvent) {
 							oPersoService.delPersData();
 							oTPC.refresh().done(function() {
-								sap.ui.commons.MessageBox.alert("Done!", "INFORMATION", "Refresh");
+								sap.ui.commons.MessageBox.show("Done!", "INFORMATION", "Refresh");
 							});
 						}
 					}),
@@ -67,7 +67,7 @@
 						icon: "sap-icon://save",
 						press: function(oEvent) {
 							oTPC.savePersonalizations().done(function() {
-								sap.ui.commons.MessageBox.alert("Done!", "INFORMATION", "Save");
+								sap.ui.commons.MessageBox.show("Done!", "INFORMATION", "Save");
 							});
 						}
 					})

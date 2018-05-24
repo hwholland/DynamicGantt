@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.unified.ShellOverlay.
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap/ui/core/Popup', './Shell', './library', 'jquery.sap.script'],
-	function(jQuery, Device, Control, Popup, Shell, library/* , jQuerySap */) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap/ui/core/Popup', './library', 'sap/ui/unified/ShellOverlayRenderer', 'jquery.sap.script'],
+	function(jQuery, Device, Control, Popup, library/* , jQuerySap */, ShellOverlayRenderer) {
 	"use strict";
 
 
@@ -18,16 +18,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * ShellOverlay to be opened in front of a sap.ui.unified.Shell
+	 * ShellOverlay to be opened in front of an sap.ui.unified.Shell
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.16.3
 	 * @alias sap.ui.unified.ShellOverlay
+	 * @deprecated Since version 1.44.0.
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var ShellOverlay = Control.extend("sap.ui.unified.ShellOverlay", /** @lends sap.ui.unified.ShellOverlay.prototype */ { metadata : {
@@ -190,11 +191,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 
 		var that = this;
 
-		this._headRenderer = new sap.ui.unified._ContentRenderer(this, this.getId() + "-hdr-center", function(rm){
-			sap.ui.unified.ShellOverlayRenderer.renderSearch(rm, that);
+		this._headRenderer = new library._ContentRenderer(this, this.getId() + "-hdr-center", function(rm){
+			ShellOverlayRenderer.renderSearch(rm, that);
 		});
-		this._contentRenderer = new sap.ui.unified._ContentRenderer(this, this.getId() + "-cntnt", function(rm){
-			sap.ui.unified.ShellOverlayRenderer.renderContent(rm, that);
+		this._contentRenderer = new library._ContentRenderer(this, this.getId() + "-cntnt", function(rm){
+			ShellOverlayRenderer.renderContent(rm, that);
 		});
 	};
 
@@ -273,14 +274,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 	ShellOverlay.prototype._getAnimDuration = function(bOpen){
 		if ((bOpen && this._animOpenDuration == -1) || (!bOpen && this._animCloseDuration == -1)) {
 			var sTxt = bOpen ? "Open" : "Close";
-			this["_anim" + sTxt + "Duration"] = this._getAnimDurationThemeParam("sapUiUfdShellOvrly" + sTxt + "AnimOverAll", true);
+			this["_anim" + sTxt + "Duration"] = this._getAnimDurationThemeParam("_sap_ui_unified_ShellOverlay_" + sTxt + "AnimOverAll", true);
 		}
 		return bOpen ? this._animOpenDuration : this._animCloseDuration;
 	};
 
 	ShellOverlay.prototype._getBLAnimDuration = function(){
 		if (this._animBlockLayerDuration == -1) {
-			this._animBlockLayerDuration = this._getAnimDurationThemeParam("sapUiUfdShellOvrlyBlockLayerAnimDuration", true);
+			this._animBlockLayerDuration = this._getAnimDurationThemeParam("_sap_ui_unified_ShellOverlay_BlockLayerAnimDuration", true);
 		}
 		return this._animBlockLayerDuration;
 	};
@@ -301,10 +302,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 				this._oLastOfRect = jQuery(window).rect();
 			};
 			this._popup.attachOpened(function(){
-				sap.ui.unified._iNumberOfOpenedShellOverlays++;
+				library._iNumberOfOpenedShellOverlays++;
 			});
 			this._popup.attachClosed(function(){
-				sap.ui.unified._iNumberOfOpenedShellOverlays--;
+				library._iNumberOfOpenedShellOverlays--;
 			});
 		}
 		return this._popup;
@@ -360,4 +361,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 
 	return ShellOverlay;
 
-}, /* bExport= */ true);
+});

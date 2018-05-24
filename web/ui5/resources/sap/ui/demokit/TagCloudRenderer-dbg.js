@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -49,7 +49,7 @@ sap.ui.define(function() {
 		};
 
 		// render each tag.
-		for (var i = 0;i < tags.length;i++) {
+		for (var i = 0; i < tags.length; i++) {
 			var tag = tags[i];
 			rm.write("<span");
 			rm.writeElementData(tag);

@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,8 +9,11 @@ sap.ui.define([
 	'jquery.sap.global',
 	'./library',
 	'sap/ui/core/Control',
-	'sap/ui/core/PopupSupport'
-], function (jQuery, library, Control, PopupSupport) {
+	'sap/ui/core/RenderManager',
+	'sap/ui/Device',
+	'./NavContainerRenderer',
+	'jquery.sap.events'
+], function(jQuery, library, Control, RenderManager, Device, NavContainerRenderer) {
 	"use strict";
 
 
@@ -27,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -44,6 +47,16 @@ sap.ui.define([
 				 * Determines whether the initial focus is set automatically on first rendering and after navigating to a new page.
 				 * This is useful when on touch devices the keyboard pops out due to the focus being automatically set on an input field.
 				 * If necessary the "afterShow" event can be used to focus another element.
+				 *
+				 * <b>Note:</b>  The following scenarios are possible, depending on where the focus
+				 * was before navigation to a new page:
+				 * <ul><li>If <code>autoFocus</code> is set to <code>true</code> and the focus was
+				 * inside the current page, the focus will be moved automatically on the new page.</li>
+				 * <li>If <code>autoFocus</code> is set to <code>false</code> and the focus was inside
+				 * the current page, the focus will disappear.
+				 * <li>If the focus was outside the current page, after the navigation it will remain
+				 * unchanged regardless of what is set to the <code>autoFocus</code> property.</li></ul>
+				 *
 				 * @since 1.30
 				 */
 				autoFocus: {type: "boolean", group: "Behavior", defaultValue: true},
@@ -219,6 +232,9 @@ sap.ui.define([
 	var bUseAnimations = sap.ui.getCore().getConfiguration().getAnimation(),
 		fnGetDelay = function (iDelay) {
 			return bUseAnimations ? iDelay : 0;
+		},
+		fnHasParent = function(oControl) {
+			return !!(oControl && oControl.getParent());
 		};
 
 	NavContainer.prototype.init = function () {
@@ -346,11 +362,10 @@ sap.ui.define([
 	/**
 	 * Returns the control with the given ID from the "pages" aggregation (if available).
 	 *
-	 * @param {string} sId
-	 *         The ID of the aggregated control to find.
-	 * @type sap.ui.core.Control
+	 * @param {string} pageId The ID of the aggregated control to find
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.ui.core.Control} The control with the given ID or null if it doesn`t exist
 	 */
 	NavContainer.prototype.getPage = function (pageId) {
 		var aPages = this.getPages();
@@ -366,7 +381,7 @@ sap.ui.define([
 		if (this._pageStack.length === 0) {
 			var page = this._getActualInitialPage(); // TODO: with bookmarking / deep linking this is the initial, but not the "home"/root page
 			if (page) {
-				this._pageStack.push({id: page.getId(), mode: "initial", data: data || {}});
+				this._pageStack.push({id: page.getId(), isInitial: true, data: data || {}});
 			}
 		}
 		return this._pageStack;
@@ -374,13 +389,15 @@ sap.ui.define([
 
 
 	/**
-	 * Returns the currently displayed page-level control. Note: it is not necessarily an instance of sap.m.Page, but it could also be a sap.ui.core.View, sap.m.Carousel, or whatever is aggregated.
+	 * Returns the currently displayed page-level control.
 	 *
-	 * Returns undefined if no page has been added yet.
+	 * <b>Note:</b> Returns <code>undefined</code> if no page has been added yet,
+	 * otherwise returns an instance of <code>sap.m.Page</code>,
+	 * <code>sap.ui.core.View</code>, <code>sap.m.Carousel</code> or whatever is aggregated.
 	 *
-	 * @type sap.ui.core.Control
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.ui.core.Control} The current page
 	 */
 	NavContainer.prototype.getCurrentPage = function () {
 		var stack = this._ensurePageStackInitialized();
@@ -396,13 +413,14 @@ sap.ui.define([
 
 	/**
 	 * Returns the previous page (the page from which the user drilled down to the current page with "to()").
-	 * Note: this is not the page which the user has seen before, but the page which is the target of the next "back()" navigation.
-	 * If there is no previous page, "undefined" is returned.
 	 *
-	 * @type sap.ui.core.Control
+	 * <b>Note:</b> this is not the page which the user has seen before, but the page which is the target of the next "back()" navigation.
+	 * If there is no previous page, <code>undefined</code> is returned.
+	 *
 	 * @public
 	 * @since 1.7.1
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.ui.core.Control} The previous page
 	 */
 	NavContainer.prototype.getPreviousPage = function () {
 		var stack = this._ensurePageStackInitialized();
@@ -422,11 +440,12 @@ sap.ui.define([
 	/**
 	 * Returns whether the current page is the top/initial page.
 	 *
-	 * Note: going to the initial page again with a row of "to" navigations causes the initial page to be displayed again, but logically one is not at the top level, so this method returns "false" in this case.
+	 * <b>Note:</b> going to the initial page again with a row of "to" navigations causes the initial page to be displayed again,
+	 * but logically one is not at the top level, so this method returns "false" in this case.
 	 *
-	 * @type boolean
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {boolean} Whether the current page is a top page
 	 */
 	NavContainer.prototype.currentPageIsTopPage = function () {
 		var stack = this._ensurePageStackInitialized();
@@ -439,26 +458,25 @@ sap.ui.define([
 	 *
 	 * This can be used for deep-linking when the user directly reached a drilldown detail page using a bookmark and then wants to navigate up in the drilldown hierarchy. Normally such a back navigation would not be possible because there is no previous page in the NavContainer's history stack.
 	 *
-	 * @param {string} sPageId
+	 * @param {string} pageId
 	 *         The ID of the control/page/screen which is inserted into the history stack. The respective control must be aggregated by the NavContainer, otherwise this will cause an error.
-	 * @param {string} [sTransitionName]
+	 * @param {string} transitionName
 	 *         The type of the transition/animation which would have been used to navigate from the (inserted) previous page to the current page. When navigating back, the inverse animation will be applied.
 	 *         This parameter can be omitted; then the default is "slide" (horizontal movement from the right).
-	 * @param {object} [oData]
-	 *         This optional object can carry any payload data which would have been given to the inserted previous page if the user would have done a normal forward navigation to it.
-	 * @type sap.m.NavContainer
+	 * @param {object} data This optional object can carry any payload data which would have been given to the inserted previous page if the user would have done a normal forward navigation to it.
 	 * @public
 	 * @since 1.16.1
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.m.NavContainer} The <code>sap.m.NavContainer</code> instance
 	 */
 	NavContainer.prototype.insertPreviousPage = function (pageId, transitionName, data) {
 		var stack = this._ensurePageStackInitialized();
 		if (this._pageStack.length > 0) {
 			var index = stack.length - 1;
-			var pageInfo = {id: pageId, mode: transitionName, data: data};
+			var pageInfo = {id: pageId, transition: transitionName, data: data};
 			if (index === 0) {
-				pageInfo.mode = "initial";
-				delete stack[stack.length - 1].mode;
+				pageInfo.isInitial = true;
+				delete stack[stack.length - 1].isInitial;
 			}
 			stack.splice(index, 0, pageInfo);
 		} else {
@@ -482,6 +500,11 @@ sap.ui.define([
 			domRefRememberedFocusSubject,
 			bAutoFocus = this.getAutoFocus(),
 			bNavigatingBackToPreviousLocation = oNavInfo.isBack || oNavInfo.isBackToPage || oNavInfo.isBackToTop;
+
+		// BCP: 1780071998 - If focus is not inside the From page we don't do any focus manipulation
+		if (!oNavInfo.bFocusInsideFromPage) {
+			return;
+		}
 
 		// check navigation type (backward or forward)
 		if (bNavigatingBackToPreviousLocation) {
@@ -535,6 +558,61 @@ sap.ui.define([
 	};
 
 	/**
+	 * Checks whether a page is in the history stack or not
+	 * @param pageId
+	 * @returns {boolean}
+	 * @private
+	 */
+	NavContainer.prototype._isInPageStack = function (pageId) {
+		return this._pageStack.some(function (oPage) {
+			return oPage.id === pageId;
+		});
+	};
+
+	/**
+	 * Navigates back to a page, if the page is in the history stack. Otherwise, navigates to it.
+	 *
+	 * This method can be used to navigate to previously visited pages which are however not in the stack any more.
+	 * Such a situation can be observed when navigating back to a page several levels back.
+	 * @param pageId
+	 * @param transitionName
+	 * @param data
+	 * @param oTransitionParameters
+	 * @private
+	 */
+	NavContainer.prototype._safeBackToPage = function (pageId, transitionName, data, oTransitionParameters) {
+		var oCurrentPage;
+
+		if (!this.getPage(pageId)) {
+			return this;
+		}
+
+		oCurrentPage = this.getCurrentPage();
+		if (oCurrentPage && oCurrentPage.getId() === pageId) {
+			return this;
+		}
+
+		if (this._isInPageStack(pageId)) {
+			return this.backToPage(pageId, data, oTransitionParameters);
+		} else {
+			// when this method calls "to", animation should be "back"
+			data = data || {};
+			data.safeBackToPage = true;
+			return this.to(pageId, transitionName, data, oTransitionParameters);
+		}
+	};
+
+	/**
+	 * Check if the current focused element is a HTML child element of the control passed.
+	 * @param {sap.ui.core.Control} oControl instance of control
+	 * @returns {boolean} If the focus is in one of the control's child HTML elements
+	 * @private
+	 */
+	NavContainer.prototype._isFocusInControl = function (oControl) {
+		return jQuery(document.activeElement).closest(oControl.$()).length > 0;
+	};
+
+	/**
 	 * Navigates to the next page (with drill-down semantic) with the given (or default) animation. This creates a new history item inside the NavContainer and allows going back.
 	 *
 	 * Note that any modifications to the target page (like setting its title, or anything else that could cause a re-rendering) should be done BEFORE calling to(), in order to avoid unwanted side effects, e.g. related to the page animation.
@@ -543,29 +621,30 @@ sap.ui.define([
 	 *
 	 * Calling this navigation method triggers first the (cancelable) "navigate" event on the NavContainer, then the "beforeHide" pseudo event on the source page and "beforeFirstShow" (if applicable) and"beforeShow" on the target page. Later - after the transition has completed - the "afterShow" pseudo event is triggered on the target page and "afterHide" on the page which has been left. The given data object is available in the "beforeFirstShow", "beforeShow" and "afterShow" event object as "data" property.
 	 *
-	 * @param {string} sPageId
+	 * @param {string} pageId
 	 *         The screen to which drilldown should happen. The ID or the control itself can be given.
-	 * @param {string} [sTransitionName]
+	 * @param {string} transitionName
 	 *         The type of the transition/animation to apply. This parameter can be omitted; then the default is "slide" (horizontal movement from the right).
 	 *         Other options are: "fade", "flip", and "show" and the names of any registered custom transitions.
 	 *
 	 *         None of the standard transitions is currently making use of any given transition parameters.
-	 * @param {object} [oData]
-	 *         Since version 1.7.1. This optional object can carry any payload data which should be made available to the target page. The "beforeShow" event on the target page will contain this data object as "data" property.
-	 *
+	 * @param {object} data
+	 *         Since version 1.7.1. This optional object can carry any payload data which should be made available to the target page.
+	 *         The "beforeShow" event on the target page will contain this data object as "data" property.
+
 	 *         Use case: in scenarios where the entity triggering the navigation can or should not directly initialize the target page, it can fill this object and the target page itself (or a listener on it) can take over the initialization, using the given data.
 	 *
 	 *         When the "transitionParameters" object is used, this "data" object must also be given (either as object or as null) in order to have a proper parameter order.
-	 * @param {object} [oTransitionParameters]
+	 * @param {object} oTransitionParameters
 	 *         Since version 1.7.1. This optional object can contain additional information for the transition function, like the DOM element which triggered the transition or the desired transition duration.
 	 *
 	 *         For a proper parameter order, the "data" parameter must be given when the "transitionParameters" parameter is used. (it can be given as "null")
 	 *
 	 *         NOTE: it depends on the transition function how the object should be structured and which parameters are actually used to influence the transition.
 	 *         The "show", "slide" and "fade" transitions do not use any parameter.
-	 * @type sap.m.NavContainer
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.m.NavContainer} The <code>sap.m.NavContainer</code> instance
 	 */
 	NavContainer.prototype.to = function (pageId, transitionName, data, oTransitionParameters, bFromQueue) {
 		if (pageId instanceof Control) {
@@ -581,6 +660,7 @@ sap.ui.define([
 		transitionName = transitionName || this.getDefaultTransitionName();
 		oTransitionParameters = oTransitionParameters || {};
 		data = data || {};
+		var oFromPageInfo = {id: pageId, transition: transitionName, data: data};
 
 		// make sure the initial page is on the stack
 		this._ensurePageStackInitialized(data);
@@ -607,6 +687,12 @@ sap.ui.define([
 			if (bFromQueue) {
 				this._dequeueNavigation();
 			}
+
+			// In an application when the first page is loaded its transition is not set and we set it here.
+			if (this._pageStack.length === 1) {
+				this._pageStack[0].transition = oFromPageInfo.transition;
+			}
+
 			return this;
 		}
 
@@ -618,9 +704,6 @@ sap.ui.define([
 				return this;
 			}
 
-			// remember the focused object in "from page"
-			this._mFocusObject[oFromPage.getId()] = document.activeElement;
-
 			var oNavInfo = {
 				from: oFromPage,
 				fromId: oFromPage.getId(),
@@ -631,12 +714,19 @@ sap.ui.define([
 				isBack: false,
 				isBackToTop: false,
 				isBackToPage: false,
-				direction: "to"
+				direction: "to",
+				bFocusInsideFromPage: this._isFocusInControl(oFromPage)
 			};
+
+			if (oNavInfo.bFocusInsideFromPage) {
+				// remember the focused object in "from page"
+				this._mFocusObject[oFromPage.getId()] = document.activeElement;
+			}
+
 			var bContinue = this.fireNavigate(oNavInfo);
 			if (bContinue) { // ok, let's do the navigation
 
-				sap.m.closeKeyboard();
+				library.closeKeyboard();
 
 				// TODO: let one of the pages also cancel navigation?
 				var oEvent = jQuery.Event("BeforeHide", oNavInfo);
@@ -659,7 +749,7 @@ sap.ui.define([
 				oToPage._handleEvent(oEvent);
 
 
-				this._pageStack.push({id: pageId, mode: transitionName, data: data}); // this actually causes/is the navigation
+				this._pageStack.push(oFromPageInfo); // this actually causes/is the navigation
 				jQuery.sap.log.info(this.toString() + ": navigating to page '" + pageId + "': " + oToPage.toString());
 				this._mVisitedPages[pageId] = true;
 
@@ -677,7 +767,7 @@ sap.ui.define([
 				// render the page that should get visible
 				var oToPageDomRef;
 
-				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || sap.ui.core.RenderManager.isPreservedContent(oToPageDomRef)) {
+				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || RenderManager.isPreservedContent(oToPageDomRef)) {
 					oToPage.addStyleClass("sapMNavItemRendering");
 					jQuery.sap.log.debug("Rendering 'to' page '" + oToPage.toString() + "' for 'to' navigation");
 					var rm = sap.ui.getCore().createRenderManager();
@@ -698,7 +788,10 @@ sap.ui.define([
 				}, fnGetDelay(5000));
 
 				this._bNavigating = true;
-				oTransition.to.call(this, oFromPage, oToPage, jQuery.proxy(function () {
+
+				// check both params since they might have shifted
+				var sTransitionDirection = (data.safeBackToPage || oTransitionParameters.safeBackToPage) ? "back" : "to";
+				oTransition[sTransitionDirection].call(this, oFromPage, oToPage, jQuery.proxy(function () {
 					this._afterTransitionCallback(oNavInfo, data);
 				}, this), oTransitionParameters); // trigger the transition
 
@@ -718,7 +811,7 @@ sap.ui.define([
 	 *
 	 * Calling this navigation method triggers first the (cancelable) "navigate" event on the NavContainer, then the "beforeHide" pseudo event on the source page and "beforeFirstShow" (if applicable) and"beforeShow" on the target page. Later - after the transition has completed - the "afterShow" pseudo event is triggered on the target page and "afterHide" on the page which has been left. The given backData object is available in the "beforeFirstShow", "beforeShow" and "afterShow" event object as "data" property. The original "data" object from the "to" navigation is also available in these event objects.
 	 *
-	 * @param {object} [oBackData]
+	 * @param {object} [backData]
 	 *         Since version 1.7.1. This optional object can carry any payload data which should be made available to the target page of the back navigation. The event on the target page will contain this data object as "backData" property. (The original data from the "to()" navigation will still be available as "data" property.)
 	 *
 	 *         In scenarios where the entity triggering the navigation can or should not directly initialize the target page, it can fill this object and the target page itself (or a listener on it) can take over the initialization, using the given data.
@@ -732,9 +825,9 @@ sap.ui.define([
 	 *         In order to use the "transitionParameters" property, the "data" property must be used (at least "null" must be given) for a proper parameter order.
 	 *
 	 *         NOTE: it depends on the transition function how the object should be structured and which parameters are actually used to influence the transition.
-	 * @type sap.m.NavContainer
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.m.NavContainer} The <code>sap.m.NavContainer</code> instance
 	 */
 	NavContainer.prototype.back = function (backData, oTransitionParameters) {
 		this._backTo("back", backData, oTransitionParameters);
@@ -748,23 +841,23 @@ sap.ui.define([
 	 *
 	 * Calling this navigation method triggers first the (cancelable) "navigate" event on the NavContainer, then the "beforeHide" pseudo event on the source page and "beforeFirstShow" (if applicable) and"beforeShow" on the target page. Later - after the transition has completed - the "afterShow" pseudo event is triggered on the target page and "afterHide" on the page which has been left. The given backData object is available in the "beforeFirstShow", "beforeShow" and "afterShow" event object as "data" property. The original "data" object from the "to" navigation is also available in these event objects.
 	 *
-	 * @param {string} sPageId
+	 * @param {string} pageId
 	 *         The ID of the screen to which back navigation should happen. The ID or the control itself can be given. The nearest such page among the previous pages in the history stack will be used.
-	 * @param {object} [oBackData]
+	 * @param {object} backData
 	 *         This optional object can carry any payload data which should be made available to the target page of the "backToPage" navigation. The event on the target page will contain this data object as "backData" property.
 	 *
 	 *         When the "transitionParameters" object is used, this "data" object must also be given (either as object or as null) in order to have a proper parameter order.
-	 * @param {object} [oTransitionParameters]
+	 * @param {object} oTransitionParameters
 	 *         This optional object can give additional information to the transition function, like the DOM element which triggered the transition or the desired transition duration.
 	 *         The animation type can NOT be selected here - it is always the inverse of the "to" navigation.
 	 *
 	 *         In order to use the "transitionParameters" property, the "data" property must be used (at least "null" must be given) for a proper parameter order.
 	 *
 	 *         NOTE: it depends on the transition function how the object should be structured and which parameters are actually used to influence the transition.
-	 * @type sap.m.NavContainer
 	 * @public
 	 * @since 1.7.2
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.m.NavContainer} The <code>sap.m.NavContainer</code> instance
 	 */
 	NavContainer.prototype.backToPage = function (pageId, backData, oTransitionParameters) {
 		this._backTo("backToPage", backData, oTransitionParameters, pageId);
@@ -778,7 +871,7 @@ sap.ui.define([
 	 *
 	 * Calling this navigation method triggers first the (cancelable) "navigate" event on the NavContainer, then the "beforeHide" pseudo event on the source page and "beforeFirstShow" (if applicable) and"beforeShow" on the target page. Later - after the transition has completed - the "afterShow" pseudo event is triggered on the target page and "afterHide" on the page which has been left. The given backData object is available in the "beforeFirstShow", "beforeShow" and "afterShow" event object as "data" property.
 	 *
-	 * @param {object} [oBackData]
+	 * @param {object} [backData]
 	 *         This optional object can carry any payload data which should be made available to the target page of the "backToTop" navigation. The event on the target page will contain this data object as "backData" property.
 	 *
 	 *         When the "transitionParameters" object is used, this "data" object must also be given (either as object or as null) in order to have a proper parameter order.
@@ -816,7 +909,7 @@ sap.ui.define([
 			// there is no place to go back
 
 			// but then the assumption is that the only page on the stack is the initial one and has not been navigated to. Check this:
-			if (this._pageStack.length === 1 && this._pageStack[0].mode != "initial") {
+			if (this._pageStack.length === 1 && !this._pageStack[0].isInitial) {
 				throw new Error("Initial page not found on the stack. How did this happen?");
 			}
 			return this;
@@ -828,7 +921,7 @@ sap.ui.define([
 			}
 
 			var oFromPageInfo = this._pageStack[this._pageStack.length - 1];
-			var mode = oFromPageInfo.mode;
+			var transition = oFromPageInfo.transition;
 			var oFromPage = this.getPage(oFromPageInfo.id);
 			var oToPage;
 			var oToPageData;
@@ -874,12 +967,13 @@ sap.ui.define([
 				isBack: (sType === "back"),
 				isBackToPage: (sType === "backToPage"),
 				isBackToTop: (sType === "backToTop"),
-				direction: sType
+				direction: sType,
+				bFocusInsideFromPage: this._isFocusInControl(oFromPage)
 			};
 			var bContinue = this.fireNavigate(oNavInfo);
 			if (bContinue) { // ok, let's do the navigation
 
-				sap.m.closeKeyboard();
+				library.closeKeyboard();
 
 				var oEvent = jQuery.Event("BeforeHide", oNavInfo);
 				oEvent.srcControl = this; // store the element on the event (aligned with jQuery syntax)
@@ -924,14 +1018,14 @@ sap.ui.define([
 					return this;
 				}
 
-				var oTransition = NavContainer.transitions[mode] || NavContainer.transitions["slide"];
+				var oTransition = NavContainer.transitions[transition] || NavContainer.transitions["slide"];
 
 				// Track proper invocation of the callback  TODO: only do this during development?
 				var iCompleted = this._iTransitionsCompleted;
 				var that = this;
 				window.setTimeout(function () {
 					if (that && (that._iTransitionsCompleted < iCompleted + 1)) {
-						jQuery.sap.log.warning("Transition '" + mode + "' 'back' was triggered five seconds ago, but has not yet invoked the end-of-transition callback.");
+						jQuery.sap.log.warning("Transition '" + transition + "' 'back' was triggered five seconds ago, but has not yet invoked the end-of-transition callback.");
 					}
 				}, fnGetDelay(5000));
 
@@ -939,7 +1033,7 @@ sap.ui.define([
 
 				// make sure the to-page is rendered
 				var oToPageDomRef;
-				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || sap.ui.core.RenderManager.isPreservedContent(oToPageDomRef)) {
+				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || RenderManager.isPreservedContent(oToPageDomRef)) {
 					oToPage.addStyleClass("sapMNavItemRendering");
 					jQuery.sap.log.debug("Rendering 'to' page '" + oToPage.toString() + "' for back navigation");
 					var rm = sap.ui.getCore().createRenderManager();
@@ -1025,8 +1119,15 @@ sap.ui.define([
 							} else {
 								// the second transition now also finished => clean up the style classes
 								bTransitionEndPending = false;
-								oToPage.removeStyleClass("sapMNavItemSliding").removeStyleClass("sapMNavItemCenter");
-								oFromPage.removeStyleClass("sapMNavItemSliding").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemLeft");
+
+								// update classes only of the active pages
+								if (fnHasParent(oToPage)) {
+									oToPage.removeStyleClass("sapMNavItemSliding").removeStyleClass("sapMNavItemCenter");
+								}
+
+								if (fnHasParent(oFromPage)) {
+									oFromPage.removeStyleClass("sapMNavItemSliding").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemLeft");
+								}
 
 								// notify the NavContainer that the animation is complete
 								fCallback();
@@ -1072,8 +1173,15 @@ sap.ui.define([
 						} else {
 							// the second transition now also finished => clean up the style classes
 							bTransitionEndPending = false;
-							oToPage.removeStyleClass("sapMNavItemSliding").removeStyleClass("sapMNavItemCenter");
-							oFromPage.removeStyleClass("sapMNavItemSliding").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemRight");
+
+							// update classes only of the active pages
+							if (fnHasParent(oToPage)) {
+								oToPage.removeStyleClass("sapMNavItemSliding").removeStyleClass("sapMNavItemCenter");
+							}
+
+							if (fnHasParent(oFromPage)) {
+								oFromPage.removeStyleClass("sapMNavItemSliding").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemRight");
+							}
 
 							// notify the NavContainer that the animation is complete
 							fCallback();
@@ -1085,7 +1193,7 @@ sap.ui.define([
 
 					// workaround for bug in current webkit versions: in slided-in elements the z-order may be wrong and will be corrected once a re-layout is enforced
 					// see http://code.google.com/p/chromium/issues/detail?id=246965  - still an issue in iOS 6.1.3 as of 03/2015
-					if (sap.ui.Device.browser.webkit) {
+					if (Device.browser.webkit) {
 						window.setTimeout(function () {
 							oToPage.$().css("box-shadow", "0em 1px 0em rgba(128, 128, 1280, 0.1)"); // add box-shadow
 							window.setTimeout(function () {
@@ -1093,6 +1201,7 @@ sap.ui.define([
 							}, fnGetDelay(50));
 						}, 0);
 					}
+
 
 					// set the new style classes that represent the end state (and thus start the transition)
 					oToPage.addStyleClass("sapMNavItemSliding").addStyleClass("sapMNavItemCenter").removeStyleClass("sapMNavItemLeft"); // transition from left position to normal/center position starts now
@@ -1162,8 +1271,15 @@ sap.ui.define([
 						jQuery(this).unbind("webkitTransitionEnd transitionend");
 						// clean up the style classes
 						bTransitionEndPending = false;
-						oFromPage.addStyleClass("sapMNavItemHidden");
-						oToPage.removeStyleClass("sapMNavItemFading").removeStyleClass("sapMNavItemOpaque");
+
+						// update classes only of the active pages
+						if (fnHasParent(oFromPage)) {
+							oFromPage.addStyleClass("sapMNavItemHidden");
+						}
+
+						if (fnHasParent(oToPage)) {
+							oToPage.removeStyleClass("sapMNavItemFading").removeStyleClass("sapMNavItemOpaque");
+						}
 
 						// notify the NavContainer that the animation is complete
 						fCallback();
@@ -1198,8 +1314,12 @@ sap.ui.define([
 						jQuery(this).unbind("webkitTransitionEnd transitionend");
 						// clean up the style classes
 						bTransitionEndPending = false;
-						oFromPage.removeStyleClass("sapMNavItemFading").addStyleClass("sapMNavItemHidden"); // TODO: destroy HTML?
-						oFromPage.removeStyleClass("sapMNavItemTransparent");
+
+						// update classes only of the active pages
+						if (fnHasParent(oFromPage)) {
+							oFromPage.removeStyleClass("sapMNavItemFading").addStyleClass("sapMNavItemHidden"); // TODO: destroy HTML?
+							oFromPage.removeStyleClass("sapMNavItemTransparent");
+						}
 
 						// notify the NavContainer that the animation is complete
 						fCallback();
@@ -1277,8 +1397,16 @@ sap.ui.define([
 							} else {
 								// the second transition now also finished => clean up the style classes
 								bTransitionEndPending = false;
-								oToPage.removeStyleClass("sapMNavItemFlipping");
-								oFromPage.removeStyleClass("sapMNavItemFlipping").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemFlipPrevious");
+
+								// update classes only of the active pages
+								if (fnHasParent(oToPage)) {
+									oToPage.removeStyleClass("sapMNavItemFlipping");
+								}
+
+								if (fnHasParent(oFromPage)) {
+									oFromPage.removeStyleClass("sapMNavItemFlipping").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemFlipPrevious");
+								}
+
 								that.$().removeClass("sapMNavFlip");
 
 								// notify the NavContainer that the animation is complete
@@ -1327,8 +1455,16 @@ sap.ui.define([
 						} else {
 							// the second transition now also finished => clean up the style classes
 							bTransitionEndPending = false;
-							oToPage.removeStyleClass("sapMNavItemFlipping");
-							oFromPage.removeStyleClass("sapMNavItemFlipping").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemFlipNext");
+
+							// update classes only of the active pages
+							if (fnHasParent(oToPage)) {
+								oToPage.removeStyleClass("sapMNavItemFlipping");
+							}
+
+							if (fnHasParent(oFromPage)) {
+								oFromPage.removeStyleClass("sapMNavItemFlipping").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemFlipNext");
+							}
+
 							that.$().removeClass("sapMNavFlip");
 
 							// notify the NavContainer that the animation is complete
@@ -1388,8 +1524,16 @@ sap.ui.define([
 							} else {
 								// the second transition now also finished => clean up the style classes
 								bTransitionEndPending = false;
-								oToPage.removeStyleClass("sapMNavItemDooring").removeStyleClass("sapMNavItemDoorInNext");
-								oFromPage.removeStyleClass("sapMNavItemDooring").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemDoorInPrevious");
+
+								// update classes only of the active pages
+								if (fnHasParent(oToPage)) {
+									oToPage.removeStyleClass("sapMNavItemDooring").removeStyleClass("sapMNavItemDoorInNext");
+								}
+
+								if (fnHasParent(oFromPage)) {
+									oFromPage.removeStyleClass("sapMNavItemDooring").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemDoorInPrevious");
+								}
+
 								that.$().removeClass("sapMNavDoor");
 
 								// notify the NavContainer that the animation is complete
@@ -1438,8 +1582,16 @@ sap.ui.define([
 						} else {
 							// the second transition now also finished =>  clean up the style classes
 							bTransitionEndPending = false;
-							oToPage.removeStyleClass("sapMNavItemDooring").removeStyleClass("sapMNavItemDoorOutNext");
-							oFromPage.removeStyleClass("sapMNavItemDooring").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemDoorOutPrevious");
+
+							// update classes only of the active pages
+							if (fnHasParent(oToPage)) {
+								oToPage.removeStyleClass("sapMNavItemDooring").removeStyleClass("sapMNavItemDoorOutNext");
+							}
+
+							if (fnHasParent(oFromPage)) {
+								oFromPage.removeStyleClass("sapMNavItemDooring").addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemDoorOutPrevious");
+							}
+
 							that.$().removeClass("sapMNavDoor");
 
 							// notify the NavContainer that the animation is complete
@@ -1498,17 +1650,17 @@ sap.ui.define([
 	 *         The name of the transition. This name can be used by the application to choose this transition when navigating "to()" or "back()": the "transitionName" parameter of "NavContainer.to()" corresponds to this name, the back() navigation will automatically use the same transition.
 	 *
 	 *         Make sure to only use names that will not collide with transitions which may be added to the NavContainer later. A suggestion is to use the prefix "c_" or "_" for your custom transitions to ensure this.
-	 * @param {object} oTo
+	 * @param {object} fTo
 	 *         The function which will be called by the NavContainer when the application navigates "to()", using this animation's name. The NavContainer instance is the "this" context within the animation function.
 	 *
 	 *         See the documentation of NavContainer.addCustomTransitions for more details about this function.
-	 * @param {object} oBack
+	 * @param {object} fBack
 	 *         The function which will be called by the NavContainer when the application navigates "back()" from a page where it had navigated to using this animation's name. The NavContainer instance is the "this" context within the animation function.
 	 *
 	 *         See the documentation of NavContainer.addCustomTransitions for more details about this function.
-	 * @type sap.m.NavContainer
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 * @returns {sap.m.NavContainer} The <code>sap.m.NavContainer</code> instance
 	 */
 	NavContainer.prototype.addCustomTransition = function (sName, fTo, fBack) {
 		if (NavContainer.transitions[sName]) {
@@ -1649,12 +1801,13 @@ sap.ui.define([
 	};
 
 	NavContainer.prototype.insertPage = function (oPage, iIndex) {
+		var iPreviousPageCount = this.getPages().length;
+
 		this.insertAggregation("pages", oPage, iIndex, true);
 
 		// sapMNavItem must be added after addAggregation is called because addAggregation can lead
 		// to a removePage-call where the class is removed again.
 		oPage.addStyleClass("sapMNavItem");
-		var iPreviousPageCount = this.getPages().length;
 
 		if (iPreviousPageCount === 0 && this.getPages().length === 1 && this.getDomRef()) { // the added page is the first and only page and has been newly added
 			this._ensurePageStackInitialized();
@@ -1758,4 +1911,4 @@ sap.ui.define([
 
 	return NavContainer;
 
-}, /* bExport= */ true);
+});

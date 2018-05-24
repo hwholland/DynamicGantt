@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="A bulletin board may contain many posts. We expect to have a high data load once it is officially released. Then, there might be performance issues and long loading times if we display all entries at the same time. Therefore we will introduce a feature that limits the initial display to 20 items. The user can then click on a more button to view more items. As with the unit test, we start by writing an integration test for this feature and then add the application functionality later."/>
 <meta name="description" content="A bulletin board may contain many posts. We expect to have a high data load once it is officially released. Then, there might be performance issues and long loading times if we display all entries at the same time. Therefore we will introduce a feature that limits the initial display to 20 items. The user can then click on a more button to view more items. As with the unit test, we start by writing an integration test for this feature and then add the application functionality later."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=47311048657753163"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=900594156972429"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=900594156972429"/>
 <title>Step 6: A First OPA Test</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio1b47457cbe4941ee926317d827517acb">
 <div id="wrapper"><div id="container">
@@ -44,15 +30,14 @@
 			
 			<div class="fig fignone" id="loio1b47457cbe4941ee926317d827517acb__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loio1b47457cbe4941ee926317d827517acb__image_rs5_wmf_ft" src="loioc4aaadbedb9b4111baec4e0738657d5c_HiRes.png"/>
+				<img class="image" id="loio1b47457cbe4941ee926317d827517acb__image_rs5_wmf_ft" src="loioc4aaadbedb9b4111baec4e0738657d5c_LowRes.png"/>
 			<div class="figcap">The OPA test page is waiting for more items to be loaded</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					
+			<p class="p">You can view and download all files in the Demo Kit 
 				<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.testing.06/preview" alt="../../explored.html#/sample/sap.m.tutorial.testing.06/preview" title="../../explored.html#/sample/sap.m.tutorial.testing.06/preview">Testing - Step 6</a></span>.</p>
 
 		</div></div>
@@ -76,9 +61,9 @@
 			<div class="note note"><span class="notetitle">Note</span> 
 				<p class="p">There is also a stand-alone version of OPA5 called <span class="q">“OPA”</span> available that can be used for
 					testing any kind of single-page Web application and that does not provide any
-						<span class="ph"><span class="ph pname">SAPUI5</span></span>-specific
+						<span class="ph"><span class="ph pname">OpenUI5</span></span>-specific
 					functionality. In this tutorial, <span class="q">“OPA”</span> always refers to OPA5. It includes
-					functionality for easily finding and matching <span class="ph"><span class="ph pname">SAPUI5</span></span>
+					functionality for easily finding and matching <span class="ph"><span class="ph pname">OpenUI5</span></span>
 					controls as well as their
 					properties and aggregations.</p>
 
@@ -102,7 +87,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/WorklistJourney.js</div><div type="webapp/test/integration/WorklistJourney.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.require(
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.require(
 	["sap/ui/test/opaQunit"],
 	function (opaTest) {
 		"use strict";
@@ -113,7 +98,8 @@
 			//Actions
 			When.onTheWorklistPage.iLookAtTheScreen();
 			// Assertions
-			<span class="ph emphasis emphasis">Then.onTheWorklistPage.theTitleShouldDisplayTheTotalAmountOfItems();
+			<span class="ph emphasis emphasis">Then.onTheWorklistPage.theTableShouldHavePagination().
+				and.theTitleShouldDisplayTheTotalAmountOfItems();
 		});
 		opaTest("Should be able to load more items", function (Given, When, Then) {
 			//Actions
@@ -175,8 +161,7 @@
 							At the end of the test case, the app is destroyed again. This is
 							typically done only once in the last test case of the journey for
 							performance reasons.
-								<samp class="ph codeph">Then.onTheWorklistPage.theTableShouldHaveAllEntries
-								().and.iTeardownMyAppFrame();</samp></p>
+								<samp class="ph codeph">Then.onTheWorklistPage.theTableShouldHaveAllEntries ().and.iTeardownMyAppFrame();</samp></p>
 
 					</li>
 
@@ -184,8 +169,7 @@
 
 			</div>
 
-			<p class="p">Please also note that you have to move the <samp class="ph codeph">and.iTeardownMyAppFrame()
-				</samp>concatenation from the previous <samp class="ph codeph">opaTest</samp> function and put
+			<p class="p">Please also note that you have to move the <samp class="ph codeph">and.iTeardownMyAppFrame()</samp> concatenation from the previous <samp class="ph codeph">opaTest</samp> function and put
 				it at the end of the last test of a journey, in this case this is our new test. For
 				performance reasons, we only start and destroy the app once per journey, as it takes
 				several seconds to construct the iFrame and load the app. You can concatenate
@@ -201,7 +185,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/pages/Worklist.js</div><div type="webapp/test/integration/pages/Worklist.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.require([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.require([
 		'sap/ui/test/Opa5',
 		'sap/ui/test/matchers/AggregationLengthEquals',
 		'sap/ui/test/matchers/PropertyStrictEquals',
@@ -217,6 +201,7 @@
 				baseClass: Common,
 				actions: {
 					<span class="ph emphasis emphasis">iPressOnMoreData: function () {
+						// Press action hits the "more" trigger on a table
 						return this.waitFor({
 							id: sTableId,
 							viewName: sViewName,
@@ -227,11 +212,26 @@
 </span>
 				},
 				assertions: {
+<span class="ph emphasis emphasis">					theTableShouldHavePagination: function () {
+						return this.waitFor({
+							id: sTableId,
+							viewName: sViewName,
+							matchers: new AggregationLengthEquals({
+								name: "items",
+								length: 20
+							}),
+							success: function () {
+								Opa5.assert.ok(true, "The table has 20 items on the first page");
+							},
+							errorMessage: "Table does not have all entries."
+						});
+					},</span>
+
 					theTableShouldHaveAllEntries: function () {
 						return this.waitFor({
 							id: sTableId,
 							viewName: sViewName,
-							matchers:  new AggregationLengthEquals({
+							matchers: new AggregationLengthEquals({
 								name: "items",
 								length: 23
 							}),
@@ -280,13 +280,25 @@
 				condition is still not fulfilled after a certain amount of time (by default it is 15
 				seconds but this can be configured) the test will fail.</p>
 
-			<p class="p">Let’s start with the action <samp class="ph codeph">iPressOnMoreData</samp>. We define a <samp class="ph codeph">waitFor</samp> statement with the current view and the table. Those
-				IDs are stored as internal variables in the <samp class="ph codeph">require</samp> statement above and are available in all tests. OPA will now try to find
-				the table based on IDs. As soon as the table is available on the screen and it can be interacted with (it is visible, not busy,...), the
-					<samp class="ph codeph">Press</samp> action is invoked, if not, the error message is displayed and the test fails. The <samp class="ph codeph">Press</samp> action will
-				simulate that a users chooses the <span class="ph uicontrol">More Data</span> button. For some controls, a specific region has to be pressed. If you, for
-				example, execute <samp class="ph codeph">Press</samp> on a <samp class="ph codeph">sap.m.Page</samp>, this will trigger the <span class="ph uicontrol">Back</span> button's
-					<samp class="ph codeph">Press</samp> event. For more information, see the API Reference.</p>
+			<div class="p">Let’s start with the action <samp class="ph codeph">iPressOnMoreData</samp>. We define a
+					<samp class="ph codeph">waitFor</samp> statement with the current view and the table. Those
+				IDs are stored as internal variables in the <samp class="ph codeph">require</samp> statement above
+				and are available in all tests. OPA will now try to find the table based on IDs. As
+				soon as the table is available on the screen and it can be interacted with (it is
+				visible, not busy,...), the <samp class="ph codeph">Press</samp> action is invoked, if not, the
+				error message is displayed and the test fails. When executed on a table, the
+					<samp class="ph codeph">Press</samp> action will simulate that a users chooses the
+					<span class="ph uicontrol">More Data</span> button. <div class="note note"><span class="notetitle">Note</span> 
+					<p class="p">The <samp class="ph codeph">Press</samp> action depends on the control that it is triggered
+						on and has a default behavior for most UI controls. If you, for example,
+						execute <samp class="ph codeph">Press</samp> on a <samp class="ph codeph">sap.m.Page</samp>, this will
+						trigger the <span class="ph uicontrol">Back</span> button's <samp class="ph codeph">Press</samp>
+						event. This behavior can be overridden by passing an ID as argument to the
+						action. <span class="ph">For more information, see the <a class="xref" href="../../docs/api/symbols/sap.ui.test.actions.Press.html" alt="../../docs/api/symbols/sap.ui.test.actions.Press.html" title="../../docs/api/symbols/sap.ui.test.actions.Press.html">API Reference: <samp class="ph codeph">sap.ui.test.actions.Press</samp></a>.</span>
+						</p>
+
+				</div>
+</div>
 
 			<p class="p">The assertion <samp class="ph codeph">theTableShouldHaveAllEntries</samp> is structured similarly, but it does not trigger an action. Here, we use the
 					<samp class="ph codeph">success</samp> function of <samp class="ph codeph">waitFor</samp> to assert if our application is in the expected state. This state is defined
@@ -352,7 +364,7 @@ Now run the
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with SAPUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with OpenUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="69a25bf2f8a2478cbda4b8bbe64039de.html" title="Now that we have implemented the conversion tests, we add the corresponding functionality and show the button to flag a post in the app. The design team has specified that the flag feature should be implemented with a toggle button that has a flag icon.">Step 5: Adding a Flag Button</a><br/>
@@ -362,7 +374,7 @@ Now run the
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="2696ab50faad458f9b4027ec2f9b884d.html" title="OPA5 is an API for SAPUI5 controls. It hides asynchronicity and eases access to SAPUI5 elements. This makes OPA especially helpful for testing user interactions, integration with SAPUI5, navigation, and data binding.">Integration Testing with One Page Acceptance Tests (OPA5)</a></div>
+<div><a class="link" href="2696ab50faad458f9b4027ec2f9b884d.html" title="OPA5 is an API for OpenUI5 controls. It hides asynchronicity and eases access to OpenUI5 elements. This makes OPA especially helpful for testing user interactions, integration with OpenUI5, navigation, and data binding.">Integration Testing with One Page Acceptance Tests (OPA5)</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.test.matchers.html" alt="../../docs/api/symbols/sap.ui.test.matchers.html" title="../../docs/api/symbols/sap.ui.test.matchers.html">API Reference: <samp class="ph codeph">sap.ui.test.matchers</samp></a></div>
 <div><a class="link" target="_blank" href="../../explored.html#/entity/sap.ui.test.Opa5/samples" alt="../../explored.html#/entity/sap.ui.test.Opa5/samples" title="../../explored.html#/entity/sap.ui.test.Opa5/samples">API Overview and Samples: <samp class="ph codeph">sap.ui.test.Opa5</samp>
 			</a></div>
@@ -370,19 +382,5 @@ Now run the
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 6: A First OPA Test";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

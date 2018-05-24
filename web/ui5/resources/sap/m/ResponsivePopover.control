@@ -3,7 +3,16 @@
     <name>ResponsivePopover</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>This control acts responsively to the type of device. It acts as a sap.m.Popover on desktop and tablet, while on phone it acts as a sap.m.Dialog with stretch set to true.</documentation>
+    <documentation>&lt;h3&gt;Overview&lt;/h3&gt;
+The responsive popover acts as a {@link sap.m.Popover popover} on desktop and tablet,
+while on phone it acts as a {@link sap.m.Dialog dialog} with &lt;code&gt;stretch&lt;/code&gt; set to true.
+
+&lt;b&gt;Note:&lt;/b&gt; It is recommended that &lt;code&gt;ResponsivePopover&lt;/code&gt; is used in fragments otherwise there might
+be some implications on the user experience. For example, on desktop, open or close functions
+of the &lt;code&gt;Popover&lt;/code&gt; might not be called.
+
+&lt;h3&gt;Usage&lt;/h3&gt;
+When you want to make sure that all content is visible on any device.</documentation>
     <since>1.15.1</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
@@ -28,6 +37,9 @@
         <property name="offsetY" type="sap.ui.core/int" group="Misc">
             <documentation>This property only takes effect on desktop or tablet. Please see the documentation sap.m.Popover#offsetY.</documentation>
         </property>
+        <property name="showArrow" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+            <documentation>This property only takes effect on desktop or tablet. Please see the documentation sap.m.Popover#showArrow.</documentation>
+        </property>
         <property name="contentWidth" type="sap.ui.core/CSSSize" group="Misc">
             <documentation>This property is supported by both variants. Please see the documentation on sap.m.Popover#contentWidth and sap.m.Dialog#contentWidth</documentation>
         </property>
@@ -41,7 +53,8 @@
             <documentation>This property is supported by both variants. Please see the documentation on sap.m.Popover#verticalScrolling and sap.m.Dialog#verticalScrolling</documentation>
         </property>
         <property name="showCloseButton" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
-            <documentation>Determines if a close button should be inserted into the dialog's header dynamically to close the dialog. This property only takes effect on phone.</documentation>
+            <documentation>Determines if a close button should be inserted into the dialog's header dynamically to close the dialog. This property only takes effect on phone.
+&lt;b&gt;Note:&lt;/b&gt; The close button could be placed only in a sap.m.Bar if a sap.m.Toolbar is passed as a header - the property will not take effect.</documentation>
         </property>
         <property name="resizable" type="sap.ui.core/boolean" defaultValue="false" group="Dimension" since="1.36.4">
             <documentation>Whether resize option is enabled.</documentation>
@@ -112,6 +125,9 @@
         <association name="initialFocus" type="sap.ui.core/Control" cardinality="0..1">
             <documentation>InitialFocus is supported by both variants. Please see the documentation on sap.m.Popover#initialFocus and sap.m.Dialog#initialFocus</documentation>
         </association>
+        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+            <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
+        </association>
         <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
             <documentation>Association to controls / IDs which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>
         </association>
@@ -120,11 +136,11 @@
         <method name="isOpen" type="sap.ui.core/Control">
             <documentation>Checks whether the ResponsivePopover is currently open.</documentation>
         </method>
-        <method name="openBy" type="sap.ui.core/Control">
+        <method name="openBy" type="sap.ui.core/object">
             <documentation>Opens the ResponsivePopover. The ResponsivePopover is positioned relatively to the control parameter on tablet or desktop and is full screen on phone. Therefore the control parameter is only used on tablet or desktop and is ignored on phone.</documentation>
             <parameters>
-                <parameter name="control" type="sap.ui.core/object">
-                    <documentation>When this control is displayed on tablet or desktop, the ResponsivePopover is positioned relatively to this control.</documentation>
+                <parameter name="parent" type="sap.ui.core/object">
+                    <documentation>When this control is displayed on tablet or desktop, the ResponsivePopover is positioned relative to this control.</documentation>
                 </parameter>
             </parameters>
         </method>

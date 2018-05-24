@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -84,8 +84,8 @@ sap.ui.define([
 		} else {
 			aResult = [];
 			// "probe for the smallest non-negative integer"
-			for (i = 0; sPath = oInterface.getPath(i); i += 1) {
-				aResult.push(sPath.replace(rBadIdChars, "."));
+			for (i = 0; oInterface.getPath(i); i += 1) {
+				aResult.push(oInterface.getPath(i).replace(rBadIdChars, "."));
 			}
 			return aResult.join("::");
 		}

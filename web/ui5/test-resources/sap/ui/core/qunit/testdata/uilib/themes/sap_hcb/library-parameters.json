@@ -15,7 +15,11 @@
 	},
 	"scopes": {
 		"sapTestScope": {
+			"sapUiText": "#000000",
 			"sapUiTstTextColor": "#000000"
+		},
+		"sapTestScopePlus": {
+			"sapUiText": "#333333"
 		}
 	}
 }

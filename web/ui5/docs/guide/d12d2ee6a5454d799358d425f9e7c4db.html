@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="In this step, we are going to extend the functionality of OpenUI5 with a custom control. We want to rate the product shown on the detail page, so we create a composition of multiple standard controls using the OpenUI5 extension mechanism and add some glue code to make them work nicely together. This way, we can reuse the control across the app and keep all related functionality in one module."/>
+<meta name="description" content="In this step, we are going to extend the functionality of OpenUI5 with a custom control. We want to rate the product shown on the detail page, so we create a composition of multiple standard controls using the OpenUI5 extension mechanism and add some glue code to make them work nicely together. This way, we can reuse the control across the app and keep all related functionality in one module."/>
 
-
-
-
-
-<meta name="abstract" content="In this step, we are going to extend the functionality of SAPUI5 with a custom control. We want to rate the product shown on the detail page, so we create a composition of multiple standard controls using the SAPUI5 extension mechanism and add some glue code to make them work nicely together. This way, we can reuse the control across the app and keep all related functionality in one module."/>
-<meta name="description" content="In this step, we are going to extend the functionality of SAPUI5 with a custom control. We want to rate the product shown on the detail page, so we create a composition of multiple standard controls using the SAPUI5 extension mechanism and add some glue code to make them work nicely together. This way, we can reuse the control across the app and keep all related functionality in one module."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7464800530769031"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=8043955609655568"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8043955609655568"/>
 <title>Step 34: Custom Controls</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiod12d2ee6a5454d799358d425f9e7c4db">
 <div id="wrapper"><div id="container">
@@ -33,9 +19,9 @@
 	<h1 class="title topictitle1">Step 34: Custom Controls</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">In this step, we are going to extend the functionality of <span class="ph"><span class="ph pname">SAPUI5</span></span> with a custom control.
+	<div class="body conbody"><p class="shortdesc">In this step, we are going to extend the functionality of <span class="ph"><span class="ph pname">OpenUI5</span></span> with a custom control.
 		We want to rate the product shown on the detail page, so we create a composition of multiple
-		standard controls using the <span class="ph"><span class="ph pname">SAPUI5</span></span> extension mechanism and add some glue code to make them
+		standard controls using the <span class="ph"><span class="ph pname">OpenUI5</span></span> extension mechanism and add some glue code to make them
 		work nicely together. This way, we can reuse the control across the app and keep all related
 		functionality in one module.</p>
 
@@ -50,15 +36,14 @@
 
 		<div class="section">
 			<div class="section_title">Coding</div>
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview">Walkthrough - Step 34</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.34/preview">Walkthrough - Step 34</a></span>.</p>
 
 			<div class="section_title">webapp/control/ProductRating.js (New)</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/core/Control"
 ], function (Control) {
 	"use strict";
-	return Control.extend("sap.ui.demo.wt.control.ProductRating", {
+	return Control.extend("sap.ui.demo.walkthrough.control.ProductRating", {
 		metadata : {
 		},
 		init : function () {
@@ -71,7 +56,7 @@
 			<p class="p">We create a new folder <samp class="ph codeph">control</samp> and a file
 					<samp class="ph codeph">ProductRating.js</samp> that will hold our new control. As with our
 				controllers and views, the custom control inherits the common control functionality
-				from a <span class="ph"><span class="ph pname">SAPUI5</span></span> base
+				from a <span class="ph"><span class="ph pname">OpenUI5</span></span> base
 				object, for controls this is done by extending the base class
 					<samp class="ph codeph">sap.ui.core.Control</samp>.</p>
 
@@ -83,18 +68,16 @@
 
 			<p class="p">The <samp class="ph codeph">metadata</samp> section defines the data structure and thus the API of
 				the control. With this meta information on the properties, events, and aggregations
-				of the control <span class="ph"><span class="ph pname">SAPUI5</span></span>
+				of the control <span class="ph"><span class="ph pname">OpenUI5</span></span>
 				automatically creates setter and getter methods and other convenience functions that
 				can be called within the app.</p>
 
-			<p class="p">The renderer defines the HTML structure that will be added to the DOM tree of your
-				app whenever the control is instantiates in a view. It is usually called initially
-				by the core of <span class="ph"><span class="ph pname">SAPUI5</span></span>
-				and whenever a property of the control is changed. The parameter
-					<samp class="ph codeph">oRM</samp> of the render function is the <span class="ph"><span class="ph pname">SAPUI5</span></span> render manager
-				that can be used to write strings and control properties to the HTML page.</p>
+			<p class="p">The renderer defines the HTML structure that will be added to the DOM tree of your app whenever the control is instantiated in a view. It is usually
+				called initially by the core of <span class="ph"><span class="ph pname">OpenUI5</span></span> and whenever a property of the control is
+				changed. The parameter <samp class="ph codeph">oRM</samp> of the render function is the <span class="ph"><span class="ph pname">OpenUI5</span></span>
+				render manager that can be used to write strings and control properties to the HTML page.</p>
 
-			<p class="p">The <samp class="ph codeph">init</samp> method is a special function that is called by the <span class="ph"><span class="ph pname">SAPUI5</span></span> core whenever
+			<p class="p">The <samp class="ph codeph">init</samp> method is a special function that is called by the <span class="ph"><span class="ph pname">OpenUI5</span></span> core whenever
 				the control is instantiated. It can be used to set up the control and prepare its
 				content for display.</p>
 
@@ -102,14 +85,14 @@
 				<div class="note note"><span class="notetitle">Note</span> Controls always extend <samp class="ph codeph">sap.ui.core.Control</samp> and render
 					themselves. You could also extend <samp class="ph codeph">sap.ui.core.Element</samp> or
 						<samp class="ph codeph">sap.ui.base.ManagedObject</samp> directly if you want to reuse
-					life cycle features of <span class="ph"><span class="ph pname">SAPUI5</span></span> including
+					life cycle features of <span class="ph"><span class="ph pname">OpenUI5</span></span> including
 					data binding for objects that are not rendered. Please refer to the API
 					reference to learn more about the inheritance hierarchy of controls. </div>
 
 			</div>
 
 			<div class="section_title">webapp/control/ProductRating.js</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/core/Control",
 	<span class="ph emphasis emphasis">"sap/m/RatingIndicator",
 	"sap/m/Label",
@@ -117,7 +100,7 @@
 </span>
 ], function (Control<span class="ph emphasis emphasis">, RatingIndicator, Label, Button</span>) {
 	"use strict";
-	return Control.extend("sap.ui.demo.wt.control.ProductRating", {
+	return Control.extend("sap.ui.demo.walkthrough.control.ProductRating", {
 		metadata : {
 <span class="ph emphasis emphasis">			properties : {
 				value: 	{type : "float", defaultValue : 0}
@@ -144,23 +127,33 @@
 			}));
 			this.setAggregation("_label", new Label({
 				text: "{i18n&gt;productRatingLabelInitial}"
-			}).addStyleClass("sapUiTinyMargin"));
+			}).addStyleClass("sapUiSmallMargin"));
 			this.setAggregation("_button", new Button({
 				text: "{i18n&gt;productRatingButton}",
 				press: this._onSubmit.bind(this)
-			}));
+			}).addStyleClass("sapUiTinyMarginTopBottom"));
 		},
 
-		setValue: function (iValue) {
-			this.setProperty("value", iValue, true);
-			this.getAggregation("_rating").setValue(iValue);
+		setValue: function (fValue) {
+			this.setProperty("value", fValue, true);
+			this.getAggregation("_rating").setValue(fValue);
+		},
+
+		reset: function () {
+			var oResourceBundle = this.getModel("i18n").getResourceBundle();
+
+			this.setValue(0);
+			this.getAggregation("_label").setDesign("Standard");
+			this.getAggregation("_rating").setEnabled(true);
+			this.getAggregation("_label").setText(oResourceBundle.getText("productRatingLabelInitial"));
+			this.getAggregation("_button").setEnabled(true);
 		},
 
 		_onRate : function (oEvent) {
 			var oRessourceBundle = this.getModel("i18n").getResourceBundle();
 			var fValue = oEvent.getParameter("value");
 
-			this.setValue(fValue);
+			this.setProperty("value", fValue, true);
 
 			this.getAggregation("_label").setText(oRessourceBundle.getText("productRatingLabelIndicator", [fValue, oEvent.getSource().getMaxValue()]));
 			this.getAggregation("_label").setDesign("Bold");
@@ -224,7 +217,7 @@
 							functionality. We therefore create three “hidden aggregations” by
 							setting the <samp class="ph codeph">visibility</samp> attribute to
 								<samp class="ph codeph">hidden</samp>. This way, we can use the models that are
-							set on the view also in the inner controls and <span class="ph"><span class="ph pname">SAPUI5</span></span> will
+							set on the view also in the inner controls and <span class="ph"><span class="ph pname">OpenUI5</span></span> will
 							take care of the lifecycle management and destroy the controls when they
 							are not needed anymore. Aggregations can also be used to hold arrays of
 							controls but we just want a single control in each of the aggregations
@@ -295,11 +288,8 @@
 								<li class="li">
 									<p class="p">Change</p>
 
-									<p class="p">We specify a <samp class="ph codeph">change</samp> event that the control
-										will fire when the rating is submitted. It contains the
-										current value as an event parameter. Applications can
-										register to this event and process the result similar to
-										“regular” <span class="ph"><span class="ph pname">SAPUI5</span></span> controls, which are in fact build similar to custom
+									<p class="p">We specify a <samp class="ph codeph">change</samp> event that the control will fire when the rating is submitted. It contains the current value as an event
+										parameter. Applications can register to this event and process the result similar to “regular” <span class="ph"><span class="ph pname">OpenUI5</span></span> controls, which are in fact built similar to custom
 										controls.</p>
 
 								</li>
@@ -312,7 +302,7 @@
 				</ul>
 </div>
 
-			<p class="p">In the <samp class="ph codeph">init</samp> function that is called by <span class="ph"><span class="ph pname">SAPUI5</span></span> automatically
+			<p class="p">In the <samp class="ph codeph">init</samp> function that is called by <span class="ph"><span class="ph pname">OpenUI5</span></span> automatically
 				whenever a new instance of the control is instantiated, we set up our internal
 				controls. We instantiate the three controls and store them in the internal
 				aggregation by calling the framework method <samp class="ph codeph">setAggregation</samp> that has
@@ -324,7 +314,7 @@
 					<samp class="ph codeph">i18n</samp> model.</p>
 
 			<p class="p">Let’s ignore the other internal helper functions and event handlers for now and
-				define our renderer. With the help of the <span class="ph"><span class="ph pname">SAPUI5</span></span> render manager
+				define our renderer. With the help of the <span class="ph"><span class="ph pname">OpenUI5</span></span> render manager
 				and the control instance that are passed on as a reference, we can now render the
 				HTML structure of our control. We render the start of the outer
 					<samp class="ph codeph">&lt;div&gt;</samp> tag as <samp class="ph codeph">&lt;div</samp> and call the helper
@@ -339,10 +329,10 @@
 				controls and add their HTML to the page. Finally, we close our surrounding
 					<samp class="ph codeph">&lt;div&gt;</samp> tag.</p>
 
-			<p class="p">The <samp class="ph codeph">setValue</samp> is an overridden setter. <span class="ph"><span class="ph pname">SAPUI5</span></span> will generate a
+			<p class="p">The <samp class="ph codeph">setValue</samp> is an overridden setter. <span class="ph"><span class="ph pname">OpenUI5</span></span> will generate a
 				setter that updates the property value when called in a controller or defined in the
 				XML view, but we also need to update the internal rating control in the hidden
-				aggregation to reflect the state properly. Also, we can skip the rerendering of <span class="ph"><span class="ph pname">SAPUI5</span></span> that is usually
+				aggregation to reflect the state properly. Also, we can skip the rerendering of <span class="ph"><span class="ph pname">OpenUI5</span></span> that is usually
 				triggered when a property is changed on a control by calling the
 					<samp class="ph codeph">setProperty</samp> method to update the control property with true as
 				the third parameter.</p>
@@ -356,23 +346,27 @@
 				the placeholder values is read from the <samp class="ph codeph">i18n</samp> model that is assigned
 				to the control automatically.</p>
 
-			<p class="p">And last but not least, we have the press handler for the rating button that submits
-				our rating. We assume that rating a product is a one-time action and first disable
-				the rating and the button so that the user is not allowed to submit another rating.
-				We also update the label to show a "Thank You" message, then we fire the change
-				event of the control and pass in the current value as a parameter so that
+			<p class="p">Next, we have the <samp class="ph codeph">press</samp> handler for the rating button that submits our
+				rating. We assume that rating a product is a one-time action and first disable the
+				rating and the button so that the user is not allowed to submit another rating. We
+				also update the label to show a "Thank you for your rating!" message, then we fire
+				the change event of the control and pass in the current value as a parameter so that
 				applications that are listening to this event can react on the rating
 				interaction.</p>
+
+			<p class="p">We define the <samp class="ph codeph">reset</samp> method to be able to revert the state of the
+				control on the UI to its initial state so that the user can again submit a
+				rating.</p>
 
 		</div>
 
 		<div class="section"><div class="section_title">webapp/view/Detail.view.xml</div><div type="webapp/view/Detail.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
-	controllerName="sap.ui.demo.wt.controller.Detail"
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
+	controllerName="sap.ui.demo.walkthrough.controller.Detail"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
-	<span class="ph emphasis emphasis">xmlns:wt="sap.ui.demo.wt.control"</span>&gt;
+	<span class="ph emphasis emphasis">xmlns:wt="sap.ui.demo.walkthrough.control"</span>&gt;
 	&lt;Page
 		title="{i18n&gt;detailPageTitle}"
 		showNavButton="true"
@@ -380,7 +374,7 @@
 		&lt;ObjectHeader
 			intro="{invoice&gt;ShipperName}"
 			title="{invoice&gt;ProductName}"/&gt;
-		<span class="ph emphasis emphasis">&lt;wt:ProductRating class="sapUiSmallMarginBeginEnd" change="onRatingChange"/&gt;</span>
+		<span class="ph emphasis emphasis">&lt;wt:ProductRating id="rating" class="sapUiSmallMarginBeginEnd" change="onRatingChange"/&gt;</span>
 	&lt;/Page&gt;
 &lt;/mvc:View&gt;
 </pre></div>
@@ -395,14 +389,21 @@
 
 		<div class="section"><div class="section_title">webapp/controller/Detail.controller.js</div><div type="webapp/controller/Detail.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/core/routing/History"<span class="ph emphasis emphasis">,
 	"sap/m/MessageToast"</span>
 ], function (Controller, History<span class="ph emphasis emphasis">, MessageToast</span>) {
 	use strict;
-	return Controller.extend(sap.ui.demo.wt.controller.Detail, {
+	return Controller.extend(sap.ui.demo.walkthrough.controller.Detail, {
 		…
+		_onObjectMatched: function (oEvent) {
+			<span class="ph emphasis emphasis">this.byId("rating").reset();</span>
+			this.getView().bindElement({
+				path: "/" + oEvent.getParameter("arguments").invoicePath,
+				model: "invoice"
+			});
+		},
 		onNavBack: function () {
 			…
 		}<span class="ph emphasis emphasis">,
@@ -421,11 +422,15 @@
 				that is fired when the rating has been submitted. We then display a confirmation
 				message with the value in a <samp class="ph codeph">MessageToast</samp> control.</p>
 
+			<p class="p">In the <samp class="ph codeph">onObjectMatched</samp> private method, we call the
+					<samp class="ph codeph">reset</samp> method to make it possible to submit another rating as
+				soon as the detail view is displayed for a different item.</p>
+
 		</div></div>
 
 		<div class="section">
 			<div class="section_title">webapp/css/style.css</div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!css</samp>.myAppDemoWTmyCustomButton.sapMBtn {
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">.myAppDemoWTmyCustomButton.sapMBtn {
 	margin-right: 0.125rem;
 }
 .myAppDemoWTmyCustomText {
@@ -447,10 +452,10 @@
 			<p class="p">We could also do this with more HTML in the renderer but this is the simplest way and
 				it will only be applied inside our custom control. However, please be aware that the
 				custom control is in your app and might have to be adjusted when the inner controls
-				change in future versions of <span class="ph"><span class="ph pname">SAPUI5</span></span>.</p>
+				change in future versions of <span class="ph"><span class="ph pname">OpenUI5</span></span>.</p>
 
 			<div class="section_title">webapp/i18n/i18n.properties </div>
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>…
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">…
 # Detail Page
 detailPageTitle=Walkthrough - Details
 <span class="ph emphasis emphasis">ratingConfirmation=You have rated this product with {0} stars
@@ -458,7 +463,7 @@ detailPageTitle=Walkthrough - Details
 # Product Rating
 productRatingLabelInitial=Please rate this product
 productRatingLabelIndicator=Your rating: {0} out of {1}
-productRatingLabelFinal=Thank you!
+productRatingLabelFinal=Thank you for your rating!
 productRatingButton=Rate</span></pre></div>
 
 			<p class="p">The resource bundle is extended with the confirmation message and the strings that we
@@ -485,26 +490,26 @@ productRatingButton=Rate</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="8ef57cfd37b44f089f7e3b52d56597eb.html" title="Now we can navigate to our detail page and display an invoice, but we cannot go back to the overview page yet. We'll add a back button to the detail page and implement a function that shows our overview page again.">Step 33: Routing Back and History</a><br/>
 </div>
 <div class="nextlink"><br/>
-<strong>Next: </strong><a class="link" href="a96e18b4cd924196b255eb9623431dbb.html" title="In this step, we improve the responsiveness of our app. SAPUI5 applications can be run on phone, tablet, and desktop devices and we can configure the application to make best use of the screen estate for each scenario. Fortunately, SAPUI5 controls like the sap.m.Table already deliver a lot of features that we can use.">Step 35: Responsiveness</a><br/>
+<strong>Next: </strong><a class="link" href="a96e18b4cd924196b255eb9623431dbb.html" title="In this step, we improve the responsiveness of our app. OpenUI5 applications can be run on phone, tablet, and desktop devices and we can configure the application to make best use of the screen estate for each scenario. Fortunately, OpenUI5 controls like the sap.m.Table already deliver a lot of features that we can use.">Step 35: Responsiveness</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f1703b6f4d1014b6dd926db0e91070.html" title="For developing controls for SAPUI5 in JavaScript, it is either possible to extend existing controls or to create new controls.">Developing SAPUI5 Controls</a></div>
-<div><a class="link" href="7b52540d9d8c4e00b9723151622bbb64.html" title="Control metadata consist of properties, events, as well as aggregations and associations.">Defining the Control Metadata</a></div>
+<div><a class="link" href="8dcab0011d274051808f959800cabf9f.html" title="You can create own content for OpenUI5. To develop controls in JavaScript, you can either extend existing controls or create new ones.">Developing Controls</a></div>
+<div><a class="link" href="7b52540d9d8c4e00b9723151622bbb64.html" title="Control metadata consists of properties, events, as well as aggregations and associations.">Defining the Control Metadata</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.RatingIndicator.html" alt="../../docs/api/symbols/sap.m.RatingIndicator.html" title="../../docs/api/symbols/sap.m.RatingIndicator.html">API Reference: <samp class="ph codeph">sap.m.RatingIndicator</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.RatingIndicator/samples" alt="../../explored.html#/entity/sap.m.RatingIndicator/samples" title="../../explored.html#/entity/sap.m.RatingIndicator/samples">API Overview and Samples: <samp class="ph codeph">sap.m.RatingIndicator</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.RatingIndicator/samples" alt="../../explored.html#/entity/sap.m.RatingIndicator/samples" title="../../explored.html#/entity/sap.m.RatingIndicator/samples">Samples: <samp class="ph codeph">sap.m.RatingIndicator</samp>
 			</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.Label.html" alt="../../docs/api/symbols/sap.m.Label.html" title="../../docs/api/symbols/sap.m.Label.html">API Reference: <samp class="ph codeph">sap.m.Label</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Label/samples" alt="../../explored.html#/entity/sap.m.Label/samples" title="../../explored.html#/entity/sap.m.Label/samples">API Overview and Samples: <samp class="ph codeph">sap.m.Label</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Label/samples" alt="../../explored.html#/entity/sap.m.Label/samples" title="../../explored.html#/entity/sap.m.Label/samples">Samples: <samp class="ph codeph">sap.m.Label</samp>
 			</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.Button.html" alt="../../docs/api/symbols/sap.m.Button.html" title="../../docs/api/symbols/sap.m.Button.html">API Reference: <samp class="ph codeph">sap.m.Button</samp></a></div>
-<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Button/samples" alt="../../explored.html#/entity/sap.m.Button/samples" title="../../explored.html#/entity/sap.m.Button/samples">API Overview and Samples: <samp class="ph codeph">sap.m.Button</samp>
+<div><a class="link" target="_blank" href="../../explored.html#/entity/sap.m.Button/samples" alt="../../explored.html#/entity/sap.m.Button/samples" title="../../explored.html#/entity/sap.m.Button/samples">Samples: <samp class="ph codeph">sap.m.Button</samp>
 			</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.Control.html" alt="../../docs/api/symbols/sap.ui.core.Control.html" title="../../docs/api/symbols/sap.ui.core.Control.html">API Reference: <samp class="ph codeph">sap.ui.core.Control</samp></a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.Element.html" alt="../../docs/api/symbols/sap.ui.core.Element.html" title="../../docs/api/symbols/sap.ui.core.Element.html">API Reference: <samp class="ph codeph">sap.ui.core.Element</samp></a></div>
@@ -513,19 +518,5 @@ productRatingButton=Rate</span></pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 34: Custom Controls";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

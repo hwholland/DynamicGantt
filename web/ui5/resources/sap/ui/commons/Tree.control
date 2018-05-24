@@ -3,7 +3,7 @@
     <name>Tree</name>
     <derived/>
     <documentation>Simple tree to display item in a hierarchical way</documentation>
-    <deprecation since="1.38"></deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Tree}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Misc">
@@ -62,10 +62,10 @@
     </aggregations>
     <methods>
         <method name="expandAll" type="sap.ui.core/void">
-            <documentation>Expands all nodes in the tree</documentation>
+            <documentation>Expands all nodes in the tree.</documentation>
         </method>
         <method name="collapseAll" type="sap.ui.core/void">
-            <documentation>Collapses all nodes in the tree</documentation>
+            <documentation>Collapses all nodes in the tree.</documentation>
         </method>
     </methods>
 </control>

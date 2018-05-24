@@ -5,13 +5,12 @@
 
     <title>PagingButton - sap.m</title>
 
+    <script src="shared-config.js"></script>
     <script src="../../../resources/sap-ui-core.js"
-            type="text/javascript"
             id="sap-ui-bootstrap"
-            data-sap-ui-libs="sap.m"
-            data-sap-ui-theme="sap_bluecrystal">
+            data-sap-ui-libs="sap.m">
     </script>
-    <script type="text/javascript">
+    <script>
         jQuery.sap.require("sap.m.PagingButton");
 
     var app = new sap.m.App("myApp", {initialPage: "page1"}),
@@ -45,18 +44,24 @@
                         enabled: true
                     })];
             },
-            oChangePositionInput = new sap.m.Input({
+            oChangePositionInput = new sap.m.Input("changePosition", {
                 liveChange: function (oEvent) {
                     oPagingButton.setPosition(+oEvent.getParameter("value"))
                 }
             }),
-            oChangePositionLabel = new sap.m.Label({text: "Change position value"}),
-            oChangeCountInput = new sap.m.Input({
+            oChangePositionLabel = new sap.m.Label({
+				text: "Change position value",
+				labelFor: "changePosition"
+            }),
+            oChangeCountInput = new sap.m.Input("changeCount", {
                 liveChange: function (oEvent) {
                     oPagingButton.setCount(+oEvent.getParameter("value"))
                 }
             }),
-            oChangeCountLabel = new sap.m.Label({text: "Change count value"}),
+            oChangeCountLabel = new sap.m.Label({
+				text: "Change count value",
+				labelFor: "changeCount"
+            }),
             page1 = new sap.m.Page("page1", {
                 title: "PagingButton",
                 headerContent: [getButtons(), oPagingButton, getButtons()],

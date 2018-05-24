@@ -4,15 +4,19 @@
   <name>sap.m</name>
   <vendor>SAP SE</vendor>
   <copyright>UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.38.33</version>
+  <version>1.54.5</version>
 
   <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 
   <dependencies>
     <dependency>
       <libraryName>sap.ui.core</libraryName>
+    </dependency>
+    <dependency>
+      <libraryName>sap.ui.unified</libraryName>
+      <lazy>true</lazy>
     </dependency>
   </dependencies>
 
@@ -36,7 +40,7 @@
     <ownership xmlns="http://www.sap.com/ui5/buildext/ownership">
         <component>CA-UI5-CTR</component><!-- default component for library, embedded text as a shortcut for <name>text</name> -->
         <component>
-            <name>CA-UI5-CTR-SOF-BAL</name>
+            <name>CA-UI5-CTR-BAL</name>
             <modules>
                 <module>sap/m/FacetFilter</module>
             </modules>
@@ -54,7 +58,9 @@
                 <module>sap/m/NewsContent</module>
                 <module>sap/m/NumericContent</module>
                 <module>sap/m/ImageContent</module>
+                <module>sap/m/HeaderContainer</module>
                 <module>sap/m/GenericTileMode</module>
+                <module>sap/m/GenericTileScope</module>
                 <module>sap/m/Size</module>
                 <module>sap/m/ValueColor</module>
                 <module>sap/m/ValueCSSColor</module>
@@ -62,10 +68,17 @@
                 <module>sap/m/UploadCollectionItem</module>
                 <module>sap/m/UploadCollectionParameter</module>
                 <module>sap/m/LoadState</module>
+                <module>sap/m/SelectionDetails</module>
+                <module>sap/m/SelectionDetailsFacade</module>
+                <module>sap/m/SelectionDetailsItem</module>
+                <module>sap/m/SelectionDetailsItemFacade</module>
+                <module>sap/m/SelectionDetailsLine</module>
+                <module>sap/m/MultiEditField</module>
+                <module>sap/m/PDFViewer</module>
             </modules>
         </component>
         <component>
-            <name>CA-UI5-DOC</name>
+            <name>CA-UI5-FST</name>
             <modules>
                 <module>sap/m/tutorial/Walkthrough</module>
                 <module>sap/m/tutorial/Testing-BulletinBoard</module>
@@ -81,6 +94,25 @@
                 <module>sap/m/P13nFilterPanel</module>
                 <module>sap/m/P13nGroupPanel</module>
                 <module>sap/m/P13nSortPanel</module>
+            </modules>
+        </component>
+        <component>
+            <name>CA-UI5-TBL</name>
+            <modules>
+                <module>sap/m/ListBase</module>
+                <module>sap/m/List</module>
+                <module>sap/m/Tree</module>
+                <module>sap/m/Table</module>
+                <module>sap/m/ListItemBase</module>
+                <module>sap/m/DisplayListItem</module>
+                <module>sap/m/GroupHeaderListItem</module>
+                <module>sap/m/InputListItem</module>
+                <module>sap/m/StandardListItem</module>
+                <module>sap/m/CustomListItem</module>
+                <module>sap/m/CustomTreeItem</module>
+                <module>sap/m/GrowingList</module>
+                <module>sap/m/Column</module>
+                <module>sap/m/ColumnListItem</module>
             </modules>
         </component>
     </ownership>

@@ -1,10 +1,10 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/mvc/JSView"], function (JSView) {
+sap.ui.define(["sap/ui/core/mvc/JSView", "sap/m/SplitApp"], function (JSView, SplitApp) {
 	"use strict";
 
 	sap.ui.jsview("sap.ui.demokit.explored.view.app", {
@@ -19,7 +19,7 @@ sap.ui.define(["sap/ui/core/mvc/JSView"], function (JSView) {
 			this.setDisplayBlock(true);
 
 			// create split app
-			return new sap.m.SplitApp("splitApp", {
+			return new SplitApp("splitApp", {
 				afterDetailNavigate: function () {
 					this.hideMaster();
 				}

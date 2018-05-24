@@ -2,8 +2,9 @@ sap.ui.define([
 	'jquery.sap.global',
 	'sap/ui/core/Fragment',
 	'sap/ui/core/mvc/Controller',
-	'sap/ui/model/json/JSONModel'
-], function (jQuery, Fragment, Controller, JSONModel) {
+	'sap/ui/model/json/JSONModel',
+	'sap/m/MessageToast'
+], function (jQuery, Fragment, Controller, JSONModel, MessageToast) {
 	"use strict";
 
 	var CController = Controller.extend("sap.m.sample.QuickView.QuickView", {
@@ -12,6 +13,7 @@ sap.ui.define([
 		oCompanyModel: new JSONModel(),
 		oEmployeeModel: new JSONModel(),
 		oGenericModel: new JSONModel(),
+		oGenericDataNoHeader: new JSONModel(),
 		onInit: function () {
 			// JSON sample data
 			var mCompanyData = {
@@ -152,7 +154,7 @@ sap.ui.define([
 										label: "Name",
 										value: "Adventure Company",
 										url: "http://sap.com",
-										type: sap.m.QuickViewGroupElementType.link
+										elementType: sap.m.QuickViewGroupElementType.link
 									},
 									{
 										label: "Address",
@@ -193,22 +195,52 @@ sap.ui.define([
 						]
 					}
 				]
-			}
+			};
+
+			var mGenericDataNoHeader = {
+				pages: [
+					{
+						pageId: "genericPageId",
+						title: "Inventarisation",
+						titleUrl: "http://de.wikipedia.org/wiki/Inventarisation",
+						icon: "sap-icon://camera",
+						groups: [
+							{
+								elements: [
+									{
+										label: "Start Date",
+										value: "01/01/2015"
+									},
+									{
+										label: "End Date",
+										value: "31/12/2015"
+									},
+									{
+										label: "Occurrence",
+										value: "Weekly"
+									}
+								]
+							}
+						]
+					}
+				]
+			};
 
 			// set the data for the model
 			this.oCompanyModel.setData(mCompanyData);
 			this.oEmployeeModel.setData(mEmployeeData);
 			this.oGenericModel.setData(mGenericData);
+			this.oGenericDataNoHeader.setData(mGenericDataNoHeader);
 		},
 
 		onAfterRendering: function () {
-			var oButton = this.getView().byId('showQuickView');
+			var oButton = this.byId('showQuickView');
 			oButton.$().attr('aria-haspopup', true);
 
-			oButton = this.getView().byId('employeeQuickView');
+			oButton = this.byId('employeeQuickView');
 			oButton.$().attr('aria-haspopup', true);
 
-			oButton = this.getView().byId('genericQuickView');
+			oButton = this.byId('genericQuickView');
 			oButton.$().attr('aria-haspopup', true);
 		},
 
@@ -236,10 +268,25 @@ sap.ui.define([
 			this.openQuickView(oEvent, this.oGenericModel);
 		},
 
+		handleGenericNoHeaderQuickViewPress: function (oEvent) {
+			this.openQuickView(oEvent, this.oGenericDataNoHeader);
+		},
+
 		createPopover: function() {
-			if (!this._oQuickView) {
-				this._oQuickView = sap.ui.xmlfragment("sap.m.sample.QuickView.QuickView", this);
-				this.getView().addDependent(this._oQuickView);
+			if (this._oQuickView) {
+				this._oQuickView.destroy();
+			}
+
+			this._oQuickView = sap.ui.xmlfragment("sap.m.sample.QuickView.QuickView", this);
+			this.getView().addDependent(this._oQuickView);
+		},
+
+		onNavigate: function (oEvent) {
+			var oNavOrigin = oEvent.getParameter("navOrigin");
+			if (oNavOrigin) {
+				MessageToast.show('Link "' + oNavOrigin.getText() + '" was clicked');
+			} else {
+				MessageToast.show('Back button was clicked');
 			}
 		},
 

@@ -1,11 +1,11 @@
-﻿if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit,sinon*/
+
 sinon.config.useFakeTimers = false;
 jQuery.sap.require("sap.ui.fl.registry.Settings");
 jQuery.sap.require("sap.ui.fl.Cache");
 
 (function(Settings, Cache) {
+	"use strict";
 
 	var bPresetFlexChangeMode, bFlexibilityAdaptationButtonAllowed;
 
@@ -30,7 +30,7 @@ jQuery.sap.require("sap.ui.fl.Cache");
 			Settings._bFlexChangeMode = bPresetFlexChangeMode;
 			Settings._bFlexibilityAdaptationButtonAllowed = bFlexibilityAdaptationButtonAllowed;
 
-			delete Settings._instances['testcomponent'];
+			Settings._instance = undefined;
 
 			// detach all events
 			jQuery.each(Settings._oEventProvider.mEventRegistry, function (sEventKey, aEvents) {
@@ -46,24 +46,77 @@ jQuery.sap.require("sap.ui.fl.Cache");
 	});
 
 	QUnit.test("isKeyUser", function(assert) {
-		QUnit.equal(this.cut._oSettings.isKeyUser, false);
+		assert.equal(this.cut._oSettings.isKeyUser, false);
 		var bIsKeyUser = this.cut.isKeyUser();
-		QUnit.equal(bIsKeyUser, false);
+		assert.equal(bIsKeyUser, false);
 	});
 
 	QUnit.test("isModelS", function(assert) {
-		QUnit.equal(this.cut._oSettings.isAtoAvailable, false);
+		assert.equal(this.cut._oSettings.isAtoAvailable, false);
 		var bIsModelS = this.cut.isModelS();
-		QUnit.equal(bIsModelS, false);
+		assert.equal(bIsModelS, false);
 	});
 
 	QUnit.test("isAtoEnabled", function(assert) {
-		QUnit.equal(this.cut._oSettings.isAtoEnabled, false);
+		assert.equal(this.cut._oSettings.isAtoEnabled, false);
 		var bIsAtoEnabled = this.cut.isAtoEnabled();
-		QUnit.equal(bIsAtoEnabled, false);
+		assert.equal(bIsAtoEnabled, false);
 	});
 
-	QUnit.test("load from cache", function(assert) {
+	QUnit.test("get instance from flex settings request when flex data promise is not available", function(assert) {
+		var done = assert.async();
+
+		var oSetting = {
+			isKeyUser: true,
+			isAtoAvailable: true
+		};
+		var oStubCreateConnector = this.stub(sap.ui.fl.LrepConnector, "createConnector").returns({
+			loadSettings : function(){
+				return Promise.resolve(oSetting);
+			}
+		});
+		var oStubGetFlexDataPromise = this.stub(Cache, "getFlexDataPromise").returns(undefined);
+		Settings.getInstance().then(function(oSettings) {
+			assert.equal(oStubGetFlexDataPromise.callCount, 1);
+			assert.equal(oStubCreateConnector.callCount, 1);
+			assert.equal(oSettings.isKeyUser(), true);
+			assert.equal(oSettings.isModelS(), true);
+			Settings.getInstance().then(function(oSettings2) {
+				assert.equal(oStubCreateConnector.callCount, 1);
+				assert.equal(oSettings, oSettings2);
+				done();
+			});
+		});
+	});
+
+	QUnit.test("get instance from flex settings request when flex data promise is rejected", function(assert) {
+		var done = assert.async();
+
+		var oSetting = {
+			isKeyUser: true,
+			isAtoAvailable: true
+		};
+		var oStubCreateConnector = sinon.stub(sap.ui.fl.LrepConnector, "createConnector").returns({
+			loadSettings : function(){
+				return Promise.resolve(oSetting);
+			}
+		});
+		var oStubGetFlexDataPromise = this.stub(Cache, "getFlexDataPromise").returns(Promise.reject());
+		Settings.getInstance().then(function(oSettings) {
+			assert.equal(oStubGetFlexDataPromise.callCount, 1);
+			assert.equal(oStubCreateConnector.callCount, 1);
+			assert.equal(oSettings.isKeyUser(), true);
+			assert.equal(oSettings.isModelS(), true);
+			Settings.getInstance().then(function(oSettings2) {
+				assert.equal(oStubCreateConnector.callCount, 1);
+				assert.equal(oSettings, oSettings2);
+				oStubCreateConnector.restore();
+				done();
+			});
+		});
+	});
+
+	QUnit.test("get instance from cache when flex data promise is resolved", function(assert) {
 		var done = assert.async();
 
 		var oFileContent = {
@@ -74,14 +127,13 @@ jQuery.sap.require("sap.ui.fl.Cache");
 				}
 			}
 		};
-		Cache._entries['testcomponent'] = {
-			promise: Promise.resolve(oFileContent)
-		};
-		Settings.getInstance('testcomponent').then(function(oSettings) {
-			QUnit.equal(oSettings.isKeyUser(), true);
-			QUnit.equal(oSettings.isModelS(), true);
-			Settings.getInstance('testcomponent').then(function(oSettings2) {
-				QUnit.equal(oSettings, oSettings2);
+		var oStubGetFlexDataPromise = this.stub(Cache, "getFlexDataPromise").returns(Promise.resolve(oFileContent));
+		Settings.getInstance().then(function(oSettings) {
+			assert.equal(oStubGetFlexDataPromise.callCount, 1);
+			assert.equal(oSettings.isKeyUser(), true);
+			assert.equal(oSettings.isModelS(), true);
+			Settings.getInstance().then(function(oSettings2) {
+				assert.equal(oSettings, oSettings2);
 				done();
 			});
 		});
@@ -90,54 +142,54 @@ jQuery.sap.require("sap.ui.fl.Cache");
 	QUnit.test("getInstanceOrUndef", function(assert) {
 		var done = assert.async();
 
-		var oFileContent = {
-			changes: {
-				settings: {
-					isKeyUser: true,
-					isAtoAvailable: true
-				}
+		var oSetting = {
+			isKeyUser: true,
+			isAtoAvailable: true
+		};
+		var oStubCreateConnector = this.stub(sap.ui.fl.LrepConnector, "createConnector").returns({
+			loadSettings : function(){
+				return Promise.resolve(oSetting);
 			}
-		};
-		Cache._entries['testcomponent'] = {
-			promise: Promise.resolve(oFileContent)
-		};
-		var oSettings0 = Settings.getInstanceOrUndef('testcomponent');
+		});
+		var oSettings0 = Settings.getInstanceOrUndef();
 		QUnit.ok(!oSettings0);
-		Settings.getInstance('testcomponent').then(function(oSettings1) {
+		Settings.getInstance().then(function(oSettings1) {
 			QUnit.ok(oSettings1);
-			var oSettings2 = Settings.getInstanceOrUndef('testcomponent');
-			QUnit.equal(oSettings1, oSettings2);
+			assert.equal(oStubCreateConnector.callCount, 1);
+			var oSettings2 = Settings.getInstanceOrUndef();
+			assert.equal(oSettings1, oSettings2);
+			assert.equal(oStubCreateConnector.callCount, 1);
 			done();
 		});
 	});
 
 	QUnit.test("_isFlexChangeModeFromUrl", function(assert) {
 		var bFlexChangeMode = Settings._isFlexChangeModeFromUrl();
-		QUnit.equal(bFlexChangeMode, undefined);
+		assert.equal(bFlexChangeMode, undefined);
 		var oUriParams = {
 			mParams: {
 				"sap-ui-fl-changeMode": ["true"]
 			}
 		};
-		var getUriParametersStub = this.stub(jQuery.sap, "getUriParameters").returns(oUriParams);
+		this.stub(jQuery.sap, "getUriParameters").returns(oUriParams);
 		bFlexChangeMode = Settings._isFlexChangeModeFromUrl();
-		QUnit.equal(bFlexChangeMode, true);
+		assert.equal(bFlexChangeMode, true);
 		oUriParams.mParams["sap-ui-fl-changeMode"] = ["false"];
 		bFlexChangeMode = Settings._isFlexChangeModeFromUrl();
-		QUnit.equal(bFlexChangeMode, false);
+		assert.equal(bFlexChangeMode, false);
 	});
 
 	QUnit.test("isFlexChangeMode", function(assert) {
 		var bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, true); //default is true
+		assert.equal(bFlexChangeMode, true); //default is true
 
 		Settings.leaveFlexChangeMode();
-		var bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, false);
+		bFlexChangeMode = Settings.isFlexChangeMode();
+		assert.equal(bFlexChangeMode, false);
 
 		Settings.activateFlexChangeMode();
-		var bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, true);
+		bFlexChangeMode = Settings.isFlexChangeMode();
+		assert.equal(bFlexChangeMode, true);
 
 		var oUriParams = {
 			mParams: {
@@ -146,19 +198,19 @@ jQuery.sap.require("sap.ui.fl.Cache");
 		};
 		this.stub(jQuery.sap, "getUriParameters").returns(oUriParams);
 		bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, false);
+		assert.equal(bFlexChangeMode, false);
 	});
 
 	QUnit.test("leave flexChangeMode eventing", function(assert) {
 		var done = assert.async();
 
 		var bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, true); //default is true
+		assert.equal(bFlexChangeMode, true); //default is true
 
 		var fOnChangeModeUpdated = function(oEvent) {
 			Settings.detachEvent(sap.ui.fl.registry.Settings.events.changeModeUpdated, fOnChangeModeUpdated.bind(this));
-			QUnit.equal(oEvent.getParameter("bFlexChangeMode"), false);
-			QUnit.equal(sap.ui.fl.registry.Settings.isFlexChangeMode(), false);
+			assert.equal(oEvent.getParameter("bFlexChangeMode"), false);
+			assert.equal(sap.ui.fl.registry.Settings.isFlexChangeMode(), false);
 			done();
 		};
 		Settings.attachEvent(sap.ui.fl.registry.Settings.events.changeModeUpdated, fOnChangeModeUpdated.bind(this));
@@ -169,12 +221,12 @@ jQuery.sap.require("sap.ui.fl.Cache");
 		var done = assert.async();
 
 		var bFlexChangeMode = Settings.isFlexChangeMode();
-		QUnit.equal(bFlexChangeMode, true); //default is true
+		assert.equal(bFlexChangeMode, true); //default is true
 
 		var fOnChangeModeUpdated = function(oEvent) {
 			Settings.detachEvent(sap.ui.fl.registry.Settings.events.changeModeUpdated, fOnChangeModeUpdated.bind(this));
-			QUnit.equal(oEvent.getParameter("bFlexChangeMode"), true);
-			QUnit.equal(Settings.isFlexChangeMode(), true);
+			assert.equal(oEvent.getParameter("bFlexChangeMode"), true);
+			assert.equal(Settings.isFlexChangeMode(), true);
 			done();
 		};
 		Settings.leaveFlexChangeMode();
@@ -182,24 +234,24 @@ jQuery.sap.require("sap.ui.fl.Cache");
 		Settings.activateFlexChangeMode();
 	});
 
-	QUnit.test("returns by default adaptation button disllowed", function () {
+	QUnit.test("returns by default adaptation button disllowed", function (assert) {
 		var bFlexibilityAdaptationButtonAllowed = sap.ui.fl.registry.Settings.isFlexibilityAdaptationButtonAllowed();
 
-		QUnit.equal(bFlexibilityAdaptationButtonAllowed, false);
+		assert.equal(bFlexibilityAdaptationButtonAllowed, false);
 	});
 
-	QUnit.test("changes adaptation button allowed", function () {
+	QUnit.test("changes adaptation button allowed", function (assert) {
 		var bRetrievedAdaptationButtonAllowed;
 		var bFlexibilityAdaptationButtonAllowed = true;
 		var bFlexibilityAdaptationButtonDisallowed = false;
 
 		Settings.setFlexibilityAdaptationButtonAllowed(bFlexibilityAdaptationButtonDisallowed);
 		bRetrievedAdaptationButtonAllowed = Settings.isFlexibilityAdaptationButtonAllowed();
-		QUnit.equal(bRetrievedAdaptationButtonAllowed, bFlexibilityAdaptationButtonDisallowed);
+		assert.equal(bRetrievedAdaptationButtonAllowed, bFlexibilityAdaptationButtonDisallowed);
 
 		Settings.setFlexibilityAdaptationButtonAllowed(bFlexibilityAdaptationButtonAllowed);
 		bRetrievedAdaptationButtonAllowed = Settings.isFlexibilityAdaptationButtonAllowed();
-		QUnit.equal(bRetrievedAdaptationButtonAllowed, bFlexibilityAdaptationButtonAllowed);
+		assert.equal(bRetrievedAdaptationButtonAllowed, bFlexibilityAdaptationButtonAllowed);
 	});
 
 	QUnit.test("fires adaptation mode event on an adaptation button activation and the button is active", function(assert) {
@@ -227,19 +279,6 @@ jQuery.sap.require("sap.ui.fl.Cache");
 		sap.ui.fl.registry.Settings.setFlexibilityAdaptationButtonAllowed(true);
 		Settings.attachEvent(sap.ui.fl.registry.Settings.events.flexibilityAdaptationButtonAllowedChanged, fOnChangeModeUpdated.bind(this));
 		sap.ui.fl.registry.Settings.setFlexibilityAdaptationButtonAllowed(false);
-	});
-
-	QUnit.test("isChangeTypeEnabled", function(assert) {
-		QUnit.equal(this.cut.isChangeTypeEnabled("addField", "CUSTOMER"), true);
-		QUnit.equal(this.cut.isChangeTypeEnabled("addField", "VENDOR"), true);
-		QUnit.equal(this.cut.isChangeTypeEnabled("addField", "USER"), false);
-		QUnit.equal(this.cut.isChangeTypeEnabled("unknownChangeType", "CUSTOMER"), true);
-		QUnit.equal(this.cut.isChangeTypeEnabled("changeTypeOnlyForUser", "USER"), true);
-		QUnit.equal(this.cut.isChangeTypeEnabled("changeTypeOnlyForUser", "VENDOR"), false);
-		QUnit.equal(this.cut.isChangeTypeEnabled("completelyDisabledChangeType", "VENDOR"), false);
-		QUnit.equal(this.cut.isChangeTypeEnabled("completelyDisabledChangeType", "CUSTOMER"), false);
-		QUnit.equal(this.cut.isChangeTypeEnabled("completelyDisabledChangeType", "USER"), false);
-		QUnit.equal(this.cut.isChangeTypeEnabled("changeTypeOnlyForUser"), true);
 	});
 
 }(sap.ui.fl.registry.Settings, sap.ui.fl.Cache));

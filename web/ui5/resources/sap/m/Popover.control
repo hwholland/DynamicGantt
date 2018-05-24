@@ -3,7 +3,40 @@
     <name>Popover</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Popover is used to present information temporarily but in a way that does not take over the entire screen. The popover content is layered on top of your existing content and it remains visible until the user taps outside of the popover (when modal is set to false) or you explicitly dismiss it (when modal is set to true). The switching between modal and non-modal can also be done when the popover is already opened.</documentation>
+    <documentation>Displays additional information for an object in a compact way.
+
+&lt;h3&gt;Overview&lt;/h3&gt;
+The popover displays additional information for an object in a compact way and without leaving the page. The popover can contain various UI elements such as fields, tables, images, and charts. It can also include actions in the footer.
+&lt;h3&gt;Structure&lt;/h3&gt;
+The popover has three main areas:
+&lt;ul&gt;
+&lt;li&gt;Header (optional) - with a back button and a title&lt;/li&gt;
+&lt;li&gt;Content - holds all the controls&lt;/li&gt;
+&lt;li&gt;Footer (optional) - with additional action buttons&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Guidelines&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Do not overlap popovers.&lt;/li&gt;
+&lt;li&gt;You can determine the {@link sap.m.PlacementType placement} of the popover relative to the control that opens it.&lt;/li&gt;
+&lt;li&gt;Ensure that the content has a basic design and shows only the most important information.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You need to define your own structure of controls within the popover.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The {@link sap.m.QuickView QuickView} is more appropriate for your use case.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+The popover is closed when the user clicks or taps outside the popover or selects an action within the popover. You can prevent this with the &lt;code&gt;modal&lt;/code&gt; property.
+The popover can be resized when the &lt;code&gt;resizable&lt;/code&gt; property is enabled.
+
+&lt;ul&gt;
+&lt;li&gt;{@link sap.m.Popover} is &lt;u&gt;not&lt;/u&gt; responsive on mobile devices - it will always be rendered as a popover and you have to take care of its size and position.&lt;/li&gt;
+&lt;li&gt;{@link sap.m.ResponsivePopover} is adaptive and responsive. It renders as a dialog with a close button in the header on phones, and as a popover on tablets.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="placement" type="sap.m/PlacementType" defaultValue="Right" group="Behavior">
@@ -50,6 +83,7 @@ Popover detects if there's sap.m.NavContainer, sap.m.Page, or sap.m.ScrollContai
         </property>
         <property name="bounce" type="sap.ui.core/boolean" group="Behavior" since="1.16.5">
             <documentation>Whether bouncing is enabled.</documentation>
+            <deprecation since="1.42">This parameter is obsolete and has no effect.</deprecation>
         </property>
         <property name="resizable" type="sap.ui.core/boolean" defaultValue="false" group="Dimension" since="1.36.4">
             <documentation>Whether resize option is enabled.</documentation>
@@ -125,19 +159,22 @@ Popover detects if there's sap.m.NavContainer, sap.m.Page, or sap.m.ScrollContai
         <association name="initialFocus" type="sap.ui.core/Control" cardinality="0..1" since="1.15.0">
             <documentation>Focus is set to the popover in the sequence of leftButton and rightButton when available. But if some other control neends to get the focus other than one of those two buttons, set the initialFocus with the control which should be focused on.</documentation>
         </association>
+        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+            <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
+        </association>
         <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
             <documentation>Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>
         </association>
     </associations>
     <methods>
         <method name="openBy" type="sap.m/Popover">
-            <documentation>Opens the Popover and set the Popover position according to the {@link #getPlacement() placement} property around the &lt;code&gt;oControl&lt;/code&gt; parameter.</documentation>
+            <documentation>Opens the Popover and sets the Popover position according to the {@link #getPlacement() placement} property around the &lt;code&gt;oControl&lt;/code&gt; parameter.</documentation>
             <parameters>
                 <parameter name="control" type="sap.ui.core/object">
                     <documentation>This is the control to which the Popover will be placed. It can be not only a UI5 control, but also an existing DOM reference. The side of the placement depends on the placement property set in the Popover.</documentation>
                 </parameter>
                 <parameter name="skipInstanceManager" type="sap.ui.core/boolean">
-                    <documentation></documentation>
+                    <documentation>Indicates whether popover should be managed by InstanceManager or not</documentation>
                 </parameter>
             </parameters>
         </method>

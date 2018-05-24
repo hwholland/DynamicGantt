@@ -1,13 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.SelectList.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/delegate/ItemNavigation'],
-	function(jQuery, library, Control, ItemNavigation) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/core/delegate/ItemNavigation',
+	'sap/ui/core/Item',
+	'./SelectListRenderer'
+],
+	function(jQuery, library, Control, ItemNavigation, Item, SelectListRenderer) {
 		"use strict";
+
+		// shortcut for sap.m.touch
+		var touch = library.touch;
+
+		// shortcut for sap.m.SelectListKeyboardNavigationMode
+		var SelectListKeyboardNavigationMode = library.SelectListKeyboardNavigationMode;
 
 		/**
 		 * Constructor for a new <code>sap.m.SelectList</code>.
@@ -20,7 +33,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @public
@@ -28,109 +41,155 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * @alias sap.m.SelectList
 		 * @ui5-metamodel This control will also be described in the UI5 (legacy) design time meta model.
 		 */
-		var SelectList = Control.extend("sap.m.SelectList", /** @lends sap.m.SelectList.prototype */ { metadata: {
+		var SelectList = Control.extend("sap.m.SelectList", /** @lends sap.m.SelectList.prototype */ {
+			metadata: {
+				library: "sap.m",
+				properties: {
 
-			library: "sap.m",
-			properties: {
+					/**
+					 * Indicates whether the user can change the selection.
+					 */
+					enabled: {
+						type: "boolean",
+						group: "Behavior",
+						defaultValue: true
+					},
 
-				/**
-				 * Indicates whether the user can change the selection.
-				 */
-				enabled : { type: "boolean", group: "Behavior", defaultValue: true },
+					/**
+					 * Sets the width of the control.
+					 */
+					width: {
+						type: "sap.ui.core.CSSSize",
+						group: "Dimension",
+						defaultValue: "auto"
+					},
 
-				/**
-				 * Sets the width of the control.
-				 */
-				width: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: "auto" },
+					/**
+					 * Sets the maximum width of the control.
+					 */
+					maxWidth: {
+						type: "sap.ui.core.CSSSize",
+						group: "Dimension",
+						defaultValue: "100%"
+					},
 
-				/**
-				 * Sets the maximum width of the control.
-				 */
-				maxWidth: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: "100%" },
+					/**
+					 * Key of the selected item.
+					 *
+					 * <b>Note: </b> If duplicate keys exist, the first item matching the key is used.
+					 */
+					selectedKey: {
+						type: "string",
+						group: "Data",
+						defaultValue: ""
+					},
 
-				/**
-				 * Key of the selected item.
-				 *
-				 * <b>Note: </b> If duplicate keys exist, the first item matching the key is used.
-				 */
-				selectedKey: { type: "string", group: "Data", defaultValue: "" },
+					/**
+					 * ID of the selected item.
+					 */
+					selectedItemId: {
+						type: "string",
+						group: "Misc",
+						defaultValue: ""
+					},
 
-				/**
-				 * ID of the selected item.
-				 */
-				selectedItemId: { type: "string", group: "Misc", defaultValue: "" },
+					/**
+					 * Indicates whether the text values of the <code>additionalText</code> property of a
+					 * {@link sap.ui.core.ListItem} are shown.
+					 * @since 1.32.3
+					 */
+					showSecondaryValues: {
+						type: "boolean",
+						group: "Misc",
+						defaultValue: false
+					},
 
-				/**
-				 * Indicates whether the text values of the <code>additionalText</code> property of a {@link sap.ui.core.ListItem} are shown.
-				 * @since 1.32.3
-				 */
-				showSecondaryValues: { type: "boolean", group: "Misc", defaultValue: false },
-
-				/**
-				 * Defines the keyboard navigation mode.
-				 *
-				 * <b>Note:</b> The <code>sap.m.SelectListKeyboardNavigationMode.None</code> enumeration value, is only
-				 * intended for use in some composite controls that handles keyboard navigation by themselves.
-				 *
-				 * @protected
-				 * @since 1.38
-				 */
-				keyboardNavigationMode: { type: "sap.m.SelectListKeyboardNavigationMode", group: "Behavior", defaultValue: sap.m.SelectListKeyboardNavigationMode.Delimited }
-			},
-			defaultAggregation: "items",
-			aggregations: {
-
-				/**
-				 * Defines the items contained within this control.
-				 */
-				items: { type: "sap.ui.core.Item", multiple: true, singularName: "item", bindable: "bindable" }
-			},
-			associations: {
-
-				/**
-				 * Sets or retrieves the selected item from the aggregation named items.
-				 */
-				selectedItem: { type: "sap.ui.core.Item", multiple: false },
-
-				/**
-				 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
-				 * @since 1.27.0
-				 */
-				ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
-			},
-			events: {
-
-				/**
-				 * This event is fired when the selection has changed.
-				 *
-				 * <b>Note: </b> The selection can be changed by pressing an non-selected item or
-				 * via keyboard and after the enter or space key is pressed.
-				 */
-				selectionChange: {
-					parameters: {
-
-						/**
-						 * The selected item.
-						 */
-						selectedItem: { type: "sap.ui.core.Item" }
+					/**
+					 * Defines the keyboard navigation mode.
+					 *
+					 * <b>Note:</b> The <code>sap.m.SelectListKeyboardNavigationMode.None</code> enumeration value,
+					 * is only intended for use in some composite controls that handles keyboard navigation by themselves.
+					 *
+					 * @protected
+					 * @since 1.38
+					 */
+					keyboardNavigationMode: {
+						type: "sap.m.SelectListKeyboardNavigationMode",
+						group: "Behavior",
+						defaultValue: SelectListKeyboardNavigationMode.Delimited
 					}
 				},
+				defaultAggregation: "items",
+				aggregations: {
 
-				/**
-				 * This event is fired when an item is pressed.
-				 * @since 1.32.4
-				 */
-				itemPress: {
-					parameters: {
+					/**
+					 * Defines the items contained within this control.
+					 */
+					items: {
+						type: "sap.ui.core.Item",
+						multiple: true,
+						singularName: "item",
+						bindable: "bindable"
+					}
+				},
+				associations: {
 
-						/**
-						 * The pressed item.
-						 */
-						item: { type: "sap.ui.core.Item" }
+					/**
+					 * Sets or retrieves the selected item from the aggregation named items.
+					 */
+					selectedItem: {
+						type: "sap.ui.core.Item",
+						multiple: false
+					},
+
+					/**
+					 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
+					 * @since 1.27.0
+					 */
+					ariaLabelledBy: {
+						type: "sap.ui.core.Control",
+						multiple: true,
+						singularName: "ariaLabelledBy"
+					}
+				},
+				events: {
+
+					/**
+					 * This event is fired when the selection has changed.
+					 *
+					 * <b>Note: </b> The selection can be changed by pressing a non-selected item or
+					 * via keyboard and after the enter or space key is pressed.
+					 */
+					selectionChange: {
+						parameters: {
+
+							/**
+							 * The selected item.
+							 */
+							selectedItem: {
+								type: "sap.ui.core.Item"
+							}
+						}
+					},
+
+					/**
+					 * This event is fired when an item is pressed.
+					 * @since 1.32.4
+					 */
+					itemPress: {
+						parameters: {
+
+							/**
+							 * The pressed item.
+							 */
+							item: {
+								type: "sap.ui.core.Item"
+							}
+						}
 					}
 				}
 			}
-		}});
+		});
 
 		/* =========================================================== */
 		/* Private methods and properties                              */
@@ -160,10 +219,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			}
 		};
 
-		/**
-		 * Called, whenever the binding of the aggregation items is changed.
-		 *
-		 */
 		SelectList.prototype.updateItems = function(sReason) {
 			this.bItemsUpdated = false;
 
@@ -204,7 +259,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 */
 		SelectList.prototype._activateItem = function(oItem) {
 
-			if (oItem instanceof sap.ui.core.Item && oItem && oItem.getEnabled()) {
+			if (oItem instanceof Item && oItem && oItem.getEnabled()) {
 
 				this.fireItemPress({
 					item: oItem
@@ -267,7 +322,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		};
 
 		SelectList.prototype.onAfterRendering = function() {
-			if (this.getKeyboardNavigationMode() === sap.m.SelectListKeyboardNavigationMode.None) {
+			if (this.getKeyboardNavigationMode() === SelectListKeyboardNavigationMode.None) {
 				this.destroyItemNavigation();
 			} else {
 				this.createItemNavigation();
@@ -291,7 +346,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		SelectList.prototype.ontouchstart = function(oEvent) {
 
 			// only process single touches (only the first active touch point)
-			if (sap.m.touch.countContained(oEvent.touches, this.getId()) > 1 ||
+			if (touch.countContained(oEvent.touches, this.getId()) > 1 ||
 				!this.getEnabled()) {
 
 				return;
@@ -336,7 +391,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			}
 
 			// find the active touch point
-			oTouch = sap.m.touch.find(oEvent.changedTouches, this._iActiveTouchId);
+			oTouch = touch.find(oEvent.changedTouches, this._iActiveTouchId);
 
 			// only process the active touch
 			if (oTouch && ((Math.abs(oTouch.pageX - this._fStartX) > 10) || (Math.abs(oTouch.pageY - this._fStartY) > 10))) {
@@ -368,7 +423,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			oEvent.setMarked();
 
 			// find the active touch point
-			oTouch = sap.m.touch.find(oEvent.changedTouches, this._iActiveTouchId);
+			oTouch = touch.find(oEvent.changedTouches, this._iActiveTouchId);
 
 			// process this event only if the touch we're tracking has changed
 			if (oTouch) {
@@ -473,7 +528,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				CSS_CLASS = this.getRenderer().CSS_CLASS;
 
 			this.setAssociation("selectedItem", vItem, true);
-			this.setProperty("selectedItemId", (vItem instanceof sap.ui.core.Item) ? vItem.getId() : vItem, true);
+			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem, true);
 
 			if (typeof vItem === "string") {
 				vItem = sap.ui.getCore().byId(vItem);
@@ -628,6 +683,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		};
 
 		/**
+		 * Returns how many items, which are not separators, are in the SelectList
+		 *
+		 * returns {int}
+		 * @private
+		 */
+		SelectList.prototype._getNonSeparatorItemsCount = function () {
+			return this.getItems().filter(function(oItem) {
+				return !(oItem instanceof sap.ui.core.SeparatorItem);
+			}).length;
+		};
+
+		/**
 		 * Retrieves the default selected item from the aggregation named <code>items</code>.
 		 *
 		 * @param {sap.ui.core.Item[]} [aItems]
@@ -712,7 +779,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				vItem = sap.ui.getCore().byId(vItem);
 			}
 
-			if (!(vItem instanceof sap.ui.core.Item) && vItem !== null) {
+			if (!(vItem instanceof Item) && vItem !== null) {
 				return this;
 			}
 
@@ -829,7 +896,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * <b>Note: </b> If duplicate keys exists, the first item matching the key is returned.
 		 *
 		 * @param {string} sKey An item key that specifies the item to retrieve.
-		 * @returns {sap.ui.core.Item | null}
+		 * @returns {sap.ui.core.Item | null} The matched item or null
 		 * @public
 		 */
 		SelectList.prototype.getItemByKey = function(sKey) {
@@ -888,5 +955,4 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		SelectList.prototype.setNoDataText = jQuery.noop;
 
 		return SelectList;
-
-	}, /* bExport= */ true);
+	});

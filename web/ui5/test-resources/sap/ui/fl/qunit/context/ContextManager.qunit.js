@@ -1,9 +1,8 @@
-/*globals QUnit, sinon*/
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit, sinon*/
 
 sap.ui.require(["sap/ui/fl/context/ContextManager", "sap/ui/fl/Change", "sap/ui/fl/Utils"], function(ContextManager, Change, Utils) {
+	"use strict";
+
 	var sandbox = sinon.sandbox.create();
 
 	var oRuntimeContext = {
@@ -37,6 +36,10 @@ sap.ui.require(["sap/ui/fl/context/ContextManager", "sap/ui/fl/Change", "sap/ui/
 				support: {
 					generator: "Dallas beta 1",
 					user: "cookie monster"
+				},
+				validAppVersions: {
+					creation: "1.0.0",
+					from: "1.0.0"
 				}
 			};
 
@@ -322,7 +325,7 @@ sap.ui.require(["sap/ui/fl/context/ContextManager", "sap/ui/fl/Change", "sap/ui/
 	 * _checkContextParameter
 	 */
 
-	QUnit.test("_checkContextParameter calls the corresponding matcher depending on the operator", function (assert) {
+	QUnit.test("_checkContextParameter calls the corresponding matcher depending on the operator (EQ)", function (assert) {
 
 		var aRuntimeContext = [];
 
@@ -338,7 +341,30 @@ sap.ui.require(["sap/ui/fl/context/ContextManager", "sap/ui/fl/Change", "sap/ui/
 		var checkEqualsStub = this.stub(ContextManager, "_checkEquals").returns(true);
 		ContextManager._checkContextParameter(oContext, aRuntimeContext);
 
-		assert.equal(checkEqualsStub.getCalls().length, 1, "the equals comparsion was called once");
+		assert.equal(checkEqualsStub.getCalls().length, 1, "the equals comparison was called once");
+		var aPassedParameters = checkEqualsStub.getCall(0).args;
+		assert.equal(aPassedParameters[0], sSelector, "the selector was passed");
+		assert.equal(aPassedParameters[1], sValue, "the value was passed");
+		assert.equal(aPassedParameters[2], aRuntimeContext, "the runtime context was passed");
+	});
+
+	QUnit.test("_checkContextParameter calls the corresponding matcher depending on the operator (NE)", function (assert) {
+
+		var aRuntimeContext = [];
+
+		var sSelector = "country";
+		var sValue = "china";
+
+		var oContext = {
+			"selector": sSelector,
+			"operator": "NE",
+			"value": sValue
+		};
+
+		var checkEqualsStub = this.stub(ContextManager, "_checkEquals").returns(false);
+		ContextManager._checkContextParameter(oContext, aRuntimeContext);
+
+		assert.equal(checkEqualsStub.getCalls().length, 1, "the equals comparison was called once");
 		var aPassedParameters = checkEqualsStub.getCall(0).args;
 		assert.equal(aPassedParameters[0], sSelector, "the selector was passed");
 		assert.equal(aPassedParameters[1], sValue, "the value was passed");
@@ -396,39 +422,131 @@ sap.ui.require(["sap/ui/fl/context/ContextManager", "sap/ui/fl/Change", "sap/ui/
 		assert.notOk(bEquals);
 	});
 
-	QUnit.test("createOrUpdateContextObject throws an error if no anchor aka app variant id is provided", function (assert) {
+	QUnit.test("createOrUpdateContextObject throws an error if no reference is provided", function (assert) {
 		var oPropertyBag = {
-			appVariantId: undefined
+			reference: undefined
 		};
 
 		assert.throws(
 			function () {
 				ContextManager.createOrUpdateContextObject(oPropertyBag);
 			},
-			new Error("no app variant id passed for the context object"),
+			new Error("no reference passed for the context object"),
+			"an error was thrown"
+		);
+	});
+
+	QUnit.test("createOrUpdateContextObject throws an error if no namespace is provided", function (assert) {
+		var oPropertyBag = {
+			reference: "someRef",
+			namespace: undefined
+		};
+
+		assert.throws(
+			function () {
+				ContextManager.createOrUpdateContextObject(oPropertyBag);
+			},
+			new Error("no namespace passed for the context object"),
 			"an error was thrown"
 		);
 	});
 
 	QUnit.test("createOrUpdateContextObject creates a new change and calls the backend connection class to propagate the creation", function (assert) {
 
-		var sAppVariantId = "anAppVariantId";
+		var sReference = "anReference";
 		var sGeneratedId = "id_123_0";
 		this.stub(Utils, "createDefaultFileName").returns(sGeneratedId);
-		var sExpectedUrl = "/sap/bc/lrep/content/apps/" + sAppVariantId + "/contexts/"+ sGeneratedId + ".context?layer=CUSTOMER";
+		var sExpectedUrl = "/sap/bc/lrep/content/apps/" + sReference + "/contexts/" + sGeneratedId + ".context?layer=CUSTOMER";
 		var oPropertyBag = {
-			appVariantId: sAppVariantId
+			reference: sReference,
+			namespace: "apps/" + sReference + "/contexts/"
 		};
 
 		var oLrepConnectorSendStub = this.stub(ContextManager._oLrepConnector, "send");
 
 		ContextManager.createOrUpdateContextObject(oPropertyBag);
 
-		assert.ok(oLrepConnectorSendStub.calledOnce, "the sending was initiated");
+		assert.ok(oLrepConnectorSendStub.calledOnce, "sending was initiated");
 		var oCallArguments = oLrepConnectorSendStub.getCall(0).args;
 		assert.equal(oCallArguments[0], sExpectedUrl, "the url was build correct");
 		assert.equal(oCallArguments[1], "PUT", "the backend operation should be a writing");
-		assert.equal(oCallArguments[2].appVariantId, sAppVariantId, "the app variant id was passed");
+		assert.equal(oCallArguments[2].reference, sReference, "the app variant id was passed");
 		assert.ok(!!oCallArguments[2].id, "a ID was generated");
+	});
+
+	QUnit.test("createOrUpdateContextObject writes down the human entered values in the object", function (assert) {
+
+		var sTitle = "hello world";
+		var sDescription = "this is a test";
+		var aParameters = [{
+			selector: "hello",
+			operator: "EQ",
+			value: "world"
+		}];
+
+		var oPropertyBag = {
+			reference: "sReference",
+			namespace: "apps/myAppReference/contexts/",
+			title: sTitle,
+			description: sDescription,
+			parameters: aParameters
+		};
+
+		var oLrepConnectorSendStub = this.stub(ContextManager._oLrepConnector, "send");
+
+		ContextManager.createOrUpdateContextObject(oPropertyBag);
+
+		assert.ok(oLrepConnectorSendStub.calledOnce, "sending was initiated");
+		var oPayLoad = oLrepConnectorSendStub.getCall(0).args[2];
+		assert.equal(oPayLoad.title, sTitle, "the title was passed");
+		assert.equal(oPayLoad.description, sDescription, "the description was passed");
+		assert.equal(oPayLoad.parameters, aParameters, "the parameter were passed");
+		assert.equal(oPayLoad.support.generator, "", "the creation generator default was used");
+
+	});
+
+	QUnit.test("createOrUpdateContextObject writes down the valid version information", function (assert) {
+
+		var sCreation = "1.1.0";
+		var sFrom = "1.1.1";
+
+		var oPropertyBag = {
+			reference: "sReference",
+			namespace: "apps/myAppReference/contexts/",
+			validAppVersions: {
+				creation: sCreation,
+				from: sFrom
+			}
+		};
+
+		var oLrepConnectorSendStub = this.stub(ContextManager._oLrepConnector, "send");
+
+		ContextManager.createOrUpdateContextObject(oPropertyBag);
+
+		assert.ok(oLrepConnectorSendStub.calledOnce, "sending was initiated");
+		var oPayLoad = oLrepConnectorSendStub.getCall(0).args[2];
+		assert.equal(oPayLoad.validAppVersions.creation, sCreation, "the creation app version was passed");
+		assert.equal(oPayLoad.validAppVersions.from, sFrom, "the from app version was passed");
+
+	});
+
+	QUnit.test("createOrUpdateContextObject writes down the provided generator information", function (assert) {
+
+		var sGenerator = "RTA";
+
+		var oPropertyBag = {
+			reference: "sReference",
+			namespace: "apps/myAppReference/contexts/",
+			generator: sGenerator
+		};
+
+		var oLrepConnectorSendStub = this.stub(ContextManager._oLrepConnector, "send");
+
+		ContextManager.createOrUpdateContextObject(oPropertyBag);
+
+		assert.ok(oLrepConnectorSendStub.calledOnce, "sending was initiated");
+		var oPayLoad = oLrepConnectorSendStub.getCall(0).args[2];
+		assert.equal(oPayLoad.support.generator, sGenerator, "the creation generator was passed");
+
 	});
 });

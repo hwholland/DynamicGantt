@@ -1,4 +1,4 @@
-/*global strictEqual, module, asyncTest, start, sinon, Promise, ok*/
+/*global QUnit,sinon,Promise*/
 
 jQuery.sap.require("sap.ui.fl.Utils");
 jQuery.sap.require('sap.ui.fl.LrepConnector');
@@ -9,8 +9,8 @@ jQuery.sap.require('sap.ui.fl.Cache');
 
 	sinon.config.useFakeTimers = false;
 
-	module("sap.ui.fl REST API's", {
-		setup: function() {
+	QUnit.module("sap.ui.fl REST API's", {
+		beforeEach: function() {
 
 			this.stubs = [];
 			this.componentName = "integrationTestingFlRest.Component";
@@ -71,7 +71,7 @@ jQuery.sap.require('sap.ui.fl.Cache');
 							name: "ghi",
 							value: "jkl"
 						}
-					],
+					]
 				},
 				originalLanguage: "EN",
 				support: {
@@ -81,31 +81,31 @@ jQuery.sap.require('sap.ui.fl.Cache');
 				}
 			};
 		},
-		teardown: function() {
+		afterEach: function() {
 			this.stubs.forEach(function(stub) {
 				stub.restore();
 			});
 		}
 	});
 
-	function checkCreateVariantResponseStatus(params) {
+	function checkCreateVariantResponseStatus(assert, params) {
 		return function(result) {
-			equal(result.status, "success");
+			assert.equal(result.status, "success");
 			return params.connector.loadChanges(params.componentName);
-		}
+		};
 	}
-	;
 
-	function checkComponentChangesReturnsVariantAndDelete(params, deleteWithLayer) {
+
+	function checkComponentChangesReturnsVariantAndDelete(assert, params, deleteWithLayer) {
 		return function(result) {
 			var variantChange = result.changes.changes[0];
-			equal(variantChange.changeType, "filterBarVariant");
-			equal(variantChange.fileName, params.fileName);
-			equal(variantChange.fileType, "variant");
-			equal(variantChange.namespace, params.namespace);
-			equal(variantChange.layer, params.expectedLayer);
-			equal(variantChange.content.filter.length, 1);
-			equal(variantChange.content.sort.length, 1);
+			assert.equal(variantChange.changeType, "filterBarVariant");
+			assert.equal(variantChange.fileName, params.fileName);
+			assert.equal(variantChange.fileType, "variant");
+			assert.equal(variantChange.namespace, params.namespace);
+			assert.equal(variantChange.layer, params.expectedLayer);
+			assert.equal(variantChange.content.filter.length, 1);
+			assert.equal(variantChange.content.sort.length, 1);
 
 			var deleteParams = {
 				sChangeName: params.fileName,
@@ -117,28 +117,28 @@ jQuery.sap.require('sap.ui.fl.Cache');
 			}
 
 			return params.connector.deleteChange(deleteParams, true);
-		}
+		};
 	}
-	;
 
-	function checkDeleteSendToBackend(params) {
+
+	function checkDeleteSendToBackend(assert, params) {
 		return function(result) {
-			equal(result.status, "nocontent");
+			assert.equal(result.status, "nocontent");
 			return params.connector.loadChanges(params.componentName);
-		}
+		};
 	}
-	;
 
-	function checkLoadingComponentChangesReturnsNothing() {
+
+	function checkLoadingComponentChangesReturnsNothing(assert) {
 		return function(result) {
-			equal(result.changes.changes.length, 0);
+			assert.equal(result.changes.changes.length, 0);
 			QUnit.start();
-		}
+		};
 	}
-	;
 
-	asyncTest('Create a user dependant variant in the user layer, read it and delete it afterwards', function() {
-		var that = this;
+
+	QUnit.test('Create a user dependant variant in the user layer, read it and delete it afterwards', function(assert) {
+		var done = assert.async();
 		var connector = LrepConnector.createConnector();
 
 		var params = {
@@ -149,20 +149,20 @@ jQuery.sap.require('sap.ui.fl.Cache');
 			expectedLayer: this.layer
 		};
 
-		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(params)).then(checkComponentChangesReturnsVariantAndDelete(params, false)).then(checkDeleteSendToBackend(params)).then(checkLoadingComponentChangesReturnsNothing())['catch'](function(err) {
-			ok(false, err);
-			QUnit.start();
+		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(assert, params)).then(checkComponentChangesReturnsVariantAndDelete(assert, params, false)).then(checkDeleteSendToBackend(assert, params)).then(checkLoadingComponentChangesReturnsNothing(assert))['catch'](function(err) {
+			assert.ok(false, err);
+			done();
 		});
 
 	});
 
-	asyncTest('Create a non-user dependant variant, it should be created in the current layer setting; delete it afterwards', function() {
+	QUnit.test('Create a non-user dependant variant, it should be created in the current layer setting; delete it afterwards', function(assert) {
+		var done = assert.async();
 		var expectedLayer = "VENDOR";
 		this.oChangeJson.layer = expectedLayer;
 		var fileName = this.baseFileName + "_" + expectedLayer;
 		this.oChangeJson.fileName = fileName;
 
-		var that = this;
 		var connector = LrepConnector.createConnector();
 
 		var params = {
@@ -173,13 +173,14 @@ jQuery.sap.require('sap.ui.fl.Cache');
 			expectedLayer: expectedLayer
 		};
 
-		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(params)).then(checkComponentChangesReturnsVariantAndDelete(params, true)).then(checkDeleteSendToBackend(params)).then(checkLoadingComponentChangesReturnsNothing())['catch'](function(err) {
-			ok(false, err);
-			QUnit.start();
+		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(assert, params)).then(checkComponentChangesReturnsVariantAndDelete(assert, params, true)).then(checkDeleteSendToBackend(assert, params)).then(checkLoadingComponentChangesReturnsNothing(assert))['catch'](function(err) {
+			assert.ok(false, err);
+			done();
 		});
 	});
 
-	asyncTest('Create a non-user dependant variant, then update the texts, save it and delete it afterwards', function() {
+	QUnit.test('Create a non-user dependant variant, then update the texts, save it and delete it afterwards', function(assert) {
+		var done = assert.async();
 		var expectedLayer = "VENDOR";
 		this.oChangeJson.layer = expectedLayer;
 		var fileName = this.baseFileName + "_" + expectedLayer;
@@ -193,20 +194,20 @@ jQuery.sap.require('sap.ui.fl.Cache');
 			componentName: this.componentName
 		};
 
-		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(params)).then(checkLoadingComponentChangesReturnsVariant).then(checkReturnedVariantWithChangedText).then(checkDeleteSendToBackend(params)).then(checkLoadingComponentChangesReturnsNothing())['catch'](function(err) {
-			ok(false, err);
-			QUnit.start();
+		connector.create(this.oChangeJson, null, true).then(checkCreateVariantResponseStatus(assert, params)).then(checkLoadingComponentChangesReturnsVariant).then(checkReturnedVariantWithChangedText).then(checkDeleteSendToBackend(assert, params)).then(checkLoadingComponentChangesReturnsNothing(assert))['catch'](function(err) {
+			assert.ok(false, err);
+			done();
 		});
 
 		function checkLoadingComponentChangesReturnsVariant(result) {
 			var variantChange = result.changes.changes[0];
-			equal(variantChange.changeType, "filterBarVariant");
-			equal(variantChange.fileName, fileName);
-			equal(variantChange.fileType, "variant");
-			equal(variantChange.namespace, that.namespace);
-			equal(variantChange.layer, expectedLayer);
-			equal(variantChange.content.filter.length, 1);
-			equal(variantChange.content.sort.length, 1);
+			assert.equal(variantChange.changeType, "filterBarVariant");
+			assert.equal(variantChange.fileName, fileName);
+			assert.equal(variantChange.fileType, "variant");
+			assert.equal(variantChange.namespace, that.namespace);
+			assert.equal(variantChange.layer, expectedLayer);
+			assert.equal(variantChange.content.filter.length, 1);
+			assert.equal(variantChange.content.sort.length, 1);
 
 			//Update text
 			if (!variantChange.texts) {
@@ -223,12 +224,12 @@ jQuery.sap.require('sap.ui.fl.Cache');
 
 			return connector.update(that.oChangeJson, that.oChangeJson.fileName, null, true);
 		}
-		;
+
 
 		function checkReturnedVariantWithChangedText(result) {
 			var variantChangedText = result.response;
-			equal(variantChangedText.texts.integrationTestKey.value, "integrationTestValue");
-			equal(variantChangedText.texts.integrationTestKey.type, "XFLD");
+			assert.equal(variantChangedText.texts.integrationTestKey.value, "integrationTestValue");
+			assert.equal(variantChangedText.texts.integrationTestKey.type, "XFLD");
 
 			var params = {
 				sChangeName: variantChangedText.fileName,
@@ -238,6 +239,6 @@ jQuery.sap.require('sap.ui.fl.Cache');
 
 			return connector.deleteChange(params, true);
 		}
-		;
+
 	});
 }(sap.ui.fl.Utils, sap.ui.fl.LrepConnector));

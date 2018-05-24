@@ -33,7 +33,7 @@
 	"sap.ui5": {
 		"resourceRoots": {
 			"navigation": "./",
-			"sap.gantt.sample.BasicGanttChart": "../gantt"
+			"gantt": "../gantt"
 		},
 		"rootView": {
 			"viewName": "navigation.view.App",

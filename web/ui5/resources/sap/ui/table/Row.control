@@ -8,6 +8,8 @@
         <aggregation name="cells" type="sap.ui.core/Control" cardinality="0..n">
             <documentation>The controls for the cells.</documentation>
         </aggregation>
+        <aggregation name="_rowAction" type="sap.ui.table/RowAction" cardinality="0..1" visibility="hidden"/>
+        <aggregation name="_settings" type="sap.ui.table/RowSettings" cardinality="0..1" visibility="hidden"/>
     </aggregations>
     <methods>
         <method name="getIndex" type="sap.ui.core/int">

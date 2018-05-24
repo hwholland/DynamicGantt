@@ -1,29 +1,38 @@
 /*
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-/**
- * @public
- * @name sap.ui.fl.transport.TransportSelection
- * @author SAP SE
- * @version 1.38.33
- * @since 1.38.0
- * Helper object to select an ABAP transport for an LREP object. This is not a generic utility to select a transport request, but part
- *        of the SmartVariant control.
- * @param {jquery.sap.global} jQuery a reference to the jQuery implementation.
- * @param {sap.ui.fl.Utils} Utils a reference to the flexibility utilities implementation.
- * @param {sap.ui.fl.transport.Transports} Transports a reference to the transport service implementation.
- * @param {sap.ui.fl.transport.TransportDialog} TransportDialog a reference to the transport dialog implementation.
- * @param {sap.ui.fl.registry.Settings} FlexSettings a reference to the settings implementation
- * @returns {sap.ui.fl.transport.TransportSelection} a new instance of <code>sap.ui.fl.transport.TransportSelection</code>.
- */
-sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Transports", "sap/ui/fl/transport/TransportDialog", "sap/ui/fl/registry/Settings" ], function(jQuery, Utils, Transports, TransportDialog, FlexSettings) {
+sap.ui.define([
+	"jquery.sap.global",
+	"sap/ui/fl/Utils",
+	"sap/ui/fl/transport/Transports",
+	"sap/ui/fl/transport/TransportDialog",
+	"sap/ui/fl/registry/Settings"
+], function(
+	jQuery,
+	Utils,
+	Transports,
+	TransportDialog,
+	FlexSettings
+) {
 	"use strict";
 	/**
 	 * @public
+	 * @alias sap.ui.fl.transport.TransportSelection
 	 * @constructor
+	 * @author SAP SE
+	 * @version 1.54.5
+	 * @since 1.38.0
+	 * Helper object to select an ABAP transport for an LREP object. This is not a generic utility to select a transport request, but part
+	 *        of the SmartVariant control.
+	 * @param jQuery.sap.global} jQuery a reference to the jQuery implementation.
+	 * @param {sap.ui.fl.Utils} Utils a reference to the flexibility utilities implementation.
+	 * @param {sap.ui.fl.transport.Transports} Transports a reference to the transport service implementation.
+	 * @param {sap.ui.fl.transport.TransportDialog} TransportDialog a reference to the transport dialog implementation.
+	 * @param {sap.ui.fl.registry.Settings} FlexSettings a reference to the settings implementation
+	 * @returns {sap.ui.fl.transport.TransportSelection} a new instance of <code>sap.ui.fl.transport.TransportSelection</code>.
 	 */
 	var TransportSelection = function() {
 		this.oTransports = new sap.ui.fl.transport.Transports();
@@ -32,7 +41,8 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 	/**
 	 * Selects a transport request for a given LREP object.
 	 * First checks if the Adaptation Transport Organizer (ATO) is enabled
-	 * If ATO is enabled and LREP object is in CUSTOMER layer the request 'ATO_NOTIFICATION' has to be used which in the backend triggers that the change is added to an ATO collection
+	 * If ATO is enabled and the layered repository object is in the CUSTOMER layer, the request 'ATO_NOTIFICATION' has to be used.
+	 * This request triggers in the back end that the change is added to an ATO collection.
 	 * If ATO is not enabled or LREP object not in CUSTOMER layer:
 	 * If the LREP object is already assigned to an open transport request or the LREP object is
 	 * assigned to a local ABAP package, no dialog to select a transport is started. Instead the success callback is invoked directly. The transport
@@ -46,39 +56,30 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 	 * @param {object} oControl Control instance
 	 * @public
 	 */
-	TransportSelection.prototype.selectTransport = function(oObjectInfo, fOkay, fError, bCompactMode, oControl) {
-		var sComponentName, mPropertyBag;
+	TransportSelection.prototype.selectTransport = function(oObjectInfo, fOkay, fError, bCompactMode, oControl, sStyleClass) {
 		var that = this;
 
 		if (oObjectInfo) {
 			var sLayerType = Utils.getCurrentLayer(false);
 
-			if (oControl) {
-				sComponentName = Utils.getComponentClassName(oControl);
-				mPropertyBag = {
-					appDescriptor: Utils.getAppDescriptor(oControl),
-					siteId: Utils.getSiteId(oControl)
-				};
-			}
-
-			// if component name and object layer are known and layer is CUSTOMER
+			// if object layer are known and layer is CUSTOMER
 			// check in settings if the adaptation transport organizer (ATO) is enabled
-			if (sComponentName && sLayerType && sLayerType === 'CUSTOMER') {
+			if (sLayerType && sLayerType === 'CUSTOMER') {
 				// retrieve the settings and check if ATO is enabled
-				FlexSettings.getInstance(sComponentName, mPropertyBag).then(function(oSettings) {
+				FlexSettings.getInstance().then(function(oSettings) {
 					// ATO is enabled - signal that change is to be added to an ATO collection
 					// instead of a transport
 					if (oSettings.isAtoEnabled()) {
 						var oTransport = { transportId: "ATO_NOTIFICATION" };
 						fOkay(that._createEventObject(oObjectInfo, oTransport));
-					// ATO is not enabled - use CTS
+						//ATO is not enabled, use CTS instead
 					} else {
-						that._selectTransport(oObjectInfo, fOkay, fError, bCompactMode);
+						that._selectTransport(oObjectInfo, fOkay, fError, bCompactMode, sStyleClass);
 					}
 				});
 			// do not have the required info to check for ATO or not CUSTOMER layer - use CTS
 			} else {
-				that._selectTransport(oObjectInfo, fOkay, fError, bCompactMode);
+				that._selectTransport(oObjectInfo, fOkay, fError, bCompactMode, sStyleClass);
 			}
 		}
 	};
@@ -95,7 +96,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 	 * @param {boolean} bCompactMode flag indicating whether the transport dialog should be opened in compact mode.
 	 * @private
 	 */
-	TransportSelection.prototype._selectTransport = function(oObjectInfo, fOkay, fError, bCompactMode) {
+	TransportSelection.prototype._selectTransport = function(oObjectInfo, fOkay, fError, bCompactMode, sStyleClass) {
 		var that = this;
 
 		if (oObjectInfo) {
@@ -108,7 +109,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 						pkg: oObjectInfo.package,
 						transports: oGetTransportsResult.transports,
 						lrepObject: that._toLREPObject(oObjectInfo)
-					}, fOkay, fError, bCompactMode);
+					}, fOkay, fError, bCompactMode, sStyleClass);
 				} else {
 					oTransport = that._getTransport(oGetTransportsResult);
 					fOkay(that._createEventObject(oObjectInfo, oTransport));
@@ -178,10 +179,11 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 	 * @returns {sap.ui.fl.transport.TransportDialog} the dialog.
 	 * @private
 	 */
-	TransportSelection.prototype._openDialog = function(oConfig, fOkay, fError, bCompactMode) {
+	TransportSelection.prototype._openDialog = function(oConfig, fOkay, fError, bCompactMode, sStyleClass) {
 		var oDialog = new TransportDialog(oConfig);
 		oDialog.attachOk(fOkay);
 		oDialog.attachCancel(fError);
+		oDialog.addStyleClass(sStyleClass);
 
 		// toggle compact style.
 		if (bCompactMode) {
@@ -275,7 +277,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 				if (bFromDialog === true) {
 					// if the request has been set by the transport dialog already,
 					// do not bring up the transport dialog a second time, but use this transport instead
-					// if the change is locked on another transport, this will be resolved in the backend when the delete request is send
+					// if the change is locked on another transport, this will be resolved in the back end when the DELETE request is send
 					if (oCurrentChange.getDefinition().packageName !== "$TMP") {
 						oCurrentChange.setRequest(sTransport);
 					}
@@ -322,7 +324,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 	 * @returns {Promise} promise that resolves
 	 * @public
 	 */
-	TransportSelection.prototype.openTransportSelection = function(oChange, oControl) {
+	TransportSelection.prototype.openTransportSelection = function(oChange, oControl, sStyleClass) {
 
 		var that = this;
 
@@ -357,8 +359,57 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/fl/Utils", "sap/ui/fl/transport/Tra
 				oObject.type = oChange.getDefinition().fileType;
 			}
 
-			that.selectTransport(oObject, fnOkay, fnError, false, oControl);
+			that.selectTransport(oObject, fnOkay, fnError, false, oControl, sStyleClass);
 		});
+	};
+
+	/**
+	 * Checks transport info object
+	 *
+	 * @param {Object} [oTransportInfo] - transport info object
+	 * @returns {boolean} returns true if transport info is complete
+	 * @public
+	 */
+	TransportSelection.prototype.checkTransportInfo = function(oTransportInfo) {
+		return oTransportInfo && oTransportInfo.transport && oTransportInfo.packageName !== "$TMP";
+	};
+
+	/**
+	 * Prepare all changes and assign them to an existing transport.
+	 *
+	 * @public
+	 * @param {Object} oTransportInfo - object containing the package name and the transport
+	 * @param {string} oTransportInfo.packageName - name of the package
+	 * @param {string} oTransportInfo.transport - ID of the transport
+	 * @param {Array} aAllLocalChanges - array that includes all local changes
+	 * @returns {Promise} Returns a Promise which resolves without parameters
+	 */
+	TransportSelection.prototype._prepareChangesForTransport = function(oTransportInfo, aAllLocalChanges) {
+		if (aAllLocalChanges.length > 0) {
+			// Pass list of changes to be transported with transport request to backend
+			var oTransports = new Transports();
+			var aTransportData = oTransports._convertToChangeTransportData(aAllLocalChanges);
+			var oTransportParams = {};
+			//packageName is '' in CUSTOMER layer (no package input field in transport dialog)
+			oTransportParams.package = oTransportInfo.packageName;
+			oTransportParams.transportId = oTransportInfo.transport;
+			oTransportParams.changeIds = aTransportData;
+
+			return oTransports.makeChangesTransportable(oTransportParams).then(function() {
+
+				// remove the $TMP package from all changes; has been done on the server as well,
+				// but is not reflected in the client cache until the application is reloaded
+				aAllLocalChanges.forEach(function(oChange) {
+
+					if (oChange.getPackage() === '$TMP') {
+						var oDefinition = oChange.getDefinition();
+						oDefinition.packageName = oTransportInfo.packageName;
+						oChange.setResponse(oDefinition);
+					}
+				});
+				return Promise.resolve();
+			});
+		}
 	};
 
 	return TransportSelection;

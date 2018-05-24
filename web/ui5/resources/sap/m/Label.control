@@ -3,7 +3,24 @@
     <name>Label</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The Label control is used in a UI5 mobile application to provide label text for other controls. Design such as bold, and text alignment can be specified.</documentation>
+    <documentation>Provides a textual label for other controls.
+Label appearance can be influenced by properties such as &lt;code&gt;textAlign&lt;/code&gt;, &lt;code&gt;design&lt;/code&gt;,
+&lt;code&gt;displayOnly&lt;/code&gt; and &lt;code&gt;wrapping&lt;/code&gt;.
+As of version 1.50 the default value of the &lt;code&gt;wrapping&lt;/code&gt; property is set to &lt;code&gt;false&lt;/code&gt;
+
+Labels for required fields are marked with an asterisk.
+&lt;h3&gt;Overview&lt;/h3&gt;
+Labels are used as titles for single controls or groups of controls.
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;It's recommended to use the &lt;code&gt;Label&lt;/code&gt; in Form controls.&lt;/li&gt;
+&lt;li&gt;Use title case for labels.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt; It is not recommended to use labels in Bold.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="design" type="sap.m/LabelDesign" defaultValue="Standard" group="Appearance">
@@ -22,7 +39,20 @@
             <documentation>Determines the width of the label.</documentation>
         </property>
         <property name="required" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
-            <documentation>Indicates that user input is required in the input this label labels.</documentation>
+            <documentation>Indicates that user input is required for input control labeled by the sap.m.Label.
+When the property is set to true and associated input field is empty an asterisk character is added to the label text.</documentation>
+        </property>
+        <property name="displayOnly" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.50.0">
+            <documentation>Determines if the label is in displayOnly mode. Controls in this mode are neither interactive, nor editable, nor focusable, and not in the tab chain.
+
+&lt;b&gt;Note:&lt;/b&gt; This property should be used only in Form controls in preview mode.</documentation>
+        </property>
+        <property name="wrapping" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.50">
+            <documentation>Determines the wrapping of the text within the &lt;code&gt;Label&lt;/code&gt;.
+If set to true the &lt;code&gt;Label&lt;/code&gt; will wrap, when set to false the &lt;code&gt;Label&lt;/code&gt; will be truncated and replaced with ellipsis which is the default behavior.</documentation>
+        </property>
+        <property name="vAlign" type="sap.ui.core/VerticalAlign" defaultValue="Inherit" group="Appearance" since="1.54">
+            <documentation>Specifies the vertical alignment of the &lt;code&gt;Label&lt;/code&gt; related to the tallest and lowest element on the line.</documentation>
         </property>
     </properties>
     <associations>

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In the examples used so far, we have used a read-only field to display the value of a model property. We will now change the user interface so that the first and last name fields are displayed using sap.m.Input fields and an additional check box control is used to enable or disable both input fields. This arrangement illustrates a feature known as &#34;two-way data binding&#34;. Now that the view contains more controls, we will also move the view definition into an XML file."/>
 <meta name="description" content="In the examples used so far, we have used a read-only field to display the value of a model property. We will now change the user interface so that the first and last name fields are displayed using sap.m.Input fields and an additional check box control is used to enable or disable both input fields. This arrangement illustrates a feature known as &#34;two-way data binding&#34;. Now that the view contains more controls, we will also move the view definition into an XML file."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=25422488253998776"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=18162222196980438"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=18162222196980438"/>
 <title>Step 4: Two-Way Data Binding</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioc72b922fdb59422496661000165d7ff1">
 <div id="wrapper"><div id="container">
@@ -51,14 +37,14 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.databinding.04/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.databinding.04/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.databinding.04/preview">Data Binding - Step 4</a></span>.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/view/App.view.xml (New)</div><div type="webapp/view/App.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc"&gt;
   &lt;Panel headerText="{/panelHeaderText}" class="sapUiResponsiveMargin" width="auto"&gt;
     &lt;content&gt;
       &lt;Label text="First Name" class="sapUiSmallMargin" /&gt;
@@ -75,7 +61,7 @@
 
 		</div></div>
 
-		<div class="section"><div class="section_title">webapp/index.html</div><div type="webapp/index.html"><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;!DOCTYPE html&gt;
+		<div class="section"><div class="section_title">webapp/index.html</div><div type="webapp/index.html"><div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
 	&lt;meta http-equiv="X-UA-Compatible" content="IE=edge"&gt;
@@ -84,7 +70,7 @@
 	&lt;script
 		id="sap-ui-bootstrap"
 		src="../../../../../../../../../resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
+		data-sap-ui-theme="sap_belize"
 		data-sap-ui-libs="sap.m"
 		data-sap-ui-compatVersion="edge"
 		data-sap-ui-preload="async"
@@ -115,25 +101,32 @@
 &lt;/html&gt;
     </pre></div>
 <p class="p">We
-				add the parameter <samp class="ph codeph">data-sap-ui-resourcerouts</samp> to the bootstrap.</p>
-<p class="p">We delete the code that assigned the
-					<samp class="ph codeph">sap.m.Text</samp> field to the UI and add an XML view that is identified by its resource name.</p>
-<p class="p">You can now refresh the
-				application preview and select or deselect the checkbox. You will see that the input fields are automatically enabled or disabled in response to
-				the state of the checkbox.</p>
-<img class="image" id="loioc72b922fdb59422496661000165d7ff1__image_tgr_2wr_xs" src="loio61d68f167778425bbdd2abd7d550ae65_HiRes.png"/><img class="image" id="loioc72b922fdb59422496661000165d7ff1__image_qtd_fwr_xs" src="loio6222561089bb4559beafb33b456bc8d4_HiRes.png"/><p class="p">It is clear that we have not written any code to transfer data between the user interface and
-				the model, yet the <samp class="ph codeph">Input</samp> controls are enabled or disabled according to the state of the checkbox. This behaviour is the result
-				of the fact that all <span class="ph"><span class="ph pname">SAPUI5</span></span> models implement two-way data binding, and for JSON
-				Models, two-way binding is the default behavior.</p>
+				add the parameter <samp class="ph codeph">data-sap-ui-resourceroots</samp> to the
+				bootstrap.</p>
+<p class="p">We delete the code that assigned the <samp class="ph codeph">sap.m.Text</samp>
+				field to the UI and add an XML view that is identified by its resource
+				name.</p>
+<p class="p">You can now refresh the application preview and select or deselect the
+				checkbox. You will see that the input fields are automatically enabled or disabled
+				in response to the state of the checkbox.</p>
+<img class="image" id="loioc72b922fdb59422496661000165d7ff1__image_tgr_2wr_xs" src="loio61d68f167778425bbdd2abd7d550ae65_HiRes.png"/><img class="image" id="loioc72b922fdb59422496661000165d7ff1__image_qtd_fwr_xs" src="loio6222561089bb4559beafb33b456bc8d4_HiRes.png"/><p class="p">It is clear that we have not
+				written any code to transfer data between the user interface and the model, yet the
+					<samp class="ph codeph">Input</samp> controls are enabled or disabled according to the state
+				of the checkbox. This behaviour is the result of the fact that all <span class="ph"><span class="ph pname">OpenUI5</span></span> models implement
+				two-way data binding, and for JSON Models, two-way binding is the default
+				behavior.</p>
 <div class="p">Two things are happening here:<ul class="ul" id="loioc72b922fdb59422496661000165d7ff1__ul_xmc_zvr_xs">
 					<li class="li">
-						<p class="p">Data binding allows the property of a control to derive its value from any suitable property in a model.</p>
+						<p class="p">Data binding allows the property of a control to derive its value from
+							any suitable property in a model.</p>
 
 					</li>
 
 					<li class="li">
-						<p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> automatically handles the transport of data both from the model
-							to the controls, and back from the controls to the model. This is called two-way binding.</p>
+						<p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span>
+							automatically handles the transport of data both from the model to the
+							controls, and back from the controls to the model. This is called
+							two-way binding.</p>
 
 					</li>
 
@@ -147,7 +140,7 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in SAPUI5.">Data Binding</a><br/>
+<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in OpenUI5.">Data Binding</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="d70e9894c09b4c27a98d4850d4e90f2c.html" title="Although there is no visible difference, the text on the screen is now derived from model data.">Step 3: Create Property Binding</a><br/>
@@ -157,24 +150,10 @@
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="68b9644a253741e8a4b9e4279a35c247.html" title="You use data binding to bind two data sources or information sources together to keep them in synch: All changes in one data source are also reflected in the other data source.">Data Binding</a></div>
+<div><a class="link" href="68b9644a253741e8a4b9e4279a35c247.html" title="You use data binding to bind UI elements to data sources to keep the data in sync and allow data editing on the UI.">Data Binding</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 4: Two-Way Data Binding";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

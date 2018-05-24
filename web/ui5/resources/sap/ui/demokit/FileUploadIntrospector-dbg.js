@@ -1,12 +1,18 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.FileUploadIntrospector.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
-	function(jQuery, Control, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/core/Control',
+    './library',
+    "./FileUploadIntrospectorRenderer",
+    'jquery.sap.act'
+],
+	function(jQuery, Control, library, FileUploadIntrospectorRenderer) {
 	"use strict";
 
 
@@ -20,12 +26,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	 * @class
 	 * Control that allows to monitor uploaded files in a demo scenario. This is not a general purpose monitor but only works with the demo fileupload service.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.FileUploadIntrospector
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var FileUploadIntrospector = Control.extend("sap.ui.demokit.FileUploadIntrospector", /** @lends sap.ui.demokit.FileUploadIntrospector.prototype */ { metadata : {
 
@@ -58,6 +64,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 	FileUploadIntrospector.prototype.init = function() {
 		this._aFiles = [];
 		this._iHash = 0;
+
+		jQuery.sap.act.attachActivate(this._activate, this);
+	};
+
+	FileUploadIntrospector.prototype.exit = function() {
+		jQuery.sap.act.detachActivate(this._activate, this);
+	};
+
+	FileUploadIntrospector.prototype._activate = function() {
+		// trigger the auto refresh once the user interacts again with the UI
+		// by reusing the setter functionality of the autoRefreshInterval property
+		this.setAutoRefreshInterval(this.getAutoRefreshInterval());
 	};
 
 	FileUploadIntrospector.prototype.setAutoRefreshInterval = function(iInterval) {
@@ -90,7 +108,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', './library'],
 		this.refresh();
 		// TODO reinitialize timer only after response has been received (requires separate receive methods)
 		var iInterval = this.getAutoRefreshInterval();
-		if ( iInterval > 0 ) {
+		// only set timer again if activity is detected
+		if ( iInterval > 0  && jQuery.sap.act.isActive() ) {
 			this.oTimer = jQuery.sap.delayedCall(iInterval, this, "_autoRefresh");
 		}
 	};

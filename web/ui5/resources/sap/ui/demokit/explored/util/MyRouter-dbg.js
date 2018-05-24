@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides acustomized router class for the 'explored' app.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/routing/Router'],
-	function(jQuery, Router) {
+sap.ui.define(['sap/ui/core/routing/History', 'sap/ui/core/routing/Router', 'sap/ui/core/Core'],
+	function(History, Router, Core) {
 	"use strict";
 
 
@@ -17,7 +17,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/routing/Router'],
 		 * mobile nav back handling
 		 */
 		myNavBack : function (sRoute, oData) {
-			var oHistory = sap.ui.core.routing.History.getInstance();
+			var oHistory = History.getInstance();
 			var oPrevHash = oHistory.getPreviousHash();
 			if (oPrevHash !== undefined) {
 				window.history.go(-1);
@@ -40,4 +40,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/routing/Router'],
 
 	return MyRouter;
 
-}, /* bExport= */ true);
+});

@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,14 +16,14 @@ sap.ui.define(['sap/ui/core/Element', './library'],
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * A substitute for an UIArea that can be embedded in the control tree.
+	 * A substitute for a UIArea that can be embedded in the control tree.
 	 * @extends sap.ui.core.Element
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @alias sap.ui.demokit.UIAreaSubstitute
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var UIAreaSubstitute = Element.extend("sap.ui.demokit.UIAreaSubstitute", /** @lends sap.ui.demokit.UIAreaSubstitute.prototype */ { metadata : {
 

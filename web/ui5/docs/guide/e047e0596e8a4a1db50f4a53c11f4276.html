@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Sometimes it is important to display an indication that the requested resource was not found. To give you an example: If a user tries to access an invalid pattern which does not match any of the configured routes, the user is notified that something went wrong. You might also know this as a “404” or Not Found Page from traditional web pages. In this step, we will implement a feature that detects invalid hashes and visualizes this in a nice way."/>
 <meta name="description" content="Sometimes it is important to display an indication that the requested resource was not found. To give you an example: If a user tries to access an invalid pattern which does not match any of the configured routes, the user is notified that something went wrong. You might also know this as a “404” or Not Found Page from traditional web pages. In this step, we will implement a feature that detects invalid hashes and visualizes this in a nice way."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8165464336671484"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=4260216197787814"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4260216197787814"/>
 <title>Step 3: Catch Invalid Hashes</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioe047e0596e8a4a1db50f4a53c11f4276">
 <div id="wrapper"><div id="container">
@@ -33,25 +19,20 @@
 	<h1 class="title topictitle1">Step 3: Catch Invalid Hashes</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">Sometimes it is important to display an indication that the requested resource was not
-		found. To give you an example: If a user tries to access an invalid pattern which does not
-		match any of the configured routes, the user is notified that something went wrong. You
-		might also know this as a <span class="q">“404”</span> or <span class="ph uicontrol">Not Found Page</span> from traditional web pages. In
-		this step, we will implement a feature that detects invalid hashes and visualizes this in a
-		nice way.</p>
+	<div class="body conbody"><p class="shortdesc">Sometimes it is important to display an indication that the requested resource was not found. To give you an example: If a user tries to access an invalid pattern which does not match any of the configured routes, the user is notified that something went wrong. You might also know this as a <span class="q">“404”</span> or <span class="ph uicontrol">Not Found Page</span> from traditional web pages. In this step, we will implement a feature that detects invalid hashes and visualizes this in a nice way.</p>
 
 		<div class="section"><div class="section_title">Preview</div><div type="Preview">
 			
 			<div class="fig fignone" id="loioe047e0596e8a4a1db50f4a53c11f4276__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loioe047e0596e8a4a1db50f4a53c11f4276__image_nf1_dxw_ls" src="loio81506b2d46e440e09921911289e74570_HiRes.png"/>
+				<img class="image" id="loioe047e0596e8a4a1db50f4a53c11f4276__image_nf1_dxw_ls" src="loio81506b2d46e440e09921911289e74570_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Not Found</span> page</div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the <span class="ph uicontrol">Samples</span> in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.03/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.03/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.03/preview">Routing and Navigation - Step
 					3</a></span>.</p>
 
@@ -64,7 +45,7 @@
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
    ...
    "sap.ui5": {
       ...
@@ -87,10 +68,12 @@
          }],
          "targets": {
             "home": {
+               "viewId": "home",
                "viewName": "Home",
                "viewLevel" : 1
             }<span class="ph emphasis emphasis">,
             "notFound": {
+               "viewId": "notFound",
                "viewName": "NotFound",
                "transition": "show"
             }</span>
@@ -112,7 +95,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/NotFound.view.xml (New)</div><div type="webapp/view/NotFound.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
    controllerName="sap.ui.demo.nav.controller.NotFound"
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -133,7 +116,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/NotFound.controller.js (New)</div><div type="webapp/controller/NotFound.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
    "sap/ui/core/mvc/Controller"
 ], function (Controller) {
    "use strict";
@@ -151,16 +134,14 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">...
 <span class="ph emphasis emphasis">NotFound=Not Found
 NotFound.text=Sorry, but the requested resource is not available.
 NotFound.description=Please check the URL and try again</span>.</pre></div>
 
 			<p class="p">Add the new properties to the <samp class="ph codeph">i18n.properties</samp> file.</p>
 
-			<p class="p">Open the URL <samp class="ph codeph">index.html/#/thisIsInvalid</samp> in your browser. From now on
-				the user will see a nice <span class="ph uicontrol">Not Found</span> page if a hash could not be
-				matched to one of our routes.</p>
+			<p class="p">Open the URL <samp class="ph codeph">index.html#/thisIsInvalid</samp> in your browser. From now on the user will see a nice <span class="ph uicontrol">Not Found</span> page if a hash could not be matched to one of our routes.</p>
 
 		</div></div>
 
@@ -189,7 +170,7 @@ NotFound.description=Please check the URL and try again</span>.</pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="cf3c57c89ef0491793d1ce327ab4f9b2.html" title="In this step we will modify the app and introduce routing. Instead of having the home page of the app hard coded we will configure a router to wire multiple views together when our app is called. The routing configuration controls the application flow when the user triggers a navigation action or opens a link to the application directly.">Step 2: Enable Routing</a><br/>
@@ -206,19 +187,5 @@ NotFound.description=Please check the URL and try again</span>.</pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 3: Catch Invalid Hashes";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

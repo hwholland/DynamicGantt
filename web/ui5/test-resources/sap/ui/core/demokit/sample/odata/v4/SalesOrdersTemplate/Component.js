@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 /**
  * @fileOverview Application component to display information on entities from the
- *   V4_GW_SAMPLE_BASIC OData service.
+ *  zui5_epm_sample OData service.
  * @version @version@
  */
 sap.ui.define([
@@ -28,7 +28,9 @@ sap.ui.define([
 
 		createContent : function () {
 			var bHasOwnProxy = this.proxy !== BaseComponent.prototype.proxy,
-				oLayout = new HBox(),
+				oLayout = new HBox({
+					renderType : "Bare"
+				}),
 				oMetaModel,
 				oModel = this.getModel(),
 				fnProxy = bHasOwnProxy
@@ -39,32 +41,44 @@ sap.ui.define([
 
 			if (oModel.sServiceUrl !== sServiceUrl) {
 				//replace model from manifest in case of proxy
+				oMetaModel = oModel.getMetaModel();
 				oModel.destroy();
 				oModel = new ODataModel({
+					annotationURI : oMetaModel.aAnnotationUris,
 					serviceUrl : sServiceUrl,
 					synchronizationMode : "None"
 				});
 				this.setModel(oModel);
 			}
 			oMetaModel = oModel.getMetaModel();
+			oMetaModel.setDefaultBindingMode("OneWay");
 
 			if (!bHasOwnProxy) {
 				TestUtils.setupODataV4Server(this.oSandbox, {
 					"$metadata" : {source : "metadata.xml"},
-					"$batch" : {
-						"BusinessPartnerList" : {
-							source : "BusinessPartnerList.txt"
-						}
-					}
-				}, "sap/ui/core/demokit/sample/odata/v4/SalesOrdersTemplate/data",
-				"/sap/opu/odata4/IWBEP/V4_SAMPLE/default/IWBEP/V4_GW_SAMPLE_BASIC/0001/");
+					"BusinessPartnerList?$skip=0&$top=5" : {source : "BusinessPartnerList.json"},
+					"/sap/opu/odata4/sap/zui5_testv4/f4/sap/h_tcurc-sh/0001;ps=%27default-zui5_epm_sample-0002%27;va=%27com.sap.gateway.default.zui5_epm_sample.v0002.ET-BUSINESSPARTNER.CURRENCY_CODE%27/$metadata"
+						: {source : "metadata_tcurc.xml"},
+					"/sap/opu/odata4/sap/zui5_testv4/f4/sap/h_tcurc-sh/0001;ps=%27default-zui5_epm_sample-0002%27;va=%27com.sap.gateway.default.zui5_epm_sample.v0002.ET-BUSINESSPARTNER.CURRENCY_CODE%27/H_TCURC_SH_Set?$skip=0&$top=20"
+						: {source : "CurrencyList.json"},
+					"/sap/opu/odata4/sap/zui5_testv4/f4/sap/d_bp_role-fv/0001;ps=%27default-zui5_epm_sample-0002%27;va=%27com.sap.gateway.default.zui5_epm_sample.v0002.ET-BUSINESSPARTNER.BP_ROLE%27/$metadata"
+						: {source : "metadata_bp_role.xml"},
+					"/sap/opu/odata4/sap/zui5_testv4/f4/sap/d_bp_role-fv/0001;ps=%27default-zui5_epm_sample-0002%27;va=%27com.sap.gateway.default.zui5_epm_sample.v0002.ET-BUSINESSPARTNER.BP_ROLE%27/D_BP_ROLE_FV_Set?$skip=0&$top=100"
+						: {source : "RoleList.json"}
+				}, "sap/ui/core/sample/odata/v4/SalesOrdersTemplate/data",
+				"/sap/opu/odata4/sap/zui5_testv4/default/sap/zui5_epm_sample/0002/");
 			}
 
 			oMetaModel.requestObject("/$EntityContainer/SalesOrderList/$Type").then(function () {
 				oLayout.addItem(sap.ui.view({
 					async : true,
+					bindingContexts : {
+						undefined : oModel.createBindingContext("/BusinessPartnerList")
+					},
 					models : {
+						// Note: XML Templating creates bindings to default model only!
 						undefined : oModel,
+						metaModel : oMetaModel,
 						ui : new JSONModel({
 							bRealOData : bRealOData,
 							icon : bRealOData ? "sap-icon://building" : "sap-icon://record",
@@ -73,7 +87,11 @@ sap.ui.define([
 					},
 					preprocessors : {
 						xml : {
+							bindingContexts : {
+								data : oModel.createBindingContext("/BusinessPartnerList")
+							},
 							models : {
+								data : oModel,
 								meta : oMetaModel
 							}
 						}

@@ -4,11 +4,10 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>Currency - sap.ui.unified</title>
+	<script src="shared-config.js"></script>
 	<script src="../../../../resources/sap-ui-core.js"
-	        type="text/javascript"
 	        id="sap-ui-bootstrap"
-	        data-sap-ui-libs="sap.ui.unified, sap.ui.layout"
-	        data-sap-ui-theme="sap_bluecrystal">
+	        data-sap-ui-libs="sap.m, sap.ui.unified, sap.ui.layout">
 	</script>
 	<script>
 
@@ -51,7 +50,8 @@
 				path: 'value',
 				type: new sap.ui.model.type.String()
 			},
-			currency: '{currency}'
+			currency: '{currency}',
+			useSymbol: '{useSymbol}'
 		});
 
 		var oLayout = new sap.ui.layout.VerticalLayout({
@@ -67,7 +67,6 @@
 				type: new sap.ui.model.type.String()
 			},
 			currency: '{currency}',
-			useSymbol: '{useSymbol}',
 			maxPrecision: 0
 		});
 

@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -168,13 +168,13 @@ sap.ui.define(['jquery.sap.global'],
 
 		if (sType == "selected") {
 			sIcon = oRating.getIconSelected();
-			sParam = "sapUiRatingSymbolSelected";
+			sParam = "_sap_ui_commons_RatingIndicator_SymbolSelected";
 		} else if (sType == "unselected") {
 			sIcon = oRating.getIconUnselected();
-			sParam = "sapUiRatingSymbolUnselected";
+			sParam = "_sap_ui_commons_RatingIndicator_SymbolUnselected";
 		} else {
 			sIcon = oRating.getIconHovered();
-			sParam = "sapUiRatingSymbolHovered";
+			sParam = "_sap_ui_commons_RatingIndicator_SymbolHovered";
 		}
 
 		if (!sIcon) {

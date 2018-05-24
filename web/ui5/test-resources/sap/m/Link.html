@@ -11,32 +11,31 @@
 			}
 		</style>
 
+		<script src="shared-config.js"></script>
 		<script src="../../../resources/sap-ui-core.js"
-			type="text/javascript"
 			id="sap-ui-bootstrap"
-			data-sap-ui-libs="sap.m"
-			data-sap-ui-theme="sap_bluecrystal">
+			data-sap-ui-libs="sap.m">
 		</script>
 
-		<script type="text/javascript">
+		<script>
 			var app = new sap.m.App("myApp", {initialPage:"page1"});
 
 			var page1 = new sap.m.Page("page1", {
 				title:"Page 1",
 				content : [
 					new sap.m.Link({
-						text : "To Page 2",
-						press : function() {
-							app.to("page2");
-						}
+						id: "link_focusable",
+						text : "To Page 2"
 					}),
 
 					new sap.m.Link({
+						id: "link_disabled",
 						text : "Disabled Link",
 						enabled : false
 					}),
 
 					new sap.m.Link({
+						id: "link_subtle",
 						text : "Subtle Link",
 						subtle : true,
 						press : function() {
@@ -45,6 +44,7 @@
 					}),
 
 					new sap.m.Link({
+						id: "link_emphasized",
 						text : "Emphasized Link",
 						emphasized : true,
 						press : function() {
@@ -53,6 +53,7 @@
 					}),
 
 					new sap.m.Link({
+						id: "link_disabled_subtle",
 						text : "Disabled & Subtle Link",
 						subtle : true,
 						enabled : false,
@@ -62,6 +63,7 @@
 					}),
 
 					new sap.m.Link({
+						id: "link_disabled_emphasized",
 						text : "Disabled & Emphasized Link",
 						emphasized : true,
 						enabled : false,

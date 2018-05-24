@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located."/>
+<meta name="description" content="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located."/>
 
-
-
-
-
-<meta name="abstract" content="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located. This system is the so-called back-end system that we will now simulate with a SAPUI5 feature called mock server. It serves local files, but it simulates a back-end system more realistically than just loading the local data. We will also change the model instantiation part so that the model is configured in the descriptor and instantiated automatically by SAPUI5. This way, we do not need to take care of the model instantiation in the code."/>
-<meta name="description" content="We just ran our app against a real service, but for developing and testing our app we do not want to rely on the availability of the “real” service or put additional load on the system where the data service is located. This system is the so-called back-end system that we will now simulate with a SAPUI5 feature called mock server. It serves local files, but it simulates a back-end system more realistically than just loading the local data. We will also change the model instantiation part so that the model is configured in the descriptor and instantiated automatically by SAPUI5. This way, we do not need to take care of the model instantiation in the code."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4933917231136383"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=925113618035133"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=925113618035133"/>
 <title>Step 27: Mock Server Configuration</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiobae9d90d2e9c4206889368f04edab508">
 <div id="wrapper"><div id="container">
@@ -35,12 +21,13 @@
 	
 	<div class="body conbody"><p class="shortdesc">We just ran our app against a real service, but for developing and testing our app we do
 		not want to rely on the availability of the “real” service or put additional load on the
-		system where the data service is located. This system is the so-called back-end system that
-		we will now simulate with a <span class="ph"><span class="ph pname">SAPUI5</span></span> feature called mock
-		server. It serves local files, but it simulates a back-end system more realistically than
-		just loading the local data. We will also change the model instantiation part so that the
-		model is configured in the descriptor and instantiated automatically by <span class="ph"><span class="ph pname">SAPUI5</span></span>. This way, we do not
-		need to take care of the model instantiation in the code.</p>
+		system where the data service is located.</p>
+
+		<p class="p">This system is the so-called back-end system that we will now simulate with an <span class="ph"><span class="ph pname">OpenUI5</span></span> feature called mock
+			server. It serves local files, but it simulates a back-end system more realistically
+			than just loading the local data. We will also change the model instantiation part so
+			that the model is configured in the descriptor and instantiated automatically by <span class="ph"><span class="ph pname">OpenUI5</span></span>. This way, we do not
+			need to take care of the model instantiation in the code.</p>
 
 		<div class="section"><div class="section_title">Preview</div><div type="Preview">
 			
@@ -53,8 +40,7 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview">Walkthrough - Step 27</a></span>.</p>
+			<p class="p">You can view and download all files <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview" alt="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview" title="../../explored.html#/sample/sap.m.tutorial.walkthrough.27/preview">Walkthrough - Step 27</a></span>.</p>
 
 			<div class="fig fignone" id="loiobae9d90d2e9c4206889368f04edab508__fig_dhm_tbp_ns"><div class="figcontainer">
 				
@@ -65,48 +51,55 @@
 				now contains a new HTML page <span class="ph filepath">mockServer.html</span> which will launch our application in test mode without calling the
 				real service.</p>
 
-			<p class="p">The new <span class="ph filepath">localService</span> folder contains a
-				<samp class="ph codeph">metadata.xml</samp>service description file for OData, the
-					<samp class="ph codeph">mockserver.js</samp> file that simulates a real service with local
-				data, and the <span class="ph filepath">mockdata</span> subfolder that contains the local test
-				data (<samp class="ph codeph">Invoices.json</samp>).</p>
+			<p class="p">The new <span class="ph filepath">localService</span> folder contains a <samp class="ph codeph">metadata.xml</samp> service description file for OData, the
+					<samp class="ph codeph">mockserver.js</samp> file that simulates a real service with local data, and the <span class="ph filepath">mockdata</span> subfolder that
+				contains the local test data (<samp class="ph codeph">Invoices.json</samp>).</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/test/mockServer.html (New)</div><div type="webapp/test/mockServer.html (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp><span class="ph emphasis emphasis">&lt;!DOCTYPE html&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html"><span class="ph emphasis emphasis">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
 	&lt;meta http-equiv="X-UA-Compatible" content="IE=edge"&gt;
 	&lt;meta charset="utf-8"&gt;
-	&lt;title&gt;Walkthrough&lt;/title&gt;
+	&lt;title&gt;SAPUI5 Walkthrough - Test page&lt;/title&gt;
 	&lt;script
 		id="sap-ui-bootstrap"
-		src="/resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
+		src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
+		data-sap-ui-theme="sap_belize"
 		data-sap-ui-libs="sap.m"
-		data-sap-ui-bindingSyntax="complex"
 		data-sap-ui-compatVersion="edge"
 		data-sap-ui-preload="async"
 		data-sap-ui-resourceroots='{
-			"sap.ui.demo.wt": "./"
-		}' &gt;
+			"sap.ui.demo.walkthrough": "../"
+		}'&gt;
 	&lt;/script&gt;
 	&lt;script&gt;
 		sap.ui.getCore().attachInit(function () {
-			new sap.m.Shell({
-				app : new sap.ui.core.ComponentContainer({
-					name : "sap.ui.demo.wt",
-					height : "100%"
-				})
-			}).placeAt("content");
+			sap.ui.require([
+				"sap/ui/demo/walkthrough/localService/mockserver",
+				"sap/m/Shell",
+				"sap/ui/core/ComponentContainer"
+			], function (mockserver, Shell, ComponentContainer) {
+				mockserver.init();
+				new Shell({
+					app : new ComponentContainer({
+						name : "sap.ui.demo.walkthrough",
+						settings : {
+							id : "walkthrough"
+						}
+					})
+				}).placeAt("content");
+			});
 		});
 	&lt;/script&gt;
 &lt;/head&gt;
 &lt;body class="sapUiBody" id="content"&gt;
 &lt;/body&gt;
-&lt;/html&gt;</span></pre></div>
+&lt;/html&gt;
+</span></pre></div>
 
 			<p class="p">We copy the <samp class="ph codeph">index.html</samp> to a separate file in the <samp class="ph codeph">webapp/test</samp> folder and name it
 					<samp class="ph codeph">mockServer.html</samp>. We will now use this file to run our app in test mode with mock data loaded from a JSON file.
@@ -127,7 +120,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/mockServer.html</div><div type="webapp/test/mockServer.html">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!html</samp>&lt;!DOCTYPE html&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-html">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 	&lt;head&gt;
 		&lt;meta http-equiv="X-UA-Compatible" content="IE=edge"&gt;
@@ -136,19 +129,19 @@
 		&lt;script
 			id="sap-ui-bootstrap"
 			src="/resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
+			data-sap-ui-theme="sap_belize"
 			data-sap-ui-libs="sap.m"
 			data-sap-ui-bindingSyntax="complex"
 			data-sap-ui-compatVersion="edge"
 			data-sap-ui-preload="async"
 			data-sap-ui-resourceroots='{
-				"sap.ui.demo.wt": <span class="ph emphasis emphasis">"../"</span>
+				"sap.ui.demo.walkthrough": <span class="ph emphasis emphasis">"../"</span>
 			}'&gt;
 		&lt;/script&gt;
 		&lt;script&gt;
 			sap.ui.getCore().attachInit(function () {
 				<span class="ph emphasis emphasis">sap.ui.require([
-					"sap/ui/demo/wt/localService/mockserver",
+					"sap/ui/demo/walkthrough/localService/mockserver",
 					"sap/m/Shell",
 					"sap/ui/core/ComponentContainer"
 				], function (mockserver, Shell, ComponentContainer) {
@@ -157,7 +150,7 @@
 					new <span class="ph emphasis emphasis">Shell</span>({
 						app : new <span class="ph emphasis emphasis">ComponentContainer</span>({
 							height: "100%",
-							name: "sap.ui.demo.wt"
+							name: "sap.ui.demo.walkthrough"
 						})
 					}).placeAt("content");
 				<span class="ph emphasis emphasis">});
@@ -188,11 +181,15 @@
 				that would go to the “real” service and process them locally by our test server when launching the app with the
 					<samp class="ph codeph">mockServer.html</samp> file. The component itself does not "know" that it will now run in test mode.</p>
 
+			<p class="p">The mock server does not need to be called from anywhere else in our code so we use
+					<samp class="ph codeph">sap.ui.require</samp> to load dependencies asynchronously without
+				defining a global namespace.</p>
+
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/localService/mockdata/Invoices.json (New)</div><div type="webapp/localService/mockdata/Invoices.json (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">[
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">[
   {
 	"ProductName": "Pineapple",
 	"Quantity": 21,
@@ -248,7 +245,7 @@
 
 		<div class="section"><div class="section_title">webapp/localService/metadata.xml (New)</div><div type="webapp/localService/metadata.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"&gt;
 	&lt;edmx:DataServices m:DataServiceVersion="1.0" m:MaxDataServiceVersion="3.0"
 					   xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"&gt;
 		&lt;Schema Namespace="NorthwindModel" xmlns="http://schemas.microsoft.com/ado/2008/09/edm"&gt;
@@ -292,7 +289,7 @@
 
 		<div class="section"><div class="section_title">webapp/localService/mockserver.js (New)</div><div type="webapp/localService/mockserver.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/core/util/MockServer"
 ], function (MockServer) {
 	"use strict";
@@ -300,7 +297,7 @@
 		init: function () {
 			// create
 			var oMockServer = new MockServer({
-				rootUri: "/destinations/northwind/V2/Northwind/Northwind.svc/"
+				rootUri: "https://services.odata.org/V2/Northwind/Northwind.svc/"
 			}); 
 			var oUriParameters = jQuery.sap.getUriParameters();
 			// configure
@@ -309,7 +306,7 @@
 				autoRespondAfter: oUriParameters.get("serverDelay") || 1000
 			});
 			// simulate
-			var sPath = jQuery.sap.getModulePath("sap.ui.demo.wt.localService");
+			var sPath = jQuery.sap.getModulePath("sap.ui.demo.walkthrough.localService");
 			oMockServer.simulate(sPath + "/metadata.xml", sPath + "/mockdata");
 			// start
 			oMockServer.start();
@@ -325,9 +322,12 @@
 				the server. This method is called before the component initialization in the <samp class="ph codeph">mockServer.html</samp> file above. The
 					<samp class="ph codeph">init</samp> method creates a <samp class="ph codeph">MockServer</samp> instance with the same URL as the real service calls.</p>
 
-			<p class="p">The URL in configuration parameter <samp class="ph codeph">rootURI</samp> will now be served by our
-				test server instead of the real service. It matches the URL of our data source in
-				the descriptor file. Next, we set two global configuration settings that tell the
+			<p class="p">The URL in configuration parameter <samp class="ph codeph">rootURI</samp> has to be exactly the same as the
+					<samp class="ph codeph">uri</samp> that is defined for the data source in the
+					<span class="ph filepath">manifest.json</span> descriptor file. This can be an absolute or,
+				for example in <span class="ph pname">SAP Web IDE</span>, a
+				relative URL to a destination. The URL will now be served by our test server instead
+				of the real service. Next, we set two global configuration settings that tell the
 				server to respond automatically and introduce a delay of one second to imitate a
 				typical server response time. Otherwise, we would have to call the respond method on
 				the <samp class="ph codeph">MockServer</samp> manually to simulate the call.</p>
@@ -350,17 +350,6 @@
 			<p class="p">Try calling the app with the <samp class="ph codeph">index.html</samp> file and the <samp class="ph codeph">mockServer.html</samp> file to see the difference. If the real
 				service connection cannot be made, for example when there is no network connection, you can always fall back to the local test
 				page.</p>
-
-			<div class="note note"><span class="notetitle">Note</span> 
-				<p class="p">The URI of the <samp class="ph codeph">invoiceRemote</samp> data source in the descriptor
-					points to our destination configured for SAP Web IDE (see previous step). We
-					assume this destination to be available. In any other development environment,
-					you need to use a local proxy for the request to the service as described in the
-					previous step. This is important when you call the application with the
-						<span class="ph filepath">index.html</span> file, otherwise the call to the remote
-					service will fail.</p>
-
-			</div>
 
 		</div></div>
 
@@ -394,35 +383,22 @@
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of SAPUI5.">Walkthrough</a><br/>
+<strong>Parent topic: </strong><a class="link" href="3da5f4be63264db99f2e5b04c5e853db.html" title="In this tutorial we will introduce you to all major development paradigms of OpenUI5.">Walkthrough</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="44062441f3bd4c67a4f665ae362d1109.html" title="So far we have only worked with local JSON data, but now we will access a real OData service. Instead of implementing an own OData service we will simply use the publicly available Northwind OData service to visualize remote data. You will be surprised how little needs to be changed in order to make this work!">Step 26: Remote OData Service</a><br/>
 </div>
 <div class="nextlink"><br/>
-<strong>Next: </strong><a class="link" href="e1ce1de315994a02bf162f4b3b5a9f09.html" title="Now that we have a test folder in the app, we can start to increase our test coverage. Actually, every feature that we added to the app so far, would require a separate test case. We have totally neglected this so far, so let’s add a simple unit test for our custom formatter function from Step 23. We will test if the long text for our status is correct by comparing it with the texts from our resource bundle.">Step 28: Unit Test with QUnit</a><br/>
+<strong>Next: </strong><a class="link" href="e1ce1de315994a02bf162f4b3b5a9f09.html" title="Now that we have a test folder in the app, we can start to increase our test coverage.">Step 28: Unit Test with QUnit</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
 <div><a class="link" href="69d3cbd4150c4ffb884e788f7f60fd93.html" title="Mock server is a mocking framework for HTTP and HTTPS that is used to simplify integration testing and to decouple development teams by allowing to develop against a service that is not complete or unstable.">Mock Server</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.util.MockServer.html" alt="../../docs/api/symbols/sap.ui.core.util.MockServer.html" title="../../docs/api/symbols/sap.ui.core.util.MockServer.html">API Reference: <samp class="ph codeph">sap.ui.core.util.MockServer</samp></a></div>
+<div><a class="link" href="3a16c7a2f1e944deb000db49e5ece6be.html" title="Configure a destination in the SAP Cloud Platform Cockpit in order to bypass the same-origin policy of the browser.">Create a Northwind Destination</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 27: Mock Server Configuration";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -3,8 +3,8 @@
     <name>UploadCollectionItem</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Items provide information about the uploaded files.</documentation>
-    <since>1.26</since>
+    <documentation>Defines a structure of the element of the 'items' aggregation.</documentation>
+    <since>1.26.0</since>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
         <property name="contributor" type="sap.ui.core/string" group="Data">
@@ -26,7 +26,7 @@ However, if the property is filled, it is displayed as an attribute. To make sur
             <documentation>Specifies the MIME type of the file.</documentation>
         </property>
         <property name="thumbnailUrl" type="sap.ui.core/string" group="Misc">
-            <documentation>Specifies the URL where the thumbnail of the file is located.</documentation>
+            <documentation>Specifies the URL where the thumbnail of the file is located. This can also be an SAPUI5 icon URL.</documentation>
         </property>
         <property name="uploadedDate" type="sap.ui.core/string" group="Misc">
             <documentation>Specifies the date on which the file was uploaded.
@@ -57,16 +57,25 @@ If the value is false, the Edit button is not visible.</documentation>
 If the value is true, the Delete button is visible.
 If the value is false, the Delete button is not visible.</documentation>
         </property>
-        <property name="ariaLabelForPicture" type="sap.ui.core/string" group="Accessibility">
+        <property name="ariaLabelForPicture" type="sap.ui.core/string" group="Accessibility" since="1.30.0">
             <documentation>Aria label for the icon (or for the image).</documentation>
-            <developmentState state="experimental" since="1.30">The behavior of the property might change in the next version.</developmentState>
         </property>
-        <property name="selected" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.34">
+        <property name="selected" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.34.0">
             <documentation>Defines the selected state of the UploadCollectionItem.</documentation>
         </property>
     </properties>
+    <events>
+        <event name="press" since="1.50.0" allowPreventDefault="false">
+            <documentation>This event is triggered when the user presses the filename link.
+If this event is provided, it overwrites the default behavior of opening the file.</documentation>
+        </event>
+        <event name="deletePress" since="1.50.0" allowPreventDefault="false">
+            <documentation>When a deletePress event handler is attached to the item and the user presses the delete button, this event is triggered.
+If this event is triggered, it overwrites the default delete behavior of UploadCollection and the fileDeleted event of UploadCollection is not triggered.</documentation>
+        </event>
+    </events>
     <aggregations default="attributes">
-        <aggregation name="attributes" type="sap.m/ObjectAttribute" since="1.30" cardinality="0..n" bindable="bindable">
+        <aggregation name="attributes" type="sap.m/ObjectAttribute" since="1.30.0" cardinality="0..n" bindable="bindable">
             <documentation>Attributes of an uploaded item, for example, 'Uploaded By', 'Uploaded On', 'File Size'
 attributes are displayed after an item has been uploaded.
 Additionally, the Active property of sap.m.ObjectAttribute is supported.&lt;br&gt;
@@ -75,18 +84,22 @@ are displayed as these properties get displayed as an attribute.
 Example: An application passes the property ‘contributor’ with the value ‘A’ and the aggregation attributes ‘contributor’: ‘B’. As a result, the attributes
 ‘contributor’:’A’ and ‘contributor’:’B’ are displayed. To make sure the title does not appear twice, check if one of the properties is filled.</documentation>
         </aggregation>
-        <aggregation name="_propertyAttributes" type="sap.m/ObjectAttribute" since="1.30" cardinality="0..n" visibility="hidden">
+        <aggregation name="_propertyAttributes" type="sap.m/ObjectAttribute" since="1.30.0" cardinality="0..n" visibility="hidden">
             <documentation>Hidden aggregation for the attributes created from the deprecated properties uploadedDate, contributor and fileSize</documentation>
         </aggregation>
-        <aggregation name="statuses" type="sap.m/ObjectStatus" since="1.30" cardinality="0..n" bindable="bindable">
+        <aggregation name="statuses" type="sap.m/ObjectStatus" since="1.30.0" cardinality="0..n" bindable="bindable">
             <documentation>Statuses of an uploaded item
 Statuses will be displayed after an item has been uploaded</documentation>
         </aggregation>
+        <aggregation name="markers" type="sap.m/ObjectMarker" since="1.40.0" cardinality="0..n" bindable="bindable">
+            <documentation>Markers of an uploaded item
+Markers will be displayed after an item has been uploaded
+But not in Edit mode</documentation>
+        </aggregation>
     </aggregations>
     <associations>
-        <association name="fileUploader" type="sap.ui.unified/FileUploader" cardinality="0..1">
-            <documentation>ID of the FileUploader instance
-since version 1.30</documentation>
+        <association name="fileUploader" type="sap.ui.unified/FileUploader" cardinality="0..1" since="1.30.0">
+            <documentation>ID of the FileUploader instance</documentation>
         </association>
     </associations>
 </control>

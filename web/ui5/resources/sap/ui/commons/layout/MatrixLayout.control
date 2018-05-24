@@ -27,7 +27,7 @@ matrix layout if you need to align controls horizontally across rows.
     <properties>
         <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
             <documentation>CSS width of the matrix layout.
-If the LayoutFixed = true a adequate width should be provided.</documentation>
+If the LayoutFixed = true an adequate width should be provided.</documentation>
         </property>
         <property name="height" type="sap.ui.core/CSSSize" group="Dimension">
             <documentation>CSS height of the matrix layout.</documentation>
@@ -35,7 +35,7 @@ If the LayoutFixed = true a adequate width should be provided.</documentation>
         <property name="layoutFixed" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>Sets the table layout. If fixed the width parameter of a column has priority, if not the width of the content of the colums has priority.
 The default is "fixed".
-If the fixed layout is used a adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.</documentation>
+If the fixed layout is used an adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.</documentation>
         </property>
         <property name="columns" type="sap.ui.core/int" group="Appearance">
             <documentation>Number of columns. If not specified, the number of columns will be determined from the given cells.</documentation>
@@ -57,11 +57,6 @@ If a column shall have an automatical sizing enter "auto" for this column width.
 Each argument must be either a matrix layout cell, which is added to the row
 "as is", or an arbitrary content control, which is wrapped with a new
 (default) matrix layout cell first and then added to the row.</documentation>
-            <parameters>
-                <parameter name="rowContent" type="sap.ui.core/Control">
-                    <documentation>to add</documentation>
-                </parameter>
-            </parameters>
         </method>
     </methods>
 </control>

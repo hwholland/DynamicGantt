@@ -1,3 +1,5 @@
+/*global QUnit,sinon*/
+
 sap.ui.define(
 	[
 		"sap/m/NavContainer",
@@ -10,15 +12,15 @@ sap.ui.define(
 		return {
 			start : function (oOptions) {
 
-				var fnSetup = oOptions.setup;
+				var fnSetup = oOptions.beforeEach;
 				var fnAct = oOptions.act;
 
 				///////////////////////////////////////////////////////
 				/// Integation test
 				///////////////////////////////////////////////////////
 				QUnit.module("Common integration tests", {
-					teardown: function () {
-						oOptions.teardown.call(this);
+					afterEach: function () {
+						oOptions.afterEach.call(this);
 					}
 				});
 
@@ -241,7 +243,7 @@ sap.ui.define(
 					});
 				});
 
-				QUnit.test("Test multiple views to be diplayed in the same order as they are requested", function() {
+				QUnit.test("Test multiple views to be diplayed in the same order as they are requested", function(assert) {
 					//Arrange
 					var oNavContainer = new NavContainer();
 					fnSetup.call(this, {
@@ -297,4 +299,5 @@ sap.ui.define(
 			}
 		};
 
-		});
+	}
+);

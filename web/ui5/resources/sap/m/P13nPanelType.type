@@ -19,5 +19,8 @@
         <value name="dimeasure">
             <documentation>Panel type for dimension and measure settings.</documentation>
         </value>
+        <value name="selection">
+            <documentation>Panel type for selection settings in general.</documentation>
+        </value>
     </enumeration>
 </simple-type>

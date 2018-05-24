@@ -1,11 +1,13 @@
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
-	"sap/ui/table/sample/TableExampleUtils",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/unified/Menu",
 	"sap/ui/unified/MenuItem",
-	"sap/m/MessageToast"
-], function(Controller, TableExampleUtils, JSONModel, Menu, MenuItem, MessageToast) {
+	"sap/m/MessageToast",
+	"sap/ui/core/format/DateFormat",
+	"sap/m/Menu",
+	"sap/m/MenuItem"
+], function(Controller, JSONModel, Menu, MenuItem, MessageToast, DateFormat, MenuM, MenuItemM) {
 	"use strict";
 
 	return Controller.extend("sap.ui.table.sample.Menus.Controller", {
@@ -14,7 +16,7 @@ sap.ui.define([
 			var oView = this.getView();
 
 			// set explored app's demo model on this sample
-			var oJSONModel = TableExampleUtils.initSampleDataModel();
+			var oJSONModel = this.initSampleDataModel();
 			oView.setModel(oJSONModel);
 
 			oView.setModel(new JSONModel({
@@ -24,9 +26,50 @@ sap.ui.define([
 			}), "ui");
 		},
 
+		initSampleDataModel : function() {
+			var oModel = new JSONModel();
+
+			var oDateFormat = DateFormat.getDateInstance({source: {pattern: "timestamp"}, pattern: "dd/MM/yyyy"});
+
+			jQuery.ajax(jQuery.sap.getModulePath("sap.ui.demo.mock", "/products.json"), {
+				dataType: "json",
+				success: function (oData) {
+					var aTemp1 = [];
+					var aTemp2 = [];
+					var aSuppliersData = [];
+					var aCategoryData = [];
+					for (var i = 0; i < oData.ProductCollection.length; i++) {
+						var oProduct = oData.ProductCollection[i];
+						if (oProduct.SupplierName && jQuery.inArray(oProduct.SupplierName, aTemp1) < 0) {
+							aTemp1.push(oProduct.SupplierName);
+							aSuppliersData.push({Name: oProduct.SupplierName});
+						}
+						if (oProduct.Category && jQuery.inArray(oProduct.Category, aTemp2) < 0) {
+							aTemp2.push(oProduct.Category);
+							aCategoryData.push({Name: oProduct.Category});
+						}
+						oProduct.DeliveryDate = (new Date()).getTime() - (i % 10 * 4 * 24 * 60 * 60 * 1000);
+						oProduct.DeliveryDateStr = oDateFormat.format(new Date(oProduct.DeliveryDate));
+						oProduct.Heavy = oProduct.WeightMeasure > 1000 ? "true" : "false";
+						oProduct.Available = oProduct.Status == "Available" ? true : false;
+					}
+
+					oData.Suppliers = aSuppliersData;
+					oData.Categories = aCategoryData;
+
+					oModel.setData(oData);
+				},
+				error: function () {
+					jQuery.sap.log.error("failed to load json");
+				}
+			});
+
+			return oModel;
+		},
+
 		onColumnSelect : function (oEvent) {
 			var oCurrentColumn = oEvent.getParameter("column");
-			var oImageColumn = this.getView().byId("image");
+			var oImageColumn = this.byId("image");
 			if (oCurrentColumn === oImageColumn) {
 				MessageToast.show("Column header " + oCurrentColumn.getLabel().getText() + " pressed.");
 			}
@@ -34,7 +77,7 @@ sap.ui.define([
 
 		onColumnMenuOpen: function (oEvent) {
 			var oCurrentColumn = oEvent.getSource();
-			var oImageColumn = this.getView().byId("image");
+			var oImageColumn = this.byId("image");
 			if (oCurrentColumn != oImageColumn) {
 				return;
 			}
@@ -64,9 +107,9 @@ sap.ui.define([
 			this._oIdContextMenu.destroyItems();
 			this._oIdContextMenu.addItem(new MenuItem({
 				text: "My Custom Cell Action",
-				select: function(oEvent) {
+				select: function() {
 					MessageToast.show("Context action triggered on Column 'Product ID' on id '" + oRowContext.getProperty("ProductId") + "'.");
-				}.bind(this)
+				}
 			}));
 
 			//Open the menu on the cell
@@ -76,19 +119,37 @@ sap.ui.define([
 		},
 
 		onQuantityCustomItemSelect : function(oEvent) {
-			alert("Some custom action triggered on column 'Quantity'.");
+			MessageToast.show("Some custom action triggered on column 'Quantity'.");
 		},
 
 		onQuantitySort : function(oEvent) {
 			var bAdd = oEvent.getParameter("ctrlKey") === true;
-			var oColumn = this.getView().byId("quantity");
+			var oColumn = this.byId("quantity");
 			var sOrder = oColumn.getSortOrder() == "Ascending" ? "Descending" : "Ascending";
 
-			this.getView().byId("table").sort(oColumn, sOrder, bAdd);
+			this.byId("table").sort(oColumn, sOrder, bAdd);
 		},
 
 		showInfo : function(oEvent) {
-			TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.Menus", "/info.json"), oEvent.getSource());
+			try {
+				jQuery.sap.require("sap.ui.table.sample.TableExampleUtils");
+				sap.ui.table.sample.TableExampleUtils.showInfo(jQuery.sap.getModulePath("sap.ui.table.sample.Menus", "/info.json"), oEvent.getSource());
+			} catch (e) {
+				// nothing
+			}
+		},
+
+		onToggleContextMenu : function(oEvent) {
+			if (oEvent.getParameter("pressed")) {
+				this.byId("table").setContextMenu(new MenuM({
+					items: [
+						new MenuItemM({text: "{Name}"}),
+						new MenuItemM({text: "{ProductId}"})
+					]
+				}));
+			} else {
+				this.byId("table").destroyContextMenu();
+			}
 		}
 
 	});

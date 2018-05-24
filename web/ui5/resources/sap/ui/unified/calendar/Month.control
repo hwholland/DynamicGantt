@@ -10,7 +10,8 @@ If used inside the calendar the properties and aggregation are directly taken fr
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="date" type="sap.ui.core/object" group="Data">
-            <documentation>the month including this date is rendered and this date is initial focused (if no other focus set)</documentation>
+            <documentation>A date as JavaScript Date object.
+The month including this date is rendered and this date is focused initially (if no other focus is set).</documentation>
         </property>
         <property name="intervalSelection" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
             <documentation>If set, interval selection is allowed</documentation>
@@ -41,6 +42,12 @@ If not set, the dates are only displayed in the primary calendar type</documenta
         <property name="width" type="sap.ui.core/CSSSize" group="Dimension" since="1.38.0">
             <documentation>Width of Month</documentation>
         </property>
+        <property name="showWeekNumbers" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.48">
+            <documentation>Determines whether the week numbers in the months are displayed.
+
+&lt;b&gt;Note:&lt;/b&gt; For Islamic calendars, the week numbers are not displayed
+regardless of what is set to this property.</documentation>
+        </property>
     </properties>
     <events>
         <event name="select" allowPreventDefault="false">
@@ -66,8 +73,14 @@ If not set, the dates are only displayed in the primary calendar type</documenta
             <documentation>Date Ranges for selected dates of the DatePicker</documentation>
         </aggregation>
         <aggregation name="specialDates" type="sap.ui.unified/DateTypeRange" cardinality="0..n">
-            <documentation>Date Range with type to visualize special days in the Calendar.
-If one day is assigned to more than one Type, only the first one will be used.</documentation>
+            <documentation>&lt;code&gt;DateRange&lt;/code&gt; with type to visualize special days in the Calendar.
+
+&lt;b&gt;Note:&lt;/b&gt; If one day is assigned to more than one DateTypeRange, only the first one
+will be used. The only exception is when one of the types is
+&lt;code&gt;NonWorking&lt;/code&gt;, then you can have both &lt;code&gt;NonWorking&lt;/code&gt;
+and the other type.
+For example, you can have &lt;code&gt;NonWorking&lt;/code&gt; + &lt;code&gt;Type01&lt;/code&gt;
+but you can't have &lt;code&gt;Type01&lt;/code&gt; + &lt;code&gt;Type02&lt;/code&gt;.</documentation>
         </aggregation>
         <aggregation name="disabledDates" type="sap.ui.unified/DateRange" since="1.38.0" cardinality="0..n">
             <documentation>Date Ranges for disabled dates</documentation>

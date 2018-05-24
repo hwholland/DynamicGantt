@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>VerticalPlacementType</name>
     <derived/>
-    <documentation>Types for the placement of message popover control.</documentation>
+    <documentation>Types for the placement of message Popover control.</documentation>
     <enumeration>
         <value name="Top">
             <documentation>Popover will be placed at the top of the reference control.</documentation>

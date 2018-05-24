@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,7 +11,7 @@ sap.ui.define(['jquery.sap.global'],
 
 	/**
 	 * @callback createDefaultContent
-	 * @return {sap.ui.core.Control|sap.ui.core.Control[]} a control or an array with 0..n controls
+	 * @return {sap.ui.core.Control|sap.ui.core.Control[]|Promise} a control or an array with 0..n controls or a Promise resolving with them
 	 */
 
 	/**
@@ -31,7 +31,8 @@ sap.ui.define(['jquery.sap.global'],
 	 * 			if not given, but an oTargetControl is still present, the function will attempt to add the extension point to the default aggregation of oTargetControl.
 	 * 			If no oTargetControl is provided, sAggregationName will also be ignored.
 	 *
-	 * @return {sap.ui.core.Control[]} an array with 0..n controls created from an ExtensionPoint
+	 * @return {sap.ui.core.Control[]|Promise} An array with 0..n controls created from an ExtensionPoint or
+	 * 			if fnCreateDefaultContent is called and returns a Promise, a Promise with the controls is returned instead
 	 * @public
 	 * @static
 	 */
@@ -49,7 +50,7 @@ sap.ui.define(['jquery.sap.global'],
 		if (CustomizingConfiguration) {
 
 			// do we have a view to check or do we need to check for configuration for a fragment?
-			if (View && oContainer instanceof View){
+			if (View && oContainer instanceof View) {
 				extensionConfig = CustomizingConfiguration.getViewExtension(oContainer.sViewName, sExtName, oContainer);
 				oView = oContainer;
 			} else if (Fragment && oContainer instanceof Fragment) {
@@ -72,7 +73,7 @@ sap.ui.define(['jquery.sap.global'],
 							fragmentName: extensionConfig.fragmentName,
 							containingView: oView
 						});
-						vResult = (jQuery.isArray(oFragment) ? oFragment : [oFragment]); // vResult is now an array, even if empty - so if a Fragment is configured, the default content below is not added anymore
+						vResult = (Array.isArray(oFragment) ? oFragment : [oFragment]); // vResult is now an array, even if empty - so if a Fragment is configured, the default content below is not added anymore
 
 					} else if (extensionConfig.className === "sap.ui.core.mvc.View") {
 						var oView = sap.ui.view({type: extensionConfig.type, viewName: extensionConfig.viewName, id: sId});
@@ -96,28 +97,37 @@ sap.ui.define(['jquery.sap.global'],
 			vResult = fnCreateDefaultContent();
 		}
 
-		// if the result returned from the default content is no array, wrap it in one
-		if (vResult && !jQuery.isArray(vResult)){
-			vResult = [vResult];
-		}
-
-		//if we have any result from either default content or customizing AND a target control is provided:
-		if (vResult && oTargetControl) {
-			//directly add the extension to the corresponding aggregation at the target control:
-			var oAggregationInfo = oTargetControl.getMetadata().getAggregation(sAggregationName);
-			if (oAggregationInfo) {
-				for (var i = 0, l = vResult.length; i < l; i++) {
-					// call the corresponding mutator for each element within the extension point - may be one or multiple elements
-					oTargetControl[oAggregationInfo._sMutator](vResult[i]);
-				}
-			} else {
-				// the target control has no default aggregation, or the aggregationName provided doesn't match an existing aggregation as defined at the targetControl
-				jQuery.sap.log.error("Creating extension point failed - Tried to add extension point with name " + sExtName + " to an aggregation of " +
-						oTargetControl.getId() + " in view " + oView.sViewName + ", but sAggregationName was not provided correctly and I could not find a default aggregation");
+		var fnProcessResult = function (vResult) {
+			// if the result returned from the default content is no array, wrap it in one
+			if (vResult && !Array.isArray(vResult)){
+				vResult = [vResult];
 			}
-		}
 
-		return vResult || [];
+			//if we have any result from either default content or customizing AND a target control is provided:
+			if (vResult && oTargetControl) {
+				//directly add the extension to the corresponding aggregation at the target control:
+				var oAggregationInfo = oTargetControl.getMetadata().getAggregation(sAggregationName);
+				if (oAggregationInfo) {
+					for (var i = 0, l = vResult.length; i < l; i++) {
+						// call the corresponding mutator for each element within the extension point - may be one or multiple elements
+						oTargetControl[oAggregationInfo._sMutator](vResult[i]);
+					}
+				} else {
+					// the target control has no default aggregation, or the aggregationName provided doesn't match an existing aggregation as defined at the targetControl
+					jQuery.sap.log.error("Creating extension point failed - Tried to add extension point with name " + sExtName + " to an aggregation of " +
+							oTargetControl.getId() + " in view " + oView.sViewName + ", but sAggregationName was not provided correctly and I could not find a default aggregation");
+				}
+			}
+
+			return vResult || [];
+		};
+
+		// if vResult was created via fnCreateDefaultContent and is a Promise (or SyncPromise)
+		if (vResult && typeof vResult.then === 'function') {
+			return vResult.then(fnProcessResult);
+		} else {
+			return fnProcessResult(vResult);
+		}
 	};
 
 	return sap.ui.extensionpoint;

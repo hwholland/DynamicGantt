@@ -15,8 +15,9 @@
             <documentation>Defines the count of items in the group, but it could also be an amount which represents the sum of all amounts in the group.
 &lt;b&gt;Note:&lt;/b&gt; Will not be displayed if not set.</documentation>
         </property>
-        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.13.2">
-            <documentation>By default, the title is capitalized automatically. To disable this automation, set this property to &lt;b&gt;false&lt;/b&gt;.</documentation>
+        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.13.2">
+            <documentation>Allows to uppercase the group title.</documentation>
+            <deprecation since="1.40.10"></deprecation>
         </property>
         <property name="titleTextDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance" since="1.28.0">
             <documentation>Defines the title text directionality with enumerated options. By default, the control inherits text direction from the DOM.</documentation>

@@ -1,19 +1,19 @@
-if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
+/*global QUnit,sinon*/
+
 jQuery.sap.require("sap.ui.fl.core.EventDelegate");
 jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 
 (function(EventDelegate, ChangeRegistry) {
+	"use strict";
 
-	module("sap.ui.fl.core.EventDelegate", {
-		setup: function() {
+	QUnit.module("sap.ui.fl.core.EventDelegate", {
+		beforeEach: function() {
 		},
-		teardown: function() {
+		afterEach: function() {
 		}
 	});
 
-	test("constructor - required parameters", function() {
+	QUnit.test("constructor - required parameters", function(assert) {
 		//Arrange
 		var oControl = {name: "ThisShouldBeASAPUI5Control"};
 		var oSupportedRegistryItems = {"labelChange": "myLabelChange", "visibility": "myVisibilityChange"};
@@ -22,26 +22,28 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 		var instance = new EventDelegate(oControl, oSupportedRegistryItems);
 
 		//Assert
-		deepEqual(instance._oControl, oControl);
-		deepEqual(instance._oSupportedRegistryItems, oSupportedRegistryItems);
-		equal(spyLog.callCount, 0);
+		assert.deepEqual(instance._oControl, oControl);
+		assert.deepEqual(instance._oSupportedRegistryItems, oSupportedRegistryItems);
+		assert.equal(spyLog.callCount, 0);
 		spyLog.restore();
 	});
 
-	test("constructor - without required parameters, errors should be logged", function() {
+	QUnit.test("constructor - without required parameters, errors should be logged", function(assert) {
 		//Arrange
 		var spyLog = sinon.spy(jQuery.sap.log, "error");
 		//Act
-		var instance = new EventDelegate();
+
+		/*eslint-disable no-new*/
+		new EventDelegate();
+		/*eslint-enable no-new*/
 
 		//Assert
-		equal(spyLog.callCount, 2);
+		assert.equal(spyLog.callCount, 2);
 		spyLog.restore();
 	});
 
-	test("registerControl - register control first time", function() {
+	QUnit.test("registerControl - register control first time", function(assert) {
 		//Arrange
-		var oSupportedRegistryItems = {"labelChange": "myLabelChange", "visibility": "myVisibilityChange"};
 		var registerExplicitStub = sinon.stub(EventDelegate, "registerExplicitChanges");
 		var oControl = {
 			aDelegates: []
@@ -53,16 +55,15 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 		registerExplicitStub.restore();
 	});
 
-	test("registerControl - register control, already registered", function() {
+	QUnit.test("registerControl - register control, already registered", function(assert) {
 		//Arrange
-		var oSupportedRegistryItems = {"labelChange": "myLabelChange", "visibility": "myVisibilityChange"};
 		var registerExplicitStub = sinon.stub(EventDelegate, "registerExplicitChanges");
 		var oControl = {
 			aDelegates: [
 				{
 					oDelegate: {
 						getType: function() {
-							return "Flexibility"
+							return "Flexibility";
 						}
 					}
 				}
@@ -75,7 +76,7 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 		registerExplicitStub.restore();
 	});
 
-	test("registerExplicitChanges - register control when changetypes available", function() {
+	QUnit.test("registerExplicitChanges - register control when changetypes available", function(assert) {
 		//Arrange
 		var oSupportedRegistryItems = {"labelChange": "myLabelChange", "visibility": "myVisibilityChange"};
 		var changeRegSpy = sinon.spy(ChangeRegistry, "getInstance");
@@ -87,7 +88,7 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 					getElementName: function() {
 						return "My.Control.Name";
 					}
-				}
+				};
 			},
 			addEventDelegate: addEventDelegateStub
 		};
@@ -103,7 +104,7 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 		changeRegGetRegItemsStub.restore();
 	});
 
-	test("registerExplicitChanges - don't register control when no change types", function() {
+	QUnit.test("registerExplicitChanges - don't register control when no change types", function(assert) {
 		//Arrange
 		var oSupportedRegistryItems = {};
 		var changeRegSpy = sinon.spy(ChangeRegistry, "getInstance");
@@ -115,7 +116,7 @@ jQuery.sap.require("sap.ui.fl.registry.ChangeRegistry");
 					getElementName: function() {
 						return "My.Control.Name";
 					}
-				}
+				};
 			},
 			addEventDelegate: addEventDelegateStub
 		};

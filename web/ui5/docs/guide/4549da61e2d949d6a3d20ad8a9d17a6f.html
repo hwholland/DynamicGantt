@@ -1,39 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="Content developers developing OpenUI5 controls should follow the guidelines outlined below with regard to APIs, behavior, and themes/CSS."/>
+<meta name="description" content="Content developers developing OpenUI5 controls should follow the guidelines outlined below with regard to APIs, behavior, and themes/CSS."/>
 
-
-
-
-
-<meta name="abstract" content="Content developers developing SAPUI5 controls should follow the guidelines outlined below with regard to APIs, behavior, and themes/CSS."/>
-<meta name="description" content="Content developers developing SAPUI5 controls should follow the guidelines outlined below with regard to APIs, behavior, and themes/CSS."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=1315205410789888"/>
-<title>SAPUI5 Control Development Guidelines</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=11136102956304006"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=11136102956304006"/>
+<title>OpenUI5 Control Development Guidelines</title>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio4549da61e2d949d6a3d20ad8a9d17a6f">
 <div id="wrapper"><div id="container">
 
-	<h1 class="title topictitle1"><span class="ph"><span class="ph pname">SAPUI5</span></span> Control Development Guidelines</h1>
+	<h1 class="title topictitle1"><span class="ph"><span class="ph pname">OpenUI5</span></span> Control Development Guidelines</h1>
 
 	
-	<div class="body"><p class="shortdesc">Content developers developing <span class="ph"><span class="ph pname">SAPUI5</span></span> controls should follow the guidelines outlined
+	<div class="body"><p class="shortdesc">Content developers developing <span class="ph"><span class="ph pname">OpenUI5</span></span> controls should follow the guidelines outlined
 		below with regard to APIs, behavior, and themes/CSS.</p>
 
 		<div class="section"><div class="section_title">General Remarks</div><div type="General Remarks">
@@ -161,7 +147,7 @@
 				</li>
 
 				<li class="li">
-					<p class="p">Use the <span class="ph"><span class="ph pname">SAPUI5</span></span> event handling methods when available instead of
+					<p class="p">Use the <span class="ph"><span class="ph pname">OpenUI5</span></span> event handling methods when available instead of
 							<samp class="ph codeph">jQuery.bind()/.on()</samp>. When you use
 							<samp class="ph codeph">jQuery.bind()</samp> or <samp class="ph codeph">jQuery.on()</samp>, always
 						unbind them again, for example in <samp class="ph codeph">onBeforeRendering()</samp> and
@@ -192,7 +178,7 @@
 
 				<li class="li">
 					<p class="p">When you modify the HTML of a control using the code in the control behavior file, make sure to escape any unchecked data you write with
-							<samp class="ph codeph">jQuery.sap.encodeHTML(...)</samp> to prevent cross-site scripting issues. For more information, see <a class="xref" href="91f0bd316f4d1014b6dd926db0e91070.html" title="Cross-site scripting (XSS) is a widely known vulnerability most web sites have. This page does not provide general information about cross-site scripting but focuses on what you as an application developer using SAPUI5 can do to avoid these security issues.">Cross-Site Scripting</a>.</p>
+							<samp class="ph codeph">jQuery.sap.encodeHTML(...)</samp> to prevent cross-site scripting issues. For more information, see <a class="xref" href="91f0bd316f4d1014b6dd926db0e91070.html" title="Cross-site scripting (XSS) is a widely known vulnerability most web sites have. This page does not provide general information about cross-site scripting but focuses on what you as an application developer using OpenUI5 can do to avoid these security issues.">Cross-Site Scripting</a>.</p>
 
 				</li>
 
@@ -279,153 +265,12 @@
 
 		</div></div>
 
-		<div class="section"><div class="section_title">Themes/CSS - General Guidelines</div><div type="Themes/CSS - General Guidelines">
-			
-			<div class="p">For themes and CSS, the following general guidelines apply:<ul class="ul" id="loio4549da61e2d949d6a3d20ad8a9d17a6f__ul_r1y_z1w_np">
-					<li class="li">
-						<p class="p">Write semicolons, even where optional.</p>
 
-					</li>
-
-					<li class="li">
-						<p class="p">Use "rem" for dimensions; use "px" only for dimensions that do not depend on the font size.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">The root element of a control should come without outer margins; add any required padding
-							inside. Root margins are owned by the parent control.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Do not hard-code any colors, use LESS parameters and color calculations instead; this is also recommended for other significant theme aspects such as
-							fonts and background images.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Use other LESS features moderately. The more LESS processing happens, the less clear it is
-							where the runtime CSS originates from.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Do <strong class="ph b">not</strong> style HTML elements directly; all selectors must include a <span class="ph"><span class="ph pname">SAPUI5</span></span>-specific
-							CSS class to avoid affecting non-owned HTML.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Avoid the star selector (such as: <samp class="ph codeph">* { color: black;}</samp>) in CSS, in particular without a "direct child" selector ("&gt;") in front of it
-							(for performance reasons).</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Only use inline CSS for control-instance specific style, for example the button width.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Do <strong class="ph b">not</strong> use <samp class="ph codeph">!important</samp> as it makes custom adaptations more
-							difficult; use more specific selectors instead.</p>
-
-						<p class="p">There are rare justified exceptions, but they need to be documented.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">Put browser-prefixed properties before the un-prefixed variant.</p>
-
-					</li>
-
-					<li class="li">
-						<p class="p">When the visuals of certain controls are different depending on the
-							context/container where they are used, use CSS cascades along with
-							marker CSS classes in the parent control:</p>
-
-						<ul class="ul" id="loio4549da61e2d949d6a3d20ad8a9d17a6f__ul_mb2_lbw_np">
-							<li class="li">
-								<p class="p">The area/container should write a certain marker CSS class to the HTML and document this CSS class in its JSDoc.</p>
-
-							</li>
-
-							<li class="li">
-								<p class="p">The documentation should mention the purpose and contract/meaning of this class, for example, that it is meant to modify the appearance of children
-									in a way that better fits table cells, toolbars, or headers.</p>
-
-							</li>
-
-							<li class="li">
-								<p class="p">This CSS class may not have any CSS styles attached. It is a pure marker.</p>
-
-							</li>
-
-							<li class="li">
-								<p class="p">This CSS class has the suffix "-CTX" (e.g. "sapUiTable-CTX" or "sapUiBorderless-CTX") to
-									make it distinguishable from "normal" CSS class names.</p>
-
-							</li>
-
-							<li class="li">
-								<p class="p">Controls that want to modify their appearance in such an area use the marker class in a cascade: <samp class="ph codeph">.sapUiTable-CTX .sapUiInput { border: none;
-										}</samp></p>
-
-							</li>
-
-						</ul>
-
-					</li>
-
-				</ul>
-</div>
-
-		</div></div>
-
-		<div class="section"><div class="section_title">Themes/CSS - Naming Guidelines</div><div type="Themes/CSS - Naming Guidelines">
-			
-			<p class="p">The following naming guidelines apply:</p>
-
-			<ul class="ul" id="loio4549da61e2d949d6a3d20ad8a9d17a6f__ul_o4r_tbw_np">
-				<li class="li">
-					<p class="p">All CSS classes must begin with the <samp class="ph codeph">sapUi</samp> prefix (or <samp class="ph codeph">sapM</samp> in the sap.m library). Exception: some global CSS classes
-						used in the core start with "sap-".</p>
-
-				</li>
-
-				<li class="li">
-					<p class="p">For each control there must be one unique control-specific prefix for CSS classes.</p>
-
-					<p class="p">For example, <samp class="ph codeph">sapUiBtn</samp> for a <samp class="ph codeph">Button</samp> control, or <samp class="ph codeph">sapMITB</samp> for an <samp class="ph codeph">IconTabBar</samp> in the
-							<samp class="ph codeph">sap.m</samp> library. This class must be written to the HTML root element of the control. All CSS classes within the HTML
-						of this control must append a suffix to this class name, for example: <samp class="ph codeph">sapUiBtnInner</samp> or
-						<samp class="ph codeph">sapMITBHeader</samp>.</p>
-
-				</li>
-
-			</ul>
-
-		</div></div>
-
-		
 	</div>
 
+<div class="related-links"> 
+</div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="SAPUI5 Control Development Guidelines";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -1,25 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.OverflowToolbarLayoutData.
-sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/OverflowToolbarPriority'],
-	function(ToolbarLayoutData, OverflowToolbarPriority) {
+sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/library', 'jquery.sap.global'],
+	function(ToolbarLayoutData, library, jQuery) {
 	"use strict";
 
+	// shortcut for sap.m.OverflowToolbarPriority
+	var OverflowToolbarPriority = library.OverflowToolbarPriority;
+
 	/**
-	 * Constructor for a new OverflowToolbarLayoutData.
+	 * Constructor for a new <code>OverflowToolbarLayoutData</code>.
 	 *
-	 * @param {string} [sId] id for the new element, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new element, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * Holds layout data for the OverflowToolbar items.
+	 * Holds layout data for the {@link sap.m.OverflowToolbar} items.
 	 * @extends sap.m.ToolbarLayoutData
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -51,7 +54,7 @@ sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/OverflowToolbarPriority'],
 			 * @public
 			 * @since 1.32
 			 */
-			priority: {type: "sap.m.OverflowToolbarPriority", group: "Behavior", defaultValue: sap.m.OverflowToolbarPriority.High},
+			priority: {type: "sap.m.OverflowToolbarPriority", group: "Behavior", defaultValue: OverflowToolbarPriority.High},
 
 			/**
 			 * Defines OverflowToolbar items group number.
@@ -61,7 +64,15 @@ sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/OverflowToolbarPriority'],
 			 * @public
 			 * @since 1.32
 			 */
-			group: {type: "int", group: "Behavior", defaultValue: 0}
+			group: {type: "int", group: "Behavior", defaultValue: 0},
+
+			/**
+			 * Defines whether the overflow area is automatically closed when interacting with a control in it
+			 *
+			 * @public
+			 * @since 1.40
+			 */
+			closeOverflowOnInteraction: {type: "boolean", group: "Behavior", defaultValue: true}
 		}
 	}});
 
@@ -84,4 +95,4 @@ sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/OverflowToolbarPriority'],
 
 	return OverflowToolbarLayoutData;
 
-}, /* bExport= */ true);
+});

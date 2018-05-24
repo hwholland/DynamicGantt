@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, we will add a new button to the home page to illustrate the usage of multiple targets for a route. When the button is pressed, a new page opens that contains two parts: a header part at the top and a content part. The content part displays a table of employees that can be sorted and searched. We will use the array notation in the routing configuration to assign multiple targets to a route - a feature that we have not yet introduced."/>
 <meta name="description" content="In this step, we will add a new button to the home page to illustrate the usage of multiple targets for a route. When the button is pressed, a new page opens that contains two parts: a header part at the top and a content part. The content part displays a table of employees that can be sorted and searched. We will use the array notation in the routing configuration to assign multiple targets to a route - a feature that we have not yet introduced."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2568847060472229"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6241895732202704"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6241895732202704"/>
 <title>Step 11: Assign Multiple Targets</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiob01840ec42ef48e6bfd2bc12612f501f">
 <div id="wrapper"><div id="container">
@@ -43,26 +29,25 @@
 			<div class="fig fignone" id="loiob01840ec42ef48e6bfd2bc12612f501f__fig_r1j_pst_mr"><div class="figcontainer">
 				
 				
-				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_znw_qgv_ns" src="loio02350a2506854c60a8e81459c578b8b1_HiRes.png"/>
+				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_znw_qgv_ns" src="loio02350a2506854c60a8e81459c578b8b1_LowRes.png"/>
 			<div class="figcap">New button <span class="ph uicontrol">Show Employee
 					Overview</span></div></div></div>
 
 			<div class="fig fignone" id="loiob01840ec42ef48e6bfd2bc12612f501f__fig_jq5_kgv_ns"><div class="figcontainer">
 				
-				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_hjm_vgv_ns" src="loiobf4ffb536b9244abb91321cb6e86b26d_HiRes.png"/>
+				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_hjm_vgv_ns" src="loiobf4ffb536b9244abb91321cb6e86b26d_LowRes.png"/>
 			<div class="figcap"><span class="ph uicontrol">Employee Overview</span> with search field</div></div></div>
 
 			<div class="fig fignone" id="loiob01840ec42ef48e6bfd2bc12612f501f__fig_zlv_kgv_ns"><div class="figcontainer">
 				
-				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_tnp_zgv_ns" src="loio0842e39ed8384b3db883e1b466beb72a_HiRes.png"/>
+				<img class="image" id="loiob01840ec42ef48e6bfd2bc12612f501f__image_tnp_zgv_ns" src="loio0842e39ed8384b3db883e1b466beb72a_LowRes.png"/>
 			<div class="figcap">Sort options for the <span class="ph uicontrol">Employee Overview</span></div></div></div>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview">Routing and Navigation - Step 11</a></span>
+			<p class="p">You can view and download all files in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.navigation.11/preview">Routing and Navigation - Step 11</a></span>
 				.</p>
 
 			<div class="fig fignone" id="loiob01840ec42ef48e6bfd2bc12612f501f__fig_pt1_lgv_ns"><div class="figcontainer">
@@ -73,7 +58,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/Home.view.xml</div><div type="webapp/view/Home.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.Home"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -94,7 +79,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/Home.controller.js</div><div type="webapp/controller/Home.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -119,8 +104,8 @@
 
 		<div class="section"><div class="section_title">webapp/manifest.json</div><div type="webapp/manifest.json">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
-	"_version": "1.1.0",
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">{
+	"_version": "1.8.0",
 	"sap.app": {
 		...
 	},
@@ -165,6 +150,7 @@
 			"targets": {
 				...
 				"resumeTabNotes": {
+					"viewId": "resumeNotes",
 					"parent": "employeeResume",
 					"viewPath": "sap.ui.demo.nav.view.employee",
 					"viewName": "ResumeNotes",
@@ -172,11 +158,13 @@
 					"controlAggregation": "content"
 				}<span class="ph emphasis emphasis">,
 				"employeeOverview": {
+					"viewId": "employeeOverview",
 					"viewPath": "sap.ui.demo.nav.view.employee.overview",
 					"viewName": "EmployeeOverview",
 					"viewLevel" : 2
 				},
 				"employeeOverviewTop": {
+					"viewId": "employeeOverviewTop",
 					"parent": "employeeOverview",
 					"viewPath": "sap.ui.demo.nav.view.employee.overview",
 					"viewName": "EmployeeOverviewTop",
@@ -184,6 +172,7 @@
 					"controlAggregation": "content"
 				},
 				"employeeOverviewContent": {
+					"viewId": "employeeOverviewContent",
 					"parent": "employeeOverview",
 					"viewPath": "sap.ui.demo.nav.view.employee.overview",
 					"viewName": "EmployeeOverviewContent",
@@ -258,7 +247,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/overview/EmployeeOverview.view.xml (New)</div><div type="webapp/view/employee/overview/EmployeeOverview.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.overview.EmployeeOverview"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
@@ -282,7 +271,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/overview/EmployeeOverview.controller.js (New)</div><div type="webapp/controller/employee/overview/EmployeeOverview.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController"
 ], function (BaseController) {
 	"use strict";
@@ -297,7 +286,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/overview/EmployeeOverviewTop.view.xml (New)</div><div type="webapp/view/employee/overview/EmployeeOverviewTop.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" class="sapUiMediumMarginBottom"&gt;
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" class="sapUiMediumMarginBottom"&gt;
 	&lt;Title text="{i18n&gt;EmployeeOverviewTop}" /&gt;
 &lt;/mvc:View&gt;</span></pre></div>
 
@@ -308,7 +297,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/employee/overview/EmployeeOverviewContent.view.xml (New)</div><div type="webapp/view/employee/overview/EmployeeOverviewContent.view.xml (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp><span class="ph emphasis emphasis">&lt;mvc:View
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml"><span class="ph emphasis emphasis">&lt;mvc:View
 	controllerName="sap.ui.demo.nav.controller.employee.overview.EmployeeOverviewContent"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"&gt;
@@ -331,7 +320,7 @@
 			&lt;Column id="regionCol" minScreenWidth="Tablet" demandPopin="true"&gt;&lt;Text text="{i18n&gt;Region}"/&gt;&lt;/Column&gt;
 			&lt;Column id="postalCodeCol" minScreenWidth="Tablet" demandPopin="true"&gt;&lt;Text text="{i18n&gt;PostalCode}"/&gt;&lt;/Column&gt;
 			&lt;Column id="countryCol" minScreenWidth="Tablet" demandPopin="true"&gt;&lt;Text text="{i18n&gt;Country}"/&gt;&lt;/Column&gt;
-			&lt;Column id="homePhoneCol" minScreenWidth="Tablet" demandPopin="true" hAlign="Right"&gt;&lt;Text text="{i18n&gt;Phone}"/&gt;&lt;/Column&gt;
+			&lt;Column id="homePhoneCol" minScreenWidth="Tablet" demandPopin="true" hAlign="End"&gt;&lt;Text text="{i18n&gt;Phone}"/&gt;&lt;/Column&gt;
 		&lt;/columns&gt;
 		&lt;items&gt;
 			&lt;ColumnListItem&gt;
@@ -361,7 +350,7 @@
 
 		<div class="section"><div class="section_title">webapp/controller/employee/overview/EmployeeOverviewContent.controller.js (New)</div><div type="webapp/controller/employee/overview/EmployeeOverviewContent.controller.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.define([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.define([
 	"sap/ui/demo/nav/controller/BaseController",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
@@ -370,7 +359,7 @@
 	"use strict";
 	return BaseController.extend("sap.ui.demo.nav.controller.employee.overview.EmployeeOverviewContent", {
 		onInit: function () {
-			this._oTable = this.getView().byId("employeesTable");
+			this._oTable = this.byId("employeesTable");
 			this._oVSD = null; 
 			this._sSortField = null; 
 			this._bSortDescending = false; 
@@ -477,10 +466,10 @@
 
 			<p class="p">There is nothing special about this implementation. If you are interested in how to set up a
 				table with sorting and filtering you can check the corresponding steps of the
-					<span class="ph uicontrol">Walkthrough</span> tutorial or the examples in the
-					<span class="ph uicontrol">Explored</span> app. We will mainly make use of the UI and the
-				functionality for showing additional navigation and routing features. Therefore, we
-				suggest copying the code and trying it out.</p>
+					<span class="ph uicontrol">Walkthrough</span> tutorial or the examples in the Demo Kit. We
+				will mainly make use of the UI and the functionality for showing additional
+				navigation and routing features. Therefore, we suggest copying the code and trying
+				it out.</p>
 
 			<p class="p">Open <samp class="ph codeph">webapp/index.html#/employees/overview</samp> and check the new views. As you can see, the three views are wired together automatically by
 				the router based on our configuration in the descriptor. In the top area of the page, you see a static text and below you see the table filled
@@ -509,7 +498,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp><span class="ph emphasis emphasis">...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"><span class="ph emphasis emphasis">...
 EmployeeOverview=Employee Overview
 ShowEmployeeOverview=Show Employee Overview
 
@@ -530,7 +519,7 @@ Employees=Employees</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Navigation and Routing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Navigation and Routing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="cdab0a1123514cc08cf2c8deb22f312e.html" title="In the previous steps, we have implemented a Resume view that uses tabs to display data. The complete content of the tabs is loaded once, no matter which tab is currently displayed. We can increase the performance of our app by avoiding to load content that is not visible. Therefore, we implement a “lazy loading” feature that only loads the view and data when requested by the user.">Step 10: Implement Lazy Loading</a><br/>
@@ -547,19 +536,5 @@ Employees=Employees</span></pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 11: Assign Multiple Targets";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

@@ -5,18 +5,18 @@
 <meta charset="utf-8">
 
 <!-- Initialization -->
-<script id="sap-ui-bootstrap" type="text/javascript"
-	src="../../../../../resources/sap-ui-core.js"
-	data-sap-ui-theme="sap_bluecrystal" data-sap-ui-language="en_US">
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap"
+	src="../../../../../resources/sap-ui-core.js" data-sap-ui-language="en_US">
 </script>
 
 <link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
 <!-- Test functions -->
-<script language="javascript" charset="utf-8"> // IE needs this :-/
+<script charset="utf-8"> // IE needs this :-/
 
 	var oModel;
 	var testData;
@@ -97,7 +97,9 @@
 				first : {lastName : "Dente", name : "Al", checked : true, linkText : "www.sap.com", href : "http://www.sap.com", rating : 4},
 				second : {lastName : "Friese", name : "Andy", checked : true, linkText : "www.spiegel.de", href : "http://www.spiegel.de", rating : 2},
 				third : {lastName : "Mann", name : "Anita", checked : false, linkText : "www.kicker.de", href : "http://www.kicker.de", rating : 3}
-			}
+			},
+			changeTestProperty: "SAPUI5",
+			changingArray: [1, 2, "hi", "b"]
 		};
 		oModel = new sap.ui.model.json.JSONModel();
 		oModel.setData(testData);
@@ -116,95 +118,95 @@
 	};
 
 	function callBackOnChange(){
-		ok(true,"ChangeEvent fired");
+		assert.ok(true,"ChangeEvent fired");
 	};
 
-	module("Listbinding getContexts", {
+	QUnit.module("Listbinding getContexts", {
 		beforeEach: function() {
 			setup();
 			createListBinding("/teamMembers", "");
 		}
 	});
 
-	test("method", function(){
-		equal(bindings.length, 1, "amount of ListBindings");
+	QUnit.test("method", function(assert) {
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
-		equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
-		equal(listBinding.getModel(), oModel, "ListBinding model");
-		equal(listBinding.getLength(), 7, "ListBinding getLength");
-		equal(listBinding.isLengthFinal(), true, "ListBinding isLengthFinal");
+		assert.equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
+		assert.equal(listBinding.getModel(), oModel, "ListBinding model");
+		assert.equal(listBinding.getLength(), 7, "ListBinding getLength");
+		assert.equal(listBinding.isLengthFinal(), true, "ListBinding isLengthFinal");
 
 		jQuery(listBinding.getContexts()).each(function(i, context){
-			equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
+			assert.equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
 		});
 
 	});
 
-	test("wrong path", function(){
+	QUnit.test("wrong path", function(assert) {
 		createListBinding("/xyz", "");
-		ok(bindings);
-		equal(bindings.length, 1, "amount of ListBindings");
+		assert.ok(bindings);
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
-		ok(listBinding);
-		equal(listBinding.getPath(), "/xyz", "ListBinding path");
-		equal(listBinding.getModel(), oModel, "ListBinding model");
-		equal(listBinding.getContexts().length, 0, "ListBinding get Contexts with wrong path");
+		assert.ok(listBinding);
+		assert.equal(listBinding.getPath(), "/xyz", "ListBinding path");
+		assert.equal(listBinding.getModel(), oModel, "ListBinding model");
+		assert.equal(listBinding.getContexts().length, 0, "ListBinding get Contexts with wrong path");
 	});
 
-	test("wrong path and checkUpdate", function(){
+	QUnit.test("wrong path and checkUpdate", function(assert) {
 		createListBinding("teamMembers", "");
 
-		equal(bindings.length, 1, "amount of ListBindings");
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
-		equal(listBinding.getPath(), "teamMembers", "ListBinding path");
-		equal(listBinding.getModel(), oModel, "ListBinding model");
+		assert.equal(listBinding.getPath(), "teamMembers", "ListBinding path");
+		assert.equal(listBinding.getModel(), oModel, "ListBinding model");
 
 		listBinding.getModel().createBindingContext("/xyz",null, function(oContext){
 			listBinding.setContext(oContext);
 			listBinding.checkUpdate();
-			equal(listBinding.getPath(), "teamMembers", "ListBinding path");
-			ok(listBinding.getContext() == oContext, "ListBinding context");
-			equal(listBinding.getContexts().length, 0, "ListBinding contexts");
+			assert.equal(listBinding.getPath(), "teamMembers", "ListBinding path");
+			assert.ok(listBinding.getContext() == oContext, "ListBinding context");
+			assert.equal(listBinding.getContexts().length, 0, "ListBinding contexts");
 		});
 	});
 
-	test("getCurrentContexts", function(){
+	QUnit.test("getCurrentContexts", function(assert) {
 		var listBinding = bindings[0],
 			contexts = listBinding.getContexts(0,5),
 			currentContexts = listBinding.getCurrentContexts();
 
-		equal(currentContexts.length, 5, "Current contexts should contain 5 items");
+		assert.equal(currentContexts.length, 5, "Current contexts should contain 5 items");
 		jQuery(currentContexts).each(function(i, context){
-			equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
+			assert.equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
 		});
 	});
 
-	test("extended change detection", function(){
+	QUnit.test("extended change detection", function(assert) {
 		var listBinding = bindings[0];
 		listBinding.enableExtendedChangeDetection();
 
 		var	contexts = listBinding.getContexts(0,5),
 			currentContexts = listBinding.getCurrentContexts();
 
-		equal(currentContexts.length, 5, "Current contexts should contain 5 items");
+		assert.equal(currentContexts.length, 5, "Current contexts should contain 5 items");
 		jQuery(currentContexts).each(function(i, context){
-			equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
+			assert.equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
 		});
 
 		testData.teamMembers[4].gender = "female";
 		listBinding.checkUpdate();
 
 		currentContexts = listBinding.getCurrentContexts();
-		equal(currentContexts.length, 5, "Current contexts should contain 5 items");
+		assert.equal(currentContexts.length, 5, "Current contexts should contain 5 items");
 		jQuery(currentContexts).each(function(i, context){
-			equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
+			assert.equal(context.getPath(), "/teamMembers/" + i, "ListBinding context");
 		});
 
 		contexts = listBinding.getContexts(0,5);
-		equal(contexts.diff.length, 2, "Delta information is available");
+		assert.equal(contexts.diff.length, 2, "Delta information is available");
 	});
 
-	test("extended change detection with grouping", function(){
+	QUnit.test("extended change detection with grouping", function(assert) {
 		var listBinding = bindings[0];
 		listBinding.sort([
 			new sap.ui.model.Sorter("gender", false, true),
@@ -215,7 +217,7 @@
 		var	contexts = listBinding.getContexts(),
 			newContexts;
 
-		equal(contexts.length, 7, "Current contexts should contain 7 items");
+		assert.equal(contexts.length, 7, "Current contexts should contain 7 items");
 
 		// Change the gender in a way that the sort order is not affected
 		testData.teamMembers[4].gender = null;
@@ -223,15 +225,15 @@
 		listBinding.checkUpdate();
 
 		newContexts = listBinding.getContexts();
-		equal(newContexts.length, 7, "Current contexts should contain 7 items");
-		ok(jQuery.sap.equal(contexts, newContexts), "Old and new contexts array is equal");
+		assert.equal(newContexts.length, 7, "Current contexts should contain 7 items");
+		assert.ok(jQuery.sap.equal(contexts, newContexts), "Old and new contexts array is equal");
 
 		// Although a key is used with extended change detection, the diff must contain
 		// an update, as grouping is enabled on this binding.
-		equal(newContexts.diff.length, 2, "Delta information is available");
+		assert.equal(newContexts.diff.length, 2, "Delta information is available");
 	});
 
-	module("Listbinding refresh", {
+	QUnit.module("Listbinding refresh", {
 		beforeEach: function() {
 			setup();
 			createListBinding("/teamMembers", "");
@@ -243,79 +245,84 @@
 		}
 	});
 
-	test("method", 3, function() {
-		equal(this.oBinding.getLength(), 7, "ListBinding returns correct length");
+	QUnit.test("method", function(assert) {
+		assert.expect(3);
+		assert.equal(this.oBinding.getLength(), 7, "ListBinding returns correct length");
 		this.oBinding.attachChange(function() {
-			ok(true, "ListBinding fires change event when changed");
+			assert.ok(true, "ListBinding fires change event when changed");
 		});
 		testData.teamMembers.push({firstName:"Jonas", lastName:"Janus", gender:"male"});
 		this.oBinding.refresh();
-		equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
+		assert.equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
 	});
 
-	test("getContexts", 1, function() {
+	QUnit.test("getContexts", function(assert) {
+		assert.expect(1);
 		var aContexts = this.oBinding.getContexts(0,5);
-		equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
+		assert.equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
 		this.oBinding.attachChange(function() {
-			ok(false, "ListBinding fires no change event, as changed data is outside visible range");
+			assert.ok(false, "ListBinding fires no change event, as changed data is outside visible range");
 		});
 		testData.teamMembers[6].firstName = "Jonas";
 		this.oBinding.refresh();
 	});
 
-	test("extended change detection and getContexts", 1, function() {
+	QUnit.test("extended change detection and getContexts", function(assert) {
+		assert.expect(1);
 		this.oBinding.enableExtendedChangeDetection();
 		var aContexts = this.oBinding.getContexts(0,5);
-		equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
+		assert.equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
 		this.oBinding.attachChange(function() {
-			ok(false, "ListBinding fires no change event, as changed data is outside visible range");
+			assert.ok(false, "ListBinding fires no change event, as changed data is outside visible range");
 		});
 		testData.teamMembers[6].firstName = "Jonas";
 		this.oBinding.refresh();
 	});
 
-	test("getContexts und length change", 3, function() {
+	QUnit.test("getContexts und length change", function(assert) {
+		assert.expect(3);
 		var aContexts = this.oBinding.getContexts(0,5);
-		equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
+		assert.equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
 		this.oBinding.attachChange(function() {
-			ok(true, "ListBinding fires change event, as length has changed");
+			assert.ok(true, "ListBinding fires change event, as length has changed");
 		});
 		testData.teamMembers.push({firstName:"Jonas", lastName:"Janus", gender:"male"});
 		this.oBinding.refresh();
-		equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
+		assert.equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
 	});
 
-	test("extended change detection, getContexts und length change", 3, function() {
+	QUnit.test("extended change detection, getContexts und length change", function(assert) {
+		assert.expect(3);
 		this.oBinding.enableExtendedChangeDetection();
 		var aContexts = this.oBinding.getContexts(0,5);
-		equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
+		assert.equal(aContexts.length, 5, "ListBinding returns correct amount of contexts");
 		this.oBinding.attachChange(function() {
-			ok(true, "ListBinding fires change event, as length has changed");
+			assert.ok(true, "ListBinding fires change event, as length has changed");
 		});
 		testData.teamMembers.push({firstName:"Jonas", lastName:"Janus", gender:"male"});
 		this.oBinding.refresh();
-		equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
+		assert.equal(this.oBinding.getLength(), 8, "ListBinding returns changed length");
 	});
 
-	module("Listbinding sort", {
+	QUnit.module("Listbinding sort", {
 		beforeEach: function() {
 			setup();
 		}
 	});
 
 	// should also work with other ListBinding implementations
-	test("method", function(){
+	QUnit.test("method", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
 
-		equal(listBinding.oList[0].firstName, "Andreas", "ListBinding before sort");
-		equal(listBinding.oList[1].firstName, "Peter", "ListBinding before sort");
-		equal(listBinding.oList[2].firstName, "Gina", "ListBinding before sort");
-		equal(listBinding.oList[3].firstName, "Steave", "ListBinding before sort");
-		equal(listBinding.oList[4].firstName, "Michael", "ListBinding before sort");
-		equal(listBinding.oList[5].firstName, "Marc", "ListBinding before sort");
-		equal(listBinding.oList[6].firstName, "Frank", "ListBinding before sort");
+		assert.equal(listBinding.oList[0].firstName, "Andreas", "ListBinding before sort");
+		assert.equal(listBinding.oList[1].firstName, "Peter", "ListBinding before sort");
+		assert.equal(listBinding.oList[2].firstName, "Gina", "ListBinding before sort");
+		assert.equal(listBinding.oList[3].firstName, "Steave", "ListBinding before sort");
+		assert.equal(listBinding.oList[4].firstName, "Michael", "ListBinding before sort");
+		assert.equal(listBinding.oList[5].firstName, "Marc", "ListBinding before sort");
+		assert.equal(listBinding.oList[6].firstName, "Frank", "ListBinding before sort");
 
 		var oSorter = new sap.ui.model.Sorter("firstName", false);
 		listBinding.sort(oSorter);
@@ -326,13 +333,13 @@
 			sorted[i] = oContext.getProperty("firstName");
 		});
 
-		equal(sorted[0], "Andreas", "ListBinding after sort");
-		equal(sorted[1], "Frank", "ListBinding after sort");
-		equal(sorted[2], "Gina", "ListBinding after sort");
-		equal(sorted[3], "Marc", "ListBinding after sort");
-		equal(sorted[4], "Michael", "ListBinding after sort");
-		equal(sorted[5], "Peter", "ListBinding after sort");
-		equal(sorted[6], "Steave", "ListBinding after sort");
+		assert.equal(sorted[0], "Andreas", "ListBinding after sort");
+		assert.equal(sorted[1], "Frank", "ListBinding after sort");
+		assert.equal(sorted[2], "Gina", "ListBinding after sort");
+		assert.equal(sorted[3], "Marc", "ListBinding after sort");
+		assert.equal(sorted[4], "Michael", "ListBinding after sort");
+		assert.equal(sorted[5], "Peter", "ListBinding after sort");
+		assert.equal(sorted[6], "Steave", "ListBinding after sort");
 
 		//descending
 		oSorter = new sap.ui.model.Sorter("firstName", true);
@@ -343,25 +350,25 @@
 			sorted[i] = oContext.getProperty("firstName");
 		});
 
-		equal(sorted[0], "Steave", "ListBinding after sort");
-		equal(sorted[1], "Peter", "ListBinding after sort");
-		equal(sorted[2], "Michael", "ListBinding after sort");
-		equal(sorted[3], "Marc", "ListBinding after sort");
-		equal(sorted[4], "Gina", "ListBinding after sort");
-		equal(sorted[5], "Frank", "ListBinding after sort");
-		equal(sorted[6], "Andreas", "ListBinding after sort");
+		assert.equal(sorted[0], "Steave", "ListBinding after sort");
+		assert.equal(sorted[1], "Peter", "ListBinding after sort");
+		assert.equal(sorted[2], "Michael", "ListBinding after sort");
+		assert.equal(sorted[3], "Marc", "ListBinding after sort");
+		assert.equal(sorted[4], "Gina", "ListBinding after sort");
+		assert.equal(sorted[5], "Frank", "ListBinding after sort");
+		assert.equal(sorted[6], "Andreas", "ListBinding after sort");
 
 	});
 
-	test("invalid binding", function(){
+	QUnit.test("invalid binding", function(assert) {
 		createListBinding("/unknown");
 
 		var listBinding = bindings[0];
 		listBinding.sort();
-		expect(0);
+		assert.expect(0);
 	});
 
-	test("null values", function() {
+	QUnit.test("null values", function(assert) {
 		createListBinding("/dataWithNullValues");
 		var listBinding = bindings[0], sortedContexts, sorted;
 		listBinding.sort(new sap.ui.model.Sorter("value"));
@@ -370,12 +377,12 @@
 		jQuery(sortedContexts).each(function(i, context){
 			sorted[i] = oModel.getProperty(context.getPath());
 		});
-		equal(sorted.length, 5, "ListBinding sorted length");
-		equal(sorted[0].value, 1, "ListBinding sort value");
-		equal(sorted[1].value, 2, "ListBinding sort value");
-		equal(sorted[2].value, 3, "ListBinding sort value");
-		equal(sorted[3].value, 4, "ListBinding sort value");
-		equal(sorted[4].value, null, "ListBinding sort value");
+		assert.equal(sorted.length, 5, "ListBinding sorted length");
+		assert.equal(sorted[0].value, 1, "ListBinding sort value");
+		assert.equal(sorted[1].value, 2, "ListBinding sort value");
+		assert.equal(sorted[2].value, 3, "ListBinding sort value");
+		assert.equal(sorted[3].value, 4, "ListBinding sort value");
+		assert.equal(sorted[4].value, null, "ListBinding sort value");
 
 		listBinding.sort(new sap.ui.model.Sorter("value", true));
 		sortedContexts = listBinding.getContexts();
@@ -383,16 +390,16 @@
 		jQuery(sortedContexts).each(function(i, context){
 			sorted[i] = oModel.getProperty(context.getPath());
 		});
-		equal(sorted.length, 5, "ListBinding sorted length");
-		equal(sorted[0].value, null, "ListBinding sort value");
-		equal(sorted[1].value, 4, "ListBinding sort value");
-		equal(sorted[2].value, 3, "ListBinding sort value");
-		equal(sorted[3].value, 2, "ListBinding sort value");
-		equal(sorted[4].value, 1, "ListBinding sort value");
+		assert.equal(sorted.length, 5, "ListBinding sorted length");
+		assert.equal(sorted[0].value, null, "ListBinding sort value");
+		assert.equal(sorted[1].value, 4, "ListBinding sort value");
+		assert.equal(sorted[2].value, 3, "ListBinding sort value");
+		assert.equal(sorted[3].value, 2, "ListBinding sort value");
+		assert.equal(sorted[4].value, 1, "ListBinding sort value");
 	});
 
 	// should also work with other ListBinding implementations
-	test("locale sort", function(){
+	QUnit.test("locale sort", function(assert) {
 		createListBinding("/sortData");
 
 		var listBinding = bindings[0];
@@ -406,23 +413,23 @@
 			sorted[i] = oModel.getProperty("word", context);
 		});
 
-		equal(sorted[0], "Funzel", "ListBinding after sort");
-		equal(sorted[1], "Fuß", "ListBinding after sort");
-		equal(sorted[2], "Fußball", "ListBinding after sort");
+		assert.equal(sorted[0], "Funzel", "ListBinding after sort");
+		assert.equal(sorted[1], "Fuß", "ListBinding after sort");
+		assert.equal(sorted[2], "Fußball", "ListBinding after sort");
 		// browsers have differnt ideas about lexical sorting
 		if (sap.ui.Device.browser.chrome && sap.ui.Device.browser.version < 24.0) {
-			equal(sorted[3], "Fussel", "ListBinding after sort");
-			equal(sorted[4], "Füße", "ListBinding after sort");
+			assert.equal(sorted[3], "Fussel", "ListBinding after sort");
+			assert.equal(sorted[4], "Füße", "ListBinding after sort");
 		}
 		else {
-			equal(sorted[3], "Füße", "ListBinding after sort");
-			equal(sorted[4], "Fussel", "ListBinding after sort");
+			assert.equal(sorted[3], "Füße", "ListBinding after sort");
+			assert.equal(sorted[4], "Fussel", "ListBinding after sort");
 		}
-		equal(sorted[5], "Füssen", "ListBinding after sort");
+		assert.equal(sorted[5], "Füssen", "ListBinding after sort");
 
 	});
 
-	test("multi sort", function(){
+	QUnit.test("multi sort", function(assert) {
 		createListBinding("/teamMembersNew");
 
 		var listBinding = bindings[0];
@@ -441,20 +448,20 @@
 			sortedLastName[i] = oModel.getProperty("lastName", context);
 		});
 
-		equal(sortedFirstName[0], "Andreas", "ListBinding after multi sort");
-		equal(sortedLastName[0], "Klark", "ListBinding after multi sort");
-		equal(sortedFirstName[1], "Gina", "ListBinding after multi sort");
-		equal(sortedLastName[1], "Rush", "ListBinding after multi sort");
-		equal(sortedFirstName[2], "Marc", "ListBinding after multi sort");
-		equal(sortedLastName[2], "Green", "ListBinding after multi sort");
-		equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[3], "Grey", "ListBinding after multi sort");
-		equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[4], "Spring", "ListBinding after multi sort");
-		equal(sortedFirstName[5], "Peter", "ListBinding after multi sort");
-		equal(sortedLastName[5], "Franklin", "ListBinding after multi sort");
-		equal(sortedFirstName[6], "Steave", "ListBinding after multi sort");
-		equal(sortedLastName[6], "Ander", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[0], "Andreas", "ListBinding after multi sort");
+		assert.equal(sortedLastName[0], "Klark", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[1], "Gina", "ListBinding after multi sort");
+		assert.equal(sortedLastName[1], "Rush", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[2], "Marc", "ListBinding after multi sort");
+		assert.equal(sortedLastName[2], "Green", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[3], "Grey", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[4], "Spring", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[5], "Peter", "ListBinding after multi sort");
+		assert.equal(sortedLastName[5], "Franklin", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[6], "Steave", "ListBinding after multi sort");
+		assert.equal(sortedLastName[6], "Ander", "ListBinding after multi sort");
 
 		oSorter = [
 			new sap.ui.model.Sorter("firstName", false),
@@ -470,20 +477,20 @@
 			sortedLastName[i] = oModel.getProperty("lastName", context);
 		});
 
-		equal(sortedFirstName[0], "Andreas", "ListBinding after multi sort");
-		equal(sortedLastName[0], "Klark", "ListBinding after multi sort");
-		equal(sortedFirstName[1], "Gina", "ListBinding after multi sort");
-		equal(sortedLastName[1], "Rush", "ListBinding after multi sort");
-		equal(sortedFirstName[2], "Marc", "ListBinding after multi sort");
-		equal(sortedLastName[2], "Green", "ListBinding after multi sort");
-		equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
-		equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[4], "Grey", "ListBinding after multi sort");
-		equal(sortedFirstName[5], "Peter", "ListBinding after multi sort");
-		equal(sortedLastName[5], "Franklin", "ListBinding after multi sort");
-		equal(sortedFirstName[6], "Steave", "ListBinding after multi sort");
-		equal(sortedLastName[6], "Ander", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[0], "Andreas", "ListBinding after multi sort");
+		assert.equal(sortedLastName[0], "Klark", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[1], "Gina", "ListBinding after multi sort");
+		assert.equal(sortedLastName[1], "Rush", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[2], "Marc", "ListBinding after multi sort");
+		assert.equal(sortedLastName[2], "Green", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[4], "Grey", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[5], "Peter", "ListBinding after multi sort");
+		assert.equal(sortedLastName[5], "Franklin", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[6], "Steave", "ListBinding after multi sort");
+		assert.equal(sortedLastName[6], "Ander", "ListBinding after multi sort");
 
 		oSorter = [
 			new sap.ui.model.Sorter("firstName", true),
@@ -499,20 +506,20 @@
 			sortedLastName[i] = oModel.getProperty("lastName", context);
 		});
 
-		equal(sortedFirstName[0], "Steave", "ListBinding after multi sort");
-		equal(sortedLastName[0], "Ander", "ListBinding after multi sort");
-		equal(sortedFirstName[1], "Peter", "ListBinding after multi sort");
-		equal(sortedLastName[1], "Franklin", "ListBinding after multi sort");
-		equal(sortedFirstName[2], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[2], "Grey", "ListBinding after multi sort");
-		equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
-		equal(sortedFirstName[4], "Marc", "ListBinding after multi sort");
-		equal(sortedLastName[4], "Green", "ListBinding after multi sort");
-		equal(sortedFirstName[5], "Gina", "ListBinding after multi sort");
-		equal(sortedLastName[5], "Rush", "ListBinding after multi sort");
-		equal(sortedFirstName[6], "Andreas", "ListBinding after multi sort");
-		equal(sortedLastName[6], "Klark", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[0], "Steave", "ListBinding after multi sort");
+		assert.equal(sortedLastName[0], "Ander", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[1], "Peter", "ListBinding after multi sort");
+		assert.equal(sortedLastName[1], "Franklin", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[2], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[2], "Grey", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[4], "Marc", "ListBinding after multi sort");
+		assert.equal(sortedLastName[4], "Green", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[5], "Gina", "ListBinding after multi sort");
+		assert.equal(sortedLastName[5], "Rush", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[6], "Andreas", "ListBinding after multi sort");
+		assert.equal(sortedLastName[6], "Klark", "ListBinding after multi sort");
 
 		oSorter = [
 			new sap.ui.model.Sorter("gender", false),
@@ -529,24 +536,24 @@
 			sortedLastName[i] = oModel.getProperty("lastName", context);
 		});
 
-		equal(sortedFirstName[0], "Gina", "ListBinding after multi sort");
-		equal(sortedLastName[0], "Rush", "ListBinding after multi sort");
-		equal(sortedFirstName[1], "Steave", "ListBinding after multi sort");
-		equal(sortedLastName[1], "Ander", "ListBinding after multi sort");
-		equal(sortedFirstName[2], "Peter", "ListBinding after multi sort");
-		equal(sortedLastName[2], "Franklin", "ListBinding after multi sort");
-		equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
-		equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
-		equal(sortedLastName[4], "Grey", "ListBinding after multi sort");
-		equal(sortedFirstName[5], "Marc", "ListBinding after multi sort");
-		equal(sortedLastName[5], "Green", "ListBinding after multi sort");
-		equal(sortedFirstName[6], "Andreas", "ListBinding after multi sort");
-		equal(sortedLastName[6], "Klark", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[0], "Gina", "ListBinding after multi sort");
+		assert.equal(sortedLastName[0], "Rush", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[1], "Steave", "ListBinding after multi sort");
+		assert.equal(sortedLastName[1], "Ander", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[2], "Peter", "ListBinding after multi sort");
+		assert.equal(sortedLastName[2], "Franklin", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[3], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[3], "Spring", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[4], "Michael", "ListBinding after multi sort");
+		assert.equal(sortedLastName[4], "Grey", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[5], "Marc", "ListBinding after multi sort");
+		assert.equal(sortedLastName[5], "Green", "ListBinding after multi sort");
+		assert.equal(sortedFirstName[6], "Andreas", "ListBinding after multi sort");
+		assert.equal(sortedLastName[6], "Klark", "ListBinding after multi sort");
 	});
 
 	// test for custom compare function
-	test("custom sort", function(){
+	QUnit.test("custom sort", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -569,16 +576,16 @@
 			sorted[i] = oModel.getProperty("firstName",context);
 		});
 
-		equal(sorted[0], "Marc", "ListBinding after sort");
-		equal(sorted[1], "Peter", "ListBinding after sort");
-		equal(sorted[2], "Michael", "ListBinding after sort");
-		equal(sorted[3], "Gina", "ListBinding after sort");
-		equal(sorted[4], "Andreas", "ListBinding after sort");
-		equal(sorted[5], "Frank", "ListBinding after sort");
-		equal(sorted[6], "Steave", "ListBinding after sort");
+		assert.equal(sorted[0], "Marc", "ListBinding after sort");
+		assert.equal(sorted[1], "Peter", "ListBinding after sort");
+		assert.equal(sorted[2], "Michael", "ListBinding after sort");
+		assert.equal(sorted[3], "Gina", "ListBinding after sort");
+		assert.equal(sorted[4], "Andreas", "ListBinding after sort");
+		assert.equal(sorted[5], "Frank", "ListBinding after sort");
+		assert.equal(sorted[6], "Steave", "ListBinding after sort");
 	});
 
-	test("change event test", function(){
+	QUnit.test("change event test", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -597,17 +604,17 @@
 
 		listBinding.detachChange(myFnCallback);
 
-		ok(attach, "change event fired with sorter");
+		assert.ok(attach, "change event fired with sorter");
 	});
 
-	module("Listbinding filter", {
+	QUnit.module("Listbinding filter", {
 		beforeEach: function() {
 			setup();
 			createListBinding("/teamMembers", "");
 		}
 	});
 
-	test("method", function(){
+	QUnit.test("method", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -620,8 +627,8 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 1, "ListBinding filtered length");
-		equal(filtered[0].gender, null, "ListBinding filter value");
+		assert.equal(filtered.length, 1, "ListBinding filtered length");
+		assert.equal(filtered[0].gender, null, "ListBinding filter value");
 
 		// NE, contains
 		oFilter = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.NE, "Peter");
@@ -632,10 +639,10 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 3, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
-		equal(filtered[1].firstName, "Steave", "ListBinding filter value");
-		equal(filtered[2].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 3, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
+		assert.equal(filtered[1].firstName, "Steave", "ListBinding filter value");
+		assert.equal(filtered[2].firstName, "Frank", "ListBinding filter value");
 
 		// between
 		oFilter = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.BT, "A","G");
@@ -645,9 +652,9 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 2, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
-		equal(filtered[1].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 2, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
+		assert.equal(filtered[1].firstName, "Frank", "ListBinding filter value");
 
 		// startsWith, endsWith
 		oFilter = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.StartsWith, "M");
@@ -658,12 +665,12 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 1, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Marc", "ListBinding filter value");
+		assert.equal(filtered.length, 1, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Marc", "ListBinding filter value");
 
 	});
 
-	test("null values", function() {
+	QUnit.test("null values", function(assert) {
 		createListBinding("/dataWithNullValues");
 		var listBinding = bindings[0], filteredContexts, filtered;
 		listBinding.sort(new sap.ui.model.Sorter("value"));
@@ -674,9 +681,9 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 2, "ListBinding filtered length");
-		equal(filtered[0].value, 3, "ListBinding filter value");
-		equal(filtered[1].value, 4, "ListBinding filter value");
+		assert.equal(filtered.length, 2, "ListBinding filtered length");
+		assert.equal(filtered[0].value, 3, "ListBinding filter value");
+		assert.equal(filtered[1].value, 4, "ListBinding filter value");
 
 		listBinding.filter([new sap.ui.model.Filter("value", "LT", 3)]);
 		filteredContexts = listBinding.getContexts();
@@ -684,21 +691,21 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 2, "ListBinding filtered length");
-		equal(filtered[0].value, 1, "ListBinding filter value");
-		equal(filtered[1].value, 2, "ListBinding filter value");
+		assert.equal(filtered.length, 2, "ListBinding filtered length");
+		assert.equal(filtered[0].value, 1, "ListBinding filter value");
+		assert.equal(filtered[1].value, 2, "ListBinding filter value");
 
 	});
 
-	test("invalid binding", function(){
+	QUnit.test("invalid binding", function(assert) {
 		createListBinding("/unknown");
 
 		var listBinding = bindings[0];
 		listBinding.filter([]);
-		expect(0);
+		assert.expect(0);
 	});
 
-	test("without array", function(){
+	QUnit.test("without array", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -711,8 +718,8 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 1, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Peter", "ListBinding filter value");
+		assert.equal(filtered.length, 1, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Peter", "ListBinding filter value");
 
 		// between
 		oFilter = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.BT, "A","G");
@@ -722,13 +729,13 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 2, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
-		equal(filtered[1].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 2, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Andreas", "ListBinding filter value");
+		assert.equal(filtered[1].firstName, "Frank", "ListBinding filter value");
 
 	});
 
-	test("complex filters", function(){
+	QUnit.test("complex filters", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -742,9 +749,9 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 2, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Peter", "ListBinding filter value");
-		equal(filtered[1].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 2, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Peter", "ListBinding filter value");
+		assert.equal(filtered[1].firstName, "Frank", "ListBinding filter value");
 
 		//check OR & AND
 		var oFilter3 = new sap.ui.model.Filter("lastName", sap.ui.model.FilterOperator.EQ, "Wallace");
@@ -755,12 +762,12 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 1, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 1, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Frank", "ListBinding filter value");
 
 	});
 
-	test("multi filters", function(){
+	QUnit.test("multi filters", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -780,14 +787,21 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 3, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Peter", "ListBinding filter value");
-		equal(filtered[1].firstName, "Marc", "ListBinding filter value");
-		equal(filtered[2].firstName, "Frank", "ListBinding filter value");
+		assert.equal(filtered.length, 3, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Peter", "ListBinding filter value");
+		assert.equal(filtered[1].firstName, "Marc", "ListBinding filter value");
+		assert.equal(filtered[2].firstName, "Frank", "ListBinding filter value");
 
+		var oEmptyMultiFilterWithAND = new sap.ui.model.Filter([], true);
+		listBinding.filter(oEmptyMultiFilterWithAND);
+		assert.equal(listBinding.getContexts().length, 7, "empty AND multifilter should match all entries");
+
+		var oEmptyMultiFilterWithOR = new sap.ui.model.Filter([], false);
+		listBinding.filter(oEmptyMultiFilterWithOR);
+		assert.equal(listBinding.getContexts().length, 0, "empty OR multifilter should match no entry");
 	});
 
-	test("test function", function() {
+	QUnit.test("test function", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -802,11 +816,11 @@
 		jQuery(filteredContexts).each(function(i, context){
 			filtered[i] = oModel.getProperty(context.getPath());
 		});
-		equal(filtered.length, 1, "ListBinding filtered length");
-		equal(filtered[0].firstName, "Gina", "ListBinding filter value");
+		assert.equal(filtered.length, 1, "ListBinding filtered length");
+		assert.equal(filtered[0].firstName, "Gina", "ListBinding filter value");
 	});
 
-	test("change event", function(){
+	QUnit.test("change event", function(assert) {
 		createListBinding("/teamMembers");
 
 		var listBinding = bindings[0];
@@ -826,12 +840,12 @@
 
 		listBinding.detachChange(myFnCallback);
 
-		ok(attach, "change event fired with filter");
+		assert.ok(attach, "change event fired with filter");
 	});
 
 	// only relevant for browsers supporting this
 	if (String.prototype.normalize) {
-		test("normalization", function() {
+		QUnit.test("normalization", function(assert) {
 			createListBinding("/filterData");
 
 			var mFilters = {}, listBinding = bindings[0];
@@ -848,99 +862,250 @@
 				jQuery(filteredContexts).each(function(i, context){
 					filtered[i] = oModel.getProperty(context.getPath());
 				});
-				equal(filtered.length, 5, "Filter working for " + sProp);
+				assert.equal(filtered.length, 5, "Filter working for " + sProp);
 			}
 
 			jQuery.each(mFilters, fnTest);
 		});
 	}
 
-	module("Listbinding general", {
+	QUnit.module("Unsupported Filters", {
+		getErrorWithMessage: function(sFilter) {
+			return new Error("Filter instances contain an unsupported FilterOperator: " + sFilter);
+		}
+	});
+
+	QUnit.test("constructor - Any/All are rejected", function (assert) {
+		assert.throws(
+			function() {
+				var oFilter = new sap.ui.model.Filter("lastName", sap.ui.model.FilterOperator.NE, "Foo");
+				var oFilter2 = new sap.ui.model.Filter({path: "firstName", operator: sap.ui.model.FilterOperator.Any, variable: "id1", condition: new sap.ui.model.Filter()});
+
+				var oMultiFilter = new sap.ui.model.Filter([oFilter, oFilter2], true);
+
+				oModel.bindList("/teamMembers", undefined, undefined, [oMultiFilter]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.Any),
+			"Error thrown if filter instances contain an unsupported FilterOperator"
+		);
+
+	});
+
+	QUnit.test("filter() - Any/All are rejected", function(assert) {
+		createListBinding("/teamMembers");
+
+		var listBinding = bindings[0];
+
+		// "Any" at last position fails
+		assert.throws(
+			function() {
+				var oFilter = new sap.ui.model.Filter("lastName", sap.ui.model.FilterOperator.GT, "Wallace");
+				var oFilter2 = new sap.ui.model.Filter({path: "firstName", operator: sap.ui.model.FilterOperator.Any, variable: "id1", condition: new sap.ui.model.Filter()});
+				listBinding.filter([oFilter, oFilter2]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.Any),
+			"Error thrown if filter instances contain an unsupported FilterOperator"
+		);
+
+		// "All" at first position fails
+		assert.throws(
+			function() {
+				var oFilter = new sap.ui.model.Filter({path: "lastName", operator: sap.ui.model.FilterOperator.All, variable: "id2", condition: new sap.ui.model.Filter()});
+				var oFilter2 = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.EQ, "Rush");
+				listBinding.filter([oFilter, oFilter2]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.All),
+			"Error thrown if filter instances contain an unsupported FilterOperator"
+		);
+
+		// Multifilter containing "All" or "Any" fails
+		assert.throws(
+			function() {
+				var oFilter = new sap.ui.model.Filter({path: "lastName", operator: sap.ui.model.FilterOperator.All, variable: "id3", condition:new sap.ui.model.Filter()});
+				var oFilter2 = new sap.ui.model.Filter("firstName", sap.ui.model.FilterOperator.EQ, "Bar");
+
+				var oMultiFilter = new sap.ui.model.Filter({
+					filters: [oFilter, oFilter2],
+					and: false
+				});
+
+				listBinding.filter([oMultiFilter]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.All),
+			"Error thrown if filter instances contain an unsupported FilterOperator"
+		);
+
+		// Multifilter containing "All" or "Any" fails
+		assert.throws(
+			function() {
+				var oFilter = new sap.ui.model.Filter("lastName", sap.ui.model.FilterOperator.NE, "Foo");
+				var oFilter2 = new sap.ui.model.Filter({path: "firstName", operator: sap.ui.model.FilterOperator.Any, variable: "id4", condition: new sap.ui.model.Filter()});
+
+				var oMultiFilter = new sap.ui.model.Filter([oFilter, oFilter2], true);
+
+				listBinding.filter([oMultiFilter]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.Any),
+			"Error thrown if filter instances contain an unsupported FilterOperator"
+		);
+	});
+
+	QUnit.test("Multi Filters (Complex) 1 - Unsupported are not OK", function(assert) {
+		createListBinding("/teamMembers");
+
+		var listBinding = bindings[0];
+
+		var oFilter1 = new sap.ui.model.Filter("x", sap.ui.model.FilterOperator.EQ, "Foo");
+		var oFilter2 = new sap.ui.model.Filter({path: "y", operator: sap.ui.model.FilterOperator.All, variable: "id1", condition: new sap.ui.model.Filter()});
+		var oFilter3 = new sap.ui.model.Filter("z", sap.ui.model.FilterOperator.NE, "Bla");
+		var oFilter4 = new sap.ui.model.Filter("t", sap.ui.model.FilterOperator.LE, "ZZZ");
+
+		var oMultiFilter1 = new sap.ui.model.Filter({
+			filters: [oFilter1, oFilter2],
+			and: true
+		});
+		var oMultiFilter2 = new sap.ui.model.Filter([oMultiFilter1, oFilter3], false);
+
+		var oMultiFilter3 = new sap.ui.model.Filter({
+			filters: [oMultiFilter2, oFilter4],
+			and: true
+		});
+
+		assert.throws(
+			function() {
+				listBinding.filter([oMultiFilter3]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.All),
+			"Error thrown if  multi-filter instances contain an unsupported FilterOperator"
+		);
+	});
+
+	QUnit.test("Multi Filters (Complex) 2 - Unsupported are not OK", function(assert) {
+		createListBinding("/teamMembers");
+
+		var listBinding = bindings[0];
+
+		var oFilter1 = new sap.ui.model.Filter("x", sap.ui.model.FilterOperator.EQ, "Foo");
+		var oFilter2 = new sap.ui.model.Filter({
+			path: "y",
+			operator: sap.ui.model.FilterOperator.All,
+			variable: "id1",
+			condition: new sap.ui.model.Filter([
+				new sap.ui.model.Filter("t", sap.ui.model.FilterOperator.GT, 66),
+				new sap.ui.model.Filter({path: "g", operator: sap.ui.model.FilterOperator.Any, variable: "id2", condition: new sap.ui.model.Filter("f", sap.ui.model.FilterOperator.NE, "hello")})
+			], true)
+		});
+		var oFilter3 = new sap.ui.model.Filter("z", sap.ui.model.FilterOperator.NE, "Bla");
+		var oFilter4 = new sap.ui.model.Filter("t", sap.ui.model.FilterOperator.LE, "ZZZ");
+
+		var oMultiFilter1 = new sap.ui.model.Filter({
+			filters: [oFilter1, oFilter2],
+			and: true
+		});
+		var oMultiFilter2 = new sap.ui.model.Filter([oMultiFilter1, oFilter3], false);
+
+		var oMultiFilter3 = new sap.ui.model.Filter({
+			filters: [oMultiFilter2, oFilter4],
+			and: true
+		});
+
+		assert.throws(
+			function() {
+				listBinding.filter([oMultiFilter3]);
+			},
+			this.getErrorWithMessage(sap.ui.model.FilterOperator.All),
+			"Error thrown if  multi-filter instances contain an unsupported FilterOperator"
+		);
+	});
+
+
+	QUnit.module("Listbinding general", {
 		beforeEach: function() {
 			setup();
 		}
 	});
 
-	test("with map, not array", function(){
+
+	QUnit.test("with map, not array", function(assert) {
 		var aKeysInMap = ["first", "second", "third"];
 		createListBinding("/map");
 
-		equal(bindings.length, 1, "amount of ListBindings");
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
-		equal(listBinding.getPath(), "/map", "ListBinding path");
-		equal(listBinding.getModel(), oModel, "ListBinding model");
-		equal(listBinding.getLength(), 3, "ListBinding getLength");
-		equal(listBinding.isLengthFinal(), true, "ListBinding isLengthFinal");
+		assert.equal(listBinding.getPath(), "/map", "ListBinding path");
+		assert.equal(listBinding.getModel(), oModel, "ListBinding model");
+		assert.equal(listBinding.getLength(), 3, "ListBinding getLength");
+		assert.equal(listBinding.isLengthFinal(), true, "ListBinding isLengthFinal");
 
 		jQuery(listBinding.getContexts()).each(function(i, context){
-			equal(context.getPath(), "/map/" + aKeysInMap[i], "ListBinding context");
+			assert.equal(context.getPath(), "/map/" + aKeysInMap[i], "ListBinding context");
 		});
 
 	});
 
-	test("nested array structure", function(){
+	QUnit.test("nested array structure", function(assert) {
 		createListBinding("/root");
 		var binding = bindings[0];
 		var contexts = binding.getContexts();
-		ok(jQuery.isArray(contexts));
-		equal(contexts.length, 2);
-		equal(oModel.getProperty("name",contexts[0]), "item1");
-		equal(oModel.getProperty("nodes",contexts[0]).length, 2);
-		equal(oModel.getProperty("/root/0/nodes/0/nodes/1").name, "subsubitem2");
-		ok(oModel.getProperty("/root/0/nodes/1").collapsed);
-		equal(oModel.getProperty("name",contexts[1]), "item2");
-		equal(oModel.getProperty("nodes",contexts[1]).length, 1);
-		equal(oModel.getProperty("nodes/0",contexts[1]).name, "subitem3");
+		assert.ok(jQuery.isArray(contexts));
+		assert.equal(contexts.length, 2);
+		assert.equal(oModel.getProperty("name",contexts[0]), "item1");
+		assert.equal(oModel.getProperty("nodes",contexts[0]).length, 2);
+		assert.equal(oModel.getProperty("/root/0/nodes/0/nodes/1").name, "subsubitem2");
+		assert.ok(oModel.getProperty("/root/0/nodes/1").collapsed);
+		assert.equal(oModel.getProperty("name",contexts[1]), "item2");
+		assert.equal(oModel.getProperty("nodes",contexts[1]).length, 1);
+		assert.equal(oModel.getProperty("nodes/0",contexts[1]).name, "subitem3");
 	});
 
-	test("nested array structure", function(){
+	QUnit.test("nested array structure", function(assert) {
 		bindings[0] = oModel.bindList("/root");
 		bindings[1] = oModel.bindList("/root/0/nodes");
 		bindings[2] = oModel.bindList("/root/1/nodes");
 
 		var binding = bindings[1];
 		var contexts = binding.getContexts();
-		ok(jQuery.isArray(contexts));
-		equal(contexts.length, 2);
-		equal(oModel.getProperty("name",contexts[0]), "subitem1");
-		equal(oModel.getProperty("name",contexts[1]), "subitem2");
+		assert.ok(jQuery.isArray(contexts));
+		assert.equal(contexts.length, 2);
+		assert.equal(oModel.getProperty("name",contexts[0]), "subitem1");
+		assert.equal(oModel.getProperty("name",contexts[1]), "subitem2");
 
 		binding = bindings[2];
 		contexts = binding.getContexts();
-		equal(contexts.length, 1);
-		equal(oModel.getProperty("name", contexts[0]), "subitem3");
+		assert.equal(contexts.length, 1);
+		assert.equal(oModel.getProperty("name", contexts[0]), "subitem3");
 
 		// check if nodes from different listbindings are the same/have the same reference
-		equal(oModel.getProperty("nodes/0/name", bindings[0].getContexts()[0]), "subitem1");
-		equal(oModel.getProperty("name",bindings[1].getContexts()[0]), "subitem1");
-		ok(jQuery.sap.equal(bindings[0].oList[0].nodes[0], bindings[1].oList[0]));
+		assert.equal(oModel.getProperty("nodes/0/name", bindings[0].getContexts()[0]), "subitem1");
+		assert.equal(oModel.getProperty("name",bindings[1].getContexts()[0]), "subitem1");
+		assert.ok(jQuery.sap.equal(bindings[0].oList[0].nodes[0], bindings[1].oList[0]));
 
-		equal(oModel.getProperty("nodes/0/name",bindings[0].getContexts()[1]), "subitem3");
-		equal(oModel.getProperty("name",bindings[2].getContexts()[0]), "subitem3");
-		ok(jQuery.sap.equal(bindings[0].oList[1].nodes[0], bindings[2].oList[0]));
+		assert.equal(oModel.getProperty("nodes/0/name",bindings[0].getContexts()[1]), "subitem3");
+		assert.equal(oModel.getProperty("name",bindings[2].getContexts()[0]), "subitem3");
+		assert.ok(jQuery.sap.equal(bindings[0].oList[1].nodes[0], bindings[2].oList[0]));
 	});
 
-	test("getDistinctValues", function(){
+	QUnit.test("getDistinctValues", function(assert) {
 		createListBinding("/teamMembers");
 		var binding = bindings[0],
 			distinctValues;
 
 		distinctValues = binding.getDistinctValues("firstName");
-		ok(jQuery.isArray(distinctValues), "Result is an array");
-		equal(distinctValues.length, 7, "Number of distinct values");
-		equal(distinctValues[0], "Andreas", "Distinct value content");
-		equal(distinctValues[6], "Frank", "Distinct value content");
+		assert.ok(jQuery.isArray(distinctValues), "Result is an array");
+		assert.equal(distinctValues.length, 7, "Number of distinct values");
+		assert.equal(distinctValues[0], "Andreas", "Distinct value content");
+		assert.equal(distinctValues[6], "Frank", "Distinct value content");
 
 		distinctValues = binding.getDistinctValues("gender");
-		ok(jQuery.isArray(distinctValues), "Result is an array");
-		equal(distinctValues.length, 3, "Number of distinct values");
-		equal(distinctValues[0], "male", "Distinct value content");
-		equal(distinctValues[1], "female", "Distinct value content");
-		equal(distinctValues[2], null, "Distinct value content");
+		assert.ok(jQuery.isArray(distinctValues), "Result is an array");
+		assert.equal(distinctValues.length, 3, "Number of distinct values");
+		assert.equal(distinctValues[0], "male", "Distinct value content");
+		assert.equal(distinctValues[1], "female", "Distinct value content");
+		assert.equal(distinctValues[2], null, "Distinct value content");
 
 	});
 
-	test("setSizeLimit", function(){
+	QUnit.test("setSizeLimit", function(assert) {
 		var aManyItems = [];
 		for (var i = 0; i < 200; i++) {
 			aManyItems.push(i);
@@ -950,42 +1115,42 @@
 			aContexts;
 
 		aContext = oListBinding.getContexts();
-		equal(aContext.length, 100, "Default size limit 100");
+		assert.equal(aContext.length, 100, "Default size limit 100");
 
 		oModel.setSizeLimit(150);
 		aContext = oListBinding.getContexts();
-		equal(aContext.length, 150, "Custom size limit 150");
+		assert.equal(aContext.length, 150, "Custom size limit 150");
 	});
 
-	test("getLength", function(){
+	QUnit.test("getLength", function(assert) {
 		createListBinding("/teamMembers");
 
-		equal(bindings.length, 1, "amount of ListBindings");
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
-		equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
-		equal(listBinding.getModel(), oModel, "ListBinding model");
+		assert.equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
+		assert.equal(listBinding.getModel(), oModel, "ListBinding model");
 
-		equal(listBinding.getLength(), testData.teamMembers.length, "ListBinding length");
+		assert.equal(listBinding.getLength(), testData.teamMembers.length, "ListBinding length");
 
 	});
 
-	test("set new data with no merge and check update and getContexts test", function(){
+	QUnit.test("set new data with no merge and check update and getContexts test", function(assert) {
 		createListBinding("/teamMembers", "");
 
-		equal(bindings.length, 1, "amount of ListBindings");
+		assert.equal(bindings.length, 1, "amount of ListBindings");
 		var listBinding = bindings[0];
 		listBinding.attachChange(fnFunc);
 		function fnFunc(){
-			equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
-			equal(listBinding.getContexts().length, 0, "ListBinding contexts length");
-			equal(listBinding.getModel().oData, newData, "ListBinding model");
-			equal(listBinding.getModel().getProperty("/test/0/firstName"), "Andreas", "model new property value");
+			assert.equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
+			assert.equal(listBinding.getContexts().length, 0, "ListBinding contexts length");
+			assert.equal(listBinding.getModel().oData, newData, "ListBinding model");
+			assert.equal(listBinding.getModel().getProperty("/test/0/firstName"), "Andreas", "model new property value");
 			listBinding.detachChange(fnFunc);
 		}
-		equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
-		ok(listBinding.getModel() === oModel, "ListBinding model");
+		assert.equal(listBinding.getPath(), "/teamMembers", "ListBinding path");
+		assert.ok(listBinding.getModel() === oModel, "ListBinding model");
 		// does not work...recursion because bining is set on model
-		//equal(listBinding.getModel(), oModel, "ListBinding model");
+		//assert.equal(listBinding.getModel(), oModel, "ListBinding model");
 		var newData = {
 			test:[
 				{ firstName:"Andreas", lastName:"Klark", gender:"male" }
@@ -994,7 +1159,32 @@
 		listBinding.getModel().setData(newData, false);
 	});
 
-	module("Listbinding diff calculation", {
+	QUnit.test("No wrong 'Change' event after unrelated property change", function (assert) {
+		createListBinding("/unknown", "");
+
+		var oListBinding = bindings[0];
+		oListBinding.attachChange(function () {
+			throw new Error("wrongfully called fired change event");
+		});
+
+		// Changing an unrelated property on the model should not trigger the
+		// ListBinding to fire a change event.
+		oModel.setProperty("/changeTestProperty", "OpenUI5");
+		assert.ok(true, "no 'change' event was fired for unrelated property change");
+	});
+
+	QUnit.test("'Change' event is fired if list content changes, but length does not", function (assert) {
+		createListBinding("/changingArray", "");
+
+		var oListBinding = bindings[0];
+		oListBinding.attachChange(function () {
+			assert.ok(true, "'change' event was fired after list content change (no length change)");
+		});
+
+		oModel.setProperty("/changingArray", [1, 2, 3, 4]);
+	});
+
+	QUnit.module("Listbinding diff calculation", {
 		beforeEach: function() {
 			setup();
 			this.oModel = new sap.ui.model.json.JSONModel(testData.teamMembers);
@@ -1006,12 +1196,12 @@
 		}
 	});
 
-	test("setData delta", function() {
+	QUnit.test("setData delta", function(assert) {
 		this.oListBinding.enableExtendedChangeDetection();
 		var aContexts = this.oListBinding.getContexts(0, 10);
 		this.oModel.setData(testData.teamMembersNew);
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [
+		assert.deepEqual(aContexts.diff, [
 			{ index : 1, type : "delete" },
 			{ index : 3, type : "insert" },
 			{ index : 6, type : "delete" },
@@ -1019,12 +1209,12 @@
 		], "Replace new data");
 	});
 
-	test("setProperty delta", function() {
+	QUnit.test("setProperty delta", function(assert) {
 		this.oListBinding.enableExtendedChangeDetection();
 		var aContexts = this.oListBinding.getContexts(0, 10);
 		this.oModel.setProperty("/4/firstName", "Paul");
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [
+		assert.deepEqual(aContexts.diff, [
 			{ index : 4, type : "delete" },
 			{ index : 4, type : "insert" }
 		], "Replace one property");
@@ -1034,15 +1224,15 @@
 			gender : "male"
 		});
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [
+		assert.deepEqual(aContexts.diff, [
 			{ index : 4, type : "delete" },
 			{ index : 4, type : "insert" }
 		], "Replace whole entry");
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [], "Nothing changed");
+		assert.deepEqual(aContexts.diff, [], "Nothing changed");
 	});
 
-	test("setProperty delta with cyclic references", function() {
+	QUnit.test("setProperty delta with cyclic references", function(assert) {
 		this.oListBinding.enableExtendedChangeDetection();
 		var aContexts = this.oListBinding.getContexts(0, 10);
 
@@ -1051,32 +1241,32 @@
 
 		this.oModel.setProperty("/4/firstName", oCyclic);
 		aContexts = this.oListBinding.getContexts(0, 10);
-		equal(aContexts.diff, undefined, "No diff for data with cyclic references");
+		assert.equal(aContexts.diff, undefined, "No diff for data with cyclic references");
 		this.oModel.setProperty("/4/firstName", "Peter");
 	});
 
-	test("setProperty delta with key", function() {
+	QUnit.test("setProperty delta with key", function(assert) {
 		this.oListBinding.enableExtendedChangeDetection(false, "lastName");
 		var aContexts = this.oListBinding.getContexts(0, 10);
 		this.oModel.setProperty("/4/firstName", "Paul");
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [], "No diff detected, as key didn't change");
+		assert.deepEqual(aContexts.diff, [], "No diff detected, as key didn't change");
 		this.oModel.setProperty("/4", {
 			firstName : "Peter",
 			lastName : "Johnson",
 			gender : "male"
 		});
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [
+		assert.deepEqual(aContexts.diff, [
 			{ index : 4, type : "delete" },
 			{ index : 4, type : "insert" }
 		], "Replace whole entry");
 		aContexts = this.oListBinding.getContexts(0, 10);
-		deepEqual(aContexts.diff, [], "Nothing changed");
+		assert.deepEqual(aContexts.diff, [], "Nothing changed");
 	});
 
 
-	module("Listbinding suspend/resume", {
+	QUnit.module("Listbinding suspend/resume", {
 		beforeEach: function() {
 			setup();
 			this.oData = testData.teamMembers.slice(0);
@@ -1090,61 +1280,59 @@
 		}
 	});
 
-	test("suspend/resume", function() {
+	QUnit.test("suspend/resume", function(assert) {
 		var oLB = this.oListBinding;
-		equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
+		assert.equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
 		this.oData.push({firstName:"Peter", lastName:"Franklin", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
+		assert.equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
 		oLB.suspend();
 		this.oData.push({firstName:"Michael", lastName:"Peterson", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
+		assert.equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
 		oLB.resume();
-		equal(oLB.getContexts().length, 9, "Binding has length 9 after calling resume");
+		assert.equal(oLB.getContexts().length, 9, "Binding has length 9 after calling resume");
 	});
 
-	test("suspend/resume with filter/sort", function() {
+	QUnit.test("suspend/resume with filter/sort", function(assert) {
 		var oLB = this.oListBinding;
-		equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
+		assert.equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
 		this.oData.push({firstName:"Peter", lastName:"Franklin", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
+		assert.equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
 		oLB.suspend();
 		this.oData.push({firstName:"Michael", lastName:"Peterson", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
+		assert.equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
 		oLB.sort(new sap.ui.model.Sorter("firstName"));
-		equal(oLB.getContexts().length, 9, "Binding has length 9 after sorting");
+		assert.equal(oLB.getContexts().length, 9, "Binding has length 9 after sorting");
 		this.oData.push({firstName:"Michael", lastName:"Bubble", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 9, "Binding still has length 9 as it is suspended");
+		assert.equal(oLB.getContexts().length, 9, "Binding still has length 9 as it is suspended");
 		oLB.filter([new sap.ui.model.Filter("firstName", "EQ", "Michael")]);
-		equal(oLB.getContexts().length, 3, "Binding has length 3 after filtering");
+		assert.equal(oLB.getContexts().length, 3, "Binding has length 3 after filtering");
 		oLB.resume();
-		equal(oLB.getContexts().length, 3, "Binding still has length 3 after calling resume");
+		assert.equal(oLB.getContexts().length, 3, "Binding still has length 3 after calling resume");
 	});
 
-	test("suspend/resume with refresh", function() {
+	QUnit.test("suspend/resume with refresh", function(assert) {
 		var oLB = this.oListBinding;
-		equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
+		assert.equal(oLB.getContexts().length, 7, "Binding has length 7 initially");
 		this.oData.push({firstName:"Peter", lastName:"Franklin", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
+		assert.equal(oLB.getContexts().length, 8, "Binding has length 8 after adding an entry");
 		oLB.suspend();
 		this.oData.push({firstName:"Michael", lastName:"Peterson", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
+		assert.equal(oLB.getContexts().length, 8, "Binding still has length 8 as it is suspended");
 		this.oModel.refresh(true);
-		equal(oLB.getContexts().length, 9, "Binding has length 9 after force refresh");
+		assert.equal(oLB.getContexts().length, 9, "Binding has length 9 after force refresh");
 		this.oData.push({firstName:"Michael", lastName:"Peterson", gender:"male"});
 		this.oModel.refresh();
-		equal(oLB.getContexts().length, 9, "Binding still has length 9 as it is suspended");
+		assert.equal(oLB.getContexts().length, 9, "Binding still has length 9 as it is suspended");
 		oLB.resume();
-		equal(oLB.getContexts().length, 10, "Binding still has length 10 after calling resume");
+		assert.equal(oLB.getContexts().length, 10, "Binding still has length 10 after calling resume");
 	});
-
-
 
 	</script>
 

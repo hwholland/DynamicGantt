@@ -4,23 +4,23 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 <title>QUnit page for sap.m.Panel</title>
-<script id="sap-ui-bootstrap" data-sap-ui-theme="sap_bluecrystal"
-	type="text/javascript" data-sap-ui-noConflict="true"
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap" data-sap-ui-noConflict="true"
 	data-sap-ui-libs="sap.m" src="../../../../resources/sap-ui-core.js">
 </script>
 
 <link rel="stylesheet" type="text/css" media="screen"
 	href="../../../../resources/sap/ui/thirdparty/qunit.css"/>
 
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
-<script type="text/javascript">
+<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+<script src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+<script>
 	QUnit.module("API", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPanel = new sap.m.Panel({
 				headerText: "Panel Header",
 				content: [
@@ -32,7 +32,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		}
@@ -128,6 +128,34 @@
 		assert.strictEqual(this.oPanel.getBackgroundDesign(), sap.m.BackgroundDesign.Translucent, "should be sap.m.BackgroundDesign.Translucent");
 	});
 
+	QUnit.test("Default accessibleRole", function (assert) {
+		assert.strictEqual(this.oPanel.getAccessibleRole(), sap.m.PanelAccessibleRole.Form, "should be sap.m.PanelAccessibleRole.Form");
+	});
+
+	QUnit.test("Call to setAccessibleRole() with Region value", function (assert) {
+		this.oPanel.setAccessibleRole(sap.m.PanelAccessibleRole.Region);
+		sap.ui.getCore().applyChanges();
+
+		assert.strictEqual(this.oPanel.getAccessibleRole(), sap.m.PanelAccessibleRole.Region, "should set the accessibleRole property to Region");
+		assert.strictEqual(this.oPanel.$().attr("role"), "region", "should set the role attribute in the DOM to region");
+	});
+
+	QUnit.test("Call to setAccessibleRole() with Form value", function (assert) {
+		this.oPanel.setAccessibleRole(sap.m.PanelAccessibleRole.Form);
+		sap.ui.getCore().applyChanges();
+
+		assert.strictEqual(this.oPanel.getAccessibleRole(), sap.m.PanelAccessibleRole.Form, "should set the accessibleRole property to Form");
+		assert.strictEqual(this.oPanel.$().attr("role"), "form", "should set the role attribute in the DOM to form");
+	});
+
+	QUnit.test("Call to setAccessibleRole() with Complementary value", function (assert) {
+		this.oPanel.setAccessibleRole(sap.m.PanelAccessibleRole.Complementary);
+		sap.ui.getCore().applyChanges();
+
+		assert.strictEqual(this.oPanel.getAccessibleRole(), sap.m.PanelAccessibleRole.Complementary, "should set the accessibleRole property to Complementary");
+		assert.strictEqual(this.oPanel.$().attr("role"), "complementary", "should set the role attribute in the DOM to complementary");
+	});
+
 	QUnit.module("Events", {
 		createPanel: function (options) {
 			this.oPanel = new sap.m.Panel({
@@ -143,7 +171,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		}
@@ -177,8 +205,34 @@
 		assert.strictEqual(bPassedArg, true, "should pass true as argument");
 	});
 
+	QUnit.test("triggeredByInteraction when setting expanded by a setter", function(assert) {
+		var bPassedArg,
+			fnEventSpy = sinon.spy(function (oEvent) {
+				bPassedArg = oEvent.getParameter('triggeredByInteraction');
+			});
+
+		this.createPanel({ expanded: false });
+		this.oPanel.attachExpand(fnEventSpy);
+		this.oPanel.setExpanded(true);
+
+		assert.notOk(bPassedArg, "Event should be triggered by a setter");
+	});
+
+	QUnit.test("triggeredByInteraction when setting expanded by an user interaction", function(assert) {
+		var bPassedArg,
+			fnEventSpy = sinon.spy(function (oEvent) {
+				bPassedArg = oEvent.getParameter('triggeredByInteraction');
+			});
+
+		this.createPanel({ expanded: false });
+		this.oPanel.attachExpand(fnEventSpy);
+		this.oPanel._getIcon().firePress();
+
+		assert.ok(bPassedArg, "Event should be triggered by an user interaction");
+	});
+
 	QUnit.module("Rendering", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPanel = new sap.m.Panel({
 				headerText: "Panel Header",
 				content: [
@@ -190,7 +244,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		},
@@ -233,7 +287,7 @@
 	});
 
 	QUnit.module("CSS classes", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPanel = new sap.m.Panel({
 				headerText: "Panel Header",
 				content: [
@@ -245,7 +299,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		},
@@ -298,6 +352,7 @@
 
 		assert.strictEqual(panel.$().find(".sapMPanelWrappingDivTb").length, 1, "should have wrapping div with sapMPanelWrappingDivTb class");
 		assert.strictEqual(panel.$().find(".sapMPanelWrappingDivTbExpanded").length, 1, "should have wrapping div with sapMPanelWrappingDivTbExpanded class");
+		assert.strictEqual(panel.$().find(".sapMPanelHeaderTB").length, 1, "should have a toolbar with sapMPanelHeaderToolbar class");
 	});
 
 	QUnit.test("Expandable panel with headerToolbar and infoToolbar", function(assert) {
@@ -311,6 +366,8 @@
 
 		assert.strictEqual($panel.find(".sapMPanelWrappingDivTb").length, 1, "should have wrapping div with sapMPanelWrappingDivTb class");
 		assert.strictEqual($panel.find(".sapMPanelExpandablePart").length, 2, "should have infoToolbar and content area with sapMPanelExpandablePart class");
+		assert.strictEqual($panel.find(".sapMPanelHeaderTB").length, 1, "should have a toolbar with sapMPanelHeaderToolbar class");
+		assert.strictEqual($panel.find(".sapMPanelInfoTB").length, 1, "should have a toolbar with sapMPanelInfoToolbar class");
 	});
 
 	QUnit.test("Expandable Panel when expanded", function(assert) {
@@ -364,7 +421,7 @@
 	});
 
 	QUnit.module("Computed styles", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPanel = new sap.m.Panel({
 				headerText: "Panel Header",
 				content: [
@@ -376,7 +433,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		},
@@ -548,8 +605,24 @@
 		oContainer.destroy();
 	});
 
+	QUnit.test("Container height exception handling", function (assert) {
+		// System under Test + Act
+		var oContainer = new sap.m.Panel({height: "100px"});
+		var oSpy = this.spy(oContainer, "_setContentHeight");
+
+		// Act
+		oContainer._setContentHeight();
+
+		// Assert
+		assert.strictEqual(oSpy.threw(), false, "Should not have thrown any exceptions.");
+
+		// Cleanup
+		oSpy.restore();
+		oContainer.destroy();
+	});
+
 	QUnit.module("ARIA attributes", {
-		setup: function () {
+		beforeEach: function () {
 			this.oPanel = new sap.m.Panel({
 				headerText: "Panel Header",
 				content: [
@@ -561,7 +634,7 @@
 			this.oPanel.placeAt("qunit-fixture");
 			sap.ui.getCore().applyChanges();
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.oPanel.destroy();
 			this.oPanel = null;
 		},

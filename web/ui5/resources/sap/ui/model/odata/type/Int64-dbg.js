@@ -1,13 +1,13 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatException',
-               'sap/ui/model/ParseException', 'sap/ui/core/format/NumberFormat',
-               'sap/ui/model/ValidateException'],
-	function(ODataType, FormatException, ParseException, NumberFormat, ValidateException) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/model/odata/type/ODataType',
+               'sap/ui/model/FormatException', 'sap/ui/model/ParseException',
+               'sap/ui/core/format/NumberFormat', 'sap/ui/model/ValidateException'],
+	function(jQuery, ODataType, FormatException, ParseException, NumberFormat, ValidateException) {
 	"use strict";
 
 	var rInteger = /^[-+]?(\d+)$/, // user input for an Int64 w/o the sign
@@ -41,9 +41,9 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 			}
 			if (aMatches[1].length > sAbsoluteLimit.length || aMatches[1] > sAbsoluteLimit) {
 				if (bNegative) {
-					return getText("EnterIntMin", [oType.formatValue(oRange.minimum, "string")]);
+					return getText("EnterNumberMin", [oType.formatValue(oRange.minimum, "string")]);
 				} else {
-					return getText("EnterIntMax", [oType.formatValue(oRange.maximum, "string")]);
+					return getText("EnterNumberMax", [oType.formatValue(oRange.maximum, "string")]);
 				}
 			}
 			return undefined;
@@ -104,13 +104,16 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 	 *   constraints, see {@link #constructor}
 	 */
 	function setConstraints(oType, oConstraints) {
-		var vNullable = oConstraints && oConstraints.nullable;
+		var vNullable;
 
-		if (vNullable === false || vNullable === "false") {
-			oType.oConstraints = oType.oConstraints || {};
-			oType.oConstraints.nullable = false;
-		} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
-			jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+		oType.oConstraints = undefined;
+		if (oConstraints) {
+			vNullable = oConstraints.nullable;
+			if (vNullable === false || vNullable === "false") {
+				oType.oConstraints = {nullable : false};
+			} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
+				jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
+			}
 		}
 		oType._handleLocalizationChange();
 	}
@@ -128,9 +131,8 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
-	 * @constructor
 	 * @alias sap.ui.model.odata.type.Int64
 	 * @param {object} [oFormatOptions]
 	 *   format options as defined in {@link sap.ui.core.format.NumberFormat}. In contrast to
@@ -157,7 +159,8 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 	 * @param {string} sValue
 	 *   the value to be formatted, which is represented as a string in the model
 	 * @param {string} sTargetType
-	 *   the target type; may be "any", "float", "int" or "string".
+	 *   the target type; may be "any", "float", "int", "string", or a type with one of these types
+	 *   as its {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {number|string}
 	 *   the formatted output value in the target type; <code>undefined</code> or <code>null</code>
@@ -174,7 +177,7 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 		if (sValue === null || sValue === undefined) {
 			return null;
 		}
-		switch (sTargetType) {
+		switch (this.getPrimitiveType(sTargetType)) {
 		case "any":
 			return sValue;
 		case "float":
@@ -219,8 +222,9 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 	 *   the value to be parsed; the empty string and <code>null</code> are parsed to
 	 *   <code>null</code>
 	 * @param {string} sSourceType
-	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int" or
-	 *   "string".
+	 *   the source type (the expected type of <code>vValue</code>); may be "float", "int",
+	 *   "string", or a type with one of these types as its
+	 *   {@link sap.ui.base.DataType#getPrimitiveType primitive type}.
 	 *   See {@link sap.ui.model.odata.type} for more information.
 	 * @returns {string}
 	 *   the parsed value
@@ -235,7 +239,7 @@ sap.ui.define(['sap/ui/model/odata/type/ODataType', 'sap/ui/model/FormatExceptio
 		if (vValue === null || vValue === "") {
 			return null;
 		}
-		switch (sSourceType) {
+		switch (this.getPrimitiveType(sSourceType)) {
 		case "string":
 			sResult = getFormatter(this).parse(vValue);
 			if (!sResult) {

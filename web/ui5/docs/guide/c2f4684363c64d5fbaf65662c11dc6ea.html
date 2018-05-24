@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The app configures several data models that are used throughout the app to update the views or to store additional configuration options."/>
 <meta name="description" content="The app configures several data models that are used throughout the app to update the views or to store additional configuration options."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=09699751230428988"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=14303265788105812"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14303265788105812"/>
 <title>Model Instantiation</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioc2f4684363c64d5fbaf65662c11dc6ea">
 <div id="wrapper"><div id="container">
@@ -48,10 +34,11 @@
 				initialized, these models will be made available under the configured name
 				throughout the app.</p>
 
-			<div class="p">An external service is defined in the dataSources section of the sap.app namespace.
-				In the example shown below, we configure an OData with protocol version 2.0 and the
-				alias "mainService" in the <span class="ph filepath">manifest.json</span>
-				file:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="p">An external service is defined in the <samp class="ph codeph">dataSources</samp> section of the
+					<samp class="ph codeph">sap.app</samp> namespace. In the example shown below, we configure an
+				OData V2 model and the alias <samp class="ph codeph">"mainService"</samp> in the
+					<span class="ph filepath">manifest.json</span> descriptor
+				file:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 {
 	…
 	"sap.app": {
@@ -74,13 +61,17 @@
 }</pre></div>
 </div>
 
-			<div class="p">In the models section of the sap.ui5 namespace we define two models that will be
-				instantiated automatically. The resource model is a named model ( i18n ) and the
+			<p class="p">If you use the OData V4 template, you set the <samp class="ph codeph">odataVersion</samp>
+				accordingly.</p>
+
+			<div class="p">In the models section of the <samp class="ph codeph">sap.ui5</samp> namespace we define two models that will
+				be instantiated automatically. The resource model is a named model ( i18n ) and the
 				OData model is the default model so it has no name. The OData model also receives
-				additional URL parameters via the metadataUrlParams. The parameters sap-server,
-				sap-client and sap-language are passed to the service automatically by SAPUI5, as
-				shown in the following <span class="ph filepath">manifest.json</span> code
-				snippet:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+				additional URL parameters via the <samp class="ph codeph">metadataUrlParams</samp>. The parameters
+					<samp class="ph codeph">sap-server</samp>, <samp class="ph codeph">sap-client</samp>, and
+					<samp class="ph codeph">sap-language</samp> are passed to the service automatically by <span class="ph"><span class="ph pname">OpenUI5</span></span>, as shown in the
+				following <span class="ph filepath">manifest.json</span> code
+				snippet:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 {
 	…
 	"sap.ui5": {
@@ -107,10 +98,11 @@
 </div>
 
 			<div class="note note"><span class="notetitle">Note</span> 
-				<p class="p">Before SAPUI5 release 1.30, all models were defined and instantiated in the
-					component's init method. We recommend removing all manual model creation code
-					and switching to the automatic model instantiation instead. The "device model"
-					however is still a local model that has to be instantiated manually.</p>
+				<p class="p">Before <span class="ph"><span class="ph pname">OpenUI5</span></span> version 1.30, all
+					models were defined and instantiated in the component's <samp class="ph codeph">init</samp>
+					method. We recommend removing all manual model creation code and switching to
+					the automatic model instantiation instead. The "device model" however is still a
+					local model that has to be instantiated manually.</p>
 
 			</div>
 
@@ -125,16 +117,15 @@
 				<li class="li">
 					<p class="p"><span class="ph emphasis emphasis">device</span></p>
 
-					<p class="p">The device model provides an easy access to the SAPUI5/OpenUI5 device API and
-						is used to configure certain view settings according to the user’s
-						device.</p>
+					<p class="p">The device model provides an easy access to the device API and is used to configure certain
+						view settings according to the user’s device.</p>
 
 				</li>
 
 				<li class="li">
 					<p class="p"><span class="ph emphasis emphasis">FLP</span></p>
 
-					<p class="p">The FLP model is a helper module to configure SAP Fiori launchpad (FLP)
+					<p class="p">The <span class="ph pname">FLP</span> model is a helper module to configure <span class="ph pname">SAP Fiori launchpad</span> (<span class="ph pname">FLP</span>)
 						integration and is used to control the sharing options of the app.</p>
 
 				</li>
@@ -163,19 +154,5 @@
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Model Instantiation";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

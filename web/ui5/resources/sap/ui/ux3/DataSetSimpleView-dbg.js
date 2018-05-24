@@ -1,12 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.ux3.DataSetSimpleView.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHandler', './library', 'jquery.sap.script'],
-	function(jQuery, Control, ResizeHandler, library/* , jQuerySap */) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/core/Control',
+	'sap/ui/core/ResizeHandler',
+	'./library',
+	"./DataSetSimpleViewRenderer",
+	'jquery.sap.script'
+],
+	function(
+		jQuery,
+		Control,
+		ResizeHandler,
+		library,
+		DataSetSimpleViewRenderer
+		/* jQuerySap */
+	) {
 	"use strict";
 
 
@@ -21,11 +35,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * DataSetSimpleView provides a simple view example for DataSet usage.
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.ux3.DataSetView
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38.
+	 * @deprecated Since version 1.38. Use a layout by choice from the {@link sap.m} library, instead.
 	 * @alias sap.ui.ux3.DataSetSimpleView
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -138,7 +152,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * Eventhandler for the selection of an Item
 	 *
-	 * @param {event} oEvent SelectionChanged event
+	 * @param {sap.ui.base.Event} oEvent SelectionChanged event
 	 * @protected
 	 */
 	DataSetSimpleView.prototype.handleSelection = function(oEvent) {
@@ -420,7 +434,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * Function is called when window is resized
 	 *
-	 * @param {jQuery.Event} oEvent
 	 * @private
 	 */
 	DataSetSimpleView.prototype.onresize = function() {
@@ -457,7 +470,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @private
 	 */
 	DataSetSimpleView.prototype.calculateItemCounts = function(){
-		if (this.getDomRef()) {
+		if (this.getDomRef() && sap.ui.getCore().isThemeApplied()) {
 			var $itemArea = this.$(),
 				$firstItem = $itemArea.children().first();
 
@@ -510,7 +523,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 */
 	DataSetSimpleView.prototype.setScrollArea = function(aScrollArea, bSupress) {
 		if (typeof aScrollArea !== 'string' && !(aScrollArea instanceof jQuery)) {
-			jQuery.sap.log.error('You can only pass a string (ID of scroll area DOM) or an jQuery object as scrollarea');
+			jQuery.sap.log.error('You can only pass a string (ID of scroll area DOM) or a jQuery object as scrollarea');
 		}
 		this.setProperty('scrollArea', aScrollArea, bSupress);
 	};

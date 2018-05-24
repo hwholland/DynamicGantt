@@ -2038,7 +2038,29 @@ if ( eventCaptureSupported ) {
 
 					$this.unbind( "vclick", clickHandler )
 						.unbind( "vmouseup", clearTapTimer );
-					$document.unbind( "vmousecancel", clearTapHandlers );
+					$document.unbind( "vmousecancel", clearTapHandlers )
+					// SAP MODIFICATION: deregister the function of clearing handlers from 'mouseup' event
+					// on document
+						.unbind( "vmouseup", checkAndClearTapHandlers );
+				}
+
+				// SAP MODIFICATION: terminate the firing of 'tap' event if 'mouseup' event occurs
+				// out of the 'mousedown' target
+				function checkAndClearTapHandlers( event ) {
+					// if the mouseup event occurs out of the origin target of the mousedown event,
+					// unbind all of the listeners
+					if (event.target !== origTarget && !$.contains(origTarget, event.target) &&
+						// SAP Modification: Workaround for an Edge browser issue which occurs with EdgeHTML 15 and higher.
+						// The root cause are inconsistent event targets of fired events, when a button is tapped.
+						// E.g. the inconsistent targets for the sap.m.Button control:
+						// - mousedown: SPAN
+						// - mouseup: BUTTON
+						// - click: SPAN
+						!(sap.ui.Device.browser.edge && sap.ui.Device.browser.version >= 15
+							&& event.target.tagName.toLowerCase() === "button"
+							&& event.target.contains(origTarget))) {
+						clearTapHandlers();
+					}
 				}
 
 				function clickHandler( event ) {
@@ -2053,10 +2075,16 @@ if ( eventCaptureSupported ) {
 
 				$this.bind( "vmouseup", clearTapTimer )
 					.bind( "vclick", clickHandler );
-				$document.bind( "vmousecancel", clearTapHandlers );
+				$document.bind( "vmousecancel", clearTapHandlers )
+				// SAP MODIFICATION: register the function of clearing handlers to 'mouseup' event
+				// on document
+					.bind( "vmouseup", checkAndClearTapHandlers );
 
 				timer = setTimeout( function() {
-					triggerCustomEvent( thisObject, "taphold", $.Event( "taphold", { target: origTarget } ) );
+					// SAP MODIFICATION: create the custom taphold event from the original event in order to preserve the properties
+					var oTapholdEvent = $.event.fix(origEvent);
+					oTapholdEvent.type = "taphold";
+					triggerCustomEvent( thisObject, "taphold", oTapholdEvent );
 				}, $.event.special.tap.tapholdThreshold );
 			});
 		}

@@ -3,8 +3,36 @@
     <name>TableSelectDialog</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>TableSelectDialog provides you with an easier way to create a dialog that contains a list with grouping and search functionalities.
-The Table used in a SelectDialog is a Table with Columns. After selecting an item, the dialog is closed and a callback function returns the item being selected.</documentation>
+    <documentation>A dialog to select items in a table containing multiple values and attributes.
+&lt;h3&gt;Overview&lt;/h3&gt;
+The table select dialog helps users select items in a table-like structure with several attributes and values per item. A search fields helps narrow down the results.
+&lt;h3&gt;Structure&lt;/h3&gt;
+The table select dialog consists of the following elements:
+&lt;ul&gt;
+&lt;li&gt; Search field - used to search enter search terms for a specific item.&lt;/li&gt;
+&lt;li&gt; Infobar (optional) - shows additional information for the current selection (i.e. total number of selected items).&lt;/li&gt;
+&lt;li&gt; Content - the table with the items.&lt;/li&gt;
+&lt;li&gt; Footer (optional) - a toolbar for actions.&lt;/li&gt;
+&lt;/ul&gt;
+Table select dialog supports multi-selection when the &lt;code&gt;multiSelect&lt;/code&gt; property is set.
+
+The selected items can be stored for later editing when the &lt;code&gt;rememberSelections&lt;/code&gt; property is set.
+&lt;b&gt;Note:&lt;/b&gt; This property has to be set before the dialog is opened.
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You need to select one or more items from a comprehensive list that contains multiple attributes or values.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You need to select one item from a predefined set of options that contains only one value. Use a {@link sap.m.Select switch} control instead.&lt;/li&gt;
+&lt;li&gt;You need to select items within a query-based range. Use a {@link sap.ui.comp.valuehelpdialog.ValueHelpDialog value help} control instead.&lt;/li&gt;
+&lt;li&gt;You need to only filter a set of items. Use a {@link sap.ui.comp.filterbar.FilterBar filter bar} control instead.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;On smaller screens, the columns of the table wrap and build a list that shows all the information.&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>

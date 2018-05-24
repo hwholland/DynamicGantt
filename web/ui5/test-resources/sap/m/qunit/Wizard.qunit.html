@@ -5,31 +5,30 @@
 	<title>QUnit Page for sap.m.Wizard</title>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
+	<script src="../shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.m">
 	</script>
 
 	<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
-	<script type="text/javascript">
+	<script>
 		jQuery.sap.require("sap.m.WizardProgressNavigator");
 		jQuery.sap.require("sap.m.WizardStep");
 
 		QUnit.module("Wizard Public API", {
 			sWizardId: "wizard-id",
 			oSpies: {},
-			setup: function () {
+			beforeEach: function () {
 				var that = this;
 				this.oParams = {};
 				this.oSpies.onStepActivated = sinon.spy(function (oEvent) {
@@ -58,6 +57,7 @@
 					steps: [
 						new sap.m.WizardStep({
 							title: "Step 1",
+							validated: false,
 							activate: this.oSpies.firstStep.onActivate,
 							complete: this.oSpies.firstStep.onComplete
 						}),
@@ -73,6 +73,7 @@
 					]
 				});
 
+				this.oWizardSecondStep = this.oWizard.getSteps()[1];
 				this.oWizard.placeAt("qunit-fixture");
 				sap.ui.getCore().applyChanges();
 
@@ -82,10 +83,11 @@
 				this.oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oWizard.destroy();
 				this.oSpies.error.restore();
 				sap.ui.base.ObjectPool.prototype.returnObject.restore();
+				this.oWizardSecondStep = null;
 				this.oWizard = null;
 			}
 		});
@@ -101,6 +103,68 @@
 			var text = this.oWizard._getNextButton().getText();
 			var sText = this.oResourceBundle.getText("WIZARD_FINISH");
 			assert.strictEqual(text, sText, "Default text of finish button should be equal to '" + sText + "'");
+		});
+
+		QUnit.test("Wizard setCurrentStep", function (assert) {
+			this.oWizard.setCurrentStep(this.oWizard.getSteps()[1]);
+			assert.ok(this.oSpies.firstStep.onComplete.calledOnce, " should call the complete event of step 1.");
+			assert.ok(this.oSpies.secondStep.onActivate.calledOnce, " should call the activate event of step 2.");
+		});
+
+		QUnit.test("Wizard nextStep()", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			assert.equal(this.oWizard.getCurrentStep(), this.oWizard.getSteps()[2].getId(), " should change the current step.");
+		});
+
+		QUnit.test("Wizard discardProgress()", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			this.oWizard.discardProgress(this.oWizard.getSteps()[0]);
+			assert.equal(this.oWizard.getCurrentStep(), this.oWizard.getSteps()[0].getId(), " should change the current step");
+		});
+
+		QUnit.test("Wizard setCurrentStep()", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			this.oWizard.setCurrentStep(this.oWizard.getSteps()[0]);
+			assert.equal(this.oWizard.getSteps()[0].getValidated(), true, " should not reset the validated state");
+		});
+
+		QUnit.test("Wizard setCurrentStep() and setValidated()", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			this.oWizard.setCurrentStep(this.oWizard.getSteps()[0]);
+			this.oWizard.getSteps()[0].setValidated(false);
+			assert.equal(this.oWizard.getSteps()[0].getValidated(), false, " should invalidate the current step");
+		});
+
+		QUnit.test("Scroll handler", function (assert) {
+			var tempWiz = new sap.m.Wizard({
+				steps: [ new sap.m.WizardStep(), new sap.m.WizardStep(), new sap.m.WizardStep() ]
+			});
+
+			tempWiz.placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+			var stepContainer = tempWiz.getDomRef("step-container");
+			tempWiz.nextStep();
+			tempWiz.destroy();
+			assert.equal(stepContainer.onscroll, null, " should be null when wizard is destroyed");
+		});
+
+		QUnit.test("goToStep should be applied on id, containing with special symbols (::)", function (assert) {
+			var oWizard = new sap.m.Wizard({
+				id: "wizard::complex::id",
+				steps: [ new sap.m.WizardStep(), new sap.m.WizardStep(), new sap.m.WizardStep() ]
+			});
+			var oSpy = sinon.spy(oWizard, "goToStep");
+
+			oWizard._getNextStep();
+			oWizard._getNextStep();
+			oWizard.placeAt("qunit-fixture");
+
+			sap.ui.getCore().applyChanges();
+			oWizard.goToStep(oWizard.getSteps()[0]);
+
+			assert.ok(oSpy.returned(oWizard), "goToStep is executed");
+
+			oWizard.destroy();
 		});
 
 		QUnit.test("setFinishLabel() should change the finish button text", function (assert) {
@@ -224,13 +288,39 @@
 			assert.strictEqual(this.oWizard.getProgress(), 3, "Progress should be 3");
 		});
 
+		QUnit.test("DiscardProgress() should return the wizard instance", function (assert) {
+			var oButton = this.oWizard._getNextButton(), vResult;
+			oButton.firePress();
+			oButton.firePress();
+			oButton.firePress();
+
+			vResult = this.oWizard.discardProgress(this.oWizardSecondStep);
+			assert.strictEqual(vResult, this.oWizard, "The Wizard instance returned correctly");
+
+			vResult = this.oWizard.discardProgress();
+			assert.strictEqual(vResult, this.oWizard, "The Wizard instance returned correctly when no step provided");
+		});
+
 		QUnit.test("DiscardProgress() should reset the steps after a given step", function (assert) {
 			var oButton = this.oWizard._getNextButton();
 			oButton.firePress();
 			oButton.firePress();
 			oButton.firePress();
-			this.oWizard.discardProgress(this.oWizard.getSteps()[1]);
+			this.oWizard.discardProgress(this.oWizardSecondStep);
 			assert.strictEqual(this.oWizard.getProgress(), 2, "Progress should be 1");
+		});
+
+		QUnit.test("DiscardProgress() ", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			this.oWizard.discardProgress(this.oWizard.getSteps()[0]);
+			assert.strictEqual(this.oWizard.getSteps()[0].getValidated(), true, "should not reset the initial validated state");
+		});
+
+		QUnit.test("DiscardProgress() with setValidated()", function (assert) {
+			this.oWizard.nextStep().nextStep();
+			this.oWizard.discardProgress(this.oWizard.getSteps()[0]);
+			this.oWizard.getSteps()[0].setValidated(false);
+			assert.strictEqual(this.oWizard.getSteps()[0].getValidated(), false, "should validate the current step after discarding the progress");
 		});
 
 		QUnit.test("DiscardProgress() should hide the steps after the step", function (assert) {
@@ -238,7 +328,7 @@
 			oButton.firePress();
 			oButton.firePress();
 			oButton.firePress();
-			this.oWizard.discardProgress(this.oWizard.getSteps()[1]);
+			this.oWizard.discardProgress(this.oWizardSecondStep);
 			assert.strictEqual(this.oWizard.getSteps()[2].$().css("display"), "none", "Step should be hidden");
 		});
 
@@ -254,14 +344,62 @@
 			 assert.strictEqual(this.oWizard.getProgress(), 2, "Should be at step 1");
 		 });
 
+		QUnit.test("setVisible() of WizardStep should not change the visibility of the steps", function (assert) {
+			var step0 = this.oWizard.getSteps()[0];
+			var domRefInit = step0.$()[0];
+			step0.setVisible(false);
+			sap.ui.getCore().applyChanges();
+			assert.equal(step0.$()[0], domRefInit, "setVisible(false) of the wizardStep should not hide the step");
+		});
+
+		QUnit.test("nextStep().nextStep() chaining nextStep method should be possible", function (assert) {
+			assert.ok(this.oWizard.nextStep().nextStep(), "nextStep chaining should not throw an error");
+		});
+
 		QUnit.test("preivousStep().previousStep() chaining previousStep method should be possible", function (assert) {
 			this.oWizard.nextStep().nextStep();
 			assert.ok(this.oWizard.previousStep().previousStep(), "previousStep chaining should not throw an Error");
 		});
 
+		QUnit.test("Optional Step property", function (assert) {
+			var oNavigator,
+				oFirstStepRef,
+				oSecondStepRef,
+				oWizard = new sap.m.Wizard({
+					steps: [
+						new sap.m.WizardStep({
+							title: "First",
+							optional: true
+						}),
+						new sap.m.WizardStep({
+							title: "Second",
+							optional: false
+						}),
+						new sap.m.WizardStep({
+							title: "Third"
+						})
+					]
+				});
+
+			// arrange
+			oWizard.placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+
+			oNavigator = oWizard._getProgressNavigator();
+			oFirstStepRef = jQuery(oNavigator.$().find("li")[0]);
+			oSecondStepRef = jQuery(oNavigator.$().find("li")[1]);
+
+			// assert
+			assert.strictEqual(oFirstStepRef.find(".sapMWizardProgressNavAnchorLabelOptional").length, 1, "An element with style class sapMWizardProgressNavAnchorLabelOptional should be added");
+			assert.strictEqual(oSecondStepRef.find(".sapMWizardProgressNavAnchorLabelOptional").length, 0, "An element with style class sapMWizardProgressNavAnchorLabelOptional should not be added");
+
+			// clean up
+			oWizard.destroy();
+		});
+
 		QUnit.module("Wizard Branching", {
 			sWizardId: "wizard-branching-id",
-			setup: function () {
+			beforeEach: function () {
 				var that = this;
 
 				this.externalStep = new sap.m.WizardStep();
@@ -304,7 +442,7 @@
 				sinon.stub(sap.ui.base.ObjectPool.prototype, "returnObject", function () {
 				});
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oWizard.destroy();
 				sap.ui.base.ObjectPool.prototype.returnObject.restore();
 				this.oWizard = null;
@@ -410,7 +548,7 @@
 
 		QUnit.module("Wizard ACC", {
 			sWizardId: "wizard-acc-id",
-			setup: function () {
+			beforeEach: function () {
 				this.oWizard = new sap.m.Wizard(this.sWizardId, {
 					steps: [
 						new sap.m.WizardStep({
@@ -433,7 +571,7 @@
 				this.oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oWizard.destroy();
 				this.oWizard = null;
 				this.oResourceBundle = null;

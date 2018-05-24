@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['jquery.sap.global', './InputBaseRenderer', 'sap/ui/core/Renderer'],
@@ -59,6 +59,7 @@ sap.ui.define(['jquery.sap.global', './InputBaseRenderer', 'sap/ui/core/Renderer
 		 * To be overwritten by subclasses.
 		 *
 		 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
+		 * @returns {object} The accessibility state of the control
 		 */
 		ComboBoxTextFieldRenderer.getAccessibilityState = function(oControl) {
 			var mAccessibilityState = InputBaseRenderer.getAccessibilityState.call(this, oControl);
@@ -138,12 +139,12 @@ sap.ui.define(['jquery.sap.global', './InputBaseRenderer', 'sap/ui/core/Renderer
 		};
 
 		/**
-		 * Renders the content, using the provided {@link sap.ui.core.RenderManager}.
+		 * Write the decorations of the input.
 		 *
 		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
 		 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
 		 */
-		ComboBoxTextFieldRenderer.writeInnerContent = function(oRm, oControl) {
+		ComboBoxTextFieldRenderer.writeDecorations = function(oRm, oControl) {
 			if (oControl.getShowButton()) {
 				this.renderButton(oRm, oControl);
 			}
@@ -185,7 +186,12 @@ sap.ui.define(['jquery.sap.global', './InputBaseRenderer', 'sap/ui/core/Renderer
 		 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
 		 */
 		ComboBoxTextFieldRenderer.addButtonClasses = function(oRm, oControl) {
-			oRm.addClass(ComboBoxTextFieldRenderer.CSS_CLASS_COMBOBOXTEXTFIELD + "Arrow");
+			var CLASS = ComboBoxTextFieldRenderer.CSS_CLASS_COMBOBOXTEXTFIELD + "Arrow";
+			oRm.addClass(CLASS);
+
+			if (!oControl.getEnabled()) {
+				oRm.addClass(CLASS + "Disabled");
+			}
 		};
 
 		return ComboBoxTextFieldRenderer;

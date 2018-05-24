@@ -3,7 +3,10 @@
     <name>Column</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The &lt;code&gt;sap.m.Column&lt;/code&gt; allows to define column specific properties that will be applied when rendering the &lt;code&gt;sap.m.Table&lt;/code&gt;.</documentation>
+    <documentation>The &lt;code&gt;sap.m.Column&lt;/code&gt; allows to define column specific properties that will be applied when rendering the &lt;code&gt;sap.m.Table&lt;/code&gt;.
+
+See section "{@link topic:6f778a805bc3453dbb66e246d8271839 Defining Column Width}"
+in the documentation to understand how to define the &lt;code&gt;width&lt;/code&gt; property of the &lt;code&gt;sap.m.Column&lt;/code&gt; to render a &lt;code&gt;sap.m.Table&lt;/code&gt; control properly.</documentation>
     <since>1.12</since>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
@@ -11,12 +14,12 @@
             <documentation>Defines the width of the column. If you leave it empty then this column covers the remaining space.</documentation>
         </property>
         <property name="hAlign" type="sap.ui.core/TextAlign" defaultValue="Begin" group="Appearance">
-            <documentation>Horizontal alignment of the column content. Available alignment settings are "Begin", "Center", "End", "Left", and "Right".
+            <documentation>Defines the horizontal alignment of the column content.
 
-NOTE: Control with a "textAlign" property inherits the horizontal alignment.</documentation>
+NOTE: Text controls with a &lt;code&gt;textAlign&lt;/code&gt; property inherits the horizontal alignment.</documentation>
         </property>
         <property name="vAlign" type="sap.ui.core/VerticalAlign" defaultValue="Inherit" group="Appearance">
-            <documentation>Vertical alignment of the cells in a column. Possible values are "Inherit", "Top", "Middle", "Bottom"
+            <documentation>Defines the vertical alignment of the cells in a column.
 This property does not affect the vertical alignment of header and footer.</documentation>
         </property>
         <property name="styleClass" type="sap.ui.core/string" group="Appearance">

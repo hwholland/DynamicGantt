@@ -52,7 +52,7 @@
 <xsd:documentation>Provides a box which can be flagged, the box has a label. A check box can either stand alone, or in a group with other check boxes. As an option, the boxes can initially be set to status 'Not Editable'.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
-<xsd:element name="ColorPicker" type="n3:_ColorPickerType" substitutionGroup="n0:Control">
+<xsd:element name="ColorPicker" type="n3:_ColorPickerType" substitutionGroup="n2:ColorPicker">
 <xsd:annotation>
 <xsd:documentation>This control gives the user the opportunity to choose a color. The color can be defined using HEX-, RGB- or HSV-values or a CSS colorname.</xsd:documentation>
 </xsd:annotation>
@@ -250,7 +250,7 @@ used as rating symbols. When the user performs a rating, an event is fired.</xsd
 <xsd:documentation>Is used to provide a container, which can show different content depending on its current width. It fires an event, whenever a new range is reached. In addition the content of the new range is automatically shown, if it is set.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
-<xsd:element name="ResponsiveContainerRange" type="n3:_ResponsiveContainerRangeType" substitutionGroup="n0:Control">
+<xsd:element name="ResponsiveContainerRange" type="n3:_ResponsiveContainerRangeType" substitutionGroup="n0:Element">
 <xsd:annotation>
 <xsd:documentation>Defines a range for the ResponsiveContainer</xsd:documentation>
 </xsd:annotation>
@@ -329,7 +329,7 @@ The user switches between the tabs to display the content.</xsd:documentation>
 </xsd:element>
 <xsd:element name="TextField" type="n3:_TextFieldType" substitutionGroup="n0:Control">
 <xsd:annotation>
-<xsd:documentation>Renders a input field for text input.</xsd:documentation>
+<xsd:documentation>Renders an input field for text input.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="TextView" type="n3:_TextViewType" substitutionGroup="n0:Control">
@@ -724,19 +724,19 @@ If set to false only the first n items (n=maxPopupItems) are shown.</xsd:documen
 <xsd:attribute name="icon" type="n0:_URIType">
 <xsd:annotation>
 <xsd:documentation>Icon to be displayed as graphical element within the button.
-This can be an URI to an image or an icon font URI.</xsd:documentation>
+This can be a URI to an image or an icon font URI.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="iconHovered" type="n0:_URIType">
 <xsd:annotation>
 <xsd:documentation>Icon to be displayed as graphical element within the button when it is hovered (only if also a base icon was specified). If not specified the base icon is used.
-If a icon font icon is used, this property is ignored.</xsd:documentation>
+If an icon font icon is used, this property is ignored.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="iconSelected" type="n0:_URIType">
 <xsd:annotation>
 <xsd:documentation>Icon to be displayed as graphical element within the button when it is selected (only if also a base icon was specified). If not specified the base or hovered icon is used.
-If a icon font icon is used, this property is ignored.</xsd:documentation>
+If an icon font icon is used, this property is ignored.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="iconFirst" type="xsd:boolean">
@@ -972,30 +972,7 @@ If a icon font icon is used, this property is ignored.</xsd:documentation>
 <!--type definition for UIElement 'sap.ui.commons.ColorPicker'-->
 <xsd:complexType name="_ColorPickerType">
 <xsd:complexContent>
-<xsd:extension base="n0:_ControlType">
-<xsd:attribute name="colorString" type="xsd:string">
-<xsd:annotation>
-<xsd:documentation>This is the import-parameter of the ColorPicker.
-As input-parameter, it can be a Hexadecimal string (#FFFFFF), a RGB-string rgb(255,255,255), a HSV-string hsv(360,100,100) or a CSS-colorname 'red'.
-As output-parameter it is a RGB-string containing the current color.</xsd:documentation>
-</xsd:annotation>
-</xsd:attribute>
-<xsd:attribute name="mode" type="n3:_ColorPickerModeType">
-<xsd:annotation>
-<xsd:documentation>Determines the mode the ColorPicker works with - Hue Saturation and Value (HSV) or Hue Saturation and Lightness (HSL)</xsd:documentation>
-</xsd:annotation>
-</xsd:attribute>
-<xsd:attribute name="change" type="xsd:string">
-<xsd:annotation>
-<xsd:documentation>Value was changed. This event is fired if the value has changed by an user action.</xsd:documentation>
-</xsd:annotation>
-</xsd:attribute>
-<xsd:attribute name="liveChange" type="xsd:string">
-<xsd:annotation>
-<xsd:documentation>Value was changed. This event is fired during the mouse move. The normal change event ist only fired by mouseup.</xsd:documentation>
-</xsd:annotation>
-</xsd:attribute>
-</xsd:extension>
+<xsd:extension base="n2:_ColorPickerType"/>
 </xsd:complexContent>
 </xsd:complexType>
 <!--type definition for UIElement 'sap.ui.commons.ComboBox'-->
@@ -1047,7 +1024,7 @@ If the key is set to a not existing value it will not be changed.</xsd:documenta
 <xsd:annotation>
 <xsd:documentation>Id of the selected item. If the value has no corresponding item, the &lt;code&gt;selectedItemId&lt;/code&gt; is empty.
 
-If the &lt;code&gt;selectedItemId&lt;/code&gt; is set to an not existing item, it will not be changed.</xsd:documentation>
+If the &lt;code&gt;selectedItemId&lt;/code&gt; is set to a not existing item, it will not be changed.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="listBox" type="xsd:string">
@@ -1439,7 +1416,7 @@ TextField, ComboBox, DropdownBox and Link</xsd:documentation>
 <xsd:attribute name="valueState" type="n0:_ValueStateType">
 <xsd:annotation>
 <xsd:documentation>Visualizes warnings or errors related to the InPlaceEdit. Possible values: Warning, Error, Success.
-If the content control has a own valueState property this will be used.</xsd:documentation>
+If the content control has an own valueState property this will be used.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="undoEnabled" type="xsd:boolean">
@@ -1498,7 +1475,7 @@ Currently this is not supported for Labels.</xsd:documentation>
 <xsd:attribute name="icon" type="n0:_URIType">
 <xsd:annotation>
 <xsd:documentation>Determines the icon to be displayed in the control.
-This can be an URI to an image or an icon font URI.</xsd:documentation>
+This can be a URI to an image or an icon font URI.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="textAlign" type="n0:_TextAlignType">
@@ -2371,7 +2348,7 @@ Note that when this attribute is used also the other icon attributes need to be 
 <!--type definition for UIElement 'sap.ui.commons.ResponsiveContainerRange'-->
 <xsd:complexType name="_ResponsiveContainerRangeType">
 <xsd:complexContent>
-<xsd:extension base="n0:_ControlType">
+<xsd:extension base="n0:_ElementType">
 <xsd:attribute name="width" type="n0:_CSSSizeType">
 <xsd:annotation>
 <xsd:documentation>The minimal width for this range to be displayed.</xsd:documentation>
@@ -2965,7 +2942,7 @@ a scroll bar is provided.</xsd:documentation>
 </xsd:attribute>
 <xsd:attribute name="change" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>Value was changed. This event is fired if the value has changed by an user action.</xsd:documentation>
+<xsd:documentation>Value was changed. This event is fired if the value has changed by a user action.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="liveChange" type="xsd:string">
@@ -3661,7 +3638,7 @@ This association holds the references of the selected children.</xsd:documentati
 <xsd:attribute name="iconURL" type="n0:_URIType">
 <xsd:annotation>
 <xsd:documentation>URL of the standard icon for the value help. If no parameter is supplied the default icon image will be shown.
-This can be an URI to an image or an icon font URI.</xsd:documentation>
+This can be a URI to an image or an icon font URI.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="iconHoverURL" type="n0:_URIType">
@@ -3858,7 +3835,7 @@ If an icon font icon is used, this property is ignored.</xsd:documentation>
 </xsd:sequence>
 <xsd:attribute name="rtl" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>The RTL setting swaps the areas Begin and End. Since version 1.5.2, this property is deprecated and ignored as it conflicts with the central configuration for the page.</xsd:documentation>
+<xsd:documentation>The RTL setting swaps the areas Begin and End.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="width" type="n0:_CSSSizeType">
@@ -3966,7 +3943,7 @@ If an icon font icon is used, this property is ignored.</xsd:documentation>
 <xsd:attribute name="width" type="n0:_CSSSizeType">
 <xsd:annotation>
 <xsd:documentation>CSS width of the matrix layout.
-If the LayoutFixed = true a adequate width should be provided.</xsd:documentation>
+If the LayoutFixed = true an adequate width should be provided.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="height" type="n0:_CSSSizeType">
@@ -3978,7 +3955,7 @@ If the LayoutFixed = true a adequate width should be provided.</xsd:documentatio
 <xsd:annotation>
 <xsd:documentation>Sets the table layout. If fixed the width parameter of a column has priority, if not the width of the content of the colums has priority.
 The default is "fixed".
-If the fixed layout is used a adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.</xsd:documentation>
+If the fixed layout is used an adequate width of the MatrixLayout should be provided. Otherwise the column width displayed could be different than the given ones because of browser dependend optimazations.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="columns" type="xsd:int">
@@ -4200,20 +4177,6 @@ The values of the attributes top and bottom are ignored when this feature is act
 <xsd:enumeration value="Default">
 <xsd:annotation>
 <xsd:documentation>default style (no special styling).</xsd:documentation>
-</xsd:annotation>
-</xsd:enumeration>
-</xsd:restriction>
-</xsd:simpleType>
-<xsd:simpleType name="_ColorPickerModeType">
-<xsd:restriction base="xsd:string">
-<xsd:enumeration value="HSV">
-<xsd:annotation>
-<xsd:documentation>Color picker works with HSV values.</xsd:documentation>
-</xsd:annotation>
-</xsd:enumeration>
-<xsd:enumeration value="HSL">
-<xsd:annotation>
-<xsd:documentation>Color picker works with HSL values.</xsd:documentation>
 </xsd:annotation>
 </xsd:enumeration>
 </xsd:restriction>

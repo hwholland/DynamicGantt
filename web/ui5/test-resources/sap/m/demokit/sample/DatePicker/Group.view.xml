@@ -10,6 +10,12 @@
 			placeholder="Enter Date ..."
 			change="handleChange"
 			class="sapUiSmallMarginBottom"/>
+		<Label text="DatePicker with initialFocusedDateValue new Date(2017, 5, 13)" labelFor="DP8"/>
+		<DatePicker
+				id="DP8"
+				placeholder="Enter Date ..."
+				change="handleChange"
+				class="sapUiSmallMarginBottom"/>
 		<Label text="DatePicker with given Value and Formatter" labelFor="DP2"/>
 		<DatePicker
 			id="DP2"
@@ -45,6 +51,11 @@
 			id="DP4"
 			value="{path:'/dateValue', type:'sap.ui.model.type.Date', formatOptions: { style: 'medium', strictParsing: true}}"
 			class="sapUiSmallMarginBottom"
+			/>
+		<Label text="DatePicker with non-working days - 05.11.2015 - 25.11.2015" labelFor="DP7"/>
+		<DatePicker
+			id="DP7"
+			value="2015-11-23"
 			/>
 		<Label text="Text bound to the same model like DatePicker" labelFor="T2" />
 		<Text

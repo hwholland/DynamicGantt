@@ -1,20 +1,20 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 	"use strict";
 
 	/**
 	 * Basic implementation for the command pattern.
-	 * 
+	 *
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
-	 * 
+	 *
 	 * @author SAP SE
-	 * @version 1.38.33
-	 * 
+	 * @version 1.54.5
+	 *
 	 * @constructor
 	 * @private
 	 * @since 1.34
@@ -26,70 +26,68 @@ sap.ui.define(['sap/ui/base/ManagedObject'], function(ManagedObject) {
 		metadata : {
 			library : "sap.ui.rta",
 			properties : {
-				element : {
-					type : "sap.ui.core.Element"
-				},
-				elementId : {
-					type : "string"
-				},
 				name : {
 					type : "string"
+				},
+				runtimeOnly : {
+					type : "boolean"
 				}
 			},
-			associations : {},
+			associations : {
+				element : {
+					type : "sap.ui.core.Element"
+				}
+			},
 			events : {}
 		}
 	});
 
-	BaseCommand.ERROR_UNKNOWN_ID = "no element for id: ";
 
 	/**
-	 * @protected Template Method to implement execute logic, with ensure precondition Element is available
+	 * @override Returns element instance instead of ID.
 	 */
-	BaseCommand.prototype._executeWithElement = function(oElement) {
-	};
-
-	BaseCommand.prototype.execute = function() {
-		this._withElement(this._executeWithElement.bind(this));
+	BaseCommand.prototype.getElement = function() {
+		var sId = this.getAssociation("element");
+		return sap.ui.getCore().byId(sId);
 	};
 
 	/**
-	 * @protected Template Method to implement undo logic, with ensure precondition Element is available
+	 * @public Template Method called by the command factory when all data is provided to the change.
+	 * @return {boolean} Returns true if the preparation was successful
 	 */
-	BaseCommand.prototype._undoWithElement = function(oElement) {
-	};
-
-	BaseCommand.prototype.undo = function() {
-		this._withElement(this._undoWithElement.bind(this));
-	};
-
-	BaseCommand.prototype._withElement = function(fn) {
-		var oElement = this._getElement();
-		if (oElement) {
-			fn(oElement);
-		} else {
-			jQuery.sap.log.error(this.getMetadata().getName(), BaseCommand.ERROR_UNKNOWN_ID + this.getElementId());
-		}
-	};
-
-	BaseCommand.prototype.serialize = function() {
-	};
-
-	BaseCommand.prototype.isEnabled = function() {
+	BaseCommand.prototype.prepare = function() {
 		return true;
 	};
 
-	BaseCommand.deserialize = function(oChangeData) {
+	/**
+	 * @public Template method to implement execute logic. You have to ensure that the
+	 * element property is available.
+	 * @return {Promise} Returns a resolving Promise
+	 */
+	BaseCommand.prototype.execute = function() {
+		return Promise.resolve();
 	};
 
-	BaseCommand.prototype._getElement = function() {
-		// Check if Element could be complete virtual property (always created by id)
-		var oElement = this.getElement();
-		if (!oElement) {
-			oElement = sap.ui.getCore().byId(this.getElementId());
-			this.setElement(oElement);
-		}
-		return oElement;
+	BaseCommand.prototype.getVariantChange = function() {
+		return this._oVariantChange;
+	};
+
+	/**
+	 * @public Template method to implement undo logic.
+	 * @return {Promise} Returns a resolving Promise
+	 */
+	BaseCommand.prototype.undo = function() {
+		return Promise.resolve();
+	};
+
+	/**
+	 * Template method to check if the command is enabled.
+	 *
+	 * @return {boolean} Returns enabled boolean state
+	 * @public
+	 */
+	BaseCommand.prototype.isEnabled = function() {
+		return true;
 	};
 
 	return BaseCommand;

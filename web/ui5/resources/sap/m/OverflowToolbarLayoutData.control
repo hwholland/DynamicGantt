@@ -3,7 +3,7 @@
     <name>OverflowToolbarLayoutData</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Holds layout data for the OverflowToolbar items.</documentation>
+    <documentation>Holds layout data for the {@link sap.m.OverflowToolbar} items.</documentation>
     <since>1.28</since>
     <baseType>sap.m/ToolbarLayoutData</baseType>
     <properties>
@@ -23,6 +23,9 @@
 Default value is 0, which means that the control does not belong to any group.
 Elements that belong to a group overflow together. The overall priority of the group is defined by the element with highest priority.
 Elements that belong to a group are not allowed to have AlwaysOverflow or NeverOverflow priority.</documentation>
+        </property>
+        <property name="closeOverflowOnInteraction" type="sap.ui.core/boolean" defaultValue="true" group="Behavior" since="1.40">
+            <documentation>Defines whether the overflow area is automatically closed when interacting with a control in it</documentation>
         </property>
     </properties>
 </control>

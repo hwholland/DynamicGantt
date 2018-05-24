@@ -1,19 +1,25 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-/*global JSZip, URI *///declare unusual global vars for JSLint/SAPUI5 validation
-sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToast'], function (Controller, Device, MessageToast) {
+/*global JSZip, URI */
+
+sap.ui.define(['jquery.sap.global',
+	'sap/ui/core/routing/History',
+	'sap/ui/core/Component', 'sap/ui/core/UIComponent', 'sap/ui/core/mvc/Controller',
+	'sap/ui/model/json/JSONModel',
+	'../data'],
+	function (jQuery, History, Component, UIComponent, Controller, JSONModel, data) {
 	"use strict";
 
 	return Controller.extend("sap.ui.demokit.explored.view.code", {
 
-		_aMockFiles : ["products.json", "supplier.json", "img.json"],
+		_aMockFiles : ["products.json", "supplier.json", "img.json", "countriesCollection.json"],
 
 		onInit : function () {
-			this.router = sap.ui.core.UIComponent.getRouterFor(this);
+			this.router = UIComponent.getRouterFor(this);
 			this.router.attachRoutePatternMatched(this.onRouteMatched, this);
 			this._viewData = sap.ui.getCore().byId("app").getViewData();
 			this._viewData.component.codeCache = {};
@@ -30,7 +36,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 			var sFileName = decodeURIComponent(oEvt.getParameter("arguments").fileName);
 
 			// retrieve sample object
-			var oSample = sap.ui.demokit.explored.data.samples[this._sId];
+			var oSample = data.samples[this._sId];
 			if (!oSample) {
 				this.router.myNavToWithoutHash("sap.ui.demokit.explored.view.notFound", "XML", false, { path: this._sId });
 				return;
@@ -68,7 +74,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 				// (via the 'Orcish maneuver': Use XHR to retrieve and cache code)
 				if (oConfig && oConfig.sample && oConfig.sample.files) {
 					var sRef = jQuery.sap.getModulePath(oSample.id);
-					for (var i = 0 ; i < oConfig.sample.files.length ; i++) {
+					for (var i = 0; i < oConfig.sample.files.length; i++) {
 						var sFile = oConfig.sample.files[i];
 						var sContent = this.fetchSourceFile(sRef, sFile);
 
@@ -83,10 +89,12 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 				this._oData.fileName = sFileName;
 			}
 			// set model
-			this.getView().setModel(new sap.ui.model.json.JSONModel(this._oData));
+			var oJSONModel = new JSONModel(this._oData);
+			this.getView().setModel(oJSONModel);
+			oJSONModel.refresh(true);
 
 			// scroll to top of page
-			var page = this.getView().byId("page");
+			var page = this.byId("page");
 			page.scrollTo(0);
 		},
 
@@ -103,11 +111,16 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 
 			if (!(sUrl in this._viewData.component.codeCache)) {
 				this._viewData.component.codeCache[sUrl] = "";
-				jQuery.ajax(sUrl, {
+				jQuery.ajax({
+					url: sUrl,
+					type: "GET",
 					async: false,
 					dataType: "text",
 					success: fnSuccess,
-					error: fnError
+					error: fnError,
+					beforeSend: function(request) {
+						request.overrideMimeType("text/plain; charset=x-user-defined");
+					}
 				});
 			}
 
@@ -116,29 +129,32 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 
 		onDownload : function (evt) {
 
-			if (Device.browser.internet_explorer && Device.browser.version < 10) {
-				MessageToast.show('Download action is not supported in Internet Explorer 9', {
-					autoClose: true,
-					duration: 3000
-				});
-				return;
-			}
-
 			jQuery.sap.require("sap.ui.thirdparty.jszip");
 			var oZipFile = new JSZip();
 
 			// zip files
-			var oData = this.getView().getModel().getData();
-			for (var i = 0 ; i < oData.files.length ; i++) {
+			var oData = this.getView().getModel().getData(),
+				iRequiredParentLevels = 0;
+			for (var i = 0; i < oData.files.length; i++) {
 				var oFile = oData.files[i],
-					sRawFileContent = oFile.raw;
+					sRawFileContent = oFile.raw,
+					iFileNestedLevel = oFile.name.split("../").length - 1,
+					sFileNameCloned = oFile.name.slice();
+
+				if (iFileNestedLevel > iRequiredParentLevels) {
+					iRequiredParentLevels = iFileNestedLevel;
+				}
+
+				if (iFileNestedLevel > 0 ) {
+					sFileNameCloned = oFile.name.slice(oFile.name.lastIndexOf("../") + 3);
+				}
 
 				// change the bootstrap URL to the current server for all HTML files of the sample
-				if (oFile.name && (oFile.name === oData.iframe || oFile.name.split(".").pop() === "html")) {
+				if (sFileNameCloned && (sFileNameCloned === oData.iframe || sFileNameCloned.split(".").pop() === "html")) {
 					sRawFileContent = this._changeIframeBootstrapToCloud(sRawFileContent);
 				}
 
-				oZipFile.file(oFile.name, sRawFileContent);
+				oZipFile.file(sFileNameCloned, sRawFileContent, { base64: false, binary: true });
 
 				// mock files
 				for (var j = 0; j < this._aMockFiles.length; j++) {
@@ -155,13 +171,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 
 			// iframe examples have a separate index file and a component file to describe it
 			if (!oData.iframe) {
-				oZipFile.file("Component.js", this.fetchSourceFile(sRef, "Component.js"));
-				oZipFile.file("index.html", this._changeIframeBootstrapToCloud(this.createIndexFile(oData)));
+				oZipFile.file("Component.js", this.fetchSourceFile(sRef, "Component.js"), { base64: false, binary: true });
+				oZipFile.file("index.html", this._changeIframeBootstrapToCloud(this.createIndexFile(oData, iRequiredParentLevels)));
 			}
 
 			// add extra download files
 			aExtraFiles.forEach(function(sFileName, index) {
-				oZipFile.file(sFileName, that.fetchSourceFile(sRef, sFileName));
+				oZipFile.file(sFileName, that.fetchSourceFile(sRef, sFileName), { base64: false, binary: true });
 			});
 
 			var oContent = oZipFile.generate({type:"blob"});
@@ -171,10 +187,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 
 		_openGeneratedFile : function (oContent) {
 			jQuery.sap.require("sap.ui.core.util.File");
-			sap.ui.core.util.File.save(oContent, this._sId, "zip", "application/zip");
+			var File = sap.ui.require("sap/ui/core/util/File");
+			File.save(oContent, this._sId, "zip", "application/zip");
 		},
 
-		createIndexFile : function(oData) {
+		createIndexFile : function(oData, iRequiredParentLevels) {
 
 			var sHeight,
 				bScrolling;
@@ -183,7 +200,16 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 			var sIndexFile = this.fetchSourceFile(sRef, "index.html.tmpl");
 
 			sIndexFile = sIndexFile.replace(/{{TITLE}}/g, oData.name);
+
 			sIndexFile = sIndexFile.replace(/{{SAMPLE_ID}}/g, oData.id);
+
+			var sParentResourcesRoots = "",
+				sODataIdCloned = oData.id.slice();
+			for (var i = 0; i < iRequiredParentLevels; i++) {
+				sODataIdCloned = sODataIdCloned.substring(0, sODataIdCloned.lastIndexOf("."));
+				sParentResourcesRoots += "\"" + sODataIdCloned  + "\" : \"./\", ";
+			}
+			sIndexFile = sIndexFile.replace(/{{PARENT_RESOURCES}}/g, sParentResourcesRoots);
 
 			sHeight = oData.stretch ? 'height : "100%", ' : "";
 			sIndexFile = sIndexFile.replace(/{{HEIGHT}}/g, sHeight);
@@ -210,7 +236,14 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 		},
 
 		onNavBack : function () {
-			this.router.navTo("sample", { id : this._sId }, true);
+			var oHistory, sPreviousHash;
+			oHistory = History.getInstance();
+			sPreviousHash = oHistory.getPreviousHash();
+			if (sPreviousHash !== undefined) {
+				window.history.go(-1);
+			} else {
+				this.router.navTo("home", {}, true /*no history*/);
+			}
 		},
 
 		/**
@@ -253,7 +286,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToas
 			this.router.navTo("code_file", {
 				id : this._sId,
 				fileName: encodeURIComponent(sFileName)
-			}, false);
+			}, true);
 		}
 
 

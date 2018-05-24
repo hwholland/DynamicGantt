@@ -3,7 +3,7 @@
     <name>P13nColumnsItem</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Type for &lt;code&gt;columnsItems&lt;/code&gt; aggregation in P13nColumnsPanel control.</documentation>
+    <documentation>Type for &lt;code&gt;columnsItems&lt;/code&gt; aggregation in &lt;code&gt;P13nColumnsPanel&lt;/code&gt; control.</documentation>
     <since>1.26.0</since>
     <baseType>sap.ui.core/Item</baseType>
     <properties>
@@ -14,7 +14,7 @@
             <documentation>This property contains the index of a table column</documentation>
         </property>
         <property name="visible" type="sap.ui.core/boolean" group="Appearance" since="1.26.0">
-            <documentation>This property decides whether a P13nColumnsItem is visible</documentation>
+            <documentation>This property decides whether a &lt;code&gt;P13nColumnsItem&lt;/code&gt; is visible</documentation>
         </property>
         <property name="width" type="sap.ui.core/string" group="Misc" since="1.26.0">
             <documentation>This property contains the with of a table column.</documentation>

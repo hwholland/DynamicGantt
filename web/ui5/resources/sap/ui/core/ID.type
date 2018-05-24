@@ -2,7 +2,10 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>ID</name>
     <derived/>
-    <documentation>A string type representing an Id or a name.</documentation>
+    <documentation>A string type representing an Id or a name.
+
+Allowed is a sequence of characters (capital/lowercase), digits, underscores, dashes, points and/or colons.
+It may start with a character or underscore only.</documentation>
     <final/>
     <pattern>[A-Za-z_][-A-Za-z0-9_.:]*</pattern>
 </simple-type>

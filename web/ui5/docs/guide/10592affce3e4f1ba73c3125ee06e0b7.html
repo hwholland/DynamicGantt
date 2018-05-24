@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="So far, we have a list of posts on the home page of the app. But typically, a post comes with more details that should be displayed on a separate detail page. We call it the post page because it displays details of a post. In this step we will introduce a new journey to test the post page. We write tests that trigger typical navigation events with OPA. Testing navigation greatly helps in reducing manual testing efforts as it covers a lot of testing paths. It is good practice to cover every view of your application with at least one test, since OPA will check if an exception is thrown. In this way you can detect critical errors very fast."/>
 <meta name="description" content="So far, we have a list of posts on the home page of the app. But typically, a post comes with more details that should be displayed on a separate detail page. We call it the post page because it displays details of a post. In this step we will introduce a new journey to test the post page. We write tests that trigger typical navigation events with OPA. Testing navigation greatly helps in reducing manual testing efforts as it covers a lot of testing paths. It is good practice to cover every view of your application with at least one test, since OPA will check if an exception is thrown. In this way you can detect critical errors very fast."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3824006429568457"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=06838472826122788"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=06838472826122788"/>
 <title>Step 8: Testing Navigation</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio10592affce3e4f1ba73c3125ee06e0b7">
 <div id="wrapper"><div id="container">
@@ -52,7 +38,7 @@
 			
 			<div class="fig fignone" id="loio10592affce3e4f1ba73c3125ee06e0b7__fig_r1j_pst_mr"><div class="figcontainer">
 				
-				<img class="image" id="loio10592affce3e4f1ba73c3125ee06e0b7__image_xkl_rkv_3t" src="loiocf3e0a650c6647b08410fab5b09d606d_HiRes.png"/>
+				<img class="image" id="loio10592affce3e4f1ba73c3125ee06e0b7__image_xkl_rkv_3t" src="loiocf3e0a650c6647b08410fab5b09d606d_LowRes.png"/>
 			<div class="figcap">We add an OPA test that selects an item from the table and navigates to the post
 					page</div></div></div>
 
@@ -60,14 +46,13 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
-					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.testing.08/preview" alt="../../explored.html#/sample/sap.m.tutorial.testing.08/preview" title="../../explored.html#/sample/sap.m.tutorial.testing.08/preview">Testing - Step 8</a></span>.</p>
+			<p class="p">You can view and download all files in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.testing.08/preview" alt="../../explored.html#/sample/sap.m.tutorial.testing.08/preview" title="../../explored.html#/sample/sap.m.tutorial.testing.08/preview">Testing - Step 8</a></span>.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/test/integration/PostJourney.js (New)</div><div type="webapp/test/integration/PostJourney.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.require(
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.require(
 	["sap/ui/test/opaQunit"],
 	function (opaTest) {
 		"use strict";
@@ -134,13 +119,14 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/pages/Worklist.js – action object</div><div type="webapp/test/integration/pages/Worklist.js – action object">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.require([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.require([
 		'sap/ui/test/Opa5',
 		'sap/ui/test/matchers/AggregationLengthEquals',
 		'sap/ui/test/matchers/PropertyStrictEquals',
-		<span class="ph emphasis emphasis">'sap/ui/test/matchers/BindingPath',
-</span>
-		'sap/ui/demo/bulletinboard/test/integration/pages/Common'
+		<span class="ph emphasis emphasis">'sap/ui/test/matchers/BindingPath',</span>
+		'sap/ui/demo/bulletinboard/test/integration/pages/Common',
+		'sap/ui/test/actions/Press'
+
 	],
 	function (Opa5, AggregationLengthEquals, PropertyStrictEquals, <span class="ph emphasis emphasis">BindingPath,</span> Common) {
 		"use strict";
@@ -159,29 +145,26 @@
 							matchers:  new BindingPath({
 								path: "/Posts('" + sId + "')"
 							}),
-							success: function (aListItems) {
-								aListItems[0].$().trigger("tap");
-							},
+							actions: new Press(),
 							errorMessage: "No list item with the id " + sId + " was found."
 						});
 					}</span></pre></div>
 
-			<p class="p">Now that we have written our spec how the navigation to the <span class="ph uicontrol">Post</span> page
-				is planned, we first need to implement the "click" on a list item. To identify the
-				item we are looking for, we use the <samp class="ph codeph">BindingPath</samp> matcher. Doing so,
-				we make sure that even if the order of the items changes, we always choose the same
-				item. </p>
+			<p class="p">Now that we have written our spec how the navigation to the <span class="ph uicontrol">Post</span> page is planned, we first need to implement the "click" on a list
+				item. To identify the item we are looking for, we use the <samp class="ph codeph">BindingPath</samp> matcher. Doing so, we make sure that even if the order of
+				the items changes, we always choose the same item. The <samp class="ph codeph">press</samp> action simulates a user click on the item.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/test/integration/pages/Post.js (New)</div><div type="webapp/test/integration/pages/Post.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.require([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.require([
 		'sap/ui/test/Opa5',
 		'sap/ui/test/matchers/Properties',
-		'sap/ui/demo/bulletinboard/test/integration/pages/Common'
+		'sap/ui/demo/bulletinboard/test/integration/pages/Common',
+		'sap/ui/test/actions/Press'
 	],
-	function (Opa5, Properties, Common) {
+	function (Opa5, Properties, Common, Press) {
 		"use strict";
 		var sViewName = "Post";
 		Opa5.createPageObjects({
@@ -192,9 +175,7 @@
 						return this.waitFor({
 							id: "page",
 							viewName: sViewName,
-							success: function (oPage) {
-								oPage.$("navButton").trigger("tap");
-							},
+							actions: new Press(),
 							errorMessage: "Did not find the nav button on object page"
 						});
 					}
@@ -220,7 +201,8 @@
 				}
 			}
 		});
-	});</span></pre></div>
+	});
+</span></pre></div>
 
 			<p class="p">After navigating to the <span class="ph uicontrol">Post</span> page, we need a new OPA5
 					<samp class="ph codeph">Page</samp> object for the page to implement our actions and
@@ -228,7 +210,7 @@
 
 			<p class="p">An OPA5 <samp class="ph codeph">Page</samp> object is used to group and reuse actions and
 				assertions that are related to a specific part of the screen. For more information,
-				see <a class="xref" href="ce4b180d97064ad088a901b53ed48b21.html" title="Best practices for OPA tests and common use cases for retrieving controls.">Cookbook for OPA5</a>. </p>
+				see <a class="xref" href="ce4b180d97064ad088a901b53ed48b21.html" title="Advanced topics and best practices for OPA tests.">Cookbook for OPA5</a>. </p>
 
 			<p class="p">We implement a <samp class="ph codeph">press</samp> event on the page’s <samp class="ph codeph">nav</samp> button
 				and we assert that we are on the correct page by checking the title in the object
@@ -240,7 +222,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/pages/Worklist.js – assertion object</div><div type="webapp/test/integration/pages/Worklist.js – assertion object">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">,
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">,
 					iShouldSeeTheTable: function () {
 						return this.waitFor({
 							id: sTableId,
@@ -261,7 +243,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/pages/Browser.js (New)</div><div type="webapp/test/integration/pages/Browser.js (New)">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp><span class="ph emphasis emphasis">sap.ui.require([
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js"><span class="ph emphasis emphasis">sap.ui.require([
 		'sap/ui/test/Opa5',
 		'sap/ui/demo/bulletinboard/test/integration/pages/Common'
 	],
@@ -296,7 +278,7 @@
 
 		<div class="section"><div class="section_title">webapp/test/integration/AllJourneys.js</div><div type="webapp/test/integration/AllJourneys.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>webapp/test/integration/AllJourneys.js
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">webapp/test/integration/AllJourneys.js
 jQuery.sap.require("sap.ui.qunit.qunit-css");
 jQuery.sap.require("sap.ui.thirdparty.qunit");
 jQuery.sap.require("sap.ui.qunit.qunit-junit");
@@ -343,7 +325,7 @@ sap.ui.require([
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with SAPUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
+<strong>Parent topic: </strong><a class="link" href="291c9121e6044ab381e0b51716f97f52.html" title="In this tutorial we will test application functionality with the testing tools that are delivered with OpenUI5. At different steps of this tutorial you will write tests using QUnit, OPA5, and the mock server. Additionally, you will learn about testing strategies, Test Driven Development (TDD), and much more.">Testing</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="016e0d44f8ff47d2bdf4fdad9b7bf7cd.html" title="Let’s switch back to developing and add the missing feature for the test we implemented in the previous step. We will simply change the table to a growing table as this is a basic feature of the table. This will display a trigger at the end of the table that the user can click on to display more items.">Step 7: Changing the Table to a Growing Table</a><br/>
@@ -358,19 +340,5 @@ sap.ui.require([
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 8: Testing Navigation";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

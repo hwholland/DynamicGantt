@@ -4,19 +4,19 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<!-- Initialization -->
 	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-		type="text/javascript"
 		src="../../../../../resources/sap-ui-core.js"
 		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-noConflict="true"
 		data-sap-ui-libs="sap.ui.commons"
 		>
 	</script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
-    <script language="javascript">
+    <script>
 
     	// Lock the Core.
     	// This can be done anywhen after the Core has been loaded and executed, potentially
@@ -45,23 +45,23 @@
 
 		qutils.delayTestStart();
 
-		module("Check for Unlocked Core");
+		QUnit.module("Check for Unlocked Core");
 
-		test("Control Events should be blocked depending on Core lock", function() {
+		QUnit.test("Control Events should be blocked depending on Core lock", function(assert) {
 			var pressed = false;
 			oButton.attachPress(function() {
 				pressed = true;
 			});
 
-			ok(!pressed, "Button must not have fired 'press' yet");
+			assert.ok(!pressed, "Button must not have fired 'press' yet");
 			jQuery("#button").focus().click();
-			ok(!pressed, "Button still must not have fired 'press'");
+			assert.ok(!pressed, "Button still must not have fired 'press'");
 
 			sap.ui.getCore().unlock();
 
-			ok(!pressed, "Button still must not have fired 'press'");
+			assert.ok(!pressed, "Button still must not have fired 'press'");
 			jQuery("#button").focus().click();
-			ok(pressed, "Button should have fired 'press'");
+			assert.ok(pressed, "Button should have fired 'press'");
 		});
 
 	</script>

@@ -2,8 +2,9 @@ sap.ui.define([
 	'jquery.sap.global',
 	'sap/ui/core/Fragment',
 	'sap/ui/core/mvc/Controller',
-	'sap/ui/model/json/JSONModel'
-], function(jQuery, Fragment, Controller, JSONModel) {
+	'sap/ui/model/json/JSONModel',
+	'sap/m/MessageToast'
+], function(jQuery, Fragment, Controller, JSONModel, MessageToast) {
 	"use strict";
 
 	var CController = Controller.extend("sap.m.sample.QuickViewCard.QuickView", {
@@ -124,21 +125,31 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-			var oButton = this.getView().byId('buttonBack');
+			var oButton = this.byId('buttonBack');
 			oButton.setEnabled(false);
 		},
 
 		onAfterRendering: function() {
-			this.getView().byId("quickViewCardContainer").$().css("maxWidth", "320px");
+			this.byId("quickViewCardContainer").$().css("maxWidth", "320px");
 		},
 
 		onButtonBackClick : function() {
-			var oQuickViewCard = this.getView().byId('quickViewCard');
+			var oQuickViewCard = this.byId('quickViewCard');
 			oQuickViewCard.navigateBack();
 		},
 
 		onNavigate : function(oEvent) {
-			var oButton = this.getView().byId('buttonBack');
+			var oNavOrigin = oEvent.getParameter("navOrigin");
+
+			if (oNavOrigin) {
+				MessageToast.show('Link "' + oNavOrigin.getText() + '" was clicked');
+			} else {
+				MessageToast.show('Back button was clicked');
+			}
+		},
+
+		onAfterNavigate : function(oEvent) {
+			var oButton = this.byId('buttonBack');
 			oButton.setEnabled(!oEvent.getParameter('isTopPage'));
 		}
 	});

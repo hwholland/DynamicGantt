@@ -5,6 +5,9 @@
     <author>SAP SE</author>
     <documentation>The &lt;code&gt;sap.m.ListBase&lt;/code&gt; control provides a base functionality of the &lt;code&gt;sap.m.List&lt;/code&gt; and &lt;code&gt;sap.m.Table&lt;/code&gt; controls. Selection, deletion, unread states and inset style are also maintained in &lt;code&gt;sap.m.ListBase&lt;/code&gt;.
 
+See section "{@link topic:295e44b2d0144318bcb7bdd56bfa5189 List, List Item, and Table}"
+in the documentation for an introduction to subclasses of &lt;code&gt;sap.m.ListBase&lt;/code&gt; control.
+
 &lt;b&gt;Note:&lt;/b&gt; The ListBase including all contained items may be completely re-rendered when the data of a bound model is changed. Due to the limited hardware resources of mobile devices this can lead to longer delays for lists that contain many items. As such the usage of a list is not recommended for these use cases.</documentation>
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
@@ -68,12 +71,17 @@ This property can only be used if the &lt;code&gt;growing&lt;/code&gt; property 
 This property can only be used if the &lt;code&gt;growing&lt;/code&gt; property is set to &lt;code&gt;true&lt;/code&gt;.</documentation>
         </property>
         <property name="growingScrollToLoad" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.16.0">
-            <documentation>If set to true, the user can scroll down to load more items. Otherwise a growing button is displayed at the bottom of the control.
+            <documentation>If set to true, the user can scroll down/up to load more items. Otherwise a growing button is displayed at the bottom/top of the control.
 &lt;b&gt;Note:&lt;/b&gt; This property can only be used if the &lt;code&gt;growing&lt;/code&gt; property is set to &lt;code&gt;true&lt;/code&gt; and only if there is one instance of &lt;code&gt;sap.m.List&lt;/code&gt; or &lt;code&gt;sap.m.Table&lt;/code&gt; inside the scrollable scroll container (e.g &lt;code&gt;sap.m.Page&lt;/code&gt;).</documentation>
+        </property>
+        <property name="growingDirection" type="sap.m/ListGrowingDirection" defaultValue="Downwards" group="Behavior" since="1.40.0">
+            <documentation>Defines the direction of the growing feature.
+If set to &lt;code&gt;Downwards&lt;/code&gt; the user has to scroll down to load more items or the growing button is displayed at the bottom.
+If set to &lt;code&gt;Upwards&lt;/code&gt; the user has to scroll up to load more items or the growing button is displayed at the top.</documentation>
         </property>
         <property name="rememberSelections" type="sap.ui.core/boolean" defaultValue="true" group="Behavior" since="1.16.6">
             <documentation>If set to true, this control remembers and retains the selection of the items after a binding update has been performed (e.g. sorting, filtering).
-&lt;b&gt;Note:&lt;/b&gt; This feature works only if two-way binding for the &lt;code&gt;selected&lt;/code&gt; property of the item is not used and needs to be turned off if the binding context of the item does not always point to the same entry in the model, for example, if the order of the data in the &lt;code&gt;JSONModel&lt;/code&gt; is changed.</documentation>
+&lt;b&gt;Note:&lt;/b&gt; This feature works only if two-way data binding for the &lt;code&gt;selected&lt;/code&gt; property of the item is not used. It also needs to be turned off if the binding context of the item does not always point to the same entry in the model, for example, if the order of the data in the &lt;code&gt;JSONModel&lt;/code&gt; is changed.</documentation>
         </property>
         <property name="keyboardMode" type="sap.m/ListKeyboardMode" defaultValue="Navigation" group="Behavior" since="1.38.0">
             <documentation>Defines keyboard handling behavior of the control.</documentation>
@@ -100,6 +108,9 @@ This property can only be used if the &lt;code&gt;growing&lt;/code&gt; property 
                 </parameter>
                 <parameter name="selected" type="sap.ui.core/boolean">
                     <documentation>Indicates whether the &lt;code&gt;listItem&lt;/code&gt; parameter is selected or not.</documentation>
+                </parameter>
+                <parameter name="selectAll" type="sap.ui.core/boolean">
+                    <documentation>Indicates whether the select all action is triggered or not.</documentation>
                 </parameter>
             </parameters>
         </event>
@@ -191,6 +202,15 @@ Calling the &lt;code&gt;preventDefault&lt;/code&gt; method of the event cancels 
                 </parameter>
             </parameters>
         </event>
+        <event name="beforeOpenContextMenu" since="1.54" allowPreventDefault="true">
+            <documentation>Fired when the context menu is opened.
+When the context menu is opened, the binding context of the item is set to the given &lt;code&gt;contextMenu&lt;/code&gt;.</documentation>
+            <parameters>
+                <parameter name="listItem" type="sap.m/ListItemBase">
+                    <documentation>Item in which the context menu was opened.</documentation>
+                </parameter>
+            </parameters>
+        </event>
     </events>
     <aggregations default="items">
         <aggregation name="items" type="sap.m/ListItemBase" cardinality="0..n" bindable="bindable">
@@ -206,6 +226,12 @@ Calling the &lt;code&gt;preventDefault&lt;/code&gt; method of the event cancels 
         </aggregation>
         <aggregation name="infoToolbar" type="sap.m/Toolbar" since="1.16" cardinality="0..1">
             <documentation>A toolbar that is placed below the header to show extra information to the user.</documentation>
+        </aggregation>
+        <aggregation name="dragDropConfig" type="sap.ui.core/dnd/DragDropBase" since="1.54" cardinality="0..n">
+            <documentation>Defines the drag-and-drop configuration.</documentation>
+        </aggregation>
+        <aggregation name="contextMenu" type="sap.ui.core/IContextMenu" since="1.54" cardinality="0..1">
+            <documentation>Defines the context menu of the items.</documentation>
         </aggregation>
     </aggregations>
     <associations>

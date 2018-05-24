@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>HeaderLevel</name>
     <derived/>
-    <documentation>Different levels for headers</documentation>
+    <documentation>Different levels for headers.</documentation>
     <enumeration>
         <value name="H1">
             <documentation>Header level 1</documentation>

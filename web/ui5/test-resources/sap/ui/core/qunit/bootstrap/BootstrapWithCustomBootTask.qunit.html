@@ -27,23 +27,29 @@
 					testresults.bSapUiCoreExists = window.sap && sap.ui && typeof sap.ui.getCore === "function";
 					if ( testresults.bSapUiCoreExists ) {
 						testresults.bApplyThemeExists = typeof sap.ui.getCore().applyTheme === "function";
-						testresults.bThemeBeforeAsExpected = sap.ui.getCore().getConfiguration().getTheme() === "sap_bluecrystal";
+						testresults.bThemeBeforeAsExpected = sap.ui.getCore().getConfiguration().getTheme() === "sap_belize";
 						testresults.$LinksBefore = jQuery('head > link[id^="sap-ui-theme-"]');
 						try {
-							sap.ui.getCore().applyTheme("sap_goldreflection");
+							sap.ui.getCore().applyTheme("sap_bluecrystal");
 							testresults.$LinksAfter = jQuery('head > link[id^="sap-ui-theme-"]');
-							testresults.bThemeAfterAsExpected = sap.ui.getCore().getConfiguration().getTheme() === "sap_goldreflection";
+							testresults.bThemeAfterAsExpected = sap.ui.getCore().getConfiguration().getTheme() === "sap_bluecrystal";
 							testresults.bApplyThemeFails = false;
 						} catch (e) {
 							testresults.bApplyThemeFails = true;
 						}
 					}
-					callback();
+
+					sap.ui.require([
+						"sap/ui/core/IconPool"
+					], function() {
+						callback();
+					});
+
 				}
 			};
 		</script>
+		<script src="../../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-				data-sap-ui-theme="sap_bluecrystal"
 				data-sap-ui-noConflict="true"
 				data-sap-ui-libs="sap.ui.core"
 				src="../../../../../../resources/sap-ui-core.js">
@@ -68,6 +74,8 @@
 			assert.ok(testresults.$LinksBefore && testresults.$LinksBefore.size() == 0, "there should be no link tags for theme styles when the hook is called");
 			assert.ok(testresults.$LinksAfter && testresults.$LinksBefore.size() == 0, "there should be no link tags for theme styles after the hook has been called");
 			assert.ok(jQuery('head > link[id^="sap-ui-theme-"]').size() > 0, "there should be no link tags for theme styles after the hook has been called");
+			assert.ok(sap.ui.require("sap/ui/core/IconPool"), "IconPool module should have been loaded during bootTask");
+
 		});
 		</script>
 	</head>

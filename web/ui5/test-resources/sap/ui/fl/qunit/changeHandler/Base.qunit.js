@@ -1,21 +1,20 @@
-/*globals QUnit */
+/*global QUnit */
 
-if(!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-	jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-}
 jQuery.sap.require("sap.ui.fl.changeHandler.Base");
 jQuery.sap.require('sap.ui.core.Control');
 jQuery.sap.require("sap.ui.core.LayoutData");
 
 (function (Base, Control, LayoutData) {
+	"use strict";
+
 	var oControl;
 
 	QUnit.module("sap.ui.fl.changeHandler.Base", {
-		setup: function () {
+		beforeEach: function () {
 			this.stubs = [];
 			this.oBaseHandler = Base;
 		},
-		teardown: function () {
+		afterEach: function () {
 			this.stubs.forEach(function (stub) {
 				stub.restore();
 			});
@@ -27,7 +26,7 @@ jQuery.sap.require("sap.ui.core.LayoutData");
 	});
 
 
-	QUnit.test('setTextInChange', function () {
+	QUnit.test('setTextInChange', function (assert) {
 		var oChange = {
 			"selector": {
 				"id": "QUnit.testkey"

@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -15,12 +15,54 @@ sap.ui.define([
 		'sap/ui/core/mvc/ViewType',
 		'sap/ui/core/sample/common/Component',
 		'sap/ui/core/util/MockServer',
+		'sap/ui/core/util/XMLPreprocessor',
 		'sap/ui/model/odata/ODataModel',
 		'sap/ui/model/odata/v2/ODataModel',
 		'jquery.sap.script'
-	], function (jQuery, View, ViewType, BaseComponent, MockServer, ODataModel, ODataModel2
-		/*, jQuerySapScript*/) {
+	], function (jQuery, View, ViewType, BaseComponent, MockServer, XMLPreprocessor, ODataModel,
+		ODataModel2/*, jQuerySapScript*/) {
 	"use strict";
+
+	/*
+	 * Plug-in a visitor for XMLPreprocessor to replace
+	 * <sap.ui.core.sample.ViewTemplate.scenario:Form binding="..." title="...">
+	 * with
+	 * <sap.ui.layout.form:SimpleForm binding="...">
+	 *   <sap.ui.layout.form:title>
+	 *     <sap.ui.core.Title text="..."/>
+	 *   </sap.ui.layout.form:title>
+	 *   <!-- children -->
+	 * </sap.ui.layout.form:SimpleForm>
+	 *
+	 * @param {Element} oForm
+	 *   The <sap.ui.core.sample.ViewTemplate.scenario:Form> element
+	 * @param {object} oInterface
+	 *   Visitor callbacks
+	 */
+	XMLPreprocessor.plugIn(function (oForm, oInterface) {
+		var sBinding = oForm.getAttribute("binding"),
+			oChild,
+			oDocument = oForm.ownerDocument,
+			oSimpleForm = oDocument.createElementNS("sap.ui.layout.form", "SimpleForm"),
+			oTitle = oDocument.createElementNS("sap.ui.core", "Title"),
+			oTitleAggregation = oDocument.createElementNS("sap.ui.layout.form", "title");
+
+		if (sBinding) {
+			oSimpleForm.setAttribute("binding", sBinding);
+		}
+		oSimpleForm.setAttribute("layout", "ResponsiveGridLayout");
+		oSimpleForm.appendChild(oTitleAggregation);
+		oTitleAggregation.appendChild(oTitle);
+		oTitle.setAttribute("text", oForm.getAttribute("title"));
+		while ((oChild = oForm.firstChild)) {
+			oSimpleForm.appendChild(oChild);
+		}
+
+		oForm.parentNode.insertBefore(oSimpleForm, oForm);
+		oForm.parentNode.removeChild(oForm);
+
+		oInterface.visitNode(oSimpleForm);
+	}, "sap.ui.core.sample.ViewTemplate.scenario", "Form");
 
 	var Component = BaseComponent.extend("sap.ui.core.sample.ViewTemplate.scenario.Component", {
 		metadata : {
@@ -86,6 +128,7 @@ sap.ui.define([
 			});
 
 			return sap.ui.view({
+					async : true,
 					type : ViewType.XML,
 					viewName : "sap.ui.core.sample.ViewTemplate.scenario.Main",
 					models : oModel

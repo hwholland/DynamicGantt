@@ -1,13 +1,27 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.StandardListItem.
-sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/EnabledPropagator', 'sap/ui/core/IconPool'],
-	function(jQuery, ListItemBase, library, EnabledPropagator, IconPool) {
+sap.ui.define([
+	'./ListItemBase',
+	'./library',
+	'sap/ui/core/IconPool',
+	'sap/ui/core/library',
+	'./StandardListItemRenderer'
+],
+	function(ListItemBase, library, IconPool, coreLibrary, StandardListItemRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.core.TextDirection
+	var TextDirection = coreLibrary.TextDirection;
+
+	// shortcut for sap.ui.core.ValueState
+	var ValueState = coreLibrary.ValueState;
 
 
 
@@ -22,7 +36,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -57,7 +71,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/
 
 			/**
 			 * By default, one or more requests are sent to get the density perfect version of the icon if the given version of the icon doesn't exist on the server.
-			 * <b>Note:<b> If bandwidth is a key factor for the application, set this value to <code>false</code>.
+			 * <b>Note:</b> If bandwidth is a key factor for the application, set this value to <code>false</code>.
 			 */
 			iconDensityAware : {type : "boolean", group : "Misc", defaultValue : true},
 
@@ -74,7 +88,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/
 			/**
 			 * Defines the state of the information text, e.g. <code>Error</code>, <code>Warning</code>, <code>Success</code>.
 			 */
-			infoState : {type : "sap.ui.core.ValueState", group : "Misc", defaultValue : sap.ui.core.ValueState.None},
+			infoState : {type : "sap.ui.core.ValueState", group : "Misc", defaultValue : ValueState.None},
 
 			/**
 			 * By default, the title size adapts to the available space and gets bigger if the description is empty. If you have list items with and without descriptions, this results in titles with different sizes. In this case, it can be better to switch the size adaption off by setting this property to <code>false</code>.
@@ -86,14 +100,15 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/
 			 * Defines the <code>title</code> text directionality with enumerated options. By default, the control inherits text direction from the DOM.
 			 * @since 1.28.0
 			 */
-			titleTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit},
+			titleTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit},
 
 			/**
 			 * Defines the <code>info</code> directionality with enumerated options. By default, the control inherits text direction from the DOM.
 			 * @since 1.28.0
 			 */
-			infoTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit}
-		}
+			infoTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit}
+		},
+		designtime: "sap/m/designtime/StandardListItem.designtime"
 	}});
 
 	StandardListItem.prototype.exit = function() {
@@ -159,6 +174,21 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library', 'sap/ui/core/
 		}
 	};
 
+	StandardListItem.prototype.getContentAnnouncement = function(oBundle) {
+		var sAnnouncement = "",
+			sInfoState = this.getInfoState(),
+			oIconInfo = IconPool.getIconInfo(this.getIcon()) || {};
+
+		sAnnouncement += (oIconInfo.text || oIconInfo.name || "") + " ";
+		sAnnouncement += this.getTitle() + " " + this.getDescription() + " " + this.getInfo() + " ";
+
+		if (sInfoState != "None" && sInfoState != this.getHighlight()) {
+			sAnnouncement += oBundle.getText("LIST_ITEM_STATE_" + sInfoState.toUpperCase());
+		}
+
+		return sAnnouncement;
+	};
+
 	return StandardListItem;
 
-}, /* bExport= */ true);
+});

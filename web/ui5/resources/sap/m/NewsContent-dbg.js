@@ -1,40 +1,48 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/Text'],
-	function(jQuery, library, Control, Text) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/m/Text',
+	'sap/ui/Device',
+	'./NewsContentRenderer',
+	'jquery.sap.keycodes'
+],
+	function(jQuery, library, Control, Text, Device, NewsContentRenderer) {
 	"use strict";
 
 	/**
 	 * Constructor for a new sap.m.NewsContent control.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class This control displays the news content text and subheader in a tile.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @since 1.34
 	 *
 	 * @public
 	 * @alias sap.m.NewsContent
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+	 * @ui5-metamodel This control will also be described in the UI5 (legacy) designtime metamodel
 	 */
 	var NewsContent = Control.extend("sap.m.NewsContent", /** @lends sap.m.NewsContent.prototype */ {
 		metadata : {
-
 			library : "sap.m",
+			designtime: "sap/m/designtime/NewsContent.designtime",
 			properties : {
 				/**
 				 * Updates the size of the chart. If not set then the default size is applied based on the device tile.
 				 * @deprecated Since version 1.38.0. The NewsContent control has now a fixed size, depending on the used media (desktop, tablet or phone).
 				 */
-				"size" : {type : "sap.m.Size", group : "Misc", defaultValue : sap.m.Size.Auto},
+				"size" : {type : "sap.m.Size", group : "Misc", defaultValue : "Auto"},
 				/**
 				 * The content text.
 				 */
@@ -53,7 +61,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 			},
 			events : {
 				/**
-				 * The event is fired when the user chooses the news content.
+				 * The event is triggered when the News Content is pressed.
 				 */
 				"press" : {}
 			}
@@ -138,16 +146,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 		return sAltText;
 	};
 
-	/**
-	 * Returns the Tooltip as String
-	 *
-	 * @returns {sap.ui.core.TooltipBase} The Tooltip object
-	 */
-	NewsContent.prototype.getTooltip_AsString = function() {
+	NewsContent.prototype.getTooltip_AsString = function() { //eslint-disable-line
 		var oTooltip = this.getTooltip();
 		var sTooltip = this.getAltText();
 		if (typeof oTooltip === "string" || oTooltip instanceof String) {
-			// TODO Nov. 2015: needs to be checked with ACC. Issue will be addresses via BLI.
 			sTooltip = oTooltip.split("{AltText}").join(sTooltip).split("((AltText))").join(sTooltip);
 			return sTooltip;
 		}
@@ -158,15 +160,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 		}
 	};
 
-	/**
-	 * Sets the ContentText
-	 *
-	 * @param {String} text The ContentType text
-	 * @returns {sap.m.NewsContent} Reference to this in order to allow method chaining
-	 */
 	NewsContent.prototype.setContentText = function(text) {
 		this._oContentText.setText(text);
-		return this;
+		return this.setProperty("contentText", text, true);
 	};
 
 	/* --- Event Handling --- */
@@ -174,10 +170,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 	/**
 	 * Handler for tap event
 	 *
-	 * @param {sap.ui.base.Event} oEvent which was fired
+	 * @param {sap.ui.base.Event} oEvent which was triggered
 	 */
 	NewsContent.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.internet_explorer) {
+		if (Device.browser.msie) {
 			this.$().focus();
 		}
 		this.firePress();
@@ -186,7 +182,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 	/**
 	 * Handler for keydown event
 	 *
-	 * @param {sap.ui.base.Event} oEvent which was fired
+	 * @param {sap.ui.base.Event} oEvent which was triggered
 	 */
 	NewsContent.prototype.onkeydown = function(oEvent) {
 		if (oEvent.which === jQuery.sap.KeyCodes.ENTER || oEvent.which === jQuery.sap.KeyCodes.SPACE) {
@@ -196,7 +192,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 	};
 
 	NewsContent.prototype.attachEvent = function(eventId, data, functionToCall, listener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, eventId, data, functionToCall, listener);
+		Control.prototype.attachEvent.call(this, eventId, data, functionToCall, listener);
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapMPointer");
 			this._setPointerOnContentText();
@@ -205,7 +201,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 	};
 
 	NewsContent.prototype.detachEvent = function(eventId, functionToCall, listener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, eventId, functionToCall, listener);
+		Control.prototype.detachEvent.call(this, eventId, functionToCall, listener);
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapMPointer");
 			this._setPointerOnContentText();
@@ -214,4 +210,4 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/m/T
 	};
 
 	return NewsContent;
-}, /* bExport= */ true);
+});

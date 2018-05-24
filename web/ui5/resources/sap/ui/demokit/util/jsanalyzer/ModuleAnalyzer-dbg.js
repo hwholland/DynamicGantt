@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -492,9 +492,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObjectMetadata', './ASTU
 
 		/**
 		 * Get the documentation information needed for a given parameter
-		 * @param {string} sParamName
-		 * @param {array} aDocTags with documentation tags
-		 * @return {Object} with parameter information
+		 * @param {string} sParamName Name of the parameter to be fetched
+		 * @param {array} aDocTags With documentation tags
+		 * @return {Object} Parameter information
 		 */
 		function getParamInfo(sParamName, aDocTags) {
 

@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Adjacent controls within the tab chain can be grouped. Within such a group, F6 skips all controls of the group and moves the focus to the first control in the tab chain of the next group. Shift F6 moves the focus to the first control of the previous group. Adjacent tab chain elements between groups are automatically handled as one group. For nested groups, the most concrete group is used."/>
 <meta name="description" content="Adjacent controls within the tab chain can be grouped. Within such a group, F6 skips all controls of the group and moves the focus to the first control in the tab chain of the next group. Shift F6 moves the focus to the first control of the previous group. Adjacent tab chain elements between groups are automatically handled as one group. For nested groups, the most concrete group is used."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=22220798958805466"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=7663726181034481"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7663726181034481"/>
 <title>Defining Groups for Fast Navigation (F6)</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio10b14c7284ba48a185ae2046db470706">
 <div id="wrapper"><div id="container">
@@ -56,7 +42,7 @@
 				on its root element, use the <samp class="ph codeph">CustomData</samp> mechanism in the <samp class="ph codeph">init</samp> function of the control or element to set the
 				attribute.</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>init = function(){
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">init = function(){
   //...
   this.data("sap-ui-fastnavgroup", "true", true/*Write into DOM*/);
   //...
@@ -70,7 +56,7 @@
 
 		<div class="section"><div class="section_title">Defining the F6 Group Within a Control</div><div type="Defining the F6 Group Within a Control">
 			
-			<div class="p">During rendering of a control, the attribute can also be written to any arbitrary DOM element of the control.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="p">During rendering of a control, the attribute can also be written to any arbitrary DOM element of the control.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 render = function(oRenderManager, oControl){
   //...
   oRenderManager.writeAttribute("data-sap-ui-fastnavgroup", "true");
@@ -96,7 +82,7 @@ render = function(oRenderManager, oControl){
 			</div></div>
 
 			<div class="p">To implement custom fast navigation handling, start with flagging the control as a custom handling
-				area:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>render = function(oRenderManager, oControl){
+				area:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">render = function(oRenderManager, oControl){
   //...
   oRenderManager.writeControlData(oControl);
   oRenderManager.writeAttribute("data-sap-ui-customfastnavgroup", "true"); //Attribute must be on the root element of the control.
@@ -112,7 +98,7 @@ render = function(oRenderManager, oControl){
 				</span>). When <samp class="ph codeph">preventDefault</samp> is called on the provided event, the central fast navigation handling ignores the event.</p>
 
 			<div class="p">The interesting point is the collaboration (b, c) between the control and the central fast navigation
-				handling.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>onsapskipforward = function(oEvent){ //F6
+				handling.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">onsapskipforward = function(oEvent){ //F6
   var oTarget = findNextDomRefToFocus(oEvent.target); //Search for the next DOM element within the control which should be focused.
   if(!oTarget){
     //target is in the last group -&gt; focus should jump to the first group after the control (done by the central handling, preventDefault not called)
@@ -167,7 +153,7 @@ onsapskipback = function(oEvent){ //Shift+F6
 
 			<div class="p">If <samp class="ph codeph">preventDefault</samp> is called on <samp class="ph codeph">BeforeFastNavigationFocus</samp>, setting the focus on the target by the central
 				handling is
-				skipped.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>onBeforeFastNavigationFocus = function(oEvent){
+				skipped.<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">onBeforeFastNavigationFocus = function(oEvent){
   var oTarget;
   if (jQuery.contains(this.getDomRef(), oEvent.source)) {
     //The source is within the custom area (e.g. might happen when the focus is on a popup which is attached to an element within the custom area)
@@ -195,19 +181,5 @@ onsapskipback = function(oEvent){ //Shift+F6
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Defining Groups for Fast Navigation (F6)";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

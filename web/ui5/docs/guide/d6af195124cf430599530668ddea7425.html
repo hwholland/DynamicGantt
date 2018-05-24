@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="For each fragment type, OpenUI5 provides a method that can be used to programmatically instantiate a fragment."/>
+<meta name="description" content="For each fragment type, OpenUI5 provides a method that can be used to programmatically instantiate a fragment."/>
 
-
-
-
-
-<meta name="abstract" content="For each fragment type, SAPUI5 provides a method that can be used to programmatically instantiate a fragment."/>
-<meta name="description" content="For each fragment type, SAPUI5 provides a method that can be used to programmatically instantiate a fragment."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=7430527590090104"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=4487297676323022"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=4487297676323022"/>
 <title>Programmatically Instantiating XML Fragments</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loiod6af195124cf430599530668ddea7425">
 <div id="wrapper"><div id="container">
@@ -33,18 +19,18 @@
 	<h1 class="title topictitle1">Programmatically Instantiating XML Fragments</h1>
 
 	
-	<div class="body taskbody"><p class="shortdesc">For each fragment type, <span class="ph"><span class="ph pname">SAPUI5</span></span> provides a method that can be used to programmatically
+	<div class="body taskbody"><p class="shortdesc">For each fragment type, <span class="ph"><span class="ph pname">OpenUI5</span></span> provides a method that can be used to programmatically
 		instantiate a fragment.</p>
 
 		<div class="section context"><div class="tasklabel"><h2 class="sectiontitle tasklabel">Context</h2></div>
 			<p class="p">To give an example of a programmatic instantiation of an XML fragment, you first have to
 				define one. The following code presents an example definition:</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;Button xmlns= "sap.ui.commons" id= "btnInFragment" text= "Hello World" /&gt;</pre></div>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;Button xmlns= "sap.ui.commons" id= "btnInFragment" text= "Hello World" /&gt;</pre></div>
 
 			<p class="p"> This fragment can be instantiated from a controller as follows:</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>var myButton = sap.ui.xmlfragment( "my.useful.VerySimpleUiPart" );</pre></div>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">var myButton = sap.ui.xmlfragment( "my.useful.VerySimpleUiPart" );</pre></div>
 
 			<div class="note note"><span class="notetitle">Note</span> 
 				<p class="p">This specific fragment does not use a controller; if controls inside a fragment
@@ -61,7 +47,7 @@
 				controls inside the fragment. The following code inside the controller will
 				instantiate the above fragment with the <samp class="ph codeph">Button</samp> and then again
 				retrieve the <samp class="ph codeph">Button</samp>:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>var myButton = sap.ui.xmlfragment(this.getView().getId(), "my.useful.VerySimpleUiPart" );
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">var myButton = sap.ui.xmlfragment(this.getView().getId(), "my.useful.VerySimpleUiPart" );
 var theSameButton = this.byId("btnInFragment"); // returns the button in the fragment </pre></div>
 </div>
 
@@ -70,19 +56,5 @@ var theSameButton = this.byId("btnInFragment"); // returns the button in the fra
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Programmatically Instantiating XML Fragments";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

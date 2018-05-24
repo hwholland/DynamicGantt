@@ -1,6 +1,6 @@
-/*
- * ! SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+/*!
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['jquery.sap.global','sap/ui/base/Object','sap/ui/fl/PreprocessorImpl'],function(q,B,P){'use strict';var F=B.extend("sap.ui.fl.Preprocessor",{});F.process=function(v){return P.process(v);};return F;},true);
+sap.ui.define(['jquery.sap.global','sap/ui/base/Object'],function(q,B){'use strict';return B.extend("sap.ui.fl.Preprocessor",{});},true);

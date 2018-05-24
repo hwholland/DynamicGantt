@@ -1,16 +1,17 @@
+/*global QUnit,sinon*/
+
 (function ($, QUnit, sinon) {
+	"use strict";
 
 	var core = sap.ui.getCore(),
 		sAnchorSelector = ".sapUxAPAnchorBarScrollContainer .sapUxAPAnchorBarButton",
 		sPopOverAnchorSelector = ".sapMPopoverScroll > .sapUxAPAnchorBarButton";
 
-	sinon.config.useFakeTimers = true;
-
 	jQuery.sap.registerModulePath("view", "view");
 
 	sap.ui.controller("viewController", {});
 
-	var viewController = new sap.ui.controller("viewController");
+	var viewController = sap.ui.controller("viewController");
 
 	var anchorBarView = sap.ui.xmlview("UxAP-70_KeyboardHandling", {
 		viewName: "view.UxAP-70_KeyboardHandling",
@@ -36,8 +37,9 @@
 
 	anchorBarView.placeAt("content");
 
-	module("AnchorBar", {
+	QUnit.module("AnchorBar", {
 		beforeEach: function () {
+			this.clock = sinon.useFakeTimers();
 			sap.ui.Device.system.phone = false;
 			jQuery("html")
 				.removeClass("sapUiMedia-Std-Phone sapUiMedia-Std-Desktop sapUiMedia-Std-Tablet")
@@ -49,7 +51,16 @@
 
 			this.assertCorrectTabIndex = function ($elment, sMessage, assert) {
 				assert.strictEqual($elment.attr(sTabIndex), sFocusable, sMessage);
-			}
+			};
+		},
+		afterEach: function() {
+			// trigger 'escape' keypress event to potentially close the popover
+			var oActiveElement = document.activeElement;
+			sap.ui.test.qunit.triggerKeydown(oActiveElement, jQuery.sap.KeyCodes.ESCAPE);
+			sap.ui.test.qunit.triggerKeyup(oActiveElement, jQuery.sap.KeyCodes.ESCAPE);
+			this.clock.tick(500);
+
+			this.clock.restore();
 		}
 	});
 
@@ -177,10 +188,6 @@
 		var aPopoverAnchors = $(sPopOverAnchorSelector),
 			iFirstSubAnchor = aPopoverAnchors[0].id;
 		assert.ok(jQuery.sap.byId(iFirstSubAnchor).is(":focus"), "Menu should be opened and first anchor focused");
-
-		// Close the popover
-		sap.ui.test.qunit.triggerKeydown(jQuery.sap.byId(iFirstSubAnchor), jQuery.sap.KeyCodes.ESCAPE);
-		sap.ui.test.qunit.triggerKeyup(jQuery.sap.byId(iFirstSubAnchor), jQuery.sap.KeyCodes.ESCAPE);
 	});
 
 	QUnit.test("PAGE UP: Anchor level", function (assert) {
@@ -220,7 +227,7 @@
 
 		sap.ui.test.qunit.triggerKeydown(oTestAnchor, jQuery.sap.KeyCodes.SPACE);
 		sap.ui.test.qunit.triggerKeyup(oTestAnchor, jQuery.sap.KeyCodes.SPACE);
-		this.clock.tick();
+		this.clock.tick(500);
 
 		// Find the first, second and seventh anchors in the popover
 		var aPopoverAnchors = $(sPopOverAnchorSelector),
@@ -281,7 +288,7 @@
 
 		sap.ui.test.qunit.triggerKeydown(oTestAnchor, jQuery.sap.KeyCodes.SPACE);
 		sap.ui.test.qunit.triggerKeyup(oTestAnchor, jQuery.sap.KeyCodes.SPACE);
-		this.clock.tick();
+		this.clock.tick(500);
 
 		// Find the first, second and seventh anchors in the popover
 		var aPopoverAnchors = $(sPopOverAnchorSelector),
@@ -308,7 +315,17 @@
 			true, "Five anchors should be skipped over and the last anchor shoud be focused");
 	});
 
-	module("Section/Subsection", {
+	QUnit.test("F6: Anchor level", function (assert) {
+		var oAncorBar = getAnchorBar(),
+			oFirstAnchor = oAncorBar.getContent()[0].getDomRef();
+
+		// Focus the first anchor and trigger F6
+		jQuery(oFirstAnchor).focus();
+		sap.ui.test.qunit.triggerKeydown(oFirstAnchor, jQuery.sap.KeyCodes.F6);
+		assert.strictEqual(jQuery("#UxAP-70_KeyboardHandling--single-subsection-show-section").is(":focus"), true, "The single subsection button should be in focus");
+	});
+
+	QUnit.module("Section/Subsection", {
 		beforeEach: function () {
 			var sFocusable = "0",
 				sTabIndex = "tabIndex";
@@ -316,7 +333,7 @@
 
 			this.assertCorrectTabIndex = function ($elment, sMessage, assert) {
 				assert.strictEqual($elment.attr(sTabIndex), sFocusable, sMessage);
-			}
+			};
 		}
 	});
 

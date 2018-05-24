@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,7 +16,7 @@ sap.ui.define('sap/ui/debug/DebugEnv', ['jquery.sap.global', 'sap/ui/base/Interf
 	 * @class Central Class for the Debug Environment
 	 *
 	 * @author Martin Schaus, Frank Weigel
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @private
 	 * @alias sap.ui.debug.DebugEnv
 	 */
@@ -58,7 +58,6 @@ sap.ui.define('sap/ui/debug/DebugEnv', ['jquery.sap.global', 'sap/ui/base/Interf
 
 	/**
 	 * Will be invoked by <code>sap.ui.core.Core</code> to notify the plugin to start
-	 * @param {sap.ui.core.Core} oCore reference to the Core
 	 * @public
 	 */
 	DebugEnv.prototype.stopPlugin = function() {

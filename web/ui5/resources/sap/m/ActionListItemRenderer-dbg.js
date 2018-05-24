@@ -1,11 +1,11 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Renderer'],
-	function(jQuery, ListItemBaseRenderer, Renderer) {
+sap.ui.define(['./ListItemBaseRenderer', 'sap/ui/core/Renderer'],
+	function(ListItemBaseRenderer, Renderer) {
 	"use strict";
 
 
@@ -40,14 +40,6 @@ sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Rende
 			rm.writeEscaped(isText);
 			rm.write("</div>");
 		}
-	};
-
-	// Returns the inner aria describedby ids for the accessibility
-	ActionListItemRenderer.getAriaDescribedBy = function(oLI) {
-		var sDescribedBy = this.getAriaAnnouncement("active"),
-			sBaseDescribedBy = ListItemBaseRenderer.getAriaDescribedBy.call(this, oLI) || "";
-
-		return sDescribedBy + " " + sBaseDescribedBy;
 	};
 
 	return ActionListItemRenderer;

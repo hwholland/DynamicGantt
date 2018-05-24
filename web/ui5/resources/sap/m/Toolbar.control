@@ -3,17 +3,36 @@
     <name>Toolbar</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The Toolbar control is a horizontal container that is most commonly used to display buttons, labels, selects and various other input controls.
+    <documentation>Horizontal container most commonly used to display buttons, labels, selects and various
+other input controls.
 
-By default, Toolbar items are shrinkable if they have percent-based width (e.g. Input, Slider) or implement the {@link sap.ui.core.IShrinkable} interface (e.g. Text, Label). This behavior can be overridden by providing {@link sap.m.ToolbarLayoutData} for the Toolbar items.
+&lt;h3&gt;Overview&lt;/h3&gt;
 
-Note: It is recommended that you use {@link sap.m.OverflowToolbar} over Toolbar, unless you want to avoid overflow in favor of shrinking.</documentation>
+By default, the &lt;code&gt;Toolbar&lt;/code&gt; items are shrinkable if they have percent-based width
+(for example, {@link sap.m.Input} and {@link sap.m.Slider}) or implement the
+{@link sap.ui.core.IShrinkable} interface (for example, {@link sap.m.Text} and {@link sap.m.Label}).
+This behavior can be overridden by providing {@link sap.m.ToolbarLayoutData} for the &lt;code&gt;Toolbar&lt;/code&gt; items.
+
+&lt;b&gt;Note:&lt;/b&gt; It is recommended that you use {@link sap.m.OverflowToolbar} over &lt;code&gt;sap.m.Toolbar&lt;/code&gt;,
+unless you want to avoid the overflow behavior in favor of shrinking.
+
+&lt;h3&gt;Usage&lt;/h3&gt;
+
+You can add a visual separator between the preceding and succeeding {@link sap.m.Toolbar} item
+with the use of the {@link sap.m.ToolbarSeparator}. The separator is theme dependent and can be
+a padding, a margin or a line.
+
+To add horizontal space between the &lt;code&gt;Toolbar&lt;/code&gt; items, use the {@link sap.m.ToolbarSpacer}.
+You can define the width of the horizontal space or make it flexible to cover the remaining space
+between the &lt;code&gt;Toolbar&lt;/code&gt; items (for example, to to push an item to the edge of the &lt;code&gt;Toolbar&lt;/code&gt;.
+
+&lt;b&gt;Note:&lt;/b&gt; {@link sap.m.ToolbarLayoutData} should not be used together with {@link sap.m.ToolbarSpacer}.</documentation>
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="width" type="sap.ui.core/CSSSize" group="Appearance">
             <documentation>Defines the width of the control.
-By default, Toolbar is a block element. If the the width is not explicitly set, the control will assume its natural size.</documentation>
+By default, Toolbar is a block element. If the width is not explicitly set, the control will assume its natural size.</documentation>
         </property>
         <property name="active" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
             <documentation>Indicates that the whole toolbar is clickable. The Press event is fired only if Active is set to true.
@@ -24,12 +43,21 @@ Note: This property should be used when there are no interactive controls inside
 Note: This property does not apply to the toolbar itself, but rather to its items.</documentation>
         </property>
         <property name="height" type="sap.ui.core/CSSSize" defaultValue="" group="Appearance">
-            <documentation>Defines the height of the control.
-Note: By default, the Height property depends on the used theme and the Design property.</documentation>
+            <documentation>Defines the height of the control. By default, the &lt;code&gt;height&lt;/code&gt;
+property depends on the used theme and the &lt;code&gt;design&lt;/code&gt; property.
+
+&lt;b&gt;Note:&lt;/b&gt; It is not recommended to use this property if the
+&lt;code&gt;sapMTBHeader-CTX&lt;/code&gt; class is used</documentation>
         </property>
         <property name="design" type="sap.m/ToolbarDesign" defaultValue="Auto" group="Appearance" since="1.16.8">
             <documentation>Defines the toolbar design.
-Note: Design settings are theme-dependent. They also determine the default height of the toolbar.</documentation>
+
+&lt;b&gt;Note:&lt;/b&gt; Design settings are theme-dependent. They also determine the default height of the toolbar.</documentation>
+        </property>
+        <property name="style" type="sap.m/ToolbarStyle" defaultValue="Standard" group="Appearance" since="1.54">
+            <documentation>Defines the visual style of the &lt;code&gt;Toolbar&lt;/code&gt;.
+
+&lt;b&gt;Note:&lt;/b&gt; The visual styles are theme-dependent.</documentation>
         </property>
     </properties>
     <events>

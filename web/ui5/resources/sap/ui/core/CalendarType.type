@@ -13,5 +13,8 @@
         <value name="Japanese">
             <documentation>The Japanese emperor calendar</documentation>
         </value>
+        <value name="Persian">
+            <documentation>The Persian Jalali calendar</documentation>
+        </value>
     </enumeration>
 </simple-type>

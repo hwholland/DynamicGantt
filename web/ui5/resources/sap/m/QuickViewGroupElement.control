@@ -20,10 +20,10 @@
             <documentation>Specifies the address of the QuickViewGroupElement link. Works only with QuickViewGroupElement of type link.</documentation>
         </property>
         <property name="target" type="sap.ui.core/string" defaultValue="_blank" group="Misc">
-            <documentation>Specifies the target of the link – it works like the target property of the HTML &lt;a&gt; tag. Works only with QuickViewGroupElement of type link.</documentation>
+            <documentation>Specifies the target of the link - it works like the target property of the HTML &lt;a&gt; tag. Works only with QuickViewGroupElement of type link.</documentation>
         </property>
         <property name="type" type="sap.m/QuickViewGroupElementType" defaultValue="text" group="Misc">
-            <documentation>Specifies the type of the displayed information – phone number, mobile number, e-mail, link, text or a link to another QuickViewPage. Default value is ‘text’.</documentation>
+            <documentation>Specifies the type of the displayed information - phone number, mobile number, e-mail, link, text or a link to another QuickViewPage. Default value is 'text'.</documentation>
         </property>
         <property name="pageLinkId" type="sap.ui.core/string" defaultValue="" group="Misc">
             <documentation>Specifies the ID of the QuickViewPage, which is opened from the link in the QuickViewGroupElement.

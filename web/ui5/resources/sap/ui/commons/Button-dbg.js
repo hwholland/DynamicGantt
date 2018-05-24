@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.Button.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator', 'sap/ui/core/IconPool'],
-	function(jQuery, library, Control, EnabledPropagator, IconPool) {
+sap.ui.define([
+    'jquery.sap.global',
+    './library',
+    'sap/ui/core/Control',
+    'sap/ui/core/EnabledPropagator',
+    'sap/ui/core/IconPool',
+    "./ButtonRenderer"
+],
+	function(jQuery, library, Control, EnabledPropagator, IconPool, ButtonRenderer) {
 	"use strict";
 
 
@@ -20,21 +27,22 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @class
 	 * Enables users to trigger actions such as save or print. For the button UI, you can define some text or an icon, or both.
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.commons.ToolbarItem
+	 * @implements sap.ui.commons.ToolbarItem, sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.Button</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.Button}
 	 * @alias sap.ui.commons.Button
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var Button = Control.extend("sap.ui.commons.Button", /** @lends sap.ui.commons.Button.prototype */ { metadata : {
 
 		interfaces : [
-			"sap.ui.commons.ToolbarItem"
+			"sap.ui.commons.ToolbarItem",
+			"sap.ui.core.IFormContent"
 		],
 		library : "sap.ui.commons",
 		properties : {
@@ -65,19 +73,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 			/**
 			 * Icon to be displayed as graphical element within the button.
-			 * This can be an URI to an image or an icon font URI.
+			 * This can be a URI to an image or an icon font URI.
 			 */
 			icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : ''},
 
 			/**
 			 * Icon to be displayed as graphical element within the button when it is hovered (only if also a base icon was specified). If not specified the base icon is used.
-			 * If a icon font icon is used, this property is ignored.
+			 * If an icon font icon is used, this property is ignored.
 			 */
 			iconHovered : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : ''},
 
 			/**
 			 * Icon to be displayed as graphical element within the button when it is selected (only if also a base icon was specified). If not specified the base or hovered icon is used.
-			 * If a icon font icon is used, this property is ignored.
+			 * If an icon font icon is used, this property is ignored.
 			 */
 			iconSelected : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : ''},
 
@@ -147,7 +155,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * Function is called when button is clicked.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onclick = function(oEvent) {
@@ -160,9 +168,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * Handles the sapenter event does not bubble
+	 * Handles the sapenter event does not bubble.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onsapenter = function(oEvent) {
@@ -173,7 +181,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * Function is called when mouse key is clicked down. The button style classes
 	 * are replaced then.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onmousedown = function(oEvent) {
@@ -194,7 +202,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		// webkit && firefox on mac does not focus a Button on click, it even unfocuses it onmousedown!
 		if (bFocus && (!!sap.ui.Device.browser.webkit || (!!sap.ui.Device.browser.firefox && navigator.platform.indexOf("Mac") === 0))) {
 			if (sap.ui.Device.browser.mobile && !!sap.ui.Device.browser.webkit) {
-				//In mobile Webkit Browsers (IPad) the focus must be set immediately to ensure that a focusout happens whereever the
+				//In mobile Webkit Browsers (IPad) the focus must be set immediately to ensure that a focusout happens wherever the
 				//focus currently is. The deleayedCall below is still needed due to the reason described above. (CSN 2536817 2012)
 				this.focus();
 			}
@@ -207,7 +215,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * When mouse key is up again, reset the background images to normal.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onmouseup = function(oEvent) {
@@ -219,7 +227,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * When mouse is going out of the control, reset the background images to normal.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onmouseout = function(oEvent) {
@@ -231,7 +239,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * When mouse is going over the control a hover effect is done.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onmouseover = function(oEvent) {
@@ -243,7 +251,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * When the button looses the focus, this method is called.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onfocusout = function(oEvent) {
@@ -255,7 +263,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * When the button gets the focus, this method is called.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The event fired
 	 * @private
 	 */
 	Button.prototype.onfocusin = function(oEvent) {
@@ -328,7 +336,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @returns {Object} Current accessibility state of the control.
 	 * @protected
 	 */
 	Button.prototype.getAccessibilityInfo = function() {

@@ -5,7 +5,11 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 	var Component = UIComponent.extend("sap.m.sample.FeedListItem.Component", {
 
 		metadata : {
-			rootView : "sap.m.sample.FeedListItem.List",
+			rootView : {
+				"viewName": "sap.m.sample.FeedListItem.List",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.m",
@@ -16,7 +20,8 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 				sample : {
 					files : [
 						"List.view.xml",
-						"List.controller.js"
+						"List.controller.js",
+						"feed.json"
 					]
 				}
 			}

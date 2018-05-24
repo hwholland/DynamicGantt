@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -19,11 +19,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	 * @class
 	 * Tree node element
 	 * @extends sap.ui.core.Element
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.Tree}
 	 * @alias sap.ui.commons.TreeNode
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -219,7 +219,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	/**
 	 * Select the node, and if any, deselects the previously selected node
 	 * @param {boolean} bSuppressEvent
-	 * @param {boolean} bDeselectOtherNodes
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -290,14 +289,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	};
 
 	/**
-	 * Private getter for child nodes without creating a copy of the nodes array
+	 * Private getter for child nodes without creating a copy of the nodes array.
+	 * @returns {sap.ui.commons.TreeNode[]} The child nodes
 	 */
 	TreeNode.prototype._getNodes = function() {
 		return this.mAggregations.nodes || [];
 	};
 
-	/**Returns true if the node has a selected child node, which is not visible
-	 * @returns True if the node has such child node
+	/** Returns true if the node has a selected child node, which is not visible.
+	 * @returns {boolean} True if the node has such child node
 	 * @private
 	 */
 	TreeNode.prototype.hasSelectedHiddenChild = function(){
@@ -368,7 +368,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	//***********************************************************************************
 
 	/** The mouse click event, which will expand/collapse the node
-	 * @param {event} oEvent The click event object
+	 * @param {jQuery.Event} oEvent The click event object
 	 * @private
 	 */
 	TreeNode.prototype.onclick = function(oEvent){
@@ -415,7 +415,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	//* KEYBOARD NAVIGATION
 	//***********************************************************************************
 	/** The generic selection event (ENTER or SPACE)
-	* @param {event} oEvent The sapselect event object
+	* @param {jQuery.Event} oEvent The sapselect event object
 	 * @private
 	 */
 	TreeNode.prototype.onsapselect = function(oEvent){
@@ -433,7 +433,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 
 	/**
 	 * The numpad + key event, which will expand the current node
-	 * @param {event} oEvent The sapexpand event object
+	 * @param {jQuery.Event} oEvent The sapexpand event object
 	 * @private
 	 */
 	TreeNode.prototype.onsapexpand = function(oEvent) {
@@ -443,7 +443,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	/**
 	 * The numpad - key event, which will expand the current node
 	 * @private
-	 * @param {event} oEvent The sapcollapse event object
+	 * @param {jQuery.Event} oEvent The sapcollapse event object
 	 */
 	TreeNode.prototype.onsapcollapse = function(oEvent) {
 		this.collapse();
@@ -451,10 +451,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	};
 
 	/**
-	* LEFT key behavior
-	* Opens the section or activates the UI element on LEFT key
+	* LEFT key behavior.
+	* Opens the section or activates the UI element on LEFT key.
 	* @private
-	* @param oEvent Browser event
+	* @param {Object} oEvent Browser event
 	*/
 	TreeNode.prototype.onsapleft = function(oEvent){
 		if (sap.ui.getCore().getConfiguration().getRTL()) {
@@ -466,10 +466,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	};
 
 	/**
-	* RIGHT key behavior
-	* Opens the section or activates the UI element on RIGHT key
+	* RIGHT key behavior.
+	* Opens the section or activates the UI element on RIGHT key.
 	* @private
-	* @param oEvent Browser event
+	* @param {Object} oEvent Browser event
 	*/
 	TreeNode.prototype.onsapright = function(oEvent){
 		if (sap.ui.getCore().getConfiguration().getRTL()) {
@@ -510,7 +510,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	//***********************************************************************************
 
 	/** Returns the parent tree control. Not necessarily the direct parent if the node is a subnode.
-	 * @returns The parent tree control
+	 * @returns {sap.ui.commons.Tree} The parent tree control
 	 * @private
 	 */
 	TreeNode.prototype.getTree = function() {
@@ -523,7 +523,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	};
 
 	/** Returns true if the node has any subnodes.
-	 * @returns True if the node has any subnode
+	 * @returns {boolean} True if the node has any subnode
 	 * @private
 	 */
 	TreeNode.prototype.hasChildren = function(){
@@ -535,7 +535,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	};
 
 	/** Returns true if the node is visible(parent and all grand parent expanded).
-	 * @returns True if the node is visible
+	 * @returns {boolean} True if the node is visible
 	 * @private
 	 */
 	TreeNode.prototype.isVisible = function(){
@@ -554,7 +554,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/CustomStyleClassSu
 	 * In case the selected node is not visible, change the scroll position of the
 	 * tree to get it into view.
 	 *
-	 * @return {sap.ui.commons.TreeNode} <code>this</code> to allow method chaining
 	 * @private
 	 */
 	TreeNode.prototype.scrollIntoView = function() {

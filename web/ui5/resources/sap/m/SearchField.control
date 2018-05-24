@@ -3,7 +3,29 @@
     <name>SearchField</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Enables users to input a search string.</documentation>
+    <documentation>An input field to search for a specific item.
+&lt;h3&gt;Overview&lt;/h3&gt;
+A search field is needed when the user needs to find specific information in large amounts of data.
+The search field is also the control of choice for filtering down
+a given amount of information.
+&lt;h3&gt;Structure&lt;/h3&gt;
+The search input field can be used in two ways:
+&lt;ul&gt;
+&lt;li&gt;Manual search - The search is triggered after the user presses the search button.
+Manual search uses a “starts with” approach.&lt;/li&gt;
+&lt;li&gt;Live search (search-as-you-type) - The search is triggered after each button press.
+A suggestion list is shown below the search field.  Live search uses a “contains” approach.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt; Use live search whenever possible. &lt;/li&gt;
+&lt;li&gt; Use a manual search only if the amount of data is too large and if your app would otherwise run
+into performance issues. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+On mobile devices, there is no refresh button in the search field. "Pull Down to Refresh" is used instead.
+The "Pull Down to Refresh" arrow icon is animated and spins to signal that the user should release it.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="value" type="sap.ui.core/string" group="Data" bindable="bindable">

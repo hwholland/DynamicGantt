@@ -1,28 +1,71 @@
 /*!
 * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
 // Provides control sap.m.MessageStrip.
-sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./MessageStripUtilities",
-	"./Text", "./Link"], function (jQuery, library, Control, MSUtils, Text, Link) {
+sap.ui.define([
+	"jquery.sap.global",
+	"./library",
+	"sap/ui/core/Control",
+	"./MessageStripUtilities",
+	"./Text",
+	"./Link",
+	"./FormattedText",
+	"sap/ui/core/library",
+	"sap/ui/Device",
+	"./MessageStripRenderer"
+], function(
+	jQuery,
+	library,
+	Control,
+	MSUtils,
+	Text,
+	Link,
+	FormattedText,
+	coreLibrary,
+	Device,
+	MessageStripRenderer
+) {
 	"use strict";
+
+	// shortcut for sap.ui.core.MessageType
+	var MessageType = coreLibrary.MessageType;
 
 	/**
 	 * Constructor for a new MessageStrip.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
 	 * MessageStrip is a control that enables the embedding of application-related messages in the application.
-	 * There are 4 types of messages: Information, Success, Warning and Error.
+	 * <h3>Overview</h3>
+	 * The message strip displays 4 types of messages, each with a corresponding semantic color and icon: Information, Success, Warning and Error.
+	 *
 	 * Each message can have a close button, so that it can be removed from the UI if needed.
+	 *
+	 * With version 1.50 you can use a limited set of formatting tags for the message text by setting <code>enableFormattedText</code>. The allowed tags are:
+	 * <ul>
+	 * <li>&lt;a&gt;</li>
+	 * <li>&lt;em&gt;</li>
+	 * <li>&lt;strong&gt;</li>
+	 * <li>&lt;u&gt;</li>
+	 * </ul>
+	 * <h3>Usage</h3>
+	 * <h4>When to use</h4>
+	 * <ul>
+	 * <li>You want to provide information or status update within the detail area of an object</li>
+	 * </ul>
+	 * <h4>When not to use</h4>
+	 * <ul>
+	 * <li>You want to display information within the object page header, within a control, in the master list, or above the page header.</li>
+	 * </ul>
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -33,6 +76,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 	var MessageStrip = Control.extend("sap.m.MessageStrip", /** @lends sap.m.MessageStrip.prototype */ {
 		metadata: {
 			library: "sap.m",
+			designtime: "sap/m/designtime/MessageStrip.designtime",
 			properties: {
 
 				/**
@@ -45,7 +89,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 				 * Possible values are: Information (default), Success, Warning, Error.
 				 * If None is passed, the value is set to Information and a warning is displayed in the console.
 				 */
-				type: { type: "sap.ui.core.MessageType", group: "Appearance", defaultValue: sap.ui.core.MessageType.Information },
+				type: { type: "sap.ui.core.MessageType", group: "Appearance", defaultValue: MessageType.Information },
 
 				/**
 				 * Determines a custom icon which is displayed.
@@ -61,15 +105,37 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 				/**
 				 * Determines if the message has a close button in the upper right corner.
 				 */
-				showCloseButton: { type: "boolean", group: "Appearance", defaultValue: false }
+				showCloseButton: { type: "boolean", group: "Appearance", defaultValue: false },
+
+				/**
+				 * Determines the limited collection of HTML elements passed to the <code>text</code> property should be
+				 * evaluated.
+				 *
+				 * <b>Note:</b> If this property is set to true the string passed to <code>text</code> property
+				 * can evaluate the following list of limited HTML elements. All other HTML elements and their nested
+				 * content will not be rendered by the control:
+				 * <ul>
+				 *	<li><code>a</code></li>
+				 *	<li><code>em</code></li>
+				 *	<li><code>strong</code></li>
+				 *	<li><code>u</code></li>
+				 * </ul>
+				 */
+				enableFormattedText: { type: "boolean", group: "Appearance", defaultValue: false }
 			},
 			defaultAggregation: "link",
 			aggregations: {
 
 				/**
-				 * Adds a sap.m.Link control which will be displayed at the end of the message.
+				 * Adds an sap.m.Link control which will be displayed at the end of the message.
 				 */
 				link: { type: "sap.m.Link", multiple: false, singularName: "link" },
+
+				/**
+				 * Hidden aggregation which is used to transform the string message into sap.m.Text control.
+				 * @private
+				 */
+				_formattedText: { type: "sap.m.FormattedText", multiple: false, visibility: "hidden" },
 
 				/**
 				 * Hidden aggregation which is used to transform the string message into sap.m.Text control.
@@ -99,8 +165,16 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 	 * @returns {sap.m.MessageStrip} this to allow method chaining
 	 */
 	MessageStrip.prototype.setText = function (sText) {
+		// Update the internal FormattedText control if needed
+		var oFormattedText = this.getAggregation("_formattedText");
+		if (oFormattedText) {
+			oFormattedText.setHtmlText(sText);
+		}
+
+		// Update the internal text control
 		this.getAggregation("_text").setText(sText);
-		return this.setProperty("text", sText, true);
+
+		return this.setProperty("text", sText);
 	};
 
 	/**
@@ -111,12 +185,28 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 	 * @returns {sap.m.MessageStrip} this to allow method chaining
 	 */
 	MessageStrip.prototype.setType = function (sType) {
-		if (sType === sap.ui.core.MessageType.None) {
+		if (sType === MessageType.None) {
 			jQuery.sap.log.warning(MSUtils.MESSAGES.TYPE_NOT_SUPPORTED);
-			sType = sap.ui.core.MessageType.Information;
+			sType = MessageType.Information;
 		}
 
 		return this.setProperty("type", sType);
+	};
+
+	MessageStrip.prototype.setEnableFormattedText = function (bEnable) {
+		var oFormattedText  = this.getAggregation("_formattedText");
+
+		if (bEnable) {
+			if (!oFormattedText) {
+				oFormattedText = new FormattedText();
+				oFormattedText._setUseLimitedRenderingRules(true);
+				this.setAggregation("_formattedText", oFormattedText);
+			}
+			// Aways call setHtmlText - do not use a constructor property to avoid unwanted warnings for HTML elements
+			oFormattedText.setHtmlText(this.getText());
+		}
+
+		return this.setProperty("enableFormattedText", bEnable);
 	};
 
 	MessageStrip.prototype.setAggregation = function (sName, oControl, bSupressInvalidate) {
@@ -130,28 +220,28 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 
 	/**
 	 * Handles tap/click
-	 * @type void
+	 * @returns void
 	 * @private
 	 */
 	MessageStrip.prototype.ontap = MSUtils.handleMSCloseButtonInteraction;
 
 	/**
 	 * Handles enter key
-	 * @type void
+	 * @returns void
 	 * @private
 	 */
 	MessageStrip.prototype.onsapenter = MSUtils.handleMSCloseButtonInteraction;
 
 	/**
 	 * Handles space key
-	 * @type void
+	 * @returns void
 	 * @private
 	 */
 	MessageStrip.prototype.onsapspace = MSUtils.handleMSCloseButtonInteraction;
 
 	/**
 	 * Handles mobile touch events
-	 * @type void
+	 * @param {jQuery.Event} oEvent The event object
 	 * @private
 	 */
 	MessageStrip.prototype.ontouchmove = function (oEvent) {
@@ -163,7 +253,6 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 	 * Closes the MessageStrip.
 	 * This method sets the visible property of the MessageStrip to false.
 	 * The MessageStrip can be shown again by setting the visible property to true.
-	 * @type void
 	 * @public
 	 */
 	MessageStrip.prototype.close = function () {
@@ -177,7 +266,7 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 			return;
 		}
 
-		if (sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version < 10) {
+		if (Device.browser.internet_explorer && Device.browser.version < 10) {
 			MSUtils.closeTransitionWithJavascript.call(this, fnClosed);
 		} else {
 			MSUtils.closeTransitionWithCSS.call(this, fnClosed);
@@ -186,4 +275,4 @@ sap.ui.define(["jquery.sap.global", "./library", "sap/ui/core/Control", "./Messa
 
 	return MessageStrip;
 
-}, /* bExport= */ true);
+});

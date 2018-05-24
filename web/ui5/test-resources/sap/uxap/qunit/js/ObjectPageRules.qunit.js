@@ -1,4 +1,7 @@
+/*global QUnit*/
+
 (function ($, QUnit) {
+	"use strict";
 
 	jQuery.sap.registerModulePath("view", "view");
 	jQuery.sap.registerModulePath("sap.uxap.sample", "../demokit/sample");
@@ -10,17 +13,29 @@
 	jQuery.sap.require("sap.uxap.ObjectPageSection");
 	jQuery.sap.require("sap.uxap.ObjectPageHeader");
 
-	module("aat_UxAP-ManageDisplay", {
-    	beforeEach: function () {
-    		//aat_UxAP-331_ObjectPageRules1
-    		this.objectPageSampleView1 = sap.ui.xmlview("UxAP-331_ObjectPageRules1", {
-    			viewName: "view.UxAP-331_ObjectPageRules1"
-    		});
-    		this.objectPageSampleView1.placeAt('qunit-fixture');
+	var BREAK_POINTS = {
+		TABLET: 1024,
+		PHONE: 600,
+		DESKTOP: 2000
+	};
 
-		    sap.ui.getCore().applyChanges();
+	var MEDIA = {
+		PHONE: "sapFDynamicPage-Std-Phone",
+		TABLET: "sapFDynamicPage-Std-Tablet",
+		DESKTOP: "sapFDynamicPage-Std-Desktop"
+	};
 
-		    this.referencedObjectPage1 = this.objectPageSampleView1.byId("objectPage1");
+	QUnit.module("aat_UxAP-ManageDisplay", {
+		beforeEach: function () {
+			//aat_UxAP-331_ObjectPageRules1
+			this.objectPageSampleView1 = sap.ui.xmlview("UxAP-331_ObjectPageRules1", {
+				viewName: "view.UxAP-331_ObjectPageRules1"
+			});
+			this.objectPageSampleView1.placeAt('qunit-fixture');
+
+			sap.ui.getCore().applyChanges();
+
+			this.referencedObjectPage1 = this.objectPageSampleView1.byId("objectPage1");
 		},
 		afterEach: function () {
 			this.objectPageSampleView1.destroy();
@@ -73,16 +88,16 @@
 		assert.strictEqual(objectPageTitle331, false, "SubSection is visible by override");
 	});
 
-	module("Single section", {
-    	beforeEach: function () {
-    		//aat_UxAP-331_ObjectPageRules2
-    		this.objectPageSampleView2 = sap.ui.xmlview("UxAP-331_ObjectPageRules2", {
-    			viewName: "view.UxAP-331_ObjectPageRules2"
-    		});
-    		this.objectPageSampleView2.placeAt('qunit-fixture');
-		    sap.ui.getCore().applyChanges();
+	QUnit.module("Single section", {
+		beforeEach: function () {
+			//aat_UxAP-331_ObjectPageRules2
+			this.objectPageSampleView2 = sap.ui.xmlview("UxAP-331_ObjectPageRules2", {
+				viewName: "view.UxAP-331_ObjectPageRules2"
+			});
+			this.objectPageSampleView2.placeAt('qunit-fixture');
+			sap.ui.getCore().applyChanges();
 
-		    this.referencedObjectPage2 = this.objectPageSampleView2.byId("objectPage2");
+			this.referencedObjectPage2 = this.objectPageSampleView2.byId("objectPage2");
 		},
 		afterEach: function () {
 			this.objectPageSampleView2.destroy();
@@ -97,9 +112,28 @@
 		var objectPageToBar331 = $("#UxAP-331_ObjectPageRules2--objectPage2").find(".sapUxAPAnchorBar").is(":visible");
 		assert.strictEqual(objectPageToBar331, false, "ObjectPageLayout 2 No AnchorBar is display");
 	});
-	QUnit.test("ObjectPageId 2: 1st Title Section is visible", function (assert) {
-		var objectPageTitle331 = $("#UxAP-331_ObjectPageRules2--ObjectPageSectionNoAnchorBar331").find(".sapUxAPObjectPageSectionHeader").is(":visible");
-		assert.strictEqual(objectPageTitle331, true, "1st Title is visible");
+
+	QUnit.test("ObjectPage _updateMedia: correct media class is applied", function (assert) {
+		assert.expect(9);
+
+		var oObjectPage = this.referencedObjectPage2,
+			fnCheckMediaClasses = function(oAssert, sMediaClass) {
+				Object.keys(MEDIA).forEach(function (sMedia) {
+					var sCurrentMediaClass = MEDIA[sMedia],
+						bMediaShouldBeApplied = sMediaClass === sCurrentMediaClass;
+
+					oAssert.strictEqual(oObjectPage.hasStyleClass(sCurrentMediaClass), bMediaShouldBeApplied, sCurrentMediaClass + " is applied: " + bMediaShouldBeApplied);
+				}, this);
+			};
+
+		oObjectPage._updateMedia(BREAK_POINTS.PHONE);
+		fnCheckMediaClasses(assert, MEDIA.PHONE);
+
+		oObjectPage._updateMedia(BREAK_POINTS.TABLET);
+		fnCheckMediaClasses(assert, MEDIA.TABLET);
+
+		oObjectPage._updateMedia(BREAK_POINTS.DESKTOP);
+		fnCheckMediaClasses(assert, MEDIA.DESKTOP);
 	});
 
 }(jQuery, QUnit));

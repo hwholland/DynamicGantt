@@ -6,6 +6,7 @@
     <documentation>Provides a main content and a secondary content area</documentation>
     <since>1.15.0</since>
     <developmentState state="experimental" since="1.15.0">API is not yet finished and might change completely</developmentState>
+    <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="showSecondaryContent" type="sap.ui.core/boolean" group="Appearance">

@@ -1,28 +1,29 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/UIComponent', 'sap/ui/demokit/demoapps/model/libraryData', "sap/ui/model/json/JSONModel"],
-	function(UIComponent, libraryData, JSONModel) {
-		"use strict";
+sap.ui.define([
+	'sap/ui/core/UIComponent',
+	'sap/ui/model/json/JSONModel',
+	'sap/ui/demokit/demoapps/model/libraryData'
+], function(UIComponent, JSONModel, libraryData) {
+	"use strict";
 
+	return UIComponent.extend("sap.ui.demokit.demoapps.Component", {
+		metadata : {
+			manifest:"json"
+		},
 
-		return UIComponent.extend("sap.ui.demokit.demoapps.Component", {
-			metadata : {
-				rootView: "sap.ui.demokit.demoapps.view.Root",
-				includes: [
-					"css/style.css"
-				]
-			},
+		init : function () {
+			// call base class constructor
+			UIComponent.prototype.init.apply(this, arguments);
 
-			init : function () {
-				UIComponent.prototype.init.apply(this, arguments);
-				var oModel = new JSONModel();
-				this.setModel(oModel);
-				libraryData.fillJSONModel(oModel);
-			}
-		});
-	}
-);
+			// load demo app metadata from docuindex of all available libraries
+			var oModel = new JSONModel();
+			libraryData.fillJSONModel(oModel);
+			this.setModel(oModel);
+		}
+	});
+});

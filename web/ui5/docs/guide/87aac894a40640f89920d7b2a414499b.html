@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The OData V4 model provides access to metadata in a streamlined JSON format which is described in the section below."/>
 <meta name="description" content="The OData V4 model provides access to metadata in a streamlined JSON format which is described in the section below."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5308237237530218"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=3270669228069527"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3270669228069527"/>
 <title>OData V4 Metadata JSON Format</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio87aac894a40640f89920d7b2a414499b">
 <div id="wrapper"><div id="container">
@@ -36,22 +22,20 @@
 	<div class="body conbody"><p class="shortdesc">The OData V4 model provides access to metadata in a streamlined JSON format which is
 		described in the section below.</p>
 
-		<p class="p">It is different to the $metadata service's JSON format (see <a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" alt="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" title="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html">OData JSON Format Version 4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>) and the OData
-			JSON Format for Common Schema Definition Language (CSDL) Version 4.0 (see <a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">corresponding specification<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>), intended to
+		<p class="p">It is different to the $metadata service's JSON format (see <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-format%2Fv4.0%2Fos%2Fodata-json-format-v4.0-os.html" alt="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" title="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html">OData JSON Format Version 4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>) and the OData
+			JSON Format for Common Schema Definition Language (CSDL) Version 4.0 (see <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-csdl%2Fv4.0%2Fodata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">corresponding specification<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>), intended to
 			simplify client-side processing. </p>
 
 		<p class="p">In the sections below, angled brackets indicate variable parts. The numbers next to each
-			expression correspond to the numbered sections in the official specification, see <a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData Version 4.0 Part 3: Common Schema Definition
-				Language (CSDL) Plus Errata 02<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>. Comments highlight optional properties,
+			expression correspond to the numbered sections in the official specification, see <a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-csdl%2Fv4.0%2Fodata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData Version 4.0 Part 3: Common Schema Definition
+				Language (CSDL) Plus Errata 03<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a>. Comments highlight optional properties,
 			especially those that have certain default values.</p>
 
 		<div class="section"><div class="section_title">Design Rationale</div><div type="Design Rationale">
 			
 			<p class="p">We have prefixed constant property names with <samp class="ph codeph">"$"</samp> as this is a legal first
 				character for JavaScript identifiers, but not for OData simple identifiers. This
-				way, <span class="ph emphasis emphasis">inline annotations</span> can be added via <samp class="ph codeph">"@&lt;14.3.1
-					Annotation Term&gt;#&lt;14.3.2 Annotation Qualifier&gt;" :
-					&lt;value&gt;</samp> everywhere without resulting in any naming conflicts.
+				way, <span class="ph emphasis emphasis">inline annotations</span> can be added via <samp class="ph codeph">"@&lt;14.3.1 Annotation Term&gt;#&lt;14.3.2 Annotation Qualifier&gt;" : &lt;value&gt;</samp> everywhere without resulting in any naming conflicts.
 				This is shown as <samp class="ph codeph">"@..." : &lt;value&gt;</samp> below.</p>
 
 			<p class="p">We assume that schema <span class="ph emphasis emphasis">aliases</span> have been resolved. We add a
@@ -70,8 +54,7 @@
 				order of their appearance, starting with zero for the first member." </p>
 
 			<p class="p">Facets like <samp class="ph codeph">MaxLength</samp>, <samp class="ph codeph">Precision</samp> and
-					<samp class="ph codeph">Scale</samp> are represented as numbers if possible (<samp class="ph codeph">"$Scale"
-					: "variable"</samp> is the only exception). <samp class="ph codeph">DefaultValue</samp> is
+					<samp class="ph codeph">Scale</samp> are represented as numbers if possible (<samp class="ph codeph">"$Scale" : "variable"</samp> is the only exception). <samp class="ph codeph">DefaultValue</samp> is
 				represented as a string for lack of type information in the general case.
 					<samp class="ph codeph">"$MaxLength" : "max"</samp> is omitted and will be treated the same as
 				an unspecified length on the client-side.</p>
@@ -94,12 +77,10 @@
 				that contain a mixture of inline annotations and external targeting to the bare
 				minimum.</p>
 
-			<div class="p">We use the <samp class="ph codeph">"&lt;key&gt;@&lt;14.3.1 Annotation Term&gt;#&lt;14.3.2 Annotation
-					Qualifier&gt;" : &lt;value&gt;</samp> syntax for inline annotations in the following
+			<div class="p">We use the <samp class="ph codeph">"&lt;key&gt;@&lt;14.3.1 Annotation Term&gt;#&lt;14.3.2 Annotation Qualifier&gt;" : &lt;value&gt;</samp> syntax for inline annotations in the following
 				cases to avoid explicit object representations: <ul class="ul" id="loio87aac894a40640f89920d7b2a414499b__ul_pcy_mms_xv">
 					<li class="li">
-						<p class="p">"7.2 Element ReferentialConstraint" with key <samp class="ph codeph">"&lt;7.2.1
-								ReferentialConstraint Property&gt;"</samp></p>
+						<p class="p">"7.2 Element ReferentialConstraint" with key <samp class="ph codeph">"&lt;7.2.1 ReferentialConstraint Property&gt;"</samp></p>
 
 					</li>
 
@@ -110,15 +91,13 @@
 					</li>
 
 					<li class="li">
-						<p class="p">"14.3 Annotation" with key <samp class="ph codeph">"@&lt;14.3.1 Annotation
-								Term&gt;#&lt;14.3.2 Annotation Qualifier&gt;"</samp> (yes, this does
+						<p class="p">"14.3 Annotation" with key <samp class="ph codeph">"@&lt;14.3.1 Annotation Term&gt;#&lt;14.3.2 Annotation Qualifier&gt;"</samp> (yes, this does
 							lead to a double at-sign <samp class="ph codeph">"@...#...@...#..."</samp>)</p>
 
 					</li>
 
 					<li class="li">
-						<p class="p">"14.5.14.2 Element PropertyValue" with key <samp class="ph codeph">"&lt;14.5.14.2.1
-								PropertyValue Property&gt;"</samp></p>
+						<p class="p">"14.5.14.2 Element PropertyValue" with key <samp class="ph codeph">"&lt;14.5.14.2.1 PropertyValue Property&gt;"</samp></p>
 
 					</li>
 
@@ -132,7 +111,8 @@
 			<p class="p">The following JSON file represents the metadata document which corresponds to
 					<samp class="ph codeph">GET &lt;serviceRoot&gt;/$metadata</samp>:</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>{
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
+{
   "$Version" : "&lt;3.1.1 Edmx Version&gt;",
   "$EntityContainer" : "&lt;5.1.1 Schema Namespace&gt;.&lt;13.1.1 EntityContainer Name&gt;", // root entity container for this $metadata document
   "$Reference" : {
@@ -318,17 +298,17 @@
 					
 					<thead class="thead" align="left">
 						<tr class="row">
-							<th class="entry" valign="top" width="33.33333333333333%" id="d6933209e210">
+							<th class="entry" valign="top" width="33.33333333333333%" id="d6408575e208">
 								<p class="p">Expression</p>
 
 							</th>
 
-							<th class="entry" valign="top" width="33.33333333333333%" id="d6933209e216">
+							<th class="entry" valign="top" width="33.33333333333333%" id="d6408575e214">
 								<p class="p">Options</p>
 
 							</th>
 
-							<th class="entry" valign="top" width="33.33333333333333%" id="d6933209e222">
+							<th class="entry" valign="top" width="33.33333333333333%" id="d6408575e220">
 								<p class="p">Additional Information</p>
 
 							</th>
@@ -339,12 +319,12 @@
 
 					<tbody class="tbody">
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4 Constant Expressions</p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">{"$Binary" : "T0RhdGE"}</samp></p>
 
 								<p class="p"><samp class="ph codeph">{"$Date" : "2000-01-01"}</samp></p>
@@ -363,7 +343,7 @@
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">"Binary", "Date", "DateTimeOffset", "Decimal", "Duration",
 									"Guid", "TimeOfDay" are objects with a single property that has
 									a string value.</p>
@@ -373,19 +353,19 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4.2 Expression <samp class="ph codeph">Bool</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">false</samp></p>
 
 								<p class="p"><samp class="ph codeph">true</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">Is represented by the JavaScript boolean literals.</p>
 
 							</td>
@@ -393,19 +373,19 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4.7 Expression <samp class="ph codeph">EnumMember</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">{"$EnumMember" : 42}</samp></p>
 
 								<p class="p"><samp class="ph codeph">{"$EnumMember" : "1234567890123456789"}</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">Is represented like above object notation, but with a JavaScript
 									number literal as long as the value is a safe integer, else with
 									a string value.</p>
@@ -415,12 +395,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4.8 Expression <samp class="ph codeph">Float</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">3.1415926535</samp></p>
 
 								<p class="p"><samp class="ph codeph">{"$Float" : "-INF"}</samp></p>
@@ -431,7 +411,7 @@
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">Is represented by a JavaScript number literal (except for the
 										<samp class="ph codeph">nanInfinity</samp> ABNF rule which needs an object
 									notation with a string value).</p>
@@ -441,19 +421,19 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4.10 Expression <samp class="ph codeph">Int</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">42</samp></p>
 
 								<p class="p"><samp class="ph codeph">{"$Int" : "1234567890123456789"}</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">Is represented by a JavaScript number literal as long as the
 									value is a safe integer. Else the above object notation is
 									used.</p>
@@ -463,17 +443,17 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e210 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e208 ">
 								<p class="p">14.4.11 Expression <samp class="ph codeph">String</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e216 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e214 ">
 								<p class="p"><samp class="ph codeph">"Product Catalog"</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="33.33333333333333%" headers="d6933209e222 ">
+							<td class="entry" valign="top" width="33.33333333333333%" headers="d6408575e220 ">
 								<p class="p">Is represented by a JavaScript string literal.</p>
 
 							</td>
@@ -493,12 +473,12 @@
 					
 					<thead class="thead" align="left">
 						<tr class="row">
-							<th class="entry" valign="top" width="50%" id="d6933209e445">
+							<th class="entry" valign="top" width="50%" id="d6408575e443">
 								<p class="p">Expression</p>
 
 							</th>
 
-							<th class="entry" valign="top" width="50%" id="d6933209e451">
+							<th class="entry" valign="top" width="50%" id="d6408575e449">
 								<p class="p">Options and Additional Information</p>
 
 							</th>
@@ -509,12 +489,12 @@
 
 					<tbody class="tbody">
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.1 Comparison and Logical Operators</p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p">edm:Not is written as <samp class="ph codeph">{"$Not" : &lt;value&gt;, "@..." :
 										&lt;value&gt;}</samp>. All others are written like
 										<samp class="ph codeph">{"$And" : [&lt;value&gt;, &lt;value&gt;], "@..." :
@@ -526,12 +506,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.2 Expression <samp class="ph codeph">AnnotationPath</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$AnnotationPath" : "..."}</samp></p>
 
 							</td>
@@ -539,12 +519,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.3 Expression <samp class="ph codeph">Apply</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$Apply" : [&lt;value&gt;, ...], "$Function" :
 										"&lt;14.5.3.1 Apply Function&gt;", "@..." :
 										&lt;value&gt;}</samp></p>
@@ -554,14 +534,15 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.4 Expression <samp class="ph codeph">Cast</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<div class="p">
-									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">{
+									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
+{
 "$Cast" : &lt;value&gt;,
 "$isCollection" : true, // omit in case of default value: false
 "$Type" : "&lt;14.5.4.1 Cast Type&gt;",
@@ -579,12 +560,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.5 Expression <samp class="ph codeph">Collection</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">[&lt;value&gt;, ...]</samp></p>
 
 								<p class="p">Simply an array. No additional properties, no annotations
@@ -595,12 +576,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.6 Expression <samp class="ph codeph">If</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$If" : [&lt;value&gt;, &lt;value&gt;, &lt;value&gt;], "@..." :
 										&lt;value&gt;}</samp></p>
 
@@ -612,14 +593,15 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.7 Expression <samp class="ph codeph">IsOf</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<div class="p">
-									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">{
+									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
+{
 "$IsOf" : &lt;value&gt;,
 "$isCollection" : true, // omit in case of default value: false
 "$Type" : "&lt;14.5.7.1 IsOf Type&gt;",
@@ -637,12 +619,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.8 Expression <samp class="ph codeph">LabeledElement</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$LabeledElement" : &lt;value&gt;, "$Name" : "&lt;5.1.1
 										Schema Namespace&gt;.&lt;14.5.8.1 LabeledElement Name&gt;", "@..."
 										: &lt;value&gt;}</samp></p>
@@ -652,12 +634,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.9 Expression <samp class="ph codeph">LabeledElementReference</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$LabeledElementReference" : "&lt;QualifiedName name of
 										a labeled element expression in scope&gt;"}</samp></p>
 
@@ -666,12 +648,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.10 Expression <samp class="ph codeph">Null</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">null</samp></p>
 
 								<p class="p"><samp class="ph codeph">{"$Null" : null, "@..." : &lt;value&gt;}</samp></p>
@@ -683,12 +665,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.11 Expression <samp class="ph codeph">NavigationPropertyPath</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$NavigationPropertyPath" : "..."}</samp></p>
 
 							</td>
@@ -696,12 +678,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.12 Expression <samp class="ph codeph">Path</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$Path" : "..."}</samp></p>
 
 							</td>
@@ -709,12 +691,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.13 Expression <samp class="ph codeph">PropertyPath</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$PropertyPath" : "..."}</samp></p>
 
 							</td>
@@ -722,16 +704,17 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.14 Expression <samp class="ph codeph">Record</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p">The record itself is a map:</p>
 
 								<div class="p">
-									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">{
+									<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
+{
   "$Type" : "&lt;14.5.14.1 Record Type&gt;",
   "&lt;14.5.14.2.1 PropertyValue Property&gt;" : &lt;value&gt;,
   "@..." : &lt;value&gt;
@@ -744,12 +727,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="50%" headers="d6933209e445 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e443 ">
 								<p class="p">14.5.15 Expression <samp class="ph codeph">UrlRef</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="50%" headers="d6933209e451 ">
+							<td class="entry" valign="top" width="50%" headers="d6408575e449 ">
 								<p class="p"><samp class="ph codeph">{"$UrlRef" : &lt;value&gt;, "@..." :
 									&lt;value&gt;}</samp></p>
 
@@ -768,28 +751,14 @@
 
 	<div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" alt="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" title="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html">OData JSON Format Version 4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData JSON Format for Common Schema Definition Language (CSDL) Version
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-format%2Fv4.0%2Fos%2Fodata-json-format-v4.0-os.html" alt="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html" title="http://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html">OData JSON Format Version 4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-csdl%2Fv4.0%2Fodata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData JSON Format for Common Schema Definition Language (CSDL) Version
 				4.0<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData Version 4.0 Part 3: Common Schema Definition Language (CSDL) Plus Errata
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=http%3A%2F%2Fdocs.oasis-open.org%2Fodata%2Fodata-json-csdl%2Fv4.0%2Fodata-json-csdl-v4.0.html" alt="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html" title="http://docs.oasis-open.org/odata/odata-json-csdl/v4.0/odata-json-csdl-v4.0.html">OData Version 4.0 Part 3: Common Schema Definition Language (CSDL) Plus Errata
 				02<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="OData V4 Metadata JSON Format";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

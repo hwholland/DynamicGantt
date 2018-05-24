@@ -1,25 +1,53 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.uxap.ObjectPageHeaderContent.
-sap.ui.define(["sap/ui/core/Control", "./library", "sap/m/Button"],
-	function (Control, library, Button) {
+sap.ui.define([
+    "sap/ui/core/Control",
+    "./library",
+    "sap/m/Button",
+    "./ObjectImageHelper",
+    "./ObjectPageHeaderContentRenderer"
+],
+	function(
+	    Control,
+		library,
+		Button,
+		ObjectImageHelper,
+		ObjectPageHeaderContentRenderer
+	) {
 		"use strict";
 
+		// shortcut for sap.uxap.ObjectPageHeaderDesign
+		var ObjectPageHeaderDesign = library.ObjectPageHeaderDesign;
+
 		/**
-		 * Constructor for a new ObjectPageHeaderContent.
+		 * Constructor for a new <code>ObjectPageHeaderContent</code>.
 		 *
-		 * @param {string} [sId] id for the new control, generated automatically if no id is given
-		 * @param {object} [mSettings] initial settings for the new control
+		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+		 * @param {object} [mSettings] Initial settings for the new control
 		 *
 		 * @class
-		 * ObjectPageHeaderContent represents the dynamic part of an Object page header. May contain any control.
-		 * Unlike the Object page header title, the Object page header content is part of the scrolling area of the Object page.
-		 * This enables it to hold any amount of information and still be usable on a mobile device.
+		 * Header content for the classic header of the {@link sap.uxap.ObjectPageLayout}.
+		 *
+		 * <h3>Overview</h3>
+		 *
+		 * The <code>ObjectPageHeaderContent</code> represents the movable part of the
+		 * <code>ObjectPageLayout</code>'s classic header. It can contain any control and scrolls along with
+		 * the content of the page until it disappears (collapsed header). When scrolled back to the
+		 * top it becomes visible again (expanded header). It contains all the additional information of the object.
+		 *
+		 * Documentation links:
+		 * <ul>
+		 * <li>{@link topic:d2ef0099542d44dc868719d908e576d0 Object Page Headers}</li>
+		 * <li>{@link topic:0fecbce45e39406aa939bd25e89823f4 Object Page Classic Header}</li>
+		 * </ul>
+		 *
 		 * @extends sap.ui.core.Control
+		 * @implements sap.uxap.IHeaderContent
 		 *
 		 * @author SAP SE
 		 *
@@ -33,15 +61,19 @@ sap.ui.define(["sap/ui/core/Control", "./library", "sap/m/Button"],
 			metadata: {
 
 				library: "sap.uxap",
+				interfaces: ["sap.uxap.IHeaderContent"],
 				properties: {
 
 					/**
-					 * Determines the design of the header - Light or Dark
+					 * Determines the design of the header - Light or Dark.
+					 * <b>Note: </b>This property is deprecated. It will continue to work in the Blue Crystal theme,
+					 * but it will not be taken into account for the Belize themes.
+					 * @deprecated Since version 1.40.1
 					 */
 					contentDesign: {
 						type: "sap.uxap.ObjectPageHeaderDesign",
 						group: "Misc",
-						defaultValue: sap.uxap.ObjectPageHeaderDesign.Light
+						defaultValue: ObjectPageHeaderDesign.Light
 					}
 				},
 				aggregations: {
@@ -55,7 +87,11 @@ sap.ui.define(["sap/ui/core/Control", "./library", "sap/m/Button"],
 					 *
 					 * Internal aggregation for the "Edit Header" button.
 					 */
-					_editHeaderButton: {type: "sap.m.Button", multiple: false, visibility: "hidden"}
+					_editHeaderButton: {type: "sap.m.Button", multiple: false, visibility: "hidden"},
+
+					_objectImage: {type: "sap.ui.core.Control", multiple: false, visibility: "hidden"},
+
+					_placeholder: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"}
 				}
 			}
 		});
@@ -99,6 +135,44 @@ sap.ui.define(["sap/ui/core/Control", "./library", "sap/m/Button"],
 			return this.getAggregation(sAggregationName);
 		};
 
+		ObjectPageHeaderContent.prototype._getObjectImage = function() {
+			if (!this.getAggregation("_objectImage")) {
+
+				var oParent = this.getParent(),
+					oHeader = oParent && oParent.getHeaderTitle && oParent.getHeaderTitle(),
+					oObjectImage = oHeader && ObjectImageHelper.createObjectImage(oHeader);
+
+				if (oObjectImage) {
+					this.setAggregation("_objectImage", oObjectImage, true); // this is always called before rendering, so suppress invalidate
+				}
+			}
+			return this.getAggregation("_objectImage");
+		};
+
+		ObjectPageHeaderContent.prototype._destroyObjectImage = function(bSuppressInvalidate) {
+			var oOldImage = this.getAggregation("_objectImage");
+			if (oOldImage) {
+				oOldImage.destroy();
+				this.getAggregation("_objectImage", null, bSuppressInvalidate);
+			}
+		};
+
+		ObjectPageHeaderContent.prototype._getPlaceholder = function() {
+			if (!this.getAggregation("_placeholder")) {
+
+				var oParent = this.getParent(),
+					oHeader = oParent && oParent.getHeaderTitle && oParent.getHeaderTitle(),
+					bShowPlaceholder = oHeader.getShowPlaceholder();
+
+				var oPlaceholder = bShowPlaceholder && ObjectImageHelper.createPlaceholder();
+
+				if (oPlaceholder) {
+					this.setAggregation("_placeholder", oPlaceholder, true); // this is always called before rendering, so suppress invalidate
+				}
+			}
+			return this.getAggregation("_placeholder");
+		};
+
 		/**
 		 * The layout data to apply to a header cluster
 		 * called from the renderer
@@ -121,6 +195,78 @@ sap.ui.define(["sap/ui/core/Control", "./library", "sap/m/Button"],
 					}
 				}
 			}
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @param aContent
+		 * @param bVisible
+		 * @param sContentDesign
+		 */
+		ObjectPageHeaderContent.createInstance = function (aContent, bVisible, sContentDesign) {
+			return new ObjectPageHeaderContent({
+				content: aContent,
+				visible: bVisible,
+				contentDesign: sContentDesign
+			});
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @returns {boolean}
+		 */
+		ObjectPageHeaderContent.prototype.supportsPinUnpin = function () {
+			return false;
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @returns {boolean}
+		 */
+		ObjectPageHeaderContent.prototype.supportsChildPageDesign = function () {
+			return true;
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @returns {boolean}
+		 */
+		ObjectPageHeaderContent.prototype.supportsAlwaysExpanded = function () {
+			return true;
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @param {boolean} bToggle
+		 * @private
+		 */
+		ObjectPageHeaderContent.prototype._toggleCollapseButton = function (bToggle) {
+
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @param {boolean} bValue
+		 * @private
+		 */
+		ObjectPageHeaderContent.prototype._setShowCollapseButton = function (bValue) {
+
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @private
+		 */
+		ObjectPageHeaderContent.prototype._focusCollapseButton = function () {
+
+		};
+
+		/**
+		 * Required by the {@link sap.uxap.IHeaderContent} interface.
+		 * @private
+		 */
+		ObjectPageHeaderContent.prototype._focusPinButton = function () {
+
 		};
 
 		return ObjectPageHeaderContent;

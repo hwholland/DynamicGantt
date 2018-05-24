@@ -3,7 +3,47 @@
     <name>Dialog</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The Dialog control is used to interrupt the current processing of an application to prompt the user for information or a response.</documentation>
+    <documentation>A popup that interrupts the current processing and prompts the user for an action or an input, in a modal mode.
+&lt;h3&gt;Overview&lt;/h3&gt;
+The Dialog control is used to prompt the user for an action or a confirmation. It interrupts the current app processing as it is the only focused UI element and the main screen is dimmed/blocked.
+The content of the dialog is fully customizable.
+&lt;h3&gt;Structure&lt;/h3&gt;
+A dialog consists of a title, optional subtitle, content area and a footer for action buttons.
+The dialog is usually displayed at the center of the screen. Its size and position can be changed by the user.
+To enable this, you need to set the properties &lt;code&gt;resizable&lt;/code&gt; and &lt;code&gt;draggable&lt;/code&gt; accordingly.
+
+There are other specialized types of dialogs:
+&lt;ul&gt;
+&lt;li&gt;{@link sap.m.P13nDialog Personalization dialog} - used for personalizing sorting, filtering and grouping in tables&lt;/li&gt;
+&lt;li&gt;{@link sap.m.SelectDialog Select dialog} - used to select one or more items from a comprehensive list&lt;/li&gt;
+&lt;li&gt;{@link sap.m.TableSelectDialog Table select dialog} - used to  make a selection from a comprehensive table containing multiple attributes or values&lt;/li&gt;
+&lt;li&gt;{@link sap.ui.comp.valuehelpdialog.ValueHelpDialog Value help dialog} - used to help the user find and select single and multiple values&lt;/li&gt;
+&lt;li&gt;{@link sap.m.ViewSettingsDialog View settings dialog}  - used to sort, filter, or group data within a (master) list or a table&lt;/li&gt;
+&lt;li&gt;{@link sap.m.BusyDialog Busy dialog} - used to block the screen and inform the user about an ongoing operation&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You want to display a system message.&lt;/li&gt;
+&lt;li&gt;You want to interrupt the user’s action.&lt;/li&gt;
+&lt;li&gt;You want to show a message with a short and a long description.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;You just want to confirm a successful action.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Responsive Behavior&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;If the &lt;code&gt;stretch&lt;/code&gt; property is set to true, the dialog displays on full screen.&lt;/li&gt;
+&lt;li&gt;If the &lt;code&gt;contentWidth&lt;/code&gt; and/or &lt;code&gt;contentHeight&lt;/code&gt; properties are set, the dialog will try to fill those sizes.&lt;/li&gt;
+&lt;li&gt;If there is no specific sizing, the dialog will try to adjust its size to its content.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Smartphones&lt;/h4&gt;
+If the dialog has one or two actions they will cover the entire footer. If there are more actions, they will overflow.
+&lt;h4&gt;Tablets&lt;/h4&gt;
+The action buttons in the toolbar are &lt;b&gt;right-aligned&lt;/b&gt;. Use &lt;b&gt;cozy&lt;/b&gt; mode on tablet devices.
+&lt;h4&gt;Desktop&lt;/h4&gt;
+The action buttons in the toolbar are &lt;b&gt;right-aligned&lt;/b&gt;. Use &lt;b&gt;compact&lt;/b&gt; mode on desktop.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="icon" type="sap.ui.core/URI" group="Appearance">
@@ -16,7 +56,7 @@
             <documentation>Determines whether the header is shown inside the dialog. If this property is set to true, the text and icon property are ignored. This property has a default value true.</documentation>
         </property>
         <property name="type" type="sap.m/DialogType" defaultValue="Standard" group="Appearance">
-            <documentation>The type of the dialog. In theme sap_bluecrystal, the type "message" will limit the dialog's width within 480px on tablet and desktop.</documentation>
+            <documentation>The type of the dialog. In some themes, the type "message" will limit the dialog's width within 480px on tablet and desktop.</documentation>
         </property>
         <property name="state" type="sap.ui.core/ValueState" defaultValue="None" group="Appearance" since="1.11.2">
             <documentation>The state affects the icon and the title color. If other than "None" is set, a predefined icon will be added to the dialog. Setting icon property will overwrite the predefined icon. The default value is "None" which doesn't add any icon to the Dialog control. This property is by now only supported by blue crystal theme.</documentation>
@@ -29,7 +69,7 @@
             <documentation>Determines  if the dialog will be stretched to full screen. This property is only applicable to standard dialog and message type dialog ignores this property.</documentation>
         </property>
         <property name="contentWidth" type="sap.ui.core/CSSSize" group="Dimension" since="1.12.1">
-            <documentation>Preferred width of content in Dialog. This property affects the width of dialog on phone in landscape mode, tablet or desktop, because the dialog has a fixed width on phone in portrait mode. If the preferred width is less than the minimum width of dilaog or more than the available width of the screen, it will be overwritten by the min or max value. The current mininum value of dialog width on tablet is 400px.</documentation>
+            <documentation>Preferred width of content in Dialog. This property affects the width of dialog on phone in landscape mode, tablet or desktop, because the dialog has a fixed width on phone in portrait mode. If the preferred width is less than the minimum width of the dialog or more than the available width of the screen, it will be overwritten by the min or max value. The current mininum value of dialog width on tablet is 400px.</documentation>
         </property>
         <property name="contentHeight" type="sap.ui.core/CSSSize" group="Dimension" since="1.12.1">
             <documentation>Preferred height of content in Dialog. If the preferred height is bigger than the available space on screen, it will be overwritten by the maximum available height on screen in order to make sure that dialog isn't cut off.</documentation>
@@ -47,6 +87,10 @@ Dialog detects if there's sap.m.NavContainer, sap.m.Page, sap.m.ScrollContainer 
         </property>
         <property name="draggable" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.30">
             <documentation>Indicates whether the dialog is draggable. If this property is set to true, the dialog will be draggable by it's header. This property has a default value false. The Dialog can be draggable only in desktop mode.</documentation>
+        </property>
+        <property name="escapeHandler" type="sap.ui.core/any" group="Behavior" since="1.44">
+            <documentation>This property expects a function with one parameter of type &lt;code&gt;Promise&lt;/code&gt;. In the function you should call either &lt;code&gt;resolve()&lt;/code&gt; or &lt;code&gt;reject()&lt;/code&gt; on the &lt;code&gt;Promise&lt;/code&gt; object.&lt;br/&gt;
+The function allows you to define custom behaviour which will be executed when the ESCAPE key is pressed. By default when the ESCAPE key is pressed the Dialog is immediately closed.</documentation>
         </property>
     </properties>
     <events>
@@ -81,7 +125,7 @@ Dialog detects if there's sap.m.NavContainer, sap.m.Page, sap.m.ScrollContainer 
             <documentation>When subHeader is assigned to Dialog, it's rendered directly after the main header in Dialog. SubHeader is out of the content area and won't be scrolled when content's size is bigger than the content area's size.</documentation>
         </aggregation>
         <aggregation name="customHeader" type="sap.m/IBar" since="1.15.1" cardinality="0..1">
-            <documentation>CustomHeader is only supported in theme sap_bluecrystal. When it's set, the icon, title and showHeader are properties ignored. Only the customHeader is shown as the header of the dialog.</documentation>
+            <documentation>CustomHeader is only supported in some themes. When it's set, the icon, title and showHeader are properties ignored. Only the customHeader is shown as the header of the dialog.</documentation>
         </aggregation>
         <aggregation name="beginButton" type="sap.m/Button" since="1.15.1" cardinality="0..1">
             <documentation>The button which is rendered to the left side (right side in RTL mode) of the endButton in the footer area inside the dialog. From UI5 version 1.21.1, there's a new aggregation "buttons" created with which more than 2 buttons can be added to the footer area of dialog. If the new "buttons" aggregation is set, any change made to this aggregation has no effect anymore. When runs on the phone, this button (and the endButton together when set) is (are) rendered at the center of the footer area. When runs on the other platforms, this button (and the endButton together when set) is (are) rendered at the right side (left side in RTL mode) of the footer area.</documentation>
@@ -103,6 +147,9 @@ Dialog detects if there's sap.m.NavContainer, sap.m.Page, sap.m.ScrollContainer 
         </aggregation>
         <aggregation name="_toolbar" type="sap.m/OverflowToolbar" cardinality="0..1" visibility="hidden">
             <documentation>The hidden aggregation for internal maintained toolbar instance</documentation>
+        </aggregation>
+        <aggregation name="_valueState" type="sap.ui.core/InvisibleText" cardinality="0..1" visibility="hidden">
+            <documentation>The hidden aggregation for the Dialog state</documentation>
         </aggregation>
     </aggregations>
     <associations>

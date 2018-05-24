@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="You use busy indicators to inform users that something is going on in the background, for example, some data is being fetched from the back end and the user has to wait. As long as the busy indicator is shown, either all or a specific part of the UI is blocked, and no user interaction is possible."/>
 <meta name="description" content="You use busy indicators to inform users that something is going on in the background, for example, some data is being fetched from the back end and the user has to wait. As long as the busy indicator is shown, either all or a specific part of the UI is blocked, and no user interaction is possible."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=03527848693115698"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=1253997073614469"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=1253997073614469"/>
 <title>Busy Indicators</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio0dd211065c714c0d8a35cecb5fea8557">
 <div id="wrapper"><div id="container">
@@ -65,12 +51,12 @@
 			
 			<div class="p">You can use the <samp class="ph codeph">sap.ui.core.BusyIndicator</samp> busy indicator to block the whole
 				UI. You can set the delay in ms by specifying the number:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.core.BusyIndicator.show(<span class="ph emphasis emphasis">&lt;number&gt;</span>);</pre></div>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.core.BusyIndicator.show(<span class="ph emphasis emphasis">&lt;number&gt;</span>);</pre></div>
 </div>
 
 			<div class="p">To release the UI again, the busy indication must be hidden again. This function call hides
 				the busy indication
-				immediately:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.core.BusyIndicator.hide();</pre></div>
+				immediately:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.core.BusyIndicator.hide();</pre></div>
 </div>
 
 			<p class="p"><a class="xref" href="../../docs/api/symbols/sap.ui.core.BusyIndicator.html" alt="../../docs/api/symbols/sap.ui.core.BusyIndicator.html" title="../../docs/api/symbols/sap.ui.core.BusyIndicator.html">API Reference:
@@ -105,40 +91,30 @@
 					<samp class="ph codeph">busy</samp> are skipped and the focus jumps to the next control.</p>
 
 			<div class="p">Here's how to do it:
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oMyListBox = new sap.ui.commons.ListBox({
-    tooltip : "Country",
-    editable : false,
-    width : "200px",
-    height : "200px",
-    items : [ new sap.ui.core.ListItem({
-        text : "I'm an item, and you?"
-    }) ]
- }).placeAt("uiArea1");
-
-<span class="ph emphasis emphasis">oMyListBox.setBusy(true);</span></pre></div>
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">	var oInput = new sap.m.Input({
+		value:'Hello World'
+	});
+...
+	<span class="ph emphasis emphasis">oInput.setBusy(true);</span>
+</pre></div>
 The
 				following code shows how you define the default state of a control as
 					<samp class="ph codeph">busy</samp> so that it will be displayed as busy when it has been
-				rendered:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>var oMyListBox = new sap.ui.commons.ListBox({
-    <span class="ph emphasis emphasis">busy : true,
+				rendered:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">	var oInput = new sap.m.Input({
+		value:'Hello World',
+		<span class="ph emphasis emphasis">busy: true
 </span>
-    tooltip : "Country",
-    editable : false,
-    width : "200px",
-    height : "200px",
-    items : [ new sap.ui.core.ListItem({
-        text : "I'm an item, and you?"
-    }) ]
- }).placeAt("uiArea1");</pre></div>
+	});
+</pre></div>
 </div>
 
 			<div class="p">To release the control's busy state again, the same API can be used. This has to be done by
 				the application after some data has been loaded, for example with the following
-				command:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oMyListBox.setBusy(false);</pre></div>
+				command:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">oMyListBox.setBusy(false);</pre></div>
 </div>
 
 			<div class="p">To change the default delay of the local busy indicator,
-				use:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>oMyListBox.setBusyIndicatorDelay(<span class="ph emphasis emphasis">&lt;number&gt;</span>);</pre></div>
+				use:<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">oMyListBox.setBusyIndicatorDelay(<span class="ph emphasis emphasis">&lt;number&gt;</span>);</pre></div>
 </div>
 
 			<p class="p"><a class="xref" href="../../docs/api/symbols/sap.m.BusyIndicator.html" alt="../../docs/api/symbols/sap.m.BusyIndicator.html" title="../../docs/api/symbols/sap.m.BusyIndicator.html">API Reference:
@@ -157,19 +133,5 @@ The
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Busy Indicators";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

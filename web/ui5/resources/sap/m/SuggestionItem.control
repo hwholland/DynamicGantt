@@ -9,7 +9,7 @@
     <properties>
         <property name="icon" type="sap.ui.core/string" defaultValue="" group="Appearance">
             <documentation>The icon belonging to this list item instance.
-This can be an URI to an image or an icon font URI.</documentation>
+This can be a URI to an image or an icon font URI.</documentation>
         </property>
         <property name="description" type="sap.ui.core/string" defaultValue="" group="Data">
             <documentation>Additional text of type string, optionally to be displayed along with this item.</documentation>

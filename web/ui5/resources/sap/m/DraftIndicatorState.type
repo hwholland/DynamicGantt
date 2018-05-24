@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>DraftIndicatorState</name>
     <derived/>
-    <documentation>Enum for the state of sap.m.DraftIndicator control.</documentation>
+    <documentation>Enum for the state of {@link sap.m.DraftIndicator} control.</documentation>
     <enumeration>
         <value name="Clear">
             <documentation>This is the default value for DraftIndicatorState type. This state has no visual information displayed.</documentation>

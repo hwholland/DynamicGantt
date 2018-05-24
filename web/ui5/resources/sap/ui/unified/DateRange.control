@@ -10,7 +10,7 @@
             <documentation>Start date for a date range. This must be a JavaScript date object.</documentation>
         </property>
         <property name="endDate" type="sap.ui.core/object" group="Misc">
-            <documentation>Start date for a date range. If empty only a single date is presented by this DateRange element. This must be a JavaScript date object.</documentation>
+            <documentation>End date for a date range. If empty only a single date is presented by this DateRange element. This must be a JavaScript date object.</documentation>
         </property>
     </properties>
 </control>

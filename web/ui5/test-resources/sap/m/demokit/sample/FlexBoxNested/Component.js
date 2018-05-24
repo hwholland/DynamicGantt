@@ -5,14 +5,18 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 	var Component = UIComponent.extend("sap.m.sample.FlexBoxNested.Component", {
 
 		metadata : {
-			rootView : "sap.m.sample.FlexBoxNested.V",
+			rootView : {
+				"viewName": "sap.m.sample.FlexBoxNested.V",
+				"type": "XML",
+				"async": true
+			},
 			dependencies : {
 				libs : [
 					"sap.m",
 					"sap.ui.layout"
 				]
 			},
-			includes : [ "FlexBoxNested/style.css" ],
+			includes : [ "style.css" ],
 			config : {
 				sample : {
 					files : [

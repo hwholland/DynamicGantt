@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="Now we want to do something with that newly generated list. In most cases you will use a list to allow the selection of an item and then show the details of that item elsewhere. In order to achieve this, we use a form with relatively bound controls and bind it to the selected entity via element binding."/>
 <meta name="description" content="Now we want to do something with that newly generated list. In most cases you will use a list to allow the selection of an item and then show the details of that item elsewhere. In order to achieve this, we use a form with relatively bound controls and bind it to the selected entity via element binding."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8177799978991727"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=8515257122101182"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8515257122101182"/>
 <title>Step 13: Element Binding</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio6c7c5c266b534e7ea9a28f861dc515f5">
 <div id="wrapper"><div id="container">
@@ -49,14 +35,14 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">			
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the Demo Kit
+			<p class="p">You can view and download all files in the Demo Kit
 					<span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.tutorial.databinding.13/preview" alt="../../explored.html#/sample/sap.ui.core.tutorial.databinding.13/preview" title="../../explored.html#/sample/sap.ui.core.tutorial.databinding.13/preview">Data Binding - Step 13</a></span>.</p>
 
 		</div></div>
 
 		<div class="section"><div class="section_title">webapp/view/App.view.xml</div><div type="webapp/view/App.view.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...
         &lt;/items&gt;
       &lt;/List&gt;
     &lt;/content&gt;
@@ -92,7 +78,7 @@
 
 		<div class="section"><div class="section_title">webapp/view/App.views.xml</div><div type="webapp/view/App.views.xml">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">...
   &lt;Panel headerText="{i18n&gt;panel4HeaderText}" class="sapUiResponsiveMargin" width="auto"&gt;
     &lt;content&gt;
       &lt;List headerText="{i18n&gt;productListTitle}" items="{products&gt;/Products}"&gt;
@@ -114,9 +100,11 @@
 
 		<div class="section"><div class="section_title">webapp/controller/App.controller.js</div><div type="webapp/controller/App.controller.js">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define(["sap/ui/core/mvc/Controller","sap/ui/model/type/Currency"],
-	function (Controller, Currency) {
-		"use strict";
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/model/type/Currency"
+], function (Controller, Currency) {
+	"use strict";
  
 	return Controller.extend("sap.ui.demo.db.controller.App", {
 		formatMail: function(sFirstName, sLastName) {
@@ -126,6 +114,7 @@
 				oBundle.getText("mailSubject", [sFirstName]),
 				oBundle.getText("mailBody"));
 		},
+
 		formatStockValue: function(fUnitPrice, iStockLevel, sCurrCode) {
 			var sBrowserLocale = sap.ui.getCore().getConfiguration().getLanguage();
 			var oLocale = new sap.ui.core.Locale(sBrowserLocale);
@@ -133,11 +122,12 @@
 			var oCurrency = new Currency(oLocaleData.mData.currencyFormat);
 			return oCurrency.formatValue([fUnitPrice * iStockLevel, sCurrCode], "string");
 		}<span class="ph emphasis emphasis">,
+
 		onItemSelected: function(oEvent) {
 			var oSelectedItem = oEvent.getSource();
 			var oContext = oSelectedItem.getBindingContext("products");
 			var sPath = oContext.getPath();
-			var oProductDetailPanel = this.getView().byId("productDetailsPanel");
+			var oProductDetailPanel = this.byId("productDetailsPanel");
 			oProductDetailPanel.bindElement({ path: sPath, model: "products" });
 		}
 </span>
@@ -159,7 +149,7 @@
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n.properties</div><div type="webapp/i18n/i18n.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>...
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">...
 # Screen titles
 panel1HeaderText=Data Binding Basics
 panel2HeaderText=Adress Details
@@ -183,7 +173,7 @@ Discontinued=Discontinued</span>
 
 		<div class="section"><div class="section_title">webapp/i18n/i18n_de.properties</div><div type="webapp/i18n/i18n_de.properties">
 			
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp># Screen titles
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs"># Screen titles
 panel1HeaderText=Data Binding Grundlagen
 panel2HeaderText=Adressdetails
 panel3HeaderText=Aggregation Binding
@@ -211,34 +201,20 @@ Discontinued=Eingestellt</span></pre></div>
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in SAPUI5.">Data Binding</a><br/>
+<strong>Parent topic: </strong><a class="link" href="e5310932a71f42daa41f3a6143efca9c.html" title="In this tutorial, we will explain the concepts of data binding in OpenUI5.">Data Binding</a><br/>
 </div>
 <div class="previouslink"><br/>
-<strong>Previous: </strong><a class="link" href="97830de2d7314e93b5c1ee3878a17be9.html" title="Aggregation binding allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls.">Step 12: Aggregation Binding Using Templates</a><br/>
+<strong>Previous: </strong><a class="link" href="97830de2d7314e93b5c1ee3878a17be9.html" title="Aggregation binding (or &#34;list binding&#34;) allows a control to be bound to a list within the model data and allows relative binding to the list entries by its child controls.">Step 12: Aggregation Binding Using Templates</a><br/>
 </div>
 <div class="nextlink"><br/>
 <strong>Next: </strong><a class="link" href="5cff8d1c3fb84c5db7a00f2daca125af.html" title="Expression binding allows you to display a value on the screen that has been calculated from values found in some model object. This way simple formatting or calculations can be inserted directly into the data binding string. In this example, we will change the color of the price depending on whether it is above or below some arbitrary threshold. The threshold value is also stored in the JSON model.">Step 14: Expression Binding</a><br/>
 </div>
 </div>
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="91f05e8b6f4d1014b6dd926db0e91070.html" title="Element binding allows you to bind elements to a specific object in the model data, which will create a binding context and allow relative binding within the control and all of its children. This is especially helpful in master-detail scenarios.">Element Binding</a></div>
+<div><a class="link" href="91f05e8b6f4d1014b6dd926db0e91070.html" title="Context binding (or element binding) allows you to bind elements to a specific object in the model data, which will create a binding context and allow relative binding within the control and all of its children. This is especially helpful in master-detail scenarios.">Context Binding (Element Binding)</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 13: Element Binding";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

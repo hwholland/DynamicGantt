@@ -10,22 +10,21 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>Calendar - sap.ui.unified</title>
 		<link rel="shortcut icon" type="image/x-icon" href="../images/controls/sap.ui.unified.Calendar.gif">
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.ui.unified"
 			data-sap-ui-language="en-US"
 			data-sap-ui-calendarType="Japanese">
 		</script>
 		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 
 		<!-- Test functions -->
-		<script language="javascript">
+		<script>
 
 			jQuery.sap.require("sap.ui.core.LocaleData");
 			var oLocaleData = sap.ui.core.LocaleData.getInstance(new sap.ui.core.Locale("en-US"));
@@ -58,9 +57,9 @@
 
 				var $Month = oCal1.getAggregation("month")[0].$();
 
-				equal($Month.find(".sapUiCalWH").length, 7, "week has 7 days");
-				equal(oCal1.$("-Head-B1").text(), "" + aMonthNames[iExpectedMonth-1], "Month is correct");
-				equal(oCal1.$("-Head-B2").text(), iExpectedYear + " " + sExpectedEra, "Japanese Year is correct");
+				assert.equal($Month.find(".sapUiCalWH").length, 7, "week has 7 days");
+				assert.equal(oCal1.$("-Head-B1").text(), "" + aMonthNames[iExpectedMonth-1], "Month is correct");
+				assert.equal(oCal1.$("-Head-B2").text(), iExpectedYear + " " + sExpectedEra, "Japanese Year is correct");
 
 				var aDays = $Month.find(".sapUiCalItem"),
 					$Day,
@@ -68,32 +67,32 @@
 					iCount = 0,
 					oDate = new UniversalDate(UniversalDate.UTC([iExpectedEra, iExpectedYear], iExpectedMonth - 1, 1));
 
-				equal(aDays.length, iExpectedDays + iExpectedDaysOfOtherMonthBefore + iExpectedDaysOfOtherMonthAfter, "Calendar shows all days");
+				assert.equal(aDays.length, iExpectedDays + iExpectedDaysOfOtherMonthBefore + iExpectedDaysOfOtherMonthAfter, "Calendar shows all days");
 
 				for (var i=0; i<35; i++) {
 					$Day = jQuery(aDays[i]);
 					sDate = $Day.attr("data-sap-day");
 
 					if (i < iExpectedDaysOfOtherMonthBefore || i >= aDays.length - iExpectedDaysOfOtherMonthAfter) {
-						ok($Day.hasClass("sapUiCalItemOtherMonth"), "Item " + i + " (" + sDate + ") is not in current month.");
+						assert.ok($Day.hasClass("sapUiCalItemOtherMonth"), "Item " + i + " (" + sDate + ") is not in current month.");
 					} else {
 						iCount++;
-						ok(!$Day.hasClass("sapUiCalItemOtherMonth"), "Item " + i + " (" + sDate + ") is in current month.");
-						equal(sDate, oFormat.format(oDate.getJSDate(), true), "Item " + i + " (" + sDate + ") has correct date (data-sap-day).");
-						equal(jQuery($Day.children(".sapUiCalItemText")[0]).text(), "" + iCount, "Item " + i + " (" + sDate + ") has correct date (text).");
+						assert.ok(!$Day.hasClass("sapUiCalItemOtherMonth"), "Item " + i + " (" + sDate + ") is in current month.");
+						assert.equal(sDate, oFormat.format(oDate.getJSDate(), true), "Item " + i + " (" + sDate + ") has correct date (data-sap-day).");
+						assert.equal(jQuery($Day.children(".sapUiCalItemText")[0]).text(), "" + iCount, "Item " + i + " (" + sDate + ") has correct date (text).");
 						oDate.setUTCDate(oDate.getUTCDate() + 1);
 					}
 
 					if (sSelectedDate == sDate) {
-						ok($Day.hasClass("sapUiCalItemSel"), "Item " + i + " (" + sDate + ") is selected.");
-						equal(jQuery($Day.children(".sapUiCalItemText")[0]).text(), "" + iExpectedDay, "Item " + i + " (" + sDate + ") has selected date (text).");
-						equal(i, iExpectedIndex, "Date has expected index")
+						assert.ok($Day.hasClass("sapUiCalItemSel"), "Item " + i + " (" + sDate + ") is selected.");
+						assert.equal(jQuery($Day.children(".sapUiCalItemText")[0]).text(), "" + iExpectedDay, "Item " + i + " (" + sDate + ") has selected date (text).");
+						assert.equal(i, iExpectedIndex, "Date has expected index")
 					} else {
-						ok(!$Day.hasClass("sapUiCalItemSel"), "Item " + i + " (" + sDate + ") is not selected.");
+						assert.ok(!$Day.hasClass("sapUiCalItemSel"), "Item " + i + " (" + sDate + ") is not selected.");
 					}
 				}
 
-				equal(iCount, iExpectedDays, "Number of days in the month correct.");
+				assert.equal(iCount, iExpectedDays, "Number of days in the month correct.");
 			}
 
 			function checkMonthNavigation(sSelectedDate, iExpectedMonth, sExpectedYear, bForwardNavigation) {
@@ -101,8 +100,8 @@
 				initializeCalendar(sSelectedDate);
 				oCal1.$("-Head-" + (bForwardNavigation ? "next" : "prev")).click();
 
-				equal(oCal1.$("-Head-B1").text(), "" + aMonthNames[iExpectedMonth], "Month is correct after navigation: " + aMonthNames[iExpectedMonth]);
-				equal(oCal1.$("-Head-B2").text(), sExpectedYear, "Year is correct after navigation " + sExpectedYear);
+				assert.equal(oCal1.$("-Head-B1").text(), "" + aMonthNames[iExpectedMonth], "Month is correct after navigation: " + aMonthNames[iExpectedMonth]);
+				assert.equal(oCal1.$("-Head-B2").text(), sExpectedYear, "Year is correct after navigation " + sExpectedYear);
 
 			}
 
@@ -114,61 +113,61 @@
 					$Year,
 					sExpectedName;
 
-				equal(aYears.length, 20, "Number of Years is correct.");
-				equal(jQuery(aYears[0]).text(), sExpectedStartYear, "First Year OK")
-				equal(jQuery(aYears[19]).text(), sExpectedEndYear, "Last Year OK")
+				assert.equal(aYears.length, 20, "Number of Years is correct.");
+				assert.equal(jQuery(aYears[0]).text(), sExpectedStartYear, "First Year OK")
+				assert.equal(jQuery(aYears[19]).text(), sExpectedEndYear, "Last Year OK")
 
 				for (var i=0; i<20; i++) {
 					$Year = jQuery(aYears[i]);
 
 					if ($Year.hasClass("sapUiCalItemSel")) {
-						equal($Year.text(), sExpectedSelYear, "Selected Year OK")
+						assert.equal($Year.text(), sExpectedSelYear, "Selected Year OK")
 					}
 				}
 
 				aYears[0].focus();
 				qutils.triggerKeyboardEvent(aYears[0], jQuery.sap.KeyCodes.ENTER, false, false, false);
-				equal(oCal1.$("-Head-B2").text(), sExpectedStartYear, "Year is correct after navigation");
+				assert.equal(oCal1.$("-Head-B2").text(), sExpectedStartYear, "Year is correct after navigation");
 			}
 
 			qutils.delayTestStart();
 
-			module("Dates");
+			QUnit.module("Dates");
 
-			test("20150701", function() {
+			QUnit.test("20150701", function(assert) {
 				checkDate("20150701", 1, 7, 27, 235, "Heisei", 31, 3, 3, 1);
 			});
 
-			test("19890102", function() {
+			QUnit.test("19890102", function(assert) {
 				checkDate("19890102", 2, 1, 64, 234, "Shōwa", 31, 1, 0, 4);
 			});
 
-			test("19890202", function() {
+			QUnit.test("19890202", function(assert) {
 				checkDate("19890202", 2, 2, 1, 235, "Heisei", 28, 4, 3, 4);
 			});
 
 
-			module("Navigation to next/previous Month");
+			QUnit.module("Navigation to next/previous Month");
 
-			test("20150701 -> next", function() {
+			QUnit.test("20150701 -> next", function(assert) {
 				checkMonthNavigation("20150701", 7, "27 Heisei", true);
 			});
 
-			test("19890202 -> prev", function() {
+			QUnit.test("19890202 -> prev", function(assert) {
 				checkMonthNavigation("19890202", 0, "64 Shōwa", false);
 			});
 
-			test("19890102 -> next", function() {
+			QUnit.test("19890102 -> next", function(assert) {
 				checkMonthNavigation("19890102", 1, "1 Heisei", true);
 			});
 
-			module("Yearpicker");
+			QUnit.module("Yearpicker");
 
-			test("20150701 Yearpicker", function() {
+			QUnit.test("20150701 Yearpicker", function(assert) {
 				checkYearPicker("20150701", "17 Heisei", "36 Heisei", "27 Heisei" );
 			});
 
-			test("19900101 Yearpicker", function() {
+			QUnit.test("19900101 Yearpicker", function(assert) {
 				checkYearPicker("19900101", "55 Shōwa", "11 Heisei", "2 Heisei" );
 			});
 

@@ -1,12 +1,29 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/InvisibleText'],
-	function(jQuery, InputBase, library, InvisibleText) {
+sap.ui.define([
+	'./InputBase',
+	'./library',
+	'sap/ui/core/InvisibleText',
+	'sap/ui/core/library',
+	'sap/ui/Device',
+	"./ComboBoxTextFieldRenderer"
+],
+	function(
+		InputBase,
+		library,
+		InvisibleText,
+		coreLibrary,
+		Device,
+		ComboBoxTextFieldRenderer
+	) {
 		"use strict";
+
+		// shortcut for sap.ui.core.ValueState
+		var ValueState = coreLibrary.ValueState;
 
 		/**
 		 * Constructor for a new <code>sap.m.ComboBoxTextField</code>.
@@ -19,7 +36,7 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		 * @extends sap.m.InputBase
 		 *
 		 * @author SAP SE
-		 * @version 1.38.33
+		 * @version 1.54.5
 		 *
 		 * @constructor
 		 * @public
@@ -42,7 +59,7 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 					},
 
 					/**
-					 * Indicates whether the dropdown arrow button is shown.
+					 * Indicates whether the dropdown downward-facing arrow button is shown.
 					 * @since 1.38
 					 */
 					showButton: {
@@ -74,7 +91,7 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		ComboBoxTextField.prototype.updateValueStateClasses = function(sValueState, sOldValueState) {
 			InputBase.prototype.updateValueStateClasses.apply(this, arguments);
 
-			var mValueState = sap.ui.core.ValueState,
+			var mValueState = ValueState,
 				CSS_CLASS = this.getRenderer().CSS_CLASS_COMBOBOXTEXTFIELD,
 				$DomRef = this.$();
 
@@ -138,7 +155,7 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		 * IE9 does not have a native placeholder support.
 		 * IE10+ fires the input event when an input field with a native placeholder is focused.
 		 */
-		ComboBoxTextField.prototype.bShowLabelAsPlaceholder = sap.ui.Device.browser.msie;
+		ComboBoxTextField.prototype.bShowLabelAsPlaceholder = Device.browser.msie;
 
 		/* =========================================================== */
 		/* API methods                                                 */
@@ -149,7 +166,7 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		 *
 		 * Default value is an empty string.
 		 *
-		 * @return {string} The value of property <code>value</code>.
+		 * @returns {string} The value of property <code>value</code>
 		 * @public
 		 */
 		ComboBoxTextField.prototype.getValue = function() {
@@ -167,41 +184,14 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		};
 
 		/**
-		 * Gets the labels referencing this control.
+		 * Gets the DOM element reference where the message popup is attached.
 		 *
-		 * @returns {sap.m.Label[]} Array of objects which are the current targets of the <code>ariaLabelledBy</code>
-		 * association and the labels referencing this control.
-		 * @since 1.38
-		 */
-		ComboBoxTextField.prototype.getLabels = function() {
-			var aLabelIDs = this.getAriaLabelledBy().map(function(sLabelID) {
-				return sap.ui.getCore().byId(sLabelID);
-			});
-
-			var oLabelEnablement = sap.ui.require("sap/ui/core/LabelEnablement");
-
-			if (oLabelEnablement) {
-				aLabelIDs = aLabelIDs.concat(oLabelEnablement.getReferencingLabels(this).map(function(sLabelID) {
-					return sap.ui.getCore().byId(sLabelID);
-				}));
-			}
-
-			return aLabelIDs;
-		};
-
-		/**
-		 * Gets the DOM reference the message popup should be docked.
-		 *
-		 * @return {object}
+		 * @returns {object} The DOM element reference where the message popup is attached
 		 */
 		ComboBoxTextField.prototype.getDomRefForValueStateMessage = function() {
 			return this.getDomRef();
 		};
 
-		/**
-		 * @see {sap.ui.core.Control#getAccessibilityInfo}
-		 * @protected
-		 */
 		ComboBoxTextField.prototype.getAccessibilityInfo = function() {
 			var oInfo = InputBase.prototype.getAccessibilityInfo.apply(this, arguments);
 			oInfo.type = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_COMBO");
@@ -209,4 +199,4 @@ sap.ui.define(['jquery.sap.global', './InputBase', './library', 'sap/ui/core/Inv
 		};
 
 		return ComboBoxTextField;
-	}, true);
+	});

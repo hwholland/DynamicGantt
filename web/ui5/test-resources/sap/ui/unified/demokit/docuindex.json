@@ -29,6 +29,15 @@
 				]
 			},
 			{
+				"id": "sap.ui.unified.ColorPicker",
+				"name": "Color Picker",
+				"category": "User Input",
+				"since": "1.48",
+				"samples": [
+					"sap.ui.unified.sample.ColorPicker"
+				]
+			},
+			{
 				"id": "sap.ui.unified.FileUploader",
 				"name": "File Uploader",
 				"category": "User Input",
@@ -103,6 +112,11 @@
 				"description": "Display Currencies in Table"
 			},
 			{
+				"id": "sap.ui.unified.sample.ColorPicker",
+				"name": "Color Picker",
+				"description": "Basic example of Color Picker. Note that you have to set the Color Picker mode to HSL to take advantage of the responsiveness of the control on a mobile device."
+			},
+			{
 				"id": "sap.ui.unified.sample.FileUploaderBasic",
 				"name": "Basic",
 				"description": "Basic File Uploader Example"
@@ -144,8 +158,8 @@
 			},
 			{
 				"id": "sap.ui.unified.sample.CalendarMinMax",
-				"name": "calendar - min., max. and disabled",
-				"description": "Calendar with minimum date 2000-01-01 and maximum date 2050-12-31 and some disabled days (in January 2016)."
+				"name": "calendar - min., max., disabled and show/hide week numbers",
+				"description": "Calendar with minimum date 2000-01-01 and maximum date 2050-12-31, some disabled days (in January 2016) and ability to show or hide week numbers."
 			},
 			{
 				"id": "sap.ui.unified.sample.CalendarDateIntervalBasic",

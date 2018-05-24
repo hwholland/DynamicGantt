@@ -5,7 +5,7 @@
     <author>SAP SE</author>
     <documentation>A horizontal row of items where in many cases the single toolbar items are buttons containing icons. Note that all controls with the
 sap.ui.commons.ToolbarItem interface can be used as item: Button, ComboBox, TextField.</documentation>
-    <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.Toolbar&lt;/code&gt; control.</deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Toolbar}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="width" type="sap.ui.core/CSSSize" defaultValue="auto" group="Dimension">

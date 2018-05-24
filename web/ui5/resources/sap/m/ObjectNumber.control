@@ -12,13 +12,13 @@ colors to provide additional meaning about the object to the user.</documentatio
         </property>
         <property name="numberUnit" type="sap.ui.core/string" group="Misc">
             <documentation>Defines the number units qualifier.</documentation>
-            <deprecation since="1.16.1">Replaced by unit property due to the number before unit is redundant.</deprecation>
+            <deprecation since="1.16.1">replaced by &lt;code&gt;unit&lt;/code&gt; property</deprecation>
         </property>
         <property name="emphasized" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
             <documentation>Indicates if the object number should appear emphasized.</documentation>
         </property>
         <property name="state" type="sap.ui.core/ValueState" defaultValue="None" group="Misc">
-            <documentation>Determines the object number's value state. Setting this state will cause the number to be rendered in state-specific colors (only blue-crystal theme).</documentation>
+            <documentation>Determines the object number's value state. Setting this state will cause the number to be rendered in state-specific colors.</documentation>
         </property>
         <property name="unit" type="sap.ui.core/string" group="Misc" since="1.16.1">
             <documentation>Defines the number units qualifier. If numberUnit and unit are both set, the unit value is used.</documentation>

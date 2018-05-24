@@ -1,14 +1,37 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Table.
-sap.ui.define(['jquery.sap.global', './ListBase', './library'],
-	function(jQuery, ListBase, library) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./ListBase',
+	'./ListItemBase',
+	'./library',
+	'sap/ui/Device',
+	'./TableRenderer'
+],
+	function(jQuery, ListBase, ListItemBase, library, Device, TableRenderer) {
 	"use strict";
 
+
+
+	// shortcut for sap.m.ListKeyboardMode
+	var ListKeyboardMode = library.ListKeyboardMode;
+
+	// shortcut for sap.m.ListGrowingDirection
+	var ListGrowingDirection = library.ListGrowingDirection;
+
+	// shortcut for sap.m.BackgroundDesign
+	var BackgroundDesign = library.BackgroundDesign;
+
+	// shortcut for sap.m.PopinLayout
+	var PopinLayout = library.PopinLayout;
+
+	// shortcut for sap.m.Sticky
+	var Sticky = library.Sticky;
 
 
 	/**
@@ -21,10 +44,15 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 	 * <code>sap.m.Table</code> control provides a set of sophisticated and convenience functions for responsive table design.
 	 * To render the <code>sap.m.Table</code> properly, the order of the <code>columns</code> aggregation should match with the order of the items <code>cells</code> aggregation. Also <code>sap.m.Table</code> requires at least one visible <code>sap.m.Column</code> in <code>columns</code> aggregation.
 	 * For mobile devices, the recommended limit of table rows is 100 (based on 4 columns) to assure proper performance. To improve initial rendering on large tables, use the <code>growing</code> feature.
+	 *
+	 * See section "{@link topic:5eb6f63e0cc547d0bdc934d3652fdc9b Creating Tables}" and "{@link topic:38855e06486f4910bfa6f4485f7c2bac Configuring Responsive Behavior of a Table}"
+	 * in the documentation for an introduction to <code>sap.m.Table</code> control.
+	 *
+	 *
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -40,7 +68,7 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 			/**
 			 * Sets the background style of the table. Depending on the theme, you can change the state of the background from <code>Solid</code> to <code>Translucent</code> or to <code>Transparent</code>.
 			 */
-			backgroundDesign : {type : "sap.m.BackgroundDesign", group : "Appearance", defaultValue : sap.m.BackgroundDesign.Translucent},
+			backgroundDesign : {type : "sap.m.BackgroundDesign", group : "Appearance", defaultValue : BackgroundDesign.Translucent},
 
 			/**
 			 * Defines the algorithm to be used to layout the table cells, rows, and columns.
@@ -57,7 +85,40 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 			 * Setting this property to <code>true</code> will show an overlay on top of the table content and prevents the user interaction with it.
 			 * @since 1.22.1
 			 */
-			showOverlay : {type : "boolean", group : "Appearance", defaultValue : false}
+			showOverlay : {type : "boolean", group : "Appearance", defaultValue : false},
+
+			/**
+			 * Enables alternating table row colors.
+			 * <b>Note:</b> This property can only be used with the Belize and Belize Deep themes.
+			 * Alternate row coloring is not available for the High Contrast Black/White themes.
+			 * @since 1.52
+			 */
+			alternateRowColors : {type : "boolean", group : "Appearance", defaultValue : false},
+
+			/**
+			 * Defines the layout in which the table pop-in rows are rendered.
+			 * <b>Note:</b> The <code>demandPopin</code> and <code>minScreenWidth</code> properties of the <code>Column</code> control must be configured appropriately.
+			 * @since 1.52
+			 */
+			popinLayout : {type : "sap.m.PopinLayout", group : "Appearance", defaultValue : PopinLayout.Block},
+
+			/**
+			 * Defines the section of the <code>sap.m.Table</code> control that remains fixed at the top of the page during vertical scrolling as long as the table is in the viewport.
+			 *
+			 * <b>Note:</b> There is limited browser support, hence the API is in experimental state.
+			 * Browsers that currently support this feature are Chrome (desktop and mobile), Safari (desktop and mobile) and Edge 41.
+			 *
+			 * There are also some known issues with respect to the scrolling behavior and focus handling. A few are given below:
+			 *
+			 * If the table is placed in certain layout containers, for example, the <code>sap.ui.layout.Grid</code> control,
+			 * the column headers are not fixed at the top of the viewport. Similar behavior is also observed with the <code>sap.m.ObjectPage</code> control.
+			 *
+			 * This API should not be used in a productive environment.
+			 *
+			 * @experimental As of 1.54
+			 * @since 1.54
+			 */
+			sticky : {type : "sap.m.Sticky", group : "Appearance", defaultValue : Sticky.None}
 		},
 		aggregations : {
 
@@ -65,22 +126,51 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 			 * Defines the columns of the table.
 			 */
 			columns : {type : "sap.m.Column", multiple : true, singularName : "column"}
-		}
+		},
+		events : {
+			/**
+			 * Fired when the context menu is opened.
+			 * When the context menu is opened, the binding context of the item is set to the given <code>contextMenu</code>.
+			 * @since 1.54
+			 */
+			beforeOpenContextMenu : {
+				allowPreventDefault : true,
+				parameters : {
+					/**
+					 * Item in which the context menu was opened.
+					 */
+					listItem : {type : "sap.m.ColumnListItem"},
+					/**
+					 * Column in which the context menu was opened.
+					 * <b>Note:</b> This parameter might be undefined for the items that are not part of a column definition.
+					 */
+					column : {type : "sap.m.Column"}
+				}
+			}
+		},
+		designtime: "sap/m/designtime/Table.designtime"
 	}});
 
 	// class name for the navigation items
 	Table.prototype.sNavItemClass = "sapMListTblRow";
 
 	Table.prototype.init = function() {
-		this._hasPopin = false;
 		this._iItemNeedsColumn = 0;
-		this._selectAllCheckBox = null;
 		ListBase.prototype.init.call(this);
 	};
 
 	Table.prototype.onBeforeRendering = function() {
 		ListBase.prototype.onBeforeRendering.call(this);
+		this._ensureColumnsMedia();
 		this._notifyColumns("ItemsRemoved");
+	};
+
+	Table.prototype._ensureColumnsMedia = function() {
+		this.getColumns().forEach(function (oColumn) {
+			if (oColumn._bShouldAddMedia) {
+				oColumn._addMedia();
+			}
+		});
 	};
 
 	Table.prototype.onAfterRendering = function() {
@@ -91,8 +181,8 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 
 	Table.prototype._renderOverlay = function() {
 		var $this = this.$(),
-		    $overlay = $this.find(".sapMTableOverlay"),
-		    bShowOverlay = this.getShowOverlay();
+			$overlay = $this.find(".sapMTableOverlay"),
+			bShowOverlay = this.getShowOverlay();
 		if (bShowOverlay && $overlay.length === 0) {
 			$overlay = jQuery("<div>").addClass("sapUiOverlay sapMTableOverlay").css("z-index", "1");
 			$this.append($overlay);
@@ -160,6 +250,10 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 	 */
 	Table.prototype.onAfterPageLoaded = function() {
 		this.updateSelectAllCheckbox();
+		if (this.getAlternateRowColors()) {
+			var $tblBody = this.$("tblBody").removeClass();
+			$tblBody.addClass(this._getAlternateRowColorsClass());
+		}
 		ListBase.prototype.onAfterPageLoaded.apply(this, arguments);
 	};
 
@@ -230,7 +324,11 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		// header and footer are in the item navigation but
 		// initial focus should be at the first item row
 		if (oItemNavigation.getFocusedIndex() == -1) {
-			oItemNavigation.setFocusedIndex($Header[0] ? 1 : 0);
+			if (this.getGrowing() && this.getGrowingDirection() == ListGrowingDirection.Upwards) {
+				oItemNavigation.setFocusedIndex(aItemDomRefs.length - 1);
+			} else {
+				oItemNavigation.setFocusedIndex($Header[0] ? 1 : 0);
+			}
 		}
 	};
 
@@ -272,9 +370,9 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 			}
 		}
 
-		this._dirty = window.innerWidth;
+		this._dirty = this._getMediaContainerWidth() || window.innerWidth;
 		if (!this._mutex) {
-			var clean = window.innerWidth;
+			var clean = this._getMediaContainerWidth() || window.innerWidth;
 			this._mutex = true;
 			this.rerender();
 
@@ -318,10 +416,15 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		}
 
 		// update the visible column count and colspan
-		// navigation columns are getting rendered always
-		this._colCount = aVisibleColumns.length + 1 + !!sap.m.ListBaseRenderer.ModeOrder[this.getMode()];
+		// highlight and navigation columns are getting rendered always
+		this._colCount = aVisibleColumns.length + 2 + !!sap.m.ListBaseRenderer.ModeOrder[this.getMode()];
 		this.$("tblBody").find(".sapMGHLICell").attr("colspan", this.getColSpan());
 		this.$("nodata-text").attr("colspan", this.getColCount());
+
+		// force IE to repaint in fixed layout mode
+		if (this.getFixedLayout()) {
+			this._forceStyleChange();
+		}
 
 		// remove or show column header row(thead) according to column visibility value
 		if (!bColVisible && bHeaderVisible) {
@@ -333,16 +436,18 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		}
 	};
 
+	// force IE to repaint
+	Table.prototype._forceStyleChange = function() {
+		if (Device.browser.msie) {
+			var oTableStyle = this.getTableDomRef().style;
+			oTableStyle.listStyleType = "circle";
+			window.setTimeout(function() { oTableStyle.listStyleType = "none"; }, 0);
+		}
+	};
+
 	// updates the type column visibility and sets the aria flag
 	Table.prototype._setTypeColumnVisibility = function(bVisible) {
-		var $Table = jQuery(this.getTableDomRef()),
-			$TypeColumnHeader = this.$("tblHeadNav"),
-			iTypeColumnIndex = $TypeColumnHeader.index() + 1,
-			$TypeColumnCells = $Table.find("tr > td:nth-child(" + iTypeColumnIndex + ")");
-
-		$Table.toggleClass("sapMListTblHasNav", bVisible);
-		$TypeColumnHeader.attr("aria-hidden", !bVisible);
-		$TypeColumnCells.attr("aria-hidden", !bVisible);
+		jQuery(this.getTableDomRef()).toggleClass("sapMListTblHasNav", bVisible);
 	};
 
 	// notify all columns with given action and param
@@ -363,18 +468,13 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		return this._selectAllCheckBox || (this._selectAllCheckBox = new sap.m.CheckBox({
 			id: this.getId("sa"),
 			activeHandling: false
-		}).setParent(this, null, true).attachSelect(function () {
+		}).addStyleClass('sapMLIBSelectM').setParent(this, null, true).attachSelect(function () {
 			if (this._selectAllCheckBox.getSelected()) {
 				this.selectAll(true);
 			} else {
 				this.removeSelections(false, true);
 			}
-		}, this).setTabIndex(-1).addEventDelegate({
-			onAfterRendering: function() {
-				// hide this from the screen readers
-				this._selectAllCheckBox.getFocusDomRef().setAttribute("aria-hidden", "true");
-			}
-		}, this));
+		}, this).setTabIndex(-1));
 	};
 
 	/*
@@ -394,6 +494,23 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 
 			// set state of the checkbox by comparing item length and selected item length
 			this._selectAllCheckBox.setSelected(aItems.length > 0 && iSelectedItemCount == iSelectableItemCount);
+		}
+	};
+
+	/**
+	 * This method is a hook for the RenderManager that gets called
+	 * during the rendering of child Controls. It allows to add,
+	 * remove and update existing accessibility attributes (ARIA) of
+	 * those controls.
+	 *
+	 * @param {sap.ui.core.Control} oElement - The Control that gets rendered by the RenderManager
+	 * @param {Object} mAriaProps - The mapping of "aria-" prefixed attributes
+	 * @protected
+	 */
+	Table.prototype.enhanceAccessibilityState = function(oElement, mAriaProps) {
+		if (oElement == this._selectAllCheckBox) {
+			var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			mAriaProps.label = oBundle.getText("TABLE_CHECKBOX_SELECT_ALL");
 		}
 	};
 
@@ -440,12 +557,60 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		return !!jQuery(oEvent.target).closest($Footer, this.getTableDomRef()).length;
 	};
 
-	// this gets called after navigation items are focused
-	Table.prototype.onNavigationItemFocus = function(oEvent) {
-		var aItemDomRefs = this._oItemNavigation.getItemDomRefs(),
-			oItemDomRef = aItemDomRefs[oEvent.getParameter("index")];
+	// returns accessibility role
+	Table.prototype.getAccessibilityType = function() {
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_TABLE");
+	};
 
-		this.getNavigationRoot().setAttribute("aria-activedescendant", oItemDomRef.id);
+	// custom footer text announcement is only for tables
+	Table.prototype.getAccessibilityDescription = function() {
+		return ListBase.prototype.getAccessibilityDescription.call(this) + " " + this.getFooterText();
+	};
+
+	Table.prototype._setHeaderAnnouncement = function() {
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
+			sAnnouncement = oBundle.getText("ACC_CTR_TYPE_HEADER_ROW") + " ";
+
+		if (this.isAllSelectableSelected()) {
+			sAnnouncement += oBundle.getText("LIST_ALL_SELECTED");
+		}
+
+		this.getColumns(true).forEach(function(oColumn, i) {
+			// only set the header announcement for visible columns
+			if (!oColumn.getVisible()) {
+				return;
+			}
+
+			var oHeader = oColumn.getHeader();
+			if (oHeader && oHeader.getVisible()) {
+				sAnnouncement += ListItemBase.getAccessibilityText(oHeader) + " ";
+			}
+		});
+
+		this.updateInvisibleText(sAnnouncement);
+	};
+
+	Table.prototype._setFooterAnnouncement = function() {
+		var sAnnouncement = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_FOOTER_ROW") + " ";
+		this.getColumns(true).forEach(function(oColumn, i) {
+			// only set the footer announcement for visible columns
+			if (!oColumn.getVisible()) {
+				return;
+			}
+
+			var oFooter = oColumn.getFooter();
+			if (oFooter && oFooter.getVisible()) {
+				// announce header as well
+				var oHeader = oColumn.getHeader();
+				if (oHeader && oHeader.getVisible()) {
+					sAnnouncement += ListItemBase.getAccessibilityText(oHeader) + " ";
+				}
+
+				sAnnouncement += ListItemBase.getAccessibilityText(oFooter) + " ";
+			}
+		});
+
+		this.updateInvisibleText(sAnnouncement);
 	};
 
 	// keyboard handling
@@ -464,7 +629,7 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 
 	// Handle tab key
 	Table.prototype.onsaptabnext = function(oEvent) {
-		if (oEvent.isMarked() || this.getKeyboardMode() == sap.m.ListKeyboardMode.Edit) {
+		if (oEvent.isMarked() || this.getKeyboardMode() == ListKeyboardMode.Edit) {
 			return;
 		}
 
@@ -486,7 +651,7 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 
 	// Handle shift-tab key
 	Table.prototype.onsaptabprevious = function(oEvent) {
-		if (oEvent.isMarked() || this.getKeyboardMode() == sap.m.ListKeyboardMode.Edit) {
+		if (oEvent.isMarked() || this.getKeyboardMode() == ListKeyboardMode.Edit) {
 			return;
 		}
 
@@ -501,6 +666,41 @@ sap.ui.define(['jquery.sap.global', './ListBase', './library'],
 		}
 	};
 
+	Table.prototype.onfocusin = function(oEvent) {
+		var oTarget = oEvent.target;
+		if (oTarget.id === this.getId("tblHeader")) {
+			this._setHeaderAnnouncement();
+		} else if (oTarget.id === this.getId("tblFooter")) {
+			this._setFooterAnnouncement();
+		}
+
+		if (this._bThemeChanged) {
+			// force IE to repaint if theme changed
+			this._bThemeChanged = false;
+			this._forceStyleChange();
+		}
+
+		ListBase.prototype.onfocusin.call(this, oEvent);
+	};
+
+	// event listener for theme changed
+	Table.prototype.onThemeChanged = function() {
+		this._bThemeChanged = true;
+	};
+
+	// returns the class that should be added to tbody element
+	Table.prototype._getAlternateRowColorsClass = function() {
+		if (this.isGrouped()) {
+			return "sapMListTblAlternateRowColorsGrouped";
+		}
+
+		if (this.hasPopin()) {
+			return "sapMListTblAlternateRowColorsPopin";
+		}
+
+		return "sapMListTblAlternateRowColors";
+	};
+
 	return Table;
 
-}, /* bExport= */ true);
+});

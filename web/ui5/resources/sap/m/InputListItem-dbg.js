@@ -1,13 +1,23 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.InputListItem.
-sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
-	function(jQuery, ListItemBase, library) {
+sap.ui.define([
+	'./ListItemBase',
+	'./library',
+	'sap/ui/core/library',
+	'./InputListItemRenderer'
+],
+	function(ListItemBase, library, coreLibrary, InputListItemRenderer) {
 	"use strict";
+
+
+
+	// shortcut for sap.ui.core.TextDirection
+	var TextDirection = coreLibrary.TextDirection;
 
 
 
@@ -22,7 +32,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -43,7 +53,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 			 * This property specifies the label text directionality with enumerated options. By default, the label inherits text direction from the DOM.
 			 * @since 1.30.0
 			 */
-			labelTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit}
+			labelTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit}
 		},
 		defaultAggregation : "content",
 		aggregations : {
@@ -53,11 +63,18 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 			 */
 			content : {type : "sap.ui.core.Control", multiple : true, singularName : "content", bindable : "bindable"}
 		},
-		designtime : true
+		designtime: "sap/m/designtime/InputListItem.designtime"
 	}});
 
+	InputListItem.prototype.getContentAnnouncement = function() {
+		var sAnnouncement = this.getLabel();
+		this.getContent().forEach(function(oContent) {
+			sAnnouncement += ListItemBase.getAccessibilityText(oContent) + " ";
+		});
 
+		return sAnnouncement;
+	};
 
 	return InputListItem;
 
-}, /* bExport= */ true);
+});

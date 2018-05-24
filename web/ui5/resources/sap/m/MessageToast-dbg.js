@@ -1,31 +1,33 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
-	function(jQuery, InstanceManager, Popup) {
+sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup', 'sap/ui/core/library', 'sap/ui/core/Control', 'sap/ui/Device'],
+	function(jQuery, InstanceManager, Popup, coreLibrary, Control, Device) {
 		"use strict";
+
+		// shortcut for sap.ui.core.Dock
+		var Dock = coreLibrary.Dock;
+
+		// shortcut for sap.ui.core.CSSSize
+		var CSSSize = coreLibrary.CSSSize;
 
 		/**
 		 * @class
-		 * A message toast notification offers simple feedback about an operation in a pop-up.
-		 * Toasts automatically disappear after a timeout unless the user moves the mouse over
-		 * the toast or taps on it. In this case the toast will remain on the screen and can
-		 * be closed when the user moves the mouse out or taps out of the toast.
-		 * Toasts appears close the bottom of the screen, centered horizontally, but you can change
-		 * this position which is not dependent on the default values of the position settings.
-		 * The default position applies as long as the application does not do any position setting.
-		 * Position settings are "my", "at", "of" and "offset".
-		 *
-		 * Beware that only one message toast can be shown at a time in the same place.
-		 * If you want to have multiple message toasts visible at the same time, you need to position
-		 * the message toasts in different places.
-		 * This positioning needs to be handled in the application logic.
-		 *
-		 * Message toast example:
-		 *
+		 * A small, non-disruptive popup for messages.
+		 * <h3>Overview</h3>
+		 * A message toast is a small, non-disruptive popup for success or information messages that disappears automatically after a few seconds.
+		 * Toasts automatically disappear after a timeout unless the user moves the mouse over the toast or taps on it.
+		 * <h4>Notes:</h4>
+		 * <ul>
+		 * <li>If the configured message contains HTML code or script tags, those will be escaped.</li>
+		 * <li>Line breaks (\r\n, \n\r, \r, \n) will be visualized.</li>
+		 * <li>Only one message toast can be shown at a time in the same place.</li>
+		 * </ul>
+		 * <h4>Example:</h4>
+		 * Here is an example of a MessageToast with all default options:
 		 * <pre>
 		 * sap.m.MessageToast.show("This message should appear in the message toast", {
 		 *     duration: 3000,                  // default
@@ -34,7 +36,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		 *     at: "center bottom",             // default
 		 *     of: window,                      // default
 		 *     offset: "0 0",                   // default
-		 *     collision: "fit fit"             // default
+		 *     collision: "fit fit",            // default
 		 *     onClose: null,                   // default
 		 *     autoClose: true,                 // default
 		 *     animationTimingFunction: "ease", // default
@@ -42,12 +44,29 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		 *     closeOnBrowserNavigation: true   // default
 		 * });
 		 * </pre>
+		 * <h3>Usage</h3>
+		 * <h4>When to use:</h4>
+		 * <ul>
+		 * <li>You want to display a short success of information message.</li>
+		 * <li>You do not want to interrupt users while they are performing an action.</li>
+		 * <li>You want to confirm a successful action.</li>
+		 * </ul>
+		 * <h4>When not to use:</h4>
+		 * <ul>
+		 * <li>You want to display an error or warning message.</li>
+		 * <li>You want to interrupt users while they are performing an action.</li>
+		 * <li>You want to make sure that users read the message before they leave the page.</li>
+		 * <li>You want users to be able to copy some part of the message text. (In this case, show a success {@link sap.m.Dialog Message Dialog}.)</li>
+		 * </ul>
+		 * <h3>Responsive Behavior</h3>
+		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
 		 *
 		 * @author SAP SE
-		 * @since 1.9.2
+		 * @version 1.54.5
 		 *
 		 * @namespace
 		 * @public
+		 * @since 1.9.2
 		 * @alias sap.m.MessageToast
 		 */
 		var MessageToast = {};
@@ -58,7 +77,9 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 
 		var OFFSET = "0 -64",
 			CSSCLASS = "sapMMessageToast",
-			ENABLESELECTIONCLASS = "sapUiSelectable";
+			ENABLESELECTIONCLASS = "sapUiSelectable",
+			BELIZECONTRAST = "sapContrast",
+			BELIZECONTRASTPLUS = "sapContrastPlus";
 
 		MessageToast._mSettings = {
 			duration: 3000,
@@ -124,13 +145,13 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		};
 
 		MessageToast._validateWidth = function(sWidth) {
-			if (!sap.ui.core.CSSSize.isValid(sWidth)) {
+			if (!CSSSize.isValid(sWidth)) {
 				jQuery.sap.log.error(sWidth + ' is not of type ' + '"sap.ui.core.CSSSize" for property "width" on ' + this + "._validateWidth");
 			}
 		};
 
 		MessageToast._validateDockPosition = function(sDock) {
-			if (!sap.ui.core.Dock.isValid(sDock)) {
+			if (!Dock.isValid(sDock)) {
 				jQuery.sap.log.error('"' + sDock + '"' + ' is not of type ' + '"sap.ui.core.Popup.Dock" on ' + this + "._validateDockPosition");
 			}
 		};
@@ -138,7 +159,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		MessageToast._validateOf = function(vElement) {
 			if (!(vElement instanceof jQuery) &&
 				!(vElement && vElement.nodeType === 1) &&
-				!(vElement instanceof sap.ui.core.Control) &&
+				!(vElement instanceof Control) &&
 				vElement !== window) {
 
 				jQuery.sap.log.error('"of" needs to be an instance of sap.ui.core.Control or an Element or a jQuery object or the window on ' + this + "._validateOf");
@@ -192,9 +213,16 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		function createHTMLMarkup(mSettings) {
 			var oMessageToastDomRef = document.createElement("div");
 
+			oMessageToastDomRef.className = CSSCLASS + " " + ENABLESELECTIONCLASS + " " + BELIZECONTRAST + " " + BELIZECONTRASTPLUS;
+
+			if (sap.ui.getCore().getConfiguration().getAccessibility()) {
+				oMessageToastDomRef.setAttribute("role", "alert");
+
+				// prevents JAWS from reading the text of the MessageToast twice
+				oMessageToastDomRef.setAttribute("aria-label", " ");
+			}
+
 			oMessageToastDomRef.style.width = mSettings.width;
-			oMessageToastDomRef.className = CSSCLASS + " " + ENABLESELECTIONCLASS;
-			oMessageToastDomRef.setAttribute("role", "alert");
 			oMessageToastDomRef.appendChild(document.createTextNode(mSettings.message));
 
 			return oMessageToastDomRef;
@@ -233,7 +261,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 
 		MessageToast._handleResizeEvent = function() {
 
-			if (sap.ui.Device.system.phone || sap.ui.Device.system.tablet) {
+			if (Device.system.phone || Device.system.tablet) {
 				this._resetPosition(this._aPopups);
 			}
 
@@ -270,7 +298,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 				if (oPopup) {
 					mPosition = oPopup._oPosition;	// TODO _oPosition is a private property
 
-					if (sap.ui.Device.system.phone || sap.ui.Device.system.tablet) {
+					if (Device.system.phone || Device.system.tablet) {
 						jQuery.sap.delayedCall(0, this, "_applyPosition", [oPopup, mPosition]);
 					} else {
 						oPopup.setPosition(mPosition.my, mPosition.at, mPosition.of, mPosition.offset);
@@ -333,7 +361,6 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		 * @param {int} [mOptions.animationDuration=1000] Time in milliseconds that the close animation takes to complete. Needs to be a finite positive integer. For not animation set to 0. This feature is not supported in android and ie9 browsers.
 		 * @param {boolean} [mOptions.closeOnBrowserNavigation=true] Specifies if the message toast closes on browser navigation.
 		 *
-		 * @type void
 		 * @public
 		 */
 		MessageToast.show = function(sMessage, mOptions) {
@@ -443,7 +470,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 			oPopup.getContent().addEventListener("mouseover", fnClearTimeout);
 
 			// WP 8.1 fires mouseleave event on tap
-			if (sap.ui.Device.system.desktop) {
+			if (Device.system.desktop) {
 				oPopup.getContent().addEventListener("mouseleave", function () {
 					iCloseTimeoutId = jQuery.sap.delayedCall(mSettings.duration,  oPopup, "close");
 				});
@@ -455,5 +482,4 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 		};
 
 		return MessageToast;
-
-}, /* bExport= */ true);
+	}, /* bExport= */ true);

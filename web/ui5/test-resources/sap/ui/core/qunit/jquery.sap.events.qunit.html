@@ -9,19 +9,18 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 	<title>QUnit tests: jquery.sap.events.js, Core Event Handling</title>
+	<script src="../shared-config.js"></script>
 	<script id="sap-ui-bootstrap"
-		type="text/javascript"
 		src="../../../../../resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-noConflict="true">
 	</script>
 	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 	<style type="text/css">
 		#uiArea {
@@ -52,7 +51,7 @@
 	</style>
 
 	<!-- Initialization -->
-	<script type="text/javascript">
+	<script>
 	sinon.config.useFakeTimers = false;
 
 	(function(sName){
@@ -126,6 +125,9 @@
 
 	if (sap.ui.Device.support.touch && bEmulationNeeded) {
 		aMobileBrowserEvents.push("sapmousedown", "sapmousemove", "sapmouseup");
+		if (sap.ui.Device.os.ios){
+			aMobileBrowserEvents.push("sapcontextmenu");
+		}
 	}
 
 	function keyEvent(sName, sAddText, iTrigger, sKeyCode, bShift, bAlt, bCtrl){
@@ -185,7 +187,7 @@
 	</script>
 
 	<!-- Test help functions -->
-	<script type="text/javascript">
+	<script>
 
 	function _testCtrlEvent(sEventName, sOrigEventName, oEventParams, bStopPropagation, fHandlerChecks, bExpectHandlersNotCalled){
 		var fCheck = function(oEvent, bTestOuter) {
@@ -194,10 +196,10 @@
 			}
 			var oTestControl = bTestOuter ? oTestControl1 : oTestControl2;
 			oTestControl._bEventHandlerCalled = true;
-			equal(oEvent.type, sEventName, "Event type correct");
-			ok(oEvent.srcControl, "Event attribute 'srcControl' available");
+			assert.equal(oEvent.type, sEventName, "Event type correct");
+			assert.ok(oEvent.srcControl, "Event attribute 'srcControl' available");
 			if(oEvent.srcControl) {
-				equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
+				assert.equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
 			}
 			if(fHandlerChecks){
 				fHandlerChecks(oEvent, oTestControl);
@@ -211,14 +213,14 @@
 
 		if(!bExpectHandlersNotCalled){
 			if(bStopPropagation){
-				ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
+				assert.ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
 			}else{
-				ok(oTestControl1._bEventHandlerCalled, "Event Handler called on control 1");
+				assert.ok(oTestControl1._bEventHandlerCalled, "Event Handler called on control 1");
 			}
-			ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
+			assert.ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
 		}else{
-			ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
-			ok(!oTestControl2._bEventHandlerCalled, "Event Handler not called on control 2");
+			assert.ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
+			assert.ok(!oTestControl2._bEventHandlerCalled, "Event Handler not called on control 2");
 		}
 
 		oTestControl1._bEventHandlerCalled = undefined;
@@ -229,11 +231,11 @@
 
 
 	function doTestCtrlEvent(sEventName, sOrigEventName, oEventParams, fHandlerChecks, bExpectHandlersNotCalled){
-		test(sEventName + " Event", function() {
+		QUnit.test(sEventName + " Event", function(assert) {
 			_testCtrlEvent(sEventName, sOrigEventName, oEventParams, false, fHandlerChecks, bExpectHandlersNotCalled);
 		});
 
-		test(sEventName + " Event (bubbling cancelled)", function() {
+		QUnit.test(sEventName + " Event (bubbling cancelled)", function(assert) {
 			_testCtrlEvent(sEventName, sOrigEventName, oEventParams, true, fHandlerChecks, bExpectHandlersNotCalled);
 		});
 	};
@@ -243,7 +245,7 @@
 		var iCount = 0;
 		var fCheck = function(oEvent) {
 			iCount++;
-			ok(oEvent.isPseudoType(oEvent._sExpectedPseudoType), "Event has expected pseudo type "+oEvent._sExpectedPseudoType);
+			assert.ok(oEvent.isPseudoType(oEvent._sExpectedPseudoType), "Event has expected pseudo type "+oEvent._sExpectedPseudoType);
 		};
 
 		jQuery("#outer").bind(sOriginalEventName, fCheck);
@@ -256,7 +258,7 @@
 			jQuery("#inner").trigger(oEvent);
 		}
 
-		equal(iCount, iTriggerCount, "Event handler called "+iTriggerCount+" times");
+		assert.equal(iCount, iTriggerCount, "Event handler called "+iTriggerCount+" times");
 
 		jQuery("#inner").unbind();
 		jQuery("#outer").unbind();
@@ -264,7 +266,7 @@
 
 
 	function doTestPseudoEvent(sOriginalEventName, sEventName, iTriggerCount, oEventParams) {
-		test(sEventName + " Event - Basic", function() {
+		QUnit.test(sEventName + " Event - Basic", function(assert) {
 			_testPseudoEvent(sOriginalEventName, sEventName, iTriggerCount, oEventParams);
 		});
 
@@ -277,7 +279,6 @@
 		// at least 500 ms should have passed trigger again to simulate dblclick
 		setTimeout(function() {
 			jQuery("#"+sTargetId).trigger("click");
-			start();
 			if(fDoAfter){
 				fDoAfter();
 			}
@@ -287,33 +288,33 @@
 	</script>
 
 	<!-- Test functions -->
-	<script type="text/javascript">
+	<script>
 
 	//***************************************
-	module("Initialization");
+	QUnit.module("Initialization");
 
-	test("Control Events", function() {
+	QUnit.test("Control Events", function(assert) {
 		var aBrowserEvents = [].concat(aBasicBrowserEvents);
 
 		if(sap.ui.Device.support.touch){
 			aBrowserEvents = aBrowserEvents.concat(aMobileBrowserEvents);
 		}
 
-		equal(jQuery.sap.ControlEvents.length, aBrowserEvents.length, "Number of basic browser events correct");
+		assert.equal(jQuery.sap.ControlEvents.length, aBrowserEvents.length, "Number of basic browser events correct");
 		for(var i=0; i<aBrowserEvents.length; i++){
-			ok(jQuery.inArray(aBrowserEvents[i], jQuery.sap.ControlEvents) >= 0, "Event "+aBrowserEvents[i]+" contained in jQuery.sap.ControlEvents");
+			assert.ok(jQuery.inArray(aBrowserEvents[i], jQuery.sap.ControlEvents) >= 0, "Event "+aBrowserEvents[i]+" contained in jQuery.sap.ControlEvents");
 		}
 	});
 
-	test("Pseudo Events", function() {
+	QUnit.test("Pseudo Events", function(assert) {
 		function fCheck(sEventName, sOrigEventName){
 			var evt = jQuery.sap.PseudoEvents[sEventName];
-			ok(!!evt, "Event "+sEventName+" contained in jQuery.sap.PseudoEvents");
+			assert.ok(!!evt, "Event "+sEventName+" contained in jQuery.sap.PseudoEvents");
 			if(evt){
-				equal(evt.sName, sEventName, "Event "+sEventName+": name correct");
-				ok(jQuery.inArray(sOrigEventName, evt.aTypes) >= 0, "Event "+sEventName+": base type correct");
+				assert.equal(evt.sName, sEventName, "Event "+sEventName+": name correct");
+				assert.ok(jQuery.inArray(sOrigEventName, evt.aTypes) >= 0, "Event "+sEventName+": base type correct");
 				for(var j=0; j<evt.aTypes.length; j++){
-					ok(jQuery.inArray(evt.aTypes[j], jQuery.sap.ControlEvents) >= 0, "Event "+sEventName+": base type in jQuery.sap.ControlEvents");
+					assert.ok(jQuery.inArray(evt.aTypes[j], jQuery.sap.ControlEvents) >= 0, "Event "+sEventName+": base type in jQuery.sap.ControlEvents");
 				}
 			}
 		};
@@ -335,7 +336,7 @@
 
 
 	//***************************************
-	module("Basic Browser Events");
+	QUnit.module("Basic Browser Events");
 
 	for(var i=0; i<aBasicBrowserEvents.length; i++){
 		doTestCtrlEvent(aBasicBrowserEvents[i]);
@@ -343,26 +344,27 @@
 
 
 	//***************************************
-	module("Basic Browser Events - Negative check");
+	QUnit.module("Basic Browser Events - Negative check");
 
 	doTestCtrlEvent("hurlipuu", null, null, null, true);
 
 
 	//***************************************
-	module("Basic Pseudo Events");
+	QUnit.module("Basic Pseudo Events");
 
 	for(var i=0; i<aPseudoKeyEvents.length; i++){
 		doTestPseudoEvent("keydown", aPseudoKeyEvents[i].sName, aPseudoKeyEvents[i].iTrigger, aPseudoKeyEvents[i].oParams);
 	}
 
-	asyncTest("sapdelayeddoubleclick Event - Basic", function(){
+	QUnit.test("sapdelayeddoubleclick Event - Basic", function(assert){
+		var done = assert.async();
 		var iCount = 0;
 		var bFirst = true;
 
 		var fCheck = function(oEvent) {
 			iCount++;
 			if(!bFirst){
-				ok(oEvent.isPseudoType("sapdelayeddoubleclick"), "Event has expected pseudo type sapdelayeddoubleclick");
+				assert.ok(oEvent.isPseudoType("sapdelayeddoubleclick"), "Event has expected pseudo type sapdelayeddoubleclick");
 			}
 			oEvent.getPseudoTypes(); //Ensure that pseudo types check functions run
 			bFirst = false;
@@ -371,21 +373,23 @@
 		jQuery("#outer").bind("click", fCheck);
 
 		triggerDelayedDoubleClick("inner", function(){
-			equal(iCount, 2, "Event handler called 2 times");
+			assert.equal(iCount, 2, "Event handler called 2 times");
 			jQuery("#inner").unbind();
 			jQuery("#outer").unbind();
+			done();
 		});
 
 	});
 
-	asyncTest("sapdelayeddoubleclick Event", function(){
+	QUnit.test("sapdelayeddoubleclick Event", function(assert){
+		var done = assert.async();
 		var fCheck = function(oEvent, bTestOuter) {
 			var oTestControl = bTestOuter ? oTestControl1 : oTestControl2;
 			oTestControl._bEventHandlerCalled = true;
-			equal(oEvent.type, "sapdelayeddoubleclick", "Event type correct");
-			ok(oEvent.srcControl, "Event attribute 'srcControl' available");
+			assert.equal(oEvent.type, "sapdelayeddoubleclick", "Event type correct");
+			assert.ok(oEvent.srcControl, "Event attribute 'srcControl' available");
 			if(oEvent.srcControl) {
-				equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
+				assert.equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
 			}
 		};
 
@@ -393,27 +397,29 @@
 		oTestControl2["onsapdelayeddoubleclick"] = function(oEvent){fCheck(oEvent, false);};
 
 		triggerDelayedDoubleClick("test2-Inner", function(){
-			ok(oTestControl1._bEventHandlerCalled, "Event Handler called on control 1");
-			ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
+			assert.ok(oTestControl1._bEventHandlerCalled, "Event Handler called on control 1");
+			assert.ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
 
 			oTestControl1._bEventHandlerCalled = undefined;
 			oTestControl2._bEventHandlerCalled = undefined;
 			oTestControl1["onsapdelayeddoubleclick"] = undefined;
 			oTestControl2["onsapdelayeddoubleclick"] = undefined;
+			done();
 		});
 	});
 
-	asyncTest("sapdelayeddoubleclick Event (bubbling cancelled)", function(){
+	QUnit.test("sapdelayeddoubleclick Event (bubbling cancelled)", function(assert){
+		var done = assert.async();
 		var fCheck = function(oEvent, bTestOuter) {
 			if(!bTestOuter){
 				oEvent.stopPropagation();
 			}
 			var oTestControl = bTestOuter ? oTestControl1 : oTestControl2;
 			oTestControl._bEventHandlerCalled = true;
-			equal(oEvent.type, "sapdelayeddoubleclick", "Event type correct");
-			ok(oEvent.srcControl, "Event attribute 'srcControl' available");
+			assert.equal(oEvent.type, "sapdelayeddoubleclick", "Event type correct");
+			assert.ok(oEvent.srcControl, "Event attribute 'srcControl' available");
 			if(oEvent.srcControl) {
-				equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
+				assert.equal(oEvent.srcControl.getId(), "test2", "Event attribute 'srcControl' correct");
 			}
 		};
 
@@ -421,13 +427,14 @@
 		oTestControl2["onsapdelayeddoubleclick"] = function(oEvent){fCheck(oEvent, false);};
 
 		triggerDelayedDoubleClick("test2-Inner", function(){
-			ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
-			ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
+			assert.ok(!oTestControl1._bEventHandlerCalled, "Event Handler not called on control 1");
+			assert.ok(oTestControl2._bEventHandlerCalled, "Event Handler called on control 2");
 
 			oTestControl1._bEventHandlerCalled = undefined;
 			oTestControl2._bEventHandlerCalled = undefined;
 			oTestControl1["onsapdelayeddoubleclick"] = undefined;
 			oTestControl2["onsapdelayeddoubleclick"] = undefined;
+			done();
 		});
 	});
 
@@ -436,7 +443,7 @@
 
 	if(sap.ui.Device.support.touch){
 		//***************************************
-		module("Mobile Browser Events");
+		QUnit.module("Mobile Browser Events");
 
 		for(var i=0; i<aMobileBrowserEvents.length; i++){
 			doTestCtrlEvent(aMobileBrowserEvents[i], null, /*Satisfy jQuery Mobile*/{touches:[{pageX:0, pageY:0}], targetTouches: [{pageX:0, pageY:0}], changedTouches: [{pageX:0, pageY:0}]});
@@ -444,13 +451,13 @@
 
 
 		//***************************************
-		module("Mobile Pseudo Events");
+		QUnit.module("Mobile Pseudo Events");
 
 		doTestPseudoEvent(bRtl ? "swiperight" : "swipeleft", "swipebegin", 1);
 		doTestPseudoEvent(!bRtl ? "swiperight" : "swipeleft", "swipeend", 1);
 	}
 
-	module("Private extensions of jQuery event object");
+	QUnit.module("Private extensions of jQuery event object");
 
 	/* ------------------------------ */
 	/* setMarked() + isMarked         */
@@ -458,7 +465,7 @@
 
 	var setMarkedTestCase = function(mOptions) {
 
-		test("setMarked()", function() {
+		QUnit.test("setMarked()", function(assert) {
 
 			// system under test + arrange
 			var oEvent = mOptions.event;
@@ -468,9 +475,9 @@
 
 			// assertions
 			if (mOptions.mark) {
-				strictEqual(oEvent.isMarked(mOptions.mark), true);
+				assert.strictEqual(oEvent.isMarked(mOptions.mark), true);
 			} else {
-				strictEqual(oEvent.isMarked(), true);
+				assert.strictEqual(oEvent.isMarked(), true);
 			}
 		});
 	};
@@ -497,7 +504,7 @@
 		})
 	});
 
-	test("setMarked() on an event which has originalEvent point to itself", function() {
+	QUnit.test("setMarked() on an event which has originalEvent point to itself", function(assert) {
 		var oEvent = new jQuery.Event("mousedown"),
 			sMark = "mark";
 
@@ -509,7 +516,7 @@
 		oEvent.setMarked(sMark);
 
 		// assertion
-		ok(oEvent.isMarked(sMark), "self-contained event is correctly marked");
+		assert.ok(oEvent.isMarked(sMark), "self-contained event is correctly marked");
 	});
 
 	/* ------------------------------ */
@@ -518,7 +525,7 @@
 
 	var setMarkTestCase = function(mOptions) {
 
-		test("setMark()", function() {
+		QUnit.test("setMark()", function(assert) {
 
 			// system under test + arrange
 			var oEvent = mOptions.event;
@@ -531,7 +538,7 @@
 			}
 
 			// assertions
-			strictEqual(oEvent.isMarked(mOptions.mark), true);
+			assert.strictEqual(oEvent.isMarked(mOptions.mark), true);
 		});
 	};
 
@@ -561,21 +568,21 @@
 		value: "some-value"
 	});
 
-	module("");
+	QUnit.module("");
 
 	/* ------------------------------ */
 	/* jQuery.sap.isSpecialKey()      */
 	/* ------------------------------ */
 
 	var fnIsSpecialKeyTestCase = function(sEventName, mOptions, bOuput, sDescription) {
-		test("jQuery.sap.isSpecialKey() " + sDescription, function() {
+		QUnit.test("jQuery.sap.isSpecialKey() " + sDescription, function(assert) {
 
 			// arrange
 			var oEvent = new jQuery.Event(sEventName);
 			jQuery.extend(oEvent, mOptions);
 
 			// assertions
-			strictEqual(jQuery.sap.isSpecialKey(oEvent), bOuput);
+			assert.strictEqual(jQuery.sap.isSpecialKey(oEvent), bOuput);
 		});
 	};
 
@@ -880,6 +887,22 @@
 		assert.ok(!jQuery.sap.isMouseEventDelayed, "isMouseEventDelayed should be marked with false for safari (not a webview) iOS 8");
 	});
 
+	QUnit.test("Under Chrome (Samsung Device, version >= 32)", function(assert) {
+		this.stub(sap.ui.Device, "browser", {
+			chrome: true,
+			mobile: true,
+			version: 32
+		});
+
+		//mock samsung user agent
+		var oNavigatorObjectMock = {};
+		oNavigatorObjectMock.userAgent = "Mozilla/5.0(SAMSUNG SM-G900F/XXS1CPF1 Build/MMB29M) Chrome/44.0.2403.133";
+
+		jQuery.sap._refreshMouseEventDelayedFlag(oNavigatorObjectMock);
+
+		assert.ok(jQuery.sap.isMouseEventDelayed, "isMouseEventDelayed should be marked with true for Samsung devices with Chrome with version >= 32");
+	});
+
 	QUnit.test("Under Chrome (version >= 32)", function(assert) {
 		this.stub(sap.ui.Device, "browser", {
 			chrome: true,
@@ -887,10 +910,179 @@
 			version: 32
 		});
 
-		jQuery.sap._refreshMouseEventDelayedFlag();
+		//mock desktop chrome user agent
+		var oNavigatorObjectMock = {};
+		oNavigatorObjectMock.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/55.0.2883.87";
+
+		jQuery.sap._refreshMouseEventDelayedFlag(oNavigatorObjectMock);
 
 		assert.ok(!jQuery.sap.isMouseEventDelayed, "isMouseEventDelayed should be marked with false for Chrome with version >= 32");
 	});
+
+	var cleanupDelegatesAndEventListener = function(){
+		//ensure all delegates are deregistered
+		oTestControl1.aDelegates.slice().forEach(function(oDelegate) {
+			oTestControl1.removeDelegate(oDelegate.oDelegate);
+		});
+		assert.equal(oTestControl1.aDelegates.length, 0);
+
+
+		//cleanup taphold event listener
+		var oElement = oTestControl1.$();
+		oElement.off("taphold");
+	};
+
+	QUnit.module("jQuery.sap.events context menu simulation", {
+		beforeEach: cleanupDelegatesAndEventListener,
+		afterEach: cleanupDelegatesAndEventListener
+	});
+
+	QUnit.test("Simulated event for contextmenu under non-iOS", function(assert) {
+		var done = assert.async();
+
+		//reload events with simulated ios device to map "sapcontextmenu" event
+		jQuery.sap.unloadResources("sap/base/events/PseudoEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/base/events/PseudoTypes.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/ControlEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/EventSimulation.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/jqueryEvent.js", false, true, true);
+		jQuery.sap.unloadResources("jquery.sap.events.js", false, true, true);
+		this.stub(sap.ui.Device, "os", {
+			ios: false
+		});
+
+		sap.ui.require(["jquery.sap.events"], function(jQUeryEvents) {
+			var uiArea = sap.ui.getCore().getUIArea("uiArea");
+
+			//trigger reload of events in order to have "sapcontextmenu" event as part of ControlEvents array
+			var oldRootNode = uiArea.getRootNode();
+			uiArea.setRootNode(null);
+			uiArea.setRootNode(oldRootNode);
+
+			// add event listener for contextmenu event
+
+			oTestControl1.addEventDelegate({oncontextmenu: function(oEvent){
+				assert.notOk(true, "oncontextmenu should not be fired");
+			}}, oTestControl1);
+
+			var oElement = oTestControl1.$();
+			oElement.on("taphold", function() {
+				assert.ok(true);
+				done();
+			});
+
+			oElement.trigger("taphold");
+		});
+	});
+
+	QUnit.test("Simulated event for contextmenu under iOS", function(assert) {
+		var done = assert.async();
+
+		//reload events with simulated ios device to map "sapcontextmenu" event
+		jQuery.sap.unloadResources("sap/base/events/PseudoEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/base/events/PseudoTypes.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/ControlEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/EventSimulation.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/jqueryEvent.js", false, true, true);
+		jQuery.sap.unloadResources("jquery.sap.events.js", false, true, true);
+		this.stub(sap.ui.Device, "os", {
+			ios: true
+		});
+
+		sap.ui.require(["jquery.sap.events"], function(jQUeryEvents) {
+			var uiArea = sap.ui.getCore().getUIArea("uiArea");
+
+			//trigger reload of events in order to have "sapcontextmenu" event as part of ControlEvents array
+			var oldRootNode = uiArea.getRootNode();
+			uiArea.setRootNode(null);
+			uiArea.setRootNode(oldRootNode);
+
+			// add event listener for contextmenu event
+			oTestControl1.addEventDelegate({oncontextmenu: function(oEvent){
+				assert.equal(oEvent.type, "contextmenu");
+				done();
+			}}, oTestControl1);
+
+			//trigger sapcontextmenu custom event
+			oTestControl1.$().trigger("taphold");
+		});
+	});
+
+	QUnit.test("Simulated event for contextmenu under iOS with selected text", function(assert) {
+		var done = assert.async();
+		assert.expect(3);
+
+		//reload events with simulated ios device to map "sapcontextmenu" event
+		jQuery.sap.unloadResources("sap/base/events/PseudoEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/base/events/PseudoTypes.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/ControlEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/EventSimulation.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/jqueryEvent.js", false, true, true);
+		jQuery.sap.unloadResources("jquery.sap.events.js", false, true, true);
+		this.stub(sap.ui.Device, "os", { ios: true });
+		var getSelectionStub = sinon.stub(window, "getSelection", function () { return "someText"; });
+
+		sap.ui.require(["jquery.sap.events"], function(jQUeryEvents) {
+			var uiArea = sap.ui.getCore().getUIArea("uiArea");
+
+			//trigger reload of events in order to have "sapcontextmenu" event as part of ControlEvents array
+			var oldRootNode = uiArea.getRootNode();
+			uiArea.setRootNode(null);
+			uiArea.setRootNode(oldRootNode);
+
+			oTestControl1.addEventDelegate({oncontextmenu: function(oEvent){
+				assert.notOk(true, "oncontextmenu should not be fired");
+			}}, oTestControl1);
+
+			//trigger sapcontextmenu custom event
+			var oElement = oTestControl1.$();
+			oElement.on("taphold", function() {
+				assert.ok(true);
+				done();
+			});
+
+			//trigger sapcontextmenu custom event
+			oElement.trigger("taphold");
+
+			getSelectionStub.restore();
+		});
+	});
+
+	QUnit.test("Simulated event for contextmenu under iOS without selected text", function(assert) {
+		var done = assert.async();
+
+		//reload events with simulated ios device to map "sapcontextmenu" event
+		jQuery.sap.unloadResources("sap/base/events/PseudoEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/base/events/PseudoTypes.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/ControlEvents.js", false, true, true);
+		jQuery.sap.unloadResources("sap/ui/events/EventSimulation.js", false, true, true);
+		jQuery.sap.unloadResources("jquery.sap.events.js", false, true, true);
+		this.stub(sap.ui.Device, "os", {
+			ios: true
+		});
+		var getSelectionStub = sinon.stub(window, "getSelection", function () { return ""; });
+
+		sap.ui.require(["jquery.sap.events"], function(jQUeryEvents) {
+			var uiArea = sap.ui.getCore().getUIArea("uiArea");
+
+			//trigger reload of events in order to have "sapcontextmenu" event as part of ControlEvents array
+			var oldRootNode = uiArea.getRootNode();
+			uiArea.setRootNode(null);
+			uiArea.setRootNode(oldRootNode);
+
+			// add event listener for contextmenu event
+			oTestControl1.addEventDelegate({oncontextmenu: function(oEvent){
+				assert.equal(oEvent.type, "contextmenu");
+				done();
+			}}, oTestControl1);
+
+			//trigger sapcontextmenu custom event
+			oTestControl1.$().trigger("taphold");
+
+			getSelectionStub.restore();
+		});
+	});
+
 	</script>
 </head>
 <body>

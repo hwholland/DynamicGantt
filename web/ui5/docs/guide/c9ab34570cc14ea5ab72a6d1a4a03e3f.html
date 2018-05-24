@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="The renderer method is responsible for creating the HTML structure for the control."/>
 <meta name="description" content="The renderer method is responsible for creating the HTML structure for the control."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9209517051242755"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=2571629600640877"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2571629600640877"/>
 <title>Renderer Methods</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioc9ab34570cc14ea5ab72a6d1a4a03e3f">
 <div id="wrapper"><div id="container">
@@ -41,13 +27,13 @@
 			given to the method. The <samp class="ph codeph">RenderManager</samp> collects and concatenates string
 			fragments and places them in the DOM at the appropriate position.</p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>renderer: function(oRM, oControl) {
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">renderer: function(oRM, oControl) {
    oRM.write("&lt;div&gt;", oControl.getText(), "&lt;/div&gt;");
 }</pre></div>
 
 		<p class="p">A control must have exactly one HTML element as a root node, additional elements may be added
 			below this node. <samp class="ph codeph">oRM.writeControlData(oControl);</samp> must be called while
-			the root node is written. Thus, the root element can be marked as <span class="ph"><span class="ph pname">SAPUI5</span></span> control root
+			the root node is written. Thus, the root element can be marked as <span class="ph"><span class="ph pname">OpenUI5</span></span> control root
 			and the ID of the control is written. Also, <samp class="ph codeph">oRM.writeClasses();</samp> must be
 			called in the root element of the control, in order to enable support of
 				<samp class="ph codeph">addStyleClass()</samp> for the control.</p>
@@ -57,7 +43,7 @@
 			inherits from <samp class="ph codeph">sap.m.InputBaseRenderer</samp> and can access the respective
 			functions.</p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define(['sap/ui/core/Renderer', 'sap/m/InputBaseRenderer'],
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define(['sap/ui/core/Renderer', 'sap/m/InputBaseRenderer'],
                 function(Renderer, InputBaseRenderer) {
                 "use strict";
                 
@@ -73,7 +59,7 @@
 		<p class="p">If an existing renderer is used without modification, you can use the name of the respective
 			renderer class: </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>renderer: "sap.m.ButtonRenderer"</pre></div>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">renderer: "sap.m.ButtonRenderer"</pre></div>
 
 		<p class="p">A control renderer can also override or implement methods from the renderer superclass. And it
 			can separate out helper functions.</p>
@@ -83,7 +69,7 @@
 			method is called <samp class="ph codeph">render</samp>. The <samp class="ph codeph">this</samp> keyword refers to
 			the control renderer type and is used to access the other methods: </p>
 
-		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+		<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 renderer: {
 
    render: function(oRM, oControl) {
@@ -108,19 +94,5 @@ renderer: {
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Renderer Methods";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

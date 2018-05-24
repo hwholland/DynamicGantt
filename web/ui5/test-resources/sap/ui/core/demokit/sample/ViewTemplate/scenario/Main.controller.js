@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -81,7 +81,7 @@ sap.ui.define([
 		onSourceCode : function (oEvent) {
 			var oView = this.getView(),
 				sSource,
-				bVisible = oView.byId("toggleSourceCode").getPressed();
+				bVisible = this.byId("toggleSourceCode").getPressed();
 
 			oView.getModel("ui").setProperty("/codeVisible", bVisible);
 			if (bVisible) {
@@ -89,16 +89,13 @@ sap.ui.define([
 					.replace(/<!--.*-->/g, "") // remove comments
 					.replace(/\t/g, "  ") // indent by just 2 spaces
 					.replace(/\n\s*\n/g, "\n"); // remove empty lines
-				oView.getModel("ui").setProperty("/code", "<div style='"
-					+ "font-family: monospace; white-space: pre-wrap;"
-					+ "margin: 1em 0; display: block;'>"
-					+ "<code>" + jQuery.sap.encodeHTML(sSource) + "</code></div>");
+				oView.getModel("ui").setProperty("/code", sSource);
 			}
 		},
 
 		_bindSelectInstance : function () {
 			var oBinding,
-				oControl = this.getView().byId("selectInstance");
+				oControl = this.byId("selectInstance");
 
 			oControl.bindAggregation("items", {
 				path : "/" + this._getSelectedSet(),
@@ -118,7 +115,7 @@ sap.ui.define([
 		},
 
 		_getDetailView : function () {
-			return this.getView().byId("detailBox").getContent()[0];
+			return this.byId("detailBox").getContent()[0];
 		},
 
 		_getSelectedSet : function () {
@@ -130,7 +127,7 @@ sap.ui.define([
 				that = this;
 
 			oMetaModel.loaded().then(function () {
-				var oDetailBox = that.getView().byId("detailBox"),
+				var oDetailBox = that.byId("detailBox"),
 					oDetailView,
 					sMetadataPath = oMetaModel.getODataEntitySet(that._getSelectedSet(), true),
 					iStart;

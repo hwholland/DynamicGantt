@@ -3,7 +3,25 @@
     <name>NotificationListBase</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>The NotificationListBase is the base class for NotificationListItem and NotificationListGroup.</documentation>
+    <documentation>The NotificationListBase is the abstract base class for {@link sap.m.NotificationListItem} and {@link sap.m.NotificationListGroup}.
+
+The NotificationList controls are designed for the SAP Fiori notification center.
+&lt;h4&gt;Overview&lt;/h4&gt;
+NotificationListBase defines the general structure of a notification item. Most of the behavioral logic is defined for the single items or groups.
+&lt;h4&gt;Structure&lt;/h4&gt;
+The base holds properties for the following elements:
+&lt;ul&gt;
+&lt;li&gt;Author name&lt;/li&gt;
+&lt;li&gt;Author picture&lt;/li&gt;
+&lt;li&gt;Time stamp&lt;/li&gt;
+&lt;li&gt;Priority&lt;/li&gt;
+&lt;li&gt;Title&lt;/li&gt;
+&lt;/ul&gt;
+Additionally, by setting these properties you can determine if buttons are shown:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;showButtons&lt;/code&gt; - action buttons visibility&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;showCloseButton&lt;/code&gt; - close button visibility&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <since>1.38</since>
     <baseType>sap.m/ListItemBase</baseType>
     <properties>
@@ -31,7 +49,7 @@
     </properties>
     <events>
         <event name="close" allowPreventDefault="false">
-            <documentation>Fired when the notification is closed.</documentation>
+            <documentation>Fired when the close button of the notification is pressed.&lt;br&gt;&lt;b&gt;Note:&lt;/b&gt; Pressing the close button doesn't destroy the notification automatically.</documentation>
         </event>
     </events>
     <aggregations>

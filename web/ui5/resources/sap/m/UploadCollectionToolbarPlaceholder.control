@@ -3,8 +3,8 @@
     <name>UploadCollectionToolbarPlaceholder</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>This control needs to be used when you would like to create a customizable toolbar for the UploadCollection. Always a FileUploader instance is
-required in the toolbar, the FileUploader will be placed in the position defined by the application.</documentation>
-    <since>1.34</since>
+    <documentation>Used to create a customizable toolbar for the UploadCollection.
+A FileUploader instance is required in the toolbar and will be placed by the application.</documentation>
+    <since>1.34.0</since>
     <baseType>sap.ui.core/Control</baseType>
 </control>

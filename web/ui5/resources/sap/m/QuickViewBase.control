@@ -46,6 +46,9 @@ which is currently navigated to) has not been displayed/navigated to before.</do
                     <documentation>Determines how the navigation was triggered, possible values are
 "to", "back", "backToPage", and "backToTop".</documentation>
                 </parameter>
+                <parameter name="navOrigin" type="sap.ui.core/Control">
+                    <documentation>Determines which link initiated the navigation.</documentation>
+                </parameter>
             </parameters>
         </event>
         <event name="afterNavigate" allowPreventDefault="false">
@@ -86,6 +89,9 @@ after the "navigate" event.</documentation>
                 </parameter>
                 <parameter name="isTopPage" type="sap.ui.core/boolean">
                     <documentation>Determines whether this is a navigation to the top page.</documentation>
+                </parameter>
+                <parameter name="navOrigin" type="sap.ui.core/Control">
+                    <documentation>Determines which link initiated the navigation.</documentation>
                 </parameter>
             </parameters>
         </event>

@@ -4,26 +4,26 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 	<title>QUnit page for sap.m.QuickView</title>
-	<script id="sap-ui-bootstrap" data-sap-ui-theme="sap_bluecrystal"
-			type="text/javascript" data-sap-ui-noConflict="true"
+	<script src="../shared-config.js"></script>
+	<script id="sap-ui-bootstrap" data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.m" src="../../../../resources/sap-ui-core.js">
 	</script>
 
 	<link rel="stylesheet" type="text/css" media="screen"
 		  href="../../../../resources/sap/ui/thirdparty/qunit.css"/>
 
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-	<script type="text/javascript">
+	<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+	<script src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+	<script src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+	<script>
 		sinon.config.useFakeTimers = true;
 
 		//create JSON model instance
 		var oModel = new sap.ui.model.json.JSONModel();
-
+		var oModelNoHeader = new sap.ui.model.json.JSONModel();
 		// JSON sample data
 		var mData = {
 			"pages": [
@@ -222,10 +222,40 @@
 
 		};
 
+		var mGenericDataNoHeader = {
+			pages: [
+				{
+					pageId: "genericPageId",
+					title: "Inventarisation",
+					titleUrl: "http://de.wikipedia.org/wiki/Inventarisation",
+					icon: "sap-icon://camera",
+					groups: [
+						{
+							elements: [
+								{
+									label: "Start Date",
+									value: "01/01/2015"
+								},
+								{
+									label: "End Date",
+									value: "31/12/2015"
+								},
+								{
+									label: "Occurrence",
+									value: "Weekly"
+								}
+							]
+						}
+					]
+				}
+			]
+		};
 		// set the data for the model
 		oModel.setData(mData);
+		oModelNoHeader.setData(mGenericDataNoHeader);
 
 		sap.ui.getCore().setModel(oModel);
+		sap.ui.getCore().setModel(oModelNoHeader);
 
 		// create and add app
 		var oApp = new sap.m.App("myApp", {initialPage: "quickViewPage"});
@@ -268,9 +298,8 @@
 				}
 			})
 		}
-
 		QUnit.module("API", {
-			setup: function () {
+			beforeEach: function () {
 				this.oQuickView = getQuickView();
 
 				this.oQuickView.setModel(oModel);
@@ -283,9 +312,10 @@
 				});
 
 				oPage.addContent(this.oButton);
+				oPage.addContent(this.oButton2);
 				sap.ui.getCore().applyChanges();
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oButton.destroy();
 				this.oButton = null;
 
@@ -307,7 +337,7 @@
 		});
 
 		QUnit.module("Render", {
-			setup: function () {
+			beforeEach: function () {
 				this.oQuickView = getQuickView();
 
 				this.oQuickView.setModel(oModel);
@@ -322,13 +352,19 @@
 				oPage.addContent(this.oButton);
 				sap.ui.getCore().applyChanges();
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oButton.destroy();
 				this.oButton = null;
 
 				this.oQuickView.destroy();
 				this.oQuickView = null;
 			}
+		});
+
+		QUnit.test("Header is rendered", function (assert) {
+			this.oButton.firePress();
+			this.clock.tick(500);
+			assert.strictEqual(jQuery(".sapMQuickViewPageWithoutHeader").length, 0, "QuickView has Header");
 		});
 
 		QUnit.test("Clicking on a button to open a QuickView", function (assert) {
@@ -360,12 +396,12 @@
 		});
 
 		QUnit.test("Checking if all link have width of 'auto'", function(assert) {
-		    // act
+			// act
 			this.oButton.firePress();
 			this.clock.tick(500);
 			assert.ok(this.oQuickView._oPopover.isOpen(), "QuickView is already open");
 
-		    // assert
+			// assert
 			var aLinks = this.oQuickView._oPopover.$().find(".sapMLnk");
 			for (var index = 0; index < aLinks.length; index += 1) {
 				assert.strictEqual(aLinks[index].style.width, 'auto', "The Link should have width set to 'auto'");
@@ -400,7 +436,7 @@
 		});
 
 		QUnit.module("Keyboard handling", {
-			setup: function () {
+			beforeEach: function () {
 				this.oQuickView = getQuickView();
 
 				this.oQuickView.setModel(oModel);
@@ -416,7 +452,7 @@
 				sap.ui.getCore().applyChanges();
 
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oButton.destroy();
 				this.oButton = null;
 
@@ -468,7 +504,7 @@
 		});
 
 		QUnit.module("Change Data", {
-			setup: function () {
+			beforeEach: function () {
 				this.oQuickView = getQuickView();
 
 				this.oQuickView.setModel(oModel);
@@ -483,7 +519,7 @@
 				oPage.addContent(this.oButton);
 				sap.ui.getCore().applyChanges();
 			},
-			teardown: function () {
+			afterEach: function () {
 				this.oButton.destroy();
 				this.oButton = null;
 
@@ -527,6 +563,186 @@
 			assert.strictEqual(oText.text(), 'New Address', 'New text is correct');
 		});
 
+		QUnit.module("Navigate", {
+			beforeEach: function () {
+				this.oQuickView = getQuickView();
+				this.oQuickView.setModel(oModel);
+				var that = this;
+				this.oButton = new sap.m.Button({
+					text: "Open Quick View",
+					press: function () {
+						that.oQuickView.openBy(this);
+					}
+				});
+
+				oPage.addContent(this.oButton);
+				sap.ui.getCore().applyChanges();
+			},
+			afterEach: function () {
+				this.oButton.destroy();
+				this.oButton = null;
+
+				this.oQuickView.destroy();
+				this.oQuickView = null;
+			}
+		});
+
+		QUnit.test("Test navOrigin parameter", function (assert) {
+			this.oQuickView._setNavOrigin(this.oQuickView);
+
+			assert.ok(this.oQuickView._navOrigin, "Setting the navOrigin parameter for QuickView.");
+		});
+
+		QUnit.module("Render: No Header QuickView", {
+			beforeEach: function () {
+				this.oQuickView = getQuickView();
+
+				this.oQuickView.setModel(oModelNoHeader);
+				var that = this;
+				this.oButton = new sap.m.Button({
+					text: "Open Quick View No Header",
+					press: function () {
+						that.oQuickView.openBy(this);
+					}
+				});
+
+				oPage.addContent(this.oButton);
+				sap.ui.getCore().applyChanges();
+			},
+			afterEach: function () {
+				this.oButton.destroy();
+				this.oButton = null;
+
+				this.oQuickView.destroy();
+				this.oQuickView = null;
+			}
+		});
+
+		QUnit.test("Test No Header Set", function (assert) {
+			var aQuickViewPages = this.oQuickView.getPages();
+			aQuickViewPages.forEach(function (page) {
+				assert.strictEqual(page.mProperties.header, "", "Header property is not set");
+			});
+		});
+
+		QUnit.test("Test No Header rendered", function (assert) {
+			this.oButton.firePress();
+			this.clock.tick(500);
+			assert.strictEqual(jQuery(".sapMQuickViewPageWithoutHeader").length, 1, "QuickView has no header");
+		});
+
+		QUnit.module("Updating", {
+			beforeEach: function () {
+				this.oQuickView = getQuickView();
+
+				this.oQuickView.setModel(oModelNoHeader);
+				var that = this;
+				this.oButton = new sap.m.Button({
+					text: "Open",
+					press: function () {
+						that.oQuickView.openBy(this);
+					}
+				});
+
+				oPage.addContent(this.oButton);
+				sap.ui.getCore().applyChanges();
+			},
+			afterEach: function () {
+				this.oButton.destroy();
+				this.oButton = null;
+
+				this.oQuickView.destroy();
+				this.oQuickView = null;
+			}
+		});
+
+		QUnit.test("Invalidation", function (assert) {
+
+			var fnQuickViewInvalidate = sinon.spy(this.oQuickView, "invalidate");
+			var fnQuickViewPopoverInvalidate = sinon.spy(this.oQuickView._oPopover, "invalidate");
+
+			this.oButton.firePress();
+
+			var data = this.oQuickView.getModel().getData();
+			data.pages.push({
+				pageId: "newPageId",
+				header: "New Page",
+				title: "Page",
+				icon: "",
+				description: "Department Manager1",
+				groups: [
+					{
+						heading: "Job",
+						elements: [
+							{
+								label: "Company",
+								value: "SAP AG",
+								url: "http://sap.com",
+								elementType: sap.m.QuickViewGroupElementType.pageLink,
+								pageLinkId: "customPageId4"
+							},
+							{
+								label: "Company address",
+								value: "Sofia, Boris III, 136A"
+							}
+						]
+					}
+				]
+			});
+
+			var newData = {};
+			jQuery.extend(true, newData, data);
+
+			this.oQuickView.getModel().setData(newData);
+
+			assert.strictEqual(fnQuickViewInvalidate.callCount, 0, "QuickView.invalidate should not be called");
+			assert.strictEqual(fnQuickViewPopoverInvalidate.callCount, 0, "QuickView.Popover.invalidate should not be called");
+		});
+
+		QUnit.test("InvalidationOfParentContainer", function (assert) {
+
+			// the QuickView shouldn't be used as a child in any control,
+			// but for historical reasons we need to handle this case
+			oPage.addContent(this.oQuickView);
+
+			var fnPageInvalidate = sinon.spy(oPage, "invalidate");
+
+			var data = this.oQuickView.getModel().getData();
+			data.pages.push({
+				pageId: "newPageId",
+				header: "New Page",
+				title: "Page",
+				icon: "",
+				description: "Department Manager1",
+				groups: [
+					{
+						heading: "Job",
+						elements: [
+							{
+								label: "Company",
+								value: "SAP AG",
+								url: "http://sap.com",
+								elementType: sap.m.QuickViewGroupElementType.pageLink,
+								pageLinkId: "customPageId4"
+							},
+							{
+								label: "Company address",
+								value: "Sofia, Boris III, 136A"
+							}
+						]
+					}
+				]
+			});
+
+			var newData = {};
+			jQuery.extend(true, newData, data);
+
+			this.oQuickView.getModel().setData(newData);
+
+			this.oQuickView.getPages()[0].setTitle('New Title');
+
+			assert.strictEqual(fnPageInvalidate.callCount, 0, "Page.invalidate should not be called");
+		});
 
 	</script>
 </head>

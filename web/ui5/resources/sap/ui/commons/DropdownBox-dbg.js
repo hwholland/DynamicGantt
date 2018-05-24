@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.DropdownBox.
-sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/History', 'sap/ui/core/SeparatorItem'],
-	function(jQuery, ComboBox, library, History, SeparatorItem) {
+sap.ui.define([
+    'jquery.sap.global',
+    './ComboBox',
+    './library',
+    'sap/ui/core/History',
+    'sap/ui/core/SeparatorItem',
+    "./DropdownBoxRenderer"
+],
+	function(jQuery, ComboBox, library, History, SeparatorItem, DropdownBoxRenderer) {
 	"use strict";
 
 
@@ -20,11 +27,11 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 	 * The control provides a field that allows end users to an entry out of a list of pre-defined items.
 	 * The choosable items can be provided in the form of a complete <code>ListBox</code>, single <code>ListItems</code>.
 	 * @extends sap.ui.commons.ComboBox
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.ComboBox</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.ComboBox}
 	 * @alias sap.ui.commons.DropdownBox
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -251,7 +258,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 				return [];
 			}
 
-			// as an empty list can not have an history or an searchHelp just clear List
+			// as an empty list can not have a history or a searchHelp just clear List
 			ComboBox.prototype.removeAllItems.apply(this, arguments);
 
 			this.__aItems = [];
@@ -323,7 +330,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 		if (bDelayed) {
 			// Items are updated by binding. As items can be "reused" and have same IDSs,
 			// only one check at the end of all changes is needed
-			// only clear if really from an delayed call
+			// only clear if really from a delayed call
 			this._sHandleItemsChanged = null;
 			this._bNoItemCheck = undefined;
 		}
@@ -710,7 +717,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			iKeyCode = oEvent.keyCode,
 			oKC = jQuery.sap.KeyCodes;
 		if (( ComboBox._isHotKey(oEvent)
-			    || ( !!sap.ui.Device.browser.firefox && iKeyCode === oKC.HOME ) || // IE & webkit fires no keypress on HOME, but "$" has the same keyCode
+				|| ( !!sap.ui.Device.browser.firefox && iKeyCode === oKC.HOME ) || // IE & webkit fires no keypress on HOME, but "$" has the same keyCode
 				iKeyCode === oKC.F4 && oEvent.which === 0 ) /*this is the Firefox case and ensures 's' with same charCode is accepted*/
 				&& !(oEvent.ctrlKey && oEvent.which == 120)/*Ctrl+X*/ ) {
 			return;
@@ -829,8 +836,8 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 	 * For IE selecting text by #setSelectedRange method (this is what function _doSelect does)
 	 * provokes focus, so this function makes sure we were not called because of "_doSelect" more than once.
 	 * Edge does not have such behavior.
-	 * @param iStart the 0-based start position for the selection
-	 * @param iEnd the 0-based end position for the selection
+	 * @param {int} iStart The 0-based start position for the selection
+	 * @param {int} iEnd The 0-based end position for the selection
 	 * @private
 	 */
 	DropdownBox.prototype._callDoSelectAfterFocusIn = function(iStart, iEnd) {
@@ -1353,7 +1360,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 	 * Handle the sapfocusleave pseudo event and ensure that when the focus moves to the list box,
 	 * the check change functionality (incl. fireChange) is not triggered.
 	 * Before the change event the value must be checked again if it fits to the items, because
-	 * it might be manipulated using DOM manipulation or a IME tool for entering foreign characters
+	 * it might be manipulated using DOM manipulation or an IME tool for entering foreign characters
 	 * @protected
 	 */
 	DropdownBox.prototype.onsapfocusleave = function(oEvent) {

@@ -1,5 +1,7 @@
+/*global QUnit,sinon*/
+
 sap.ui.define([
-	"myCompany/myApp/controller/App.controller",
+	"mycompany/myapp/controller/App.controller",
 	"sap/ui/core/Control",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel",
@@ -10,7 +12,7 @@ sap.ui.define([
 
 	QUnit.module("Initialization", {
 
-		setup: function() {
+		beforeEach: function() {
 			this.oViewStub = new Control();
 			this.oComponentStub = new Control();
 
@@ -33,7 +35,7 @@ sap.ui.define([
 			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
 		},
 
-		teardown: function() {
+		afterEach: function() {
 			Controller.prototype.getOwnerComponent.restore();
 			Controller.prototype.getView.restore();
 

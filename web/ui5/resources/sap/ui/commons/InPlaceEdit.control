@@ -4,12 +4,12 @@
     <derived/>
     <documentation>The InPlaceEdit is a functionality to have text in display mode that can be changed in place.</documentation>
     <since>1.8.0</since>
-    <deprecation since="1.38"></deprecation>
+    <deprecation since="1.38">replaced by {@link sap.m.Input}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="valueState" type="sap.ui.core/ValueState" defaultValue="None" group="Data">
             <documentation>Visualizes warnings or errors related to the InPlaceEdit. Possible values: Warning, Error, Success.
-If the content control has a own valueState property this will be used.</documentation>
+If the content control has an own valueState property this will be used.</documentation>
         </property>
         <property name="undoEnabled" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
             <documentation>If undo is enabled after changing the text an undo button appears.</documentation>

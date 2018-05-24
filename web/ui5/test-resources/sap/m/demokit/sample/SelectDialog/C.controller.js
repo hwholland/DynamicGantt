@@ -23,7 +23,7 @@ sap.ui.define([
 		},
 
 		handleSelectDialogPress: function (oEvent) {
-			if (! this._oDialog) {
+			if (!this._oDialog) {
 				this._oDialog = sap.ui.xmlfragment("sap.m.sample.SelectDialog.Dialog", this);
 				this._oDialog.setModel(this.getView().getModel());
 			}
@@ -53,8 +53,10 @@ sap.ui.define([
 
 		handleClose: function(oEvent) {
 			var aContexts = oEvent.getParameter("selectedContexts");
-			if (aContexts.length) {
+			if (aContexts && aContexts.length) {
 				MessageToast.show("You have chosen " + aContexts.map(function(oContext) { return oContext.getObject().Name; }).join(", "));
+			} else {
+				MessageToast.show("No new item was selected.");
 			}
 			oEvent.getSource().getBinding("items").filter([]);
 		}

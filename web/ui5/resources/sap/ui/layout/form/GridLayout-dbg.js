@@ -1,22 +1,22 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.form.GridLayout.
-sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './GridElementData', 'sap/ui/layout/library'],
-	function(jQuery, FormLayout, GridContainerData, GridElementData, library) {
+sap.ui.define(['jquery.sap.global', './FormLayout', 'sap/ui/layout/library', './GridLayoutRenderer'],
+	function(jQuery, FormLayout, library, GridLayoutRenderer) {
 	"use strict";
 
 	/**
 	 * Constructor for a new sap.ui.layout.form.GridLayout.
 	 *
-	 * @param {string} [sId] Id for the new control, generated automatically if no id is given
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * This <code>FormLayout</code> renders a <code>Form</code> using a HTML-table based grid.
+	 * This <code>FormLayout</code> renders a <code>Form</code> using an HTML-table based grid.
 	 * This can be a 16 column grid or an 8 column grid. The grid is stable, so the alignment of the fields is the same for all screen sizes or widths of the <code>Form</code>.
 	 * Only the width of the single grid columns depends on the available width.
 	 *
@@ -25,11 +25,11 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 	 *
 	 * <b>Note:</b> If content fields have a <code>width</code> property this will be ignored, as the width of the controls is set by the grid cells.
 	 *
-	 * This control cannot be used stand alone, it only renders a <code>Form</code>, so it must be assigned to a <code>Form</code>.
+	 * This control cannot be used stand-alone, it just renders a <code>Form</code>, so it must be assigned to a <code>Form</code> using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -67,7 +67,7 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 			var aContainers = oForm.getFormContainers();
 			for ( var i = 0; i < aContainers.length; i++) {
 				var oContainer = aContainers[i];
-				if (oContainer.getExpandable()) {
+				if (oContainer.getExpandable() && oContainer._oExpandButton) {
 					oContainer._oExpandButton.$().attr("tabindex", "-1");
 				}
 			}
@@ -82,7 +82,7 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 
 		FormLayout.prototype.contentOnAfterRendering.apply(this, arguments);
 
-		if (oControl.getMetadata().getName() != "sap.ui.commons.Image" ) {
+		if (!oControl.getFormDoNotAdjustWidth || !oControl.getFormDoNotAdjustWidth()) {
 			oControl.$().css("width", "100%");
 		}
 
@@ -119,7 +119,7 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 			return FormLayout.prototype.findPrevFieldOfElement.apply(this, arguments);
 		}
 
-		if (!oElement.getVisible()) {
+		if (!oElement.isVisible()) {
 			return null;
 		}
 
@@ -154,7 +154,7 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 		var iCurrentIndex = oContainer.indexOfFormElement(oElement);
 		var oNewDomRef;
 
-		if (oContainer.getVisible()) {
+		if (oContainer.isVisible()) {
 			var aElements = oContainer.getFormElements();
 			var iMax = aElements.length;
 			var i = iCurrentIndex + 1;
@@ -184,7 +184,7 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 		var iCurrentIndex = oContainer.indexOfFormElement(oElement);
 		var oNewDomRef;
 
-		if (oContainer.getVisible()) {
+		if (oContainer.isVisible()) {
 			var aElements = oContainer.getFormElements();
 			var i = iCurrentIndex - 1;
 			var iLeft = oControl.$().offset().left;
@@ -234,10 +234,9 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 		if (this.getDomRef()) {
 			var bSingleColumn = this.getSingleColumn();
 			var oContainer = oElement.getParent();
-			var oContainerData = this.getLayoutDataForElement(oContainer, "sap.ui.layout.form.GridContainerData");
-			var that = this;
+			var oContainerData = this.getLayoutDataForElement(oContainer, "sap/ui/layout/form/GridContainerData");
 
-			if ((bSingleColumn || !oContainerData || !oContainerData.getHalfGrid()) && !this.getRenderer().checkFullSizeElement(that, oElement) ) {
+			if ((bSingleColumn || !oContainerData || !oContainerData.getHalfGrid()) && !this.getRenderer().checkFullSizeElement(this, oElement) ) {
 				return jQuery.sap.domById(oElement.getId());
 			}
 		}
@@ -248,4 +247,4 @@ sap.ui.define(['jquery.sap.global', './FormLayout', './GridContainerData', './Gr
 
 	return GridLayout;
 
-}, /* bExport= */ true);
+});

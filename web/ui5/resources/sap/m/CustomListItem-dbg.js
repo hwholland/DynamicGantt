@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.CustomListItem.
-sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
-	function(jQuery, ListItemBase, library) {
+sap.ui.define(['./ListItemBase', './library', './CustomListItemRenderer'],
+	function(ListItemBase, library, CustomListItemRenderer) {
 	"use strict";
 
 
@@ -24,7 +24,7 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -42,12 +42,15 @@ sap.ui.define(['jquery.sap.global', './ListItemBase', './library'],
 			 */
 			content : {type : "sap.ui.core.Control", multiple : true, singularName : "content", bindable : "bindable"}
 		},
-		designtime : true
+		designtime: "sap/m/designtime/CustomListItem.designtime"
 	}});
 
-
-
+	CustomListItem.prototype.getContentAnnouncement = function() {
+		return this.getContent().map(function(oContent) {
+			return ListItemBase.getAccessibilityText(oContent);
+		}).join(" ").trim();
+	};
 
 	return CustomListItem;
 
-}, /* bExport= */ true);
+});

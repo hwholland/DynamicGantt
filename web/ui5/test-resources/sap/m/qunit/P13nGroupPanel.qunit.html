@@ -4,8 +4,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 <title>Test Page for sap.m.P13nGroupPanel</title>
-<script id="sap-ui-bootstrap" data-sap-ui-theme="sap_bluecrystal"
-	type="text/javascript" data-sap-ui-noConflict="true"
+<script src="../shared-config.js"></script>
+<script id="sap-ui-bootstrap" data-sap-ui-noConflict="true"
 	data-sap-ui-libs="sap.m" src="../../../../resources/sap-ui-core.js">
 
 </script>
@@ -13,39 +13,34 @@
 <link rel="stylesheet"
 	href="../../../../resources/sap/ui/thirdparty/qunit.css"
 	type="text/css" media="screen" />
-<script type="text/javascript"
+<script
 	src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-<script type="text/javascript"
+<script
 	src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-<script type="text/javascript"
+<script
+	src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+<script
 	src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-<script type="text/javascript"
+<script
 	src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-<script type="text/javascript"
+<script
 	src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
-<script type="text/javascript">
-	if(!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version <= 8)) {
-			jQuery.sap.require("sap.ui.qunit.qunit-coverage");
-	} 		
+<script>
 
 	(function() {
 		jQuery.sap.require("sap.m.P13nGroupPanel");
 		jQuery.sap.require("sap.m.P13nGroupItem");
 
-		module("Properties", {
-			setup: function() {
+		QUnit.module("Properties", {
+			beforeEach: function() {
 			},
-			teardown: function() {
+			afterEach: function() {
 			}
 		});
 		var gData = {
 			"items": [
 				{
-					"key": null,
-					"text": "(none)",
-					"tooltip": "nix"
-				}, {
 					"key": "c0",
 					"text": "Name"
 				}, {
@@ -88,7 +83,7 @@
 			}));
 		};
 
-		test("Default Values", function() {
+		QUnit.test("Default Values", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel({
@@ -100,19 +95,19 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			strictEqual(oP13nGroupPanel.getLayoutMode(), "Desktop", "getLayoutMode should be 'Desktop'");
+			assert.strictEqual(oP13nGroupPanel.getLayoutMode(), "Desktop", "getLayoutMode should be 'Desktop'");
 
 			oP13nGroupPanel.setContainerQuery(true);
-			strictEqual(oP13nGroupPanel.getContainerQuery(), true, "getContainerQuery should return true");
+			assert.strictEqual(oP13nGroupPanel.getContainerQuery(), true, "getContainerQuery should return true");
 
 			oP13nGroupPanel.setMaxGroups(5);
-			strictEqual(oP13nGroupPanel.getMaxGroups(), "5", "getMaxGroups should return 5");
+			assert.strictEqual(oP13nGroupPanel.getMaxGroups(), "5", "getMaxGroups should return 5");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("Validation Tests", function() {
+		QUnit.test("Validation Tests", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel({
@@ -124,7 +119,7 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			strictEqual(oP13nGroupPanel.validateConditions(), true, "validateConditions should return true");
+			assert.strictEqual(oP13nGroupPanel.validateConditions(), true, "validateConditions should return true");
 
 			oP13nGroupPanel.removeInvalidConditions();
 			oP13nGroupPanel.removeValidationErrors();
@@ -133,7 +128,7 @@
 			oP13nGroupPanel.destroy();
 		});
 
-		test("bind Items test", function() {
+		QUnit.test("bind Items test", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
@@ -145,14 +140,13 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			var nItems = 4;
-			strictEqual(oP13nGroupPanel.getItems().length, nItems, "length of getItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getItems().length, 3, "length of getItems should be 3");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("bind GroupItems test", function() {
+		QUnit.test("bind GroupItems test", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
@@ -165,13 +159,13 @@
 
 			// assertions
 			var nItems = 2;
-			strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("Insert Remove GroupItems test", function() {
+		QUnit.test("Insert Remove GroupItems test", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
@@ -190,17 +184,17 @@
 
 			// assertions
 			var nItems = 3;
-			strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
 
 			oP13nGroupPanel.removeAllGroupItems();
 			nItems = 0;
-			strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("test model update events", function() {
+		QUnit.test("test model update events", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel({
@@ -246,7 +240,7 @@
 			var nItems = 1;
 			var oConditionPanel = oP13nGroupPanel._oGroupPanel;
 			oConditionPanel._handleRemoveCondition(oConditionPanel._oConditionsGrid, oConditionPanel._oConditionsGrid.getContent()[0]);
-			strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
 
 			// Add item
 			nItems = 2;
@@ -257,13 +251,13 @@
 			oConditionGrid.keyField.setSelectedKey("c0");
 			oConditionPanel._changeField(oConditionGrid);
 
-			strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, nItems, "length of getGroupItems should be '" + nItems + "'");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("bind named model", function() {
+		QUnit.test("bind named model", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
@@ -288,30 +282,26 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			strictEqual(oP13nGroupPanel.getItems().length, 4, "length of getItems should be 4'");
-			strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
+			assert.strictEqual(oP13nGroupPanel.getItems().length, 3, "length of getItems should be 3'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("create with aggregations", function() {
+		QUnit.test("create with aggregations", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel({
 				items: [
 					new sap.m.P13nItem({
-						key: null,
-						text: "(none)",
-						tooltip: "nix"
-					}), new sap.m.P13nItem({
-						key: "c0",
+						columnKey: "c0",
 						text: "Name"
 					}), new sap.m.P13nItem({
-						key: "c1",
+						columnKey: "c1",
 						text: "Color"
 					}), new sap.m.P13nItem({
-						key: "c2",
+						columnKey: "c2",
 						text: "Number"
 					})
 				],
@@ -334,14 +324,14 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			strictEqual(oP13nGroupPanel.getItems().length, 4, "length of getItems should be 4'");
-			strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
+			assert.strictEqual(oP13nGroupPanel.getItems().length, 3, "length of getItems should be 3'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
 		});
 
-		test("create with addXXX", function() {
+		QUnit.test("create with addXXX", function(assert) {
 
 			// system under test
 			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
@@ -351,20 +341,15 @@
 			sap.ui.getCore().applyChanges();
 
 			oP13nGroupPanel.addItem(new sap.m.P13nItem({
-				key: null,
-				text: "(none)",
-				tooltip: "nix"
-			}));
-			oP13nGroupPanel.addItem(new sap.m.P13nItem({
-				key: "c0",
+				columnKey: "c0",
 				text: "Name"
 			}));
 			oP13nGroupPanel.addItem(new sap.m.P13nItem({
-				key: "c1",
+				columnKey: "c1",
 				text: "Color"
 			}));
 			oP13nGroupPanel.addItem(new sap.m.P13nItem({
-				key: "c2",
+				columnKey: "c2",
 				text: "Number"
 			}));
 
@@ -383,8 +368,27 @@
 			sap.ui.getCore().applyChanges();
 
 			// assertions
-			strictEqual(oP13nGroupPanel.getItems().length, 4, "length of getItems should be 4'");
-			strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
+			assert.strictEqual(oP13nGroupPanel.getItems().length, 3, "length of getItems should be 3'");
+			assert.strictEqual(oP13nGroupPanel.getGroupItems().length, 2, "length of getGroupItems should be 2'");
+
+			// cleanup
+			oP13nGroupPanel.destroy();
+		});
+
+		QUnit.test("'none'", function(assert) {
+
+			// system under test
+			var oP13nGroupPanel = new sap.m.P13nGroupPanel();
+
+			bindGroupPanel(oP13nGroupPanel);
+
+			// arrange
+			oP13nGroupPanel.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
+			// assertions
+			assert.strictEqual(oP13nGroupPanel.getItems().length, 3, "length of getItems should be 3");
+			assert.strictEqual(oP13nGroupPanel._oGroupPanel.getKeyFields().length, 4, "length of getItems should be 4");
 
 			// cleanup
 			oP13nGroupPanel.destroy();
@@ -395,7 +399,7 @@
 
 </head>
 <body id="body" class="sapUiBody">
-	<h1 id="qunit-header">qUnit Page for sap.m.P13nGroupPanel</h1>
+	<h1 id="qunit-header">QUnit Page for sap.m.P13nGroupPanel</h1>
 	<h2 id="qunit-banner"></h2>
 	<h2 id="qunit-userAgent"></h2>
 	<ol id="qunit-tests"></ol>

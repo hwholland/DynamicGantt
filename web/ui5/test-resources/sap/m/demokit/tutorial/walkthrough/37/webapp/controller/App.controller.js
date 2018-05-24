@@ -3,14 +3,14 @@ sap.ui.define([
 ], function (Controller) {
 	"use strict";
 
-	return Controller.extend("sap.ui.demo.wt.controller.App", {
+	return Controller.extend("sap.ui.demo.walkthrough.controller.App", {
 
 		onInit: function () {
 			this.getView().addStyleClass(this.getOwnerComponent().getContentDensityClass());
 		},
 
-		onOpenDialog: function () {
-			this.getOwnerComponent().helloDialog.open(this.getView());
+		onOpenDialog : function () {
+			this.getOwnerComponent().openHelloDialog();
 		}
 	});
 

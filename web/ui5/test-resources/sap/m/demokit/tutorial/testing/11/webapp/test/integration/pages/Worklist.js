@@ -4,14 +4,16 @@ sap.ui.require([
 		'sap/ui/test/matchers/PropertyStrictEquals',
 		'sap/ui/test/matchers/BindingPath',
 		'sap/ui/demo/bulletinboard/test/integration/pages/Common',
-		'sap/ui/test/actions/Press'
+		'sap/ui/test/actions/Press',
+		'sap/ui/test/actions/EnterText'
 	],
 	function (Opa5,
 			  AggregationLengthEquals,
 			  PropertyStrictEquals,
 			  BindingPath,
 			  Common,
-			  Press) {
+			  Press,
+			  EnterText) {
 		"use strict";
 
 		var sViewName = "Worklist",
@@ -22,6 +24,7 @@ sap.ui.require([
 				baseClass: Common,
 				actions: {
 					iPressOnMoreData: function () {
+						// Press action hits the "more" trigger on a table
 						return this.waitFor({
 							id: sTableId,
 							viewName: sViewName,
@@ -38,16 +41,57 @@ sap.ui.require([
 								path: "/Posts('" + sId + "')"
 							}),
 							actions: new Press(),
-							errorMessage: "No list item with the id " + sId + " was found."
+							errorMessage: "No list item with the ID " + sId + " was found."
+						});
+					},
+
+					iSearchFor: function (sSearchString) {
+						return this.waitFor({
+							id: "searchField",
+							viewName: sViewName,
+							actions: new EnterText({
+								text: sSearchString
+							}),
+							errorMessage: "SearchField was not found."
 						});
 					}
 				},
 				assertions: {
+					theTableHasOneItem: function () {
+						return this.waitFor({
+							id: sTableId,
+							viewName: sViewName,
+							matchers: new AggregationLengthEquals({
+								name: "items",
+								length: 1
+							}),
+							success: function () {
+								Opa5.assert.ok(true, "The table contains one corresponding item.");
+							},
+							errorMessage: "The table does not contain one item."
+						});
+					},
+
+					theTableShouldHavePagination: function () {
+						return this.waitFor({
+							id: sTableId,
+							viewName: sViewName,
+							matchers: new AggregationLengthEquals({
+								name: "items",
+								length: 20
+							}),
+							success: function () {
+								Opa5.assert.ok(true, "The table has 20 items on the first page");
+							},
+							errorMessage: "Table does not have all entries."
+						});
+					},
+
 					theTableShouldHaveAllEntries: function () {
 						return this.waitFor({
 							id: sTableId,
 							viewName: sViewName,
-							matchers:  new AggregationLengthEquals({
+							matchers: new AggregationLengthEquals({
 								name: "items",
 								length: 23
 							}),

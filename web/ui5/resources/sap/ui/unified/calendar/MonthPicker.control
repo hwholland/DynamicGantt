@@ -41,7 +41,7 @@ if the displayed months are changed by user navigation.</documentation>
             <documentation>displays the previous page</documentation>
         </method>
         <method name="setMinMax" type="sap.ui.unified/calendar/MonthPicker">
-            <documentation>sets a minimum an maximum month</documentation>
+            <documentation>sets a minimum and maximum month</documentation>
             <parameters>
                 <parameter name="min" type="sap.ui.core/int">
                     <documentation>minimum month as integer (starting with 0)</documentation>

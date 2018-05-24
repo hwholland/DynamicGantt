@@ -10,9 +10,9 @@
 	type="text/css" media="screen"/>
 
 <!-- UI5 Bootstrap -->
+<script src="../shared-config.js"></script>
 <script id="sap-ui-bootstrap"
 	src="../../../../resources/sap-ui-core.js"
-	data-sap-ui-theme="sap_bluecrystal"
 	data-sap-ui-libs="sap.m"></script>
 
 <!-- QUnit libraries -->
@@ -27,7 +27,7 @@
 	jQuery.sap.initMobile();
 	var core = sap.ui.getCore();
 
-	test("ShouldRemoveAPopin", function() {
+	QUnit.test("ShouldRemoveAPopin", function(assert) {
 		// SUT
 		var result,
 			popinId,
@@ -51,14 +51,14 @@
 		result = sut.removePopin();
 
 		// Assert
-		ok(hasPopin, "did have a popin before deleting it");
-		equal(sut.$Popin().length, 0,"popin got removed from dom");
+		assert.ok(hasPopin, "did have a popin before deleting it");
+		assert.equal(sut.$Popin().length, 0,"popin got removed from dom");
 
 		//Cleanup
 		table.destroy();
 	});
 
-	test("ShouldToggleActiveClass", function() {
+	QUnit.test("ShouldToggleActiveClass", function(assert) {
 		var testCase = function(sFunctionName,hasClass){
 			//Arrange
 			var className ="sapMLIBActive",
@@ -83,7 +83,7 @@
 			sut[sFunctionName]();
 
 			//Assert
-			equal(sut.$Popin().hasClass(className), hasClass);
+			assert.equal(sut.$Popin().hasClass(className), hasClass);
 
 			table.destroy();
 		};
@@ -92,7 +92,7 @@
 		testCase("_inactiveHandlingInheritor",false);
 	});
 
-	test("Should not clone headers for popinDisplay:WithoutHeader", function() {
+	QUnit.test("Should not clone headers for popinDisplay:WithoutHeader", function(assert) {
 		// SUT
 		var result,
 			popinId,
@@ -120,31 +120,31 @@
 		core.applyChanges();
 
 		// Assert
-		ok(sut.hasPopin(), "Popin is generated");
-		strictEqual(sut._aClonedHeaders.length, 1, "Popin has cloned header");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntHdr").length, 1, "Popin header is found in the dom");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntSpr").length, 1, "Popin separator is found in the dom");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntVal").length, 1, "Popin cell content found in the dom");
+		assert.ok(sut.hasPopin(), "Popin is generated");
+		assert.strictEqual(sut._aClonedHeaders.length, 1, "Popin has cloned header");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntHdr").length, 1, "Popin header is found in the dom");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntSpr").length, 1, "Popin separator is found in the dom");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntVal").length, 1, "Popin cell content found in the dom");
 
 		column.setPopinDisplay("WithoutHeader");
 		core.applyChanges();
 
-		strictEqual(sut._aClonedHeaders.length, 0, "Does not have any cloned headers");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntHdr").length, 0, "Popin header is not found in the dom");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntSpr").length, 0, "Popin separator is not found in the dom");
-		strictEqual(sut.$Popin().find(".sapMListTblSubCntVal").length, 1, "Popin cell content found in the dom");
+		assert.strictEqual(sut._aClonedHeaders.length, 0, "Does not have any cloned headers");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntHdr").length, 0, "Popin header is not found in the dom");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntSpr").length, 0, "Popin separator is not found in the dom");
+		assert.strictEqual(sut.$Popin().find(".sapMListTblSubCntVal").length, 1, "Popin cell content found in the dom");
 
 		column.destroy();
 		core.applyChanges();
 
-		strictEqual(sut._aClonedHeaders.length, 0, "Does not have any cloned headers");
-		strictEqual(sut.$Popin().length, 0, "No popin in the dom");
+		assert.strictEqual(sut._aClonedHeaders.length, 0, "Does not have any cloned headers");
+		assert.strictEqual(sut.$Popin().length, 0, "No popin in the dom");
 
 		//Cleanup
 		table.destroy();
 	});
 
-	test("RenderOulineClassButNotLegacyOutlineClass", function() {
+	QUnit.test("RenderOulineClassButNotLegacyOutlineClass", function(assert) {
 		this.stub(sap.ui.Device.system, "desktop", true);
 		this.stub(sap.ui.Device, "browser", {"msie": true});
 
@@ -160,11 +160,35 @@
 		core.applyChanges();
 
 		// Assert
-		ok(sut.$().hasClass("sapMLIBFocusable"), "Outline class is added");
-		ok(!sut.$().hasClass("sapMLIBLegacyOutline"), "Legacy outline class is not added");
+		assert.ok(sut.$().hasClass("sapMLIBFocusable"), "Outline class is added");
+		assert.ok(!sut.$().hasClass("sapMLIBLegacyOutline"), "Legacy outline class is not added");
 
 		//Cleanup
 		table.destroy();
+	});
+
+	QUnit.test("Test for correct column id", function(assert) {
+		var oCLI = new sap.m.ColumnListItem({
+			cells: [
+				new sap.m.Text({text: "Cell data"})
+			]
+		});
+		var oCol = new sap.m.Column("testColumn", {
+			header: new sap.m.Label({text: "Column Header"})
+		});
+		var sut = new sap.m.Table("idResponsiveTable", {
+			columns: [oCol],
+			items: [oCLI]
+		});
+		sut.placeAt("qunit-fixture");
+		sap.ui.getCore().applyChanges();
+
+		var $cell = oCLI.getCells()[0].getDomRef();
+		var $td = $cell.parentElement;
+		assert.equal($td.getAttribute("data-sap-ui-column"), oCol.getId(), "Column id is correctly associated with cell");
+
+		// cleanup
+		sut.destroy();
 	});
 
 </script>

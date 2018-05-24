@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -49,7 +49,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 			this._iPendingCalls = 0;
 			this._mBestMatchingPage = {};
 			this._aTopLevelNavItems = [];
-			this._aThemes = aThemes || ["sap_bluecrystal", "sap_belize", "sap_belize_plus", "sap_goldreflection", "sap_hcb"];
+			this._aThemes = aThemes || ["sap_belize", "sap_belize_plus", "sap_belize_hcb", "sap_belize_hcw", "sap_bluecrystal", "sap_hcb"];
 			this._sTheme = this._aThemes[0]; // 'aThemes' must contain at least one theme
 			this._sCurrentContent = null;
 			this._mAliases = {};
@@ -519,7 +519,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 					oSAPUI5Logo.addStyleClass("extraLeftPadding");
 
 					sAboutDialogContentHtml  = '<h2>OpenUI5 - Demo Kit</h2>';
-					sAboutDialogContentHtml += '<span>&copy; 2009-2016 SAP SE or an SAP affiliate company.</span><br>';
+					sAboutDialogContentHtml += '<span>&copy; 2009-2018 SAP SE or an SAP affiliate company.</span><br>';
 					sAboutDialogContentHtml += '<span>Licensed under the Apache License, Version 2.0 – <embed data-index="3"><br><br><br></span>';
 					sAboutDialogContentHtml += '<span>OpenUI5 Version <embed data-index="0"></span><br>';
 				} else {
@@ -528,7 +528,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 					oSAPUI5Logo.addStyleClass("extraLeftPadding");
 
 					sAboutDialogContentHtml  = '<h2>SAP UI Development Toolkit for HTML5 (SAPUI5) - Demo Kit</h2>';
-					sAboutDialogContentHtml += '<span>&copy; Copyright 2009-2016 SAP SE. All rights reserved.</span><br><br><br>';
+					sAboutDialogContentHtml += '<span>&copy; Copyright 2009-2018 SAP SE. All rights reserved.</span><br><br><br>';
 					sAboutDialogContentHtml += '<span>SAPUI5 Version <embed data-index="0"></span><br>';
 				}
 
@@ -635,10 +635,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 				var fnOpenReleaseDialog = function openReleaseDialog() {
 
 					var oNotesModel;
+					var oText;
 					var oNotesView = sap.ui.getCore().byId("notesView");
 					var oNotesDialog = sap.ui.getCore().byId("notesDialog");
 					if (!oNotesDialog) {
-						var oText = new TextView({text: "No changes for this library!", id: "noRelNote"});
+						oText = new TextView({text: "No changes for this library!", id: "noRelNote"});
 						oNotesView = sap.ui.view({id:"notesView", viewName:"versioninfo.notes", type:ViewType.Template});
 						oNotesModel = new JSONModel();
 						oNotesView.setModel(oNotesModel);
@@ -660,7 +661,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 					oNotesDialog.setTitle("Change log for: " + this.getBindingContext().getProperty("library"));
 
 					var oVersion = jQuery.sap.Version(this.getBindingContext().getProperty("version"));
-					var sVersion = oVersion.getMajor() + "." + oVersion.getMinor() + "." + oVersion.getPatch() + oVersion.getSuffix() ;
+					var sVersion = oVersion.getMajor() + "." + oVersion.getMinor() + "." + oVersion.getPatch() + oVersion.getSuffix();
 
 					oLibInfo._getReleaseNotes(this.getBindingContext().getProperty("library"), sVersion, function(oRelNotes, sVersion) {
 						oNotesDialog.removeAllContent();
@@ -940,7 +941,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 
 			this.navigateTo(sInitialPage);
 
-			jQuery(function () {
+			sap.ui.getCore().addPrerenderingTask(function () {
 				jQuery("body").append("<div id=\"logo\"><img id=\"logoico\"><img id=\"logotxt\"></div>");
 			  //check if it is internal or external version of Demokit and set the dialog content according to it
 				var oVersionInfo = sap.ui.getVersionInfo();
@@ -1037,12 +1038,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 					}
 					oSplitter.setSplitterBarVisible(false);
 				}
-			} else {
-				if (!oSplitter.getSplitterBarVisible()) {
-					sOldPos = oSplitter._oldPos || "20%";
-					oSplitter.setSplitterPosition(sOldPos);
-					oSplitter.setSplitterBarVisible(true);
-				}
+			} else if (!oSplitter.getSplitterBarVisible()) {
+				sOldPos = oSplitter._oldPos || "20%";
+				oSplitter.setSplitterPosition(sOldPos);
+				oSplitter.setSplitterBarVisible(true);
 			}
 
 			this._sCurrentContent = sPageName;
@@ -1230,7 +1229,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 			"sap_bluecrystal": "Blue Crystal",
 			"sap_belize": "Belize",
 			"sap_belize_plus": "Belize Plus",
-			"sap_goldreflection": "Gold Reflection",
+			"sap_belize_hcb": "Belize High Contrast Black",
+			"sap_belize_hcw": "Belize High Contrast White",
 			"sap_hcb": "High Contrast Black"
 		};
 
@@ -1260,7 +1260,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device',
 
 				//Find supported themes
 				var isMobilePage = sIFrameContent.match(/\/sap\/me?\//);
-				var aMySupportedThemes = isMobilePage ? ["sap_bluecrystal", "sap_belize", "sap_belize_plus"] : this._aThemes;
+				var aMySupportedThemes = isMobilePage ? ["sap_bluecrystal", "sap_belize", "sap_belize_plus", "sap_belize_hcb", "sap_belize_hcw"] : this._aThemes;
 				var aSupportedThemes = oContentWindow.sap.ui.demokit && oContentWindow.sap.ui.demokit._supportedThemes ? oContentWindow.sap.ui.demokit._supportedThemes : aMySupportedThemes;
 
 				//Update theme switch

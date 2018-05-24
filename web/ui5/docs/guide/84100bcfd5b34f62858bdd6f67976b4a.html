@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="In this step, we will edit the worklist table to include additional columns for our manage product stocks scenario. We display the supplier, the product price, and the number of units on order for each product and format the values accordingly."/>
 <meta name="description" content="In this step, we will edit the worklist table to include additional columns for our manage product stocks scenario. We display the supplier, the product price, and the number of units on order for each product and format the values accordingly."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=3960044619387173"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=2736398278121862"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2736398278121862"/>
 <title>Step 3: Extending the Worklist Table</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio84100bcfd5b34f62858bdd6f67976b4a">
 <div id="wrapper"><div id="container">
@@ -48,14 +34,12 @@
 
 		<div class="section"><div class="section_title">Coding</div><div type="Coding">
 			
-			<p class="p">You can view and download all files in the <span class="ph uicontrol">Explored</span> app in the
-				Demo Kit <span class="ph">at
-						<a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview" alt="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview" title="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview">Worklist App - Step 3</a></span>.</p>
+			<p class="p">You can view and download all files in the Demo Kit <span class="ph">at <a class="xref" target="_blank" href="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview" alt="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview" title="../../explored.html#/sample/sap.m.tutorial.worklist.03/preview">Worklist App - Step 3</a></span>.</p>
 
 			<div class="sectiondiv subsection">
 				<p class="p subsectiontitle">webapp/view/Worklist.view.xml</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>…
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">…
 &lt;Table
    id="table"
    busyIndicatorDelay="{worklistView&gt;/tableBusyDelay}"
@@ -103,7 +87,7 @@
 							<samp class="ph codeph">Products</samp> and <samp class="ph codeph">Suppliers</samp>. Each entity
 						lists a number of fields that we can bind to the properties of our view.</p>
 
-					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>&lt;?xml version="1.0" encoding="utf-8" standalone="yes"?&gt;
+					<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">&lt;?xml version="1.0" encoding="utf-8" standalone="yes"?&gt;
 &lt;edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"&gt;
 	&lt;edmx:DataServices xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" m:DataServiceVersion="1.0"&gt;
 		&lt;Schema Namespace="NorthwindModel" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns="http://schemas.microsoft.com/ado/2008/09/edm"&gt;
@@ -187,7 +171,7 @@
 			<div class="sectiondiv subsection">
 				<p class="p subsectiontitle">webapp/view/Worklist.view.xml</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>…
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">…
 &lt;columns&gt;
    <span class="ph emphasis emphasis">&lt;Column id="nameColumn"&gt;
       &lt;Text
@@ -202,7 +186,7 @@
    &lt;/Column&gt;
    &lt;Column
       id="unitPriceColumn"
-      hAlign="Right"
+      hAlign="End"
       demandPopin="true"
       minScreenWidth="Tablet"&gt;
       &lt;Text text="{i18n&gt;TablePriceColumnTitle}"/&gt;
@@ -210,11 +194,11 @@
    &lt;Column id="unitsOnOrderColumn"
       demandPopin="true"
       minScreenWidth="Tablet"
-      hAlign="Right"&gt;
+      hAlign="End"&gt;
       &lt;Text text="{i18n&gt;TableUnitsOrderedColumnTitle}"/&gt;
    &lt;/Column&gt;
    &lt;Column id="unitsInStockColumn"
-      hAlign="Right"&gt;
+      hAlign="End"&gt;
       &lt;Text text="{i18n&gt;TableUnitsInStockColumnTitle}"/&gt;
    &lt;/Column&gt;
 </span>
@@ -296,7 +280,7 @@
 			<div class="sectiondiv subsection">
 				<p class="p subsectiontitle">webapp/model/formatter.js</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>sap.ui.define([
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">sap.ui.define([
 	<span class="ph emphasis emphasis">"sap/ui/core/ValueState"</span>
 ], function(<span class="ph emphasis emphasis">ValueState</span>) {
 	"use strict";
@@ -361,7 +345,7 @@
 			<div class="sectiondiv subsection">
 				<p class="p subsectiontitle">webapp/view/Worklist.view.xml</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!xml</samp>…
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-xml">…
 &lt;items&gt;
    &lt;ColumnListItem
       press="onPress"
@@ -415,7 +399,7 @@
 						</li>
 
 						<li class="li">
-							<p class="p">The <span class="ph uicontrol">Price</span> cell uses a
+							<p class="p">The <span class="ph uicontrol">Price</span> cell uses an
 									<samp class="ph codeph">sap.m.ObjectNumber</samp> control and a custom
 								formatter. You can find the formatter’s implementation in the
 									<span class="ph filepath">webapp/model/formatter.js</span> file. The unit
@@ -451,7 +435,7 @@
 			<div class="sectiondiv subsection">
 				<p class="p subsectiontitle">webapp/i18n/i18n.properties</p>
 
-				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!properties</samp>#XTIT: The title of the column containing Product name
+				<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-prefs">#XTIT: The title of the column containing Product name
 TableProductColumnTitle=Product
 
 <span class="ph emphasis emphasis">#XTIT: The title of the column containing Supplier name
@@ -499,11 +483,11 @@ tableNoDataText=No products are currently available
 									<p class="p"><span class="ph emphasis emphasis">Testing the responsiveness with the SAP Web
 											IDE</span></p>
 
-									<div class="p">SAP Web IDE can simulate different screen sizes. You just
+									<div class="p"><span class="ph pname">SAP Web IDE</span> can simulate different screen sizes. You just
 										have to make sure that the run configuration is set up
 											correctly:<ol class="ol" id="loio84100bcfd5b34f62858bdd6f67976b4a__ol_hck_q2s_c5">
 											<li class="li">
-												<p class="p">In SAP Web IDE, choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/> <span class="ph uicontrol">Run</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">New Configuration</span> <img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span></p>
+												<p class="p">In <span class="ph pname">SAP Web IDE</span>, choose <span class="ph menucascade"><img src="images/navstart.gif" alt="Start of the navigation path" title="Start of the navigation path"/><span class="ph uicontrol">Run</span> <img src="images/navstep.gif" alt="Next navigation step" title="Next navigation step"/> <span class="ph uicontrol">New Configuration</span><img src="images/navend.gif" alt="End of the navigation path" title="End of the navigation path"/></span></p>
 
 											</li>
 
@@ -544,7 +528,7 @@ If you now run the application again, you will see the
 									<div class="fig fignone" id="loio84100bcfd5b34f62858bdd6f67976b4a__fig_wjy_v5m_d5"><div class="figcontainer">
 										
 										<img class="image" id="loio84100bcfd5b34f62858bdd6f67976b4a__image_cq1_z5m_d5" src="loiod6eabfb13df240d49d9bf1e10ca71bbe_HiRes.png"/>
-									<div class="figcap">Testing the responsiveness in SAP Web IDE</div></div></div>
+									<div class="figcap">Testing the responsiveness in <span class="ph pname">SAP Web IDE</span></div></div></div>
 
 								</li>
 
@@ -599,7 +583,7 @@ If you now run the application again, you will see the
 
 <div class="familylinks">
 <div class="parentlink"><br/>
-<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using SAPUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
+<strong>Parent topic: </strong><a class="link" href="6a6a621c978145ad9eef2b221d2cf21d.html" title="In this tutorial we will build an app using OpenUI5 that, for example, a shop owner can use to manage his product stock levels.">Worklist App</a><br/>
 </div>
 <div class="previouslink"><br/>
 <strong>Previous: </strong><a class="link" href="311890311f7148adbfbf248a6980df1c.html" title="In this step, we want to change the mock data of the initial app. The service metadata only contains a description of the service entities. The mock server that is part of the app will auto-generate random mock data based on the data types defined in the metadata file. To have a more realistic development environment we will now add additional sample data.">Step 2: Custom Mock Data</a><br/>
@@ -611,19 +595,5 @@ If you now run the application again, you will see the
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Step 3: Extending the Worklist Table";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

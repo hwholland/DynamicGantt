@@ -1,4 +1,8 @@
-sap.ui.define([], function() {
+/*global QUnit*/
+
+sap.ui.define([
+	"sap/ui/test/opaQunit"
+], function (opaTest) {
 	"use strict";
 
 	QUnit.module("Object");
@@ -16,9 +20,9 @@ sap.ui.define([], function() {
 
 		// Assertions
 		Then.onTheObjectPage.iShouldSeeTheObjectViewsBusyIndicator().
-		and.theObjectViewsBusyIndicatorDelayIsRestored().
-		and.iShouldSeeTheRememberedObject().
-		and.theObjectViewShouldContainOnlyFormattedUnitNumbers().and.iTeardownMyAppFrame();
+			and.theObjectViewsBusyIndicatorDelayIsRestored().
+			and.iShouldSeeTheRememberedObject().
+			and.iTeardownMyAppFrame();
 	});
 
 });

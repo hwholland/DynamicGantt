@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.commons.ToggleButton.
-sap.ui.define(['jquery.sap.global', './Button'],
-	function(jQuery, Button) {
+sap.ui.define(['jquery.sap.global', './Button', "./ToggleButtonRenderer"],
+	function(jQuery, Button, ToggleButtonRenderer) {
 	"use strict";
 
 
@@ -22,11 +22,11 @@ sap.ui.define(['jquery.sap.global', './Button'],
 	 * @extends sap.ui.commons.Button
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.ToggleButton</code> control.
+	 * @deprecated as of version 1.38, replaced by {@link sap.m.ToggleButton}
 	 * @alias sap.ui.commons.ToggleButton
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -45,7 +45,7 @@ sap.ui.define(['jquery.sap.global', './Button'],
 	/**
 	 * Function is called when ToggleButton is clicked.
 	 *
-	 * @param {jQuery.Event} oEvent
+	 * @param {jQuery.Event} oEvent The fired event
 	 * @private
 	 */
 	ToggleButton.prototype.onclick = function(oEvent) {
@@ -87,7 +87,8 @@ sap.ui.define(['jquery.sap.global', './Button'],
 
 
 	/**
-	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @see sap.ui.core.Control#getAccessibilityInfo
+	 * @returns {Object} Current accessibility state of the control
 	 * @protected
 	 */
 	ToggleButton.prototype.getAccessibilityInfo = function() {

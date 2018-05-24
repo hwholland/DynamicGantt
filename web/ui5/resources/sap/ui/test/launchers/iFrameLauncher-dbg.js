@@ -1,25 +1,28 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 		'jquery.sap.global',
 		'sap/ui/thirdparty/URI',
 		'sap/ui/Device',
-		'sap/ui/test/_XHRCounter'
-	], function (jQuery, URI, Device, _XHRCounter) {
+		'sap/ui/test/_LogCollector'
+	], function ($, URI, Device, _LogCollector) {
 	"use strict";
-	var sLogPrefix = "Opa5 - finding controls",
-		$ = jQuery,
-		oFrameWindow = null,
+
+	/*global CollectGarbage */
+
+	var oFrameWindow = null,
 		$Frame = null,
 		oFramePlugin = null,
 		oFrameUtils = null,
 		oFrameJQuery = null,
-		bRegiesteredToUI5Init = false,
+		bRegisteredToUI5Init = false,
 		bUi5Loaded = false,
-		oXHRCounter = null;
+		oAutoWaiter = null,
+		FrameHashChanger = null,
+		sOpaLogLevel;
 
 	/*
 	 * INTERNALS
@@ -34,20 +37,26 @@ sap.ui.define([
 	}
 
 	function registerOnError () {
-		// In IE9 retrieving the active element in an IFrame when it has no focus produces an error.
-		// Since we use it all over the UI5 libraries, the only solution is to ignore frame errors in IE9.
-		if (Device.browser.internet_explorer && Device.browser.version === 9) {
-			return;
-		}
-
 		var fnFrameOnError = oFrameWindow.onerror;
 
-		oFrameWindow.onerror = function (sErrorMsg, sUrl, iLine) {
+		oFrameWindow.onerror = function (sErrorMsg, sUrl, iLine, iColumn, oError) {
+			var vReturnValue = false;
+
 			if (fnFrameOnError) {
-				fnFrameOnError.apply(this, arguments);
+				// save the return value if the original returns true - the error is supressed
+				vReturnValue = fnFrameOnError.apply(this, arguments);
 			}
 
-			throw "OpaFrame error message: " + sErrorMsg + " url: " + sUrl + " line: " + iLine;
+			// a global exception in the outer window's scope should be fired. but since this onerror
+			// function is wrapped in QUnits onerror function the exception needs to be thrown in a setTimeout
+			// to make sure the QUnit onerror can run to the end
+			setTimeout(function () {
+				// column number and error object may be missing in older browsers. Currently, Edge doesn't provide the oError object
+				var sColumn = iColumn ? "\ncolumn: " + iColumn : "";
+				var sIFrameError = oError && "\niFrame error: " + (oError.stack ? oError.message + "\n" + oError.stack : oError) || "";
+				throw new Error("Error in launched application iFrame: " + sErrorMsg + "\nurl: " + sUrl + "\nline: " + iLine + sColumn + sIFrameError);
+			}, 0);
+			return vReturnValue;
 		};
 
 	}
@@ -58,21 +67,60 @@ sap.ui.define([
 		}
 
 		if (oFrameWindow && oFrameWindow.sap && oFrameWindow.sap.ui && oFrameWindow.sap.ui.getCore) {
-			if (!bRegiesteredToUI5Init) {
+			if (!bRegisteredToUI5Init) {
 				oFrameWindow.sap.ui.getCore().attachInit(handleUi5Loaded);
 			}
 
-			bRegiesteredToUI5Init = true;
+			bRegisteredToUI5Init = true;
 		}
 
 		return bUi5Loaded;
 	}
 
+	/**
+	 * Firefox only function - load sinon as often as needed until it is defined.
+	 * @param {function} fnDone executed when sinon is loaded
+	 */
+	function loadSinon(fnDone) {
+		oFrameWindow.sap.ui.require(["sap/ui/thirdparty/sinon"], function (sinon) {
+			if (!sinon) {
+				setTimeout(function () {
+					loadSinon(fnDone);
+				}, 50);
+			} else {
+				fnDone();
+			}
+		});
+	}
 
 	function handleUi5Loaded () {
+		registerFrameModulePaths();
+
+		if (Device.browser.firefox) {
+			// In Firefox there is a bug when the app loads sinon and OPA loads it from outside.
+			// sinon might be undefined in a module requiring it. So the workaround comes here:
+			// trigger the load of sinon - wait until it is defined. Only when it is defined continue loading other modules
+			loadSinon(loadFrameModules);
+		} else {
+			// no workaround - directly load all other modules
+			loadFrameModules();
+		}
+	}
+
+	function afterModulesLoaded () {
+		// forward OPA log messages from the inner iframe to the Log listener of the outer frame
+		oFrameJQuery.sap.log.addLogListener(_LogCollector.getInstance()._oListener);
+
 		bUi5Loaded = true;
-		setFrameVariables();
-		modifyIFrameNavigation();
+	}
+
+	function registerFrameModulePaths () {
+		oFrameJQuery = oFrameWindow.jQuery;
+		//All Opa related resources in the iframe should be the same version
+		//that is running in the test and not the (evtl. not available) version of Opa of the running App.
+		registerAbsoluteModulePathInIframe("sap.ui.test");
+		registerAbsoluteModulePathInIframe("sap.ui.qunit");
+		registerAbsoluteModulePathInIframe("sap.ui.thirdparty");
 	}
 
 	/**
@@ -81,32 +129,34 @@ sap.ui.define([
 	 * This makes it necessary to hook into all navigation methods
 	 * @private
 	 */
-	function modifyIFrameNavigation () {
-		oFrameWindow.jQuery.sap.require("sap.ui.thirdparty.hasher");
-		oFrameWindow.jQuery.sap.require("sap.ui.core.routing.History");
-		oFrameWindow.jQuery.sap.require("sap.ui.core.routing.HashChanger");
+	function modifyIFrameNavigation (hasher, History, HashChanger) {
 
-		var oHashChanger = new oFrameWindow.sap.ui.core.routing.HashChanger(),
-			oHistory = new oFrameWindow.sap.ui.core.routing.History(oHashChanger),
-			oHasher = oFrameWindow.hasher,
-			fnOriginalSetHash = oHasher.setHash,
-			fnOriginalGetHash = oHasher.getHash,
+		var oHashChanger = new HashChanger(),
+			oHistory = new History(oHashChanger),
+			fnOriginalSetHash = hasher.setHash,
+			fnOriginalGetHash = hasher.getHash,
 			sCurrentHash,
+			bKnownHashChange = false,
 			fnOriginalGo = oFrameWindow.history.go;
 
 		// replace hash is only allowed if it is triggered within the inner window. Even if you trigger an event from the outer test, it will not work.
 		// Therefore we have mock the behavior of replace hash. If an application uses the dom api to change the hash window.location.hash, this workaround will fail.
-		oHasher.replaceHash = function (sHash) {
+		hasher.replaceHash = function (sHash) {
+			bKnownHashChange = true;
 			var sOldHash = this.getHash();
 			sCurrentHash = sHash;
+			// fire the secret events for the local history so the recording is correct.
+			// The hash changer is not the global singleton it is a local one only used in this scope for the history.
 			oHashChanger.fireEvent("hashReplaced",{ sHash : sHash });
 			this.changed.dispatch(sHash, sOldHash);
 		};
 
-		oHasher.setHash = function (sHash) {
+		hasher.setHash = function (sHash) {
+			bKnownHashChange = true;
 			var sRealCurrentHash = fnOriginalGetHash.call(this);
-
 			sCurrentHash = sHash;
+			// fire the secret events for the local history so the recording is correct.
+			// The hash changer is not the global singleton it is a local one only used in this scope for the history.
 			oHashChanger.fireEvent("hashSet", { sHash : sHash });
 			fnOriginalSetHash.apply(this, arguments);
 
@@ -120,7 +170,7 @@ sap.ui.define([
 		};
 
 		// This function also needs to be manipulated since hasher does not know about our intercepted replace
-		oHasher.getHash = function() {
+		hasher.getHash = function() {
 			//initial hash
 			if (sCurrentHash === undefined) {
 				return fnOriginalGetHash.apply(this, arguments);
@@ -129,27 +179,41 @@ sap.ui.define([
 			return sCurrentHash;
 		};
 
+		// when a link is clicked or the hash is directly set we only get a changed event.
+		hasher.changed.add(function (sNewHash) {
+			// only if the change does not come from the other known places it is likely to be a pressed link
+			if (!bKnownHashChange) {
+				// fire the secret events for the local history so the recording is correct.
+				// The hash changer is not the global singleton it is a local one only used in this scope for the history.
+				oHashChanger.fireEvent("hashSet", { sHash : sNewHash });
+				sCurrentHash = sNewHash;
+			}
+			bKnownHashChange = false;
+		});
+
 		oHashChanger.init();
 
 		function goBack () {
+			bKnownHashChange = true;
 			var sNewPreviousHash = oHistory.aHistory[oHistory.iHistoryPosition],
 				sNewCurrentHash = oHistory.getPreviousHash();
 
 			sCurrentHash = sNewCurrentHash;
-			oHasher.changed.dispatch(sNewCurrentHash, sNewPreviousHash);
+			hasher.changed.dispatch(sNewCurrentHash, sNewPreviousHash);
 		}
 
 		function goForward () {
+			bKnownHashChange = true;
 			var sNewCurrentHash = oHistory.aHistory[oHistory.iHistoryPosition + 1],
 				sNewPreviousHash = oHistory.aHistory[oHistory.iHistoryPosition];
 
 			if (sNewCurrentHash === undefined) {
-				jQuery.sap.log.error("Could not navigate forwards, there is no history entry in the forwards direction", this);
+				$.sap.log.error("Could not navigate forwards, there is no history entry in the forwards direction", this);
 				return;
 			}
 
 			sCurrentHash = sNewCurrentHash;
-			oHasher.changed.dispatch(sNewCurrentHash, sNewPreviousHash);
+			hasher.changed.dispatch(sNewCurrentHash, sNewPreviousHash);
 		}
 
 		oFrameWindow.history.back = goBack;
@@ -164,44 +228,68 @@ sap.ui.define([
 				return;
 			}
 
-			jQuery.sap.log.error("Using history.go with a number greater than 1 is not supported by OPA5", this);
+			$.sap.log.error("Using history.go with a number greater than 1 is not supported by OPA5", this);
 			return fnOriginalGo.apply(oFrameWindow.history, arguments);
 		};
 	}
 
-	function setFrameVariables() {
-		oFrameJQuery = oFrameWindow.jQuery;
-		//All Opa related resources in the iframe should be the same version
-		//that is running in the test and not the (evtl. not available) version of Opa of the running App.
-		registerAbsoluteModulePathInIframe("sap.ui.test");
-		oFrameJQuery.sap.require("sap.ui.test.OpaPlugin");
-		oFramePlugin = new oFrameWindow.sap.ui.test.OpaPlugin(sLogPrefix);
-
-		oFrameJQuery.sap.require("sap.ui.test._XHRCounter");
-		oXHRCounter = oFrameWindow.sap.ui.test._XHRCounter;
-
-		registerAbsoluteModulePathInIframe("sap.ui.qunit.QUnitUtils");
-		oFrameWindow.jQuery.sap.require("sap.ui.qunit.QUnitUtils");
-		oFrameUtils = oFrameWindow.sap.ui.qunit.QUnitUtils;
+	function loadFrameModules() {
+		oFrameWindow.sap.ui.require([
+			"sap/ui/test/OpaPlugin",
+			"sap/ui/test/autowaiter/_autoWaiter",
+			"sap/ui/test/_OpaLogger",
+			"sap/ui/qunit/QUnitUtils",
+			"sap/ui/thirdparty/hasher",
+			"sap/ui/core/routing/History",
+			"sap/ui/core/routing/HashChanger"
+		], function (
+			OpaPlugin,
+			_autoWaiter,
+			_OpaLogger,
+			QUnitUtils,
+			hasher,
+			History,
+			HashChanger
+		) {
+			_OpaLogger.setLevel(sOpaLogLevel);
+			oFramePlugin = new OpaPlugin();
+			oAutoWaiter = _autoWaiter;
+			oFrameUtils = QUnitUtils;
+			modifyIFrameNavigation(hasher, History, HashChanger);
+			FrameHashChanger = HashChanger;
+			afterModulesLoaded();
+		});
 	}
 
 	function registerAbsoluteModulePathInIframe(sModule) {
-		var sOpaLocation = jQuery.sap.getModulePath(sModule);
+		var sOpaLocation = $.sap.getModulePath(sModule);
 		var sAbsoluteOpaPath = new URI(sOpaLocation).absoluteTo(document.baseURI).search("").toString();
 		oFrameJQuery.sap.registerModulePath(sModule,sAbsoluteOpaPath);
 	}
 
 	function destroyFrame () {
+		if (!oFrameWindow) {
+			throw new Error("sap.ui.test.launchers.iFrameLauncher: Teardown was called before launch. No iFrame was loaded.");
+		}
 		// Workaround for IE - there are errors even after removing the frame so setting the onerror to noop again seems to be fine
 		oFrameWindow.onerror = $.noop;
+		for (var i = 0; i < $Frame.length; i++) {
+			$Frame[0].src = "about:blank";
+			$Frame[0].contentWindow.document.write('');
+			$Frame[0].contentWindow.close();
+		}
+		if ( typeof CollectGarbage == "function") {
+			CollectGarbage(); // eslint-disable-line
+		}
 		$Frame.remove();
 		oFrameJQuery = null;
 		oFramePlugin = null;
 		oFrameUtils = null;
 		oFrameWindow = null;
 		bUi5Loaded = false;
-		bRegiesteredToUI5Init = false;
-		oXHRCounter = null;
+		bRegisteredToUI5Init = false;
+		oAutoWaiter = null;
+		FrameHashChanger = null;
 	}
 
 	/**
@@ -213,8 +301,7 @@ sap.ui.define([
 	return {
 		launch: function (options) {
 			if (oFrameWindow) {
-				$.sap.log.error("sap.ui.test.launchers.iFrameLauncher: Only one IFrame may be loaded at a time.");
-				return;
+				throw new Error("sap.ui.test.launchers.iFrameLauncher: Launch was called twice without teardown. Only one iFrame may be loaded at a time.");
 			}
 
 			//invalidate the cache
@@ -234,16 +321,22 @@ sap.ui.define([
 			} else {
 				$Frame.on("load", handleFrameLoad);
 			}
-
+			sOpaLogLevel = options.opaLogLevel;
 			return checkForUI5ScriptLoaded();
 		},
+		hasLaunched: function () {
+			checkForUI5ScriptLoaded();
+			return bUi5Loaded;
+		},
+		teardown: function () {
+			destroyFrame();
+		},
 		getHashChanger: function () {
-			if (!oFrameWindow) {
+			if (!FrameHashChanger) {
 				return null;
 			}
-			oFrameWindow.jQuery.sap.require("sap.ui.core.routing.HashChanger");
 
-			return oFrameWindow.sap.ui.core.routing.HashChanger.getInstance();
+			return FrameHashChanger.getInstance();
 		},
 		getPlugin: function () {
 			return oFramePlugin;
@@ -254,20 +347,11 @@ sap.ui.define([
 		getUtils: function () {
 			return oFrameUtils;
 		},
-		hasLaunched: function () {
-			checkForUI5ScriptLoaded();
-			return bUi5Loaded;
-		},
 		getWindow: function () {
 			return oFrameWindow;
 		},
-		_getIXHRCounter:function () {
-			return oXHRCounter || _XHRCounter;
-		},
-		teardown: function () {
-			destroyFrame();
-		},
-		_sLogPrefix :sLogPrefix
+		_getAutoWaiter: function () {
+			return oAutoWaiter;
+		}
 	};
 }, /* export= */ true);
-

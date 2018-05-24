@@ -1,12 +1,12 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for control sap.ui.unified.Menu
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define([],
+	function() {
 	"use strict";
 
 
@@ -14,7 +14,7 @@ sap.ui.define(['jquery.sap.global'],
 	/**
 	 * Currency renderer.
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @namespace
 	 */
 	var CurrencyRenderer = {
@@ -25,9 +25,9 @@ sap.ui.define(['jquery.sap.global'],
 	 * {@link sap.ui.core.RenderManager}.
 	 *
 	 * @param {sap.ui.core.RenderManager}
-	 *            oRenderManager The RenderManager that can be used for writing to the render-output-buffer.
+	 *            oRm The RenderManager that can be used for writing to the render-output-buffer.
 	 * @param {sap.ui.core.Control}
-	 *            oMenu An object representation of the control that should be rendered
+	 *            oCurrency An object representation of the control that should be rendered
 	 */
 	CurrencyRenderer.render = function(oRm,oCurrency) {
 		var sTooltip = oCurrency.getTooltip_AsString();

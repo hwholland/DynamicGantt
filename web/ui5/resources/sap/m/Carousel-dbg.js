@@ -1,30 +1,95 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Carousel.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/thirdparty/mobify-carousel'],
-	function(jQuery, library, Control, mobifycarousel) {
+sap.ui.define([
+	'jquery.sap.global',
+	'./library',
+	'sap/ui/core/Control',
+	'sap/ui/Device',
+	'sap/ui/core/ResizeHandler',
+	'sap/ui/core/library',
+	'./CarouselRenderer',
+	'sap/ui/thirdparty/mobify-carousel',
+	'sap/ui/core/IconPool',
+	'jquery.sap.keycodes'
+],
+function(
+	jQuery,
+	library,
+	Control,
+	Device,
+	ResizeHandler,
+	coreLibrary,
+	CarouselRenderer
+	/*, mobifycarousel, IconPool (indirect dependency, kept for compatibility with tests, to be fixed in ImageHelper) */
+) {
 	"use strict";
+
+	//shortcut for sap.ui.core.BusyIndicatorSize
+	var BusyIndicatorSize = coreLibrary.BusyIndicatorSize;
+
+	// shortcut for sap.m.ImageHelper
+	var ImageHelper = library.ImageHelper;
+
+	// shortcut for sap.m.CarouselArrowsPlacement
+	var CarouselArrowsPlacement = library.CarouselArrowsPlacement;
+
+	// shortcut for sap.m.PlacementType
+	var PlacementType = library.PlacementType;
 
 
 
 	/**
 	 * Constructor for a new Carousel.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * The Carousel control can be used to navigate through a list of sap.m controls just like flipping through the pages of a book by swiping right or left. An indicator shows the current position within the control list. When displayed in a desktop browser, a left- and right-arrow button is displayed on the carousel's sides, which can be used to navigate through the carousel.
-	 *
-	 * Note: when displa Internet Explorer 9, page changes are not animated.
+	 * The carousel allows the user to browse through a set of items by swiping right or left.
+	 * <h3>Overview</h3>
+	 * The control is mostly used for showing a gallery of images, but can hold any sap.m control.
+	 * <h3>Structure</h3>
+	 * The carousel consists of a the following elements:
+	 * <ul>
+	 * <li>Content area - displays the different items.</li>
+	 * <li>Navigation - arrows to the left and right for switching between items.</li>
+	 * <li>(optional) Paging - indicator at the bottom to show the current position in the set.</li>
+	 * </ul>
+	 * The paging indicator can be configured as follows:
+	 * <ul>
+	 * <li><code>showPageIndicator</code> - determines if the indicator is displayed.</li>
+	 * <li>If the pages are less than 9, the page indicator is represented with bullets.</li>
+	 * <li>If the pages are 9 or more, the page indicator is numeric.</li>
+	 * <li><code>pageIndicatorPlacement</code> - determines where the indicator is located. Default (<code>sap.m.PlacementType.Bottom</code>) - below the content.</li>
+	 *</ul>
+	 * Additionally, you can also change the location of the navigation arrows.
+	 * By setting <code>arrowsPlacement</code> to <code>sap.m.CarouselArrowsPlacement.PageIndicator</code>, the arrows will be located at the bottom by the paging indicator.
+	 * <h3>Usage</h3>
+	 * <h4> When to use</h4>
+	 * <ul>
+	 * <li>The items you want to display are very different from each other.</li>
+	 * <li>You want to display the items one after the other.</li>
+	 * </ul>
+	 * <h4> When not to use</h4>
+	 * <ul>
+	 * <li>The items you want to display need to be visible at the same time.</li>
+	 * <li>The items you want to display are uniform and very similar</li>
+	 * </ul>
+	 * <h3>Responsive Behavior</h3>
+	 * <ul>
+	 * <li>On touch devices, navigation is performed with swipe gestures (swipe right or swipe left).</li>
+	 * <li>On desktop, navigation is done with the navigation arrows.</li>
+	 * <li>The paging indicator (when activated) is visible on each form factor.</li>
+	 * </ul>
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
 	 * @public
@@ -34,6 +99,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	var Carousel = Control.extend("sap.m.Carousel", /** @lends sap.m.Carousel.prototype */ { metadata : {
 
 		library : "sap.m",
+		designtime: "sap/m/designtime/Carousel.designtime",
 		properties : {
 
 			/**
@@ -59,7 +125,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			/**
 			 * Defines where the carousel's page indicator is displayed. Possible values are sap.m.PlacementType.Top, sap.m.PlacementType.Bottom. Other values are ignored and the default value will be applied. The default value is sap.m.PlacementType.Bottom.
 			 */
-			pageIndicatorPlacement : {type : "sap.m.PlacementType", group : "Appearance", defaultValue : sap.m.PlacementType.Bottom},
+			pageIndicatorPlacement : {type : "sap.m.PlacementType", group : "Appearance", defaultValue : PlacementType.Bottom},
 
 			/**
 			 * Show or hide busy indicator in the carousel when loading pages after swipe.
@@ -69,11 +135,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			showBusyIndicator : {type : "boolean", group : "Appearance", defaultValue : true, deprecated: true},
 
 			/**
-			 * Size of the busy indicators which can be displayed in the carousel.
-			 * @deprecated Since version 1.18.7.
-			 * Since 1.18.7 pages are no longer loaded or unloaded. Therefore busy indicator is not necessary any longer.
+			 * Defines where the carousel's arrows are placed. Default is <code>sap.m.CarouselArrowsPlacement.Content</code> used to
+			 * place the arrows on the sides of the carousel. Alternatively <code>sap.m.CarouselArrowsPlacement.PageIndicator</code> can
+			 * be used to place the arrows on the sides of the page indicator.
 			 */
-			busyIndicatorSize : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '6em', deprecated: true}
+			arrowsPlacement : {type : "sap.m.CarouselArrowsPlacement", group : "Appearance", defaultValue : CarouselArrowsPlacement.Content}
 		},
 		defaultAggregation : "pages",
 		aggregations : {
@@ -147,12 +213,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	//Constants convenient class selections
 	Carousel._INNER_SELECTOR = ".sapMCrslInner";
 	Carousel._PAGE_INDICATOR_SELECTOR = ".sapMCrslBulleted";
+	Carousel._PAGE_INDICATOR_ARROWS_SELECTOR = ".sapMCrslIndicatorArrow";
+	Carousel._CONTROLS = ".sapMCrslControls";
 	Carousel._ITEM_SELECTOR = ".sapMCrslItem";
 	Carousel._LEFTMOST_CLASS = "sapMCrslLeftmost";
 	Carousel._RIGHTMOST_CLASS = "sapMCrslRightmost";
 	Carousel._LATERAL_CLASSES = "sapMCrslLeftmost sapMCrslRightmost";
-	Carousel._bIE9 = (sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version < 10);
 	Carousel._MODIFIERNUMBERFORKEYBOARDHANDLING = 10; // The number 10 is by keyboard specification
+	Carousel._BULLETS_TO_NUMBERS_THRESHOLD = 9; //The number 9 is by visual specification. Less than 9 pages - bullets for page indicator. 9 or more pages - numeric page indicator.
 
 	/**
 	 * Initialize member variables which are needed later on.
@@ -196,7 +264,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		if (this._sResizeListenerId) {
-			sap.ui.core.ResizeHandler.deregister(this._sResizeListenerId);
+			ResizeHandler.deregister(this._sResizeListenerId);
 			this._sResizeListenerId = null;
 		}
 		this.$().off('afterSlide');
@@ -272,7 +340,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this.setAssociation("activePage", this.getPages()[0].getId(), true);
 		}
 		if (this._sResizeListenerId) {
-			sap.ui.core.ResizeHandler.deregister(this._sResizeListenerId);
+			ResizeHandler.deregister(this._sResizeListenerId);
 			this._sResizeListenerId = null;
 		}
 
@@ -351,7 +419,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		this._$InnerDiv = this.$().find(Carousel._INNER_SELECTOR)[0];
 
-		this._sResizeListenerId = sap.ui.core.ResizeHandler.register(this._$InnerDiv, this._fnAdjustAfterResize);
+		this._sResizeListenerId = ResizeHandler.register(this._$InnerDiv, this._fnAdjustAfterResize);
 
 		// Fixes wrong focusing in IE
 		// BCP: 1670008915
@@ -425,7 +493,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * Private method which adjusts the Hud visibility and fires a page change
 	 * event when the active page changes
 	 *
-	 * @param iNewPageIndex index of new page in 'pages' aggregation.
+	 * @param {int} iNewPageIndex index of new page in 'pages' aggregation.
 	 * @private
 	 */
 	Carousel.prototype._changePage = function(iNewPageIndex) {
@@ -433,23 +501,32 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var sOldActivePageId = this.getActivePage();
 		var sNewActivePageId = this.getPages()[iNewPageIndex - 1].getId();
 		this.setAssociation("activePage", sNewActivePageId, true);
+		var sTextBetweenNumbers = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("CAROUSEL_PAGE_INDICATOR_TEXT", [iNewPageIndex, this.getPages().length]);
 
 		jQuery.sap.log.debug("sap.m.Carousel: firing pageChanged event: old page: " + sOldActivePageId
 				+ ", new page: " + sNewActivePageId);
 
+		// close the soft keyboard
+		if (!Device.system.desktop) {
+			jQuery(document.activeElement).blur();
+		}
+
 		this.firePageChanged( { oldActivePageId: sOldActivePageId,
 			newActivePageId: sNewActivePageId});
+
+		// change the number in the page indicator
+		this.$('slide-number').text(sTextBetweenNumbers);
 	};
 
 	/**
 	 * Sets HUD control's visibility after page has changed
 	 *
-	 * @param iNextSlide index of the next active page
+	 * @param {int} iNextSlide index of the next active page
 	 * @private
 	 *
 	 */
 	Carousel.prototype._adjustHUDVisibility = function(iNextSlide) {
-		if (sap.ui.Device.system.desktop && !this.getLoop() && this.getPages().length > 1) {
+		if (Device.system.desktop && !this.getLoop() && this.getPages().length > 1) {
 			//update HUD arrow visibility for left- and
 			//rightmost pages
 			var $HUDContainer = this.$('hud');
@@ -531,62 +608,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/*
-	 * API method to place the page indicator.
-	 *
-	 * @param {sap.m.PlacementType} sPlacement either sap.m.PlacementType.Top or sap.m.PlacementType.Bottom
-	 * @public
-	 * @override
-	 */
-	Carousel.prototype.setPageIndicatorPlacement = function(sPlacement) {
-		if (sap.m.PlacementType.Top != sPlacement &&
-				sap.m.PlacementType.Bottom != sPlacement) {
-			jQuery.sap.assert(false, "sap.m.Carousel.prototype.setPageIndicatorPlacement: invalid value '" +
-					sPlacement + "'. Valid values: sap.m.PlacementType.Top, sap.m.PlacementType.Bottom." +
-							"\nUsing default value sap.m.PlacementType.Bottom");
-			sPlacement = sap.m.PlacementType.Bottom;
-		}
-
-		//do suppress rerendering
-		this.setProperty("pageIndicatorPlacement", sPlacement, true);
-
-		var $PageIndicator = this.$().find(Carousel._PAGE_INDICATOR_SELECTOR);
-
-		//set placement regardless of whether indicator is visible: it may become
-		//visible later on and then it should be at the right place
-		if (sap.m.PlacementType.Top === sPlacement) {
-			this.$().prepend($PageIndicator);
-			$PageIndicator.removeClass('sapMCrslBottomOffset').addClass('sapMCrslTopOffset');
-			this.$().find(Carousel._ITEM_SELECTOR).removeClass('sapMCrslBottomOffset').addClass('sapMCrslTopOffset');
-		} else {
-			this.$().append($PageIndicator);
-			$PageIndicator.addClass('sapMCrslBottomOffset').removeClass('sapMCrslTopOffset');
-			this.$().find(Carousel._ITEM_SELECTOR).addClass('sapMCrslBottomOffset').removeClass('sapMCrslTopOffset');
-		}
-		return this;
-	};
-
-
-	/*
-	 * API method to set whether the carousel should display the page indicator
-	 *
-	 * @param {boolean} bShowPageIndicator the new show property
-	 * @public
-	 * @override
-	 */
-	Carousel.prototype.setShowPageIndicator = function(bShowPageIndicator) {
-
-		var $PageInd = this.$().find(Carousel._PAGE_INDICATOR_SELECTOR);
-
-		bShowPageIndicator ? $PageInd.show() : $PageInd.hide();
-
-		//do suppress rerendering
-		this.setProperty("showPageIndicator", bShowPageIndicator, true);
-		return this;
-	};
-
-
-
-	/*
 	 * API method to set whether the carousel should loop, i.e
 	 * show the first page after the last page is reached and vice
 	 * versa.
@@ -607,24 +628,23 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * Gets the icon of the requested arrow (left/right).
 	 * @private
-	 * @param sName left or right
+	 * @param {string} sName left or right
 	 * @returns icon of the requested arrow
 	 */
 	Carousel.prototype._getNavigationArrow = function(sName) {
-		jQuery.sap.require("sap.ui.core.IconPool");
 		var mProperties = {
-			src : "sap-icon://navigation-" + sName + "-arrow",
+			src: "sap-icon://slim-arrow-" + sName,
 			useIconTooltip : false
 		};
 
 		if (sName === "left") {
 			if (!this._oArrowLeft) {
-				this._oArrowLeft = sap.m.ImageHelper.getImageControl(this.getId() + "-arrowScrollLeft", this._oArrowLeft, this, mProperties);
+				this._oArrowLeft = ImageHelper.getImageControl(this.getId() + "-arrowScrollLeft", this._oArrowLeft, this, mProperties);
 			}
 			return this._oArrowLeft;
 		} else if (sName === "right") {
 			if (!this._oArrowRight) {
-				this._oArrowRight = sap.m.ImageHelper.getImageControl(this.getId() + "-arrowScrollRight", this._oArrowRight, this, mProperties);
+				this._oArrowRight = ImageHelper.getImageControl(this.getId() + "-arrowScrollRight", this._oArrowRight, this, mProperties);
 			}
 			return this._oArrowRight;
 		}
@@ -640,9 +660,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @param oPage the page to check
 	 * @private
 	 */
-	Carousel.prototype._createScrollContainer = function(oPage) {
+	Carousel.prototype._createScrollContainer = function (oPage) {
+		var imgClass;
+		var bShowIndicatorArrows = Device.system.desktop && this.getArrowsPlacement() === CarouselArrowsPlacement.PageIndicator;
+		if (bShowIndicatorArrows) {
+			imgClass = "sapMCrslImg";
+		} else {
+			imgClass = "sapMCrslImgNoArrows";
+		}
 
-		var cellClasses = oPage instanceof sap.m.Image ? "sapMCrslItemTableCell sapMCrslImg" : "sapMCrslItemTableCell",
+
+		var cellClasses = oPage instanceof sap.m.Image ? "sapMCrslItemTableCell " + imgClass : "sapMCrslItemTableCell",
 			oContent = new sap.ui.core.HTML({
 			content :	"<div class='sapMCrslItemTable'>" +
 							"<div class='" + cellClasses + "'></div>" +
@@ -651,6 +679,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				var rm = sap.ui.getCore().createRenderManager();
 				rm.render(oPage, this.getDomRef().firstChild);
 				rm.destroy();
+				oPage = null;
 			}
 		});
 
@@ -665,9 +694,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		this._aScrollContainers.push(oScrollContainer);
 		return oScrollContainer;
 	};
-
-
-
 
 	/**
 	 * Call this method to display the previous page (corresponds to a swipe left). Returns 'this' for method chaining.
@@ -719,9 +745,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		return result;
 	};
 
-	 //================================================================================
-	 // Keyboard handling
-	 //================================================================================
+	//================================================================================
+	// Keyboard handling
+	//================================================================================
 
 	/**
 	 * Handler for 'tab previous' key event.
@@ -841,13 +867,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * Move focus to the next item. If focus is on the last item, do nothing.
+	 * Move focus to the previous item. If focus is on the first item, do nothing.
 	 *
 	 * @param {Object} oEvent - key event
 	 * @private
 	 */
 	Carousel.prototype.onsapup = function(oEvent) {
-		this._fnSkipToIndex(oEvent, 1);
+		this._fnSkipToIndex(oEvent, -1);
 	};
 
 	/**
@@ -861,13 +887,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
-	 * Move focus to the previous item. If focus is on the first item, do nothing.
+	 *
+	 * Move focus to the next item. If focus is on the last item, do nothing.
 	 *
 	 * @param {Object} oEvent - key event
 	 * @private
 	 */
 	Carousel.prototype.onsapdown = function(oEvent) {
-		this._fnSkipToIndex(oEvent, -1);
+		this._fnSkipToIndex(oEvent, 1);
 	};
 
 	/**
@@ -1107,29 +1134,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/*
-	 * API method to set the carousel's busy indicator size.
-	 * This property has been deprecated since 1.18.7. Does nothing and returns the carousel reference.
+	 * @see sap.ui.core.Control#setBusyIndicatorSize
+	 * Original property was depracated so we removed it, but made it failsafe
+	 * by mapping a 'wrong' input value to the new enum.
 	 *
-	 * @deprecated
 	 * @public
 	 */
-	Carousel.prototype.setBusyIndicatorSize = function() {
-		jQuery.sap.log.warning("sap.m.Carousel: Deprecated function 'setBusyIndicatorSize' called. Does nothing.");
-		return this;
-	};
-
-	/*
-	 * API method to retrieve the carousel's busy indicator size.
-	 * This property has been deprecated since 1.18.6. Always returns an empty string.
-	 *
-	 * @deprecated
-	 * @public
-	 */
-	Carousel.prototype.getBusyIndicatorSize = function() {
-		jQuery.sap.log.warning("sap.m.Carousel: Deprecated function 'getBusyIndicatorSize' called. Does nothing.");
-		return "";
+	Carousel.prototype.setBusyIndicatorSize = function(sSize) {
+		if (!(sSize in BusyIndicatorSize)) {
+			sSize = BusyIndicatorSize.Medium;
+		}
+		return Control.prototype.setBusyIndicatorSize.call(this, sSize);
 	};
 
 	return Carousel;
-
-}, /* bExport= */ true);
+});

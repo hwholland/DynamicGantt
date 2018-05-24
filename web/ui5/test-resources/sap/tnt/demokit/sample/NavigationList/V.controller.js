@@ -1,26 +1,27 @@
 sap.ui.define([
-		'jquery.sap.global',
-		'sap/ui/core/mvc/Controller',
-		'sap/m/Popover',
-		'sap/m/Button'
-	], function(jQuery, Controller, Popover, Button) {
+	'jquery.sap.global',
+	'sap/ui/core/mvc/Controller'
+], function(jQuery, Controller) {
 	"use strict";
 
-	var Controller = Controller.extend("sap.tnt.sample.NavigationList.V", {
+	return Controller.extend("sap.tnt.sample.NavigationList.V", {
 
 		onInit: function () {
 
 		},
 
-		onCollapseExapandPress: function (event) {
-			var navigationList = this.getView().byId('navigationList');
-			var expanded = !navigationList.getExpanded();
+		onCollapseExpandPress: function () {
+			var oNavigationList = this.byId('navigationList');
+			var bExpanded = oNavigationList.getExpanded();
 
-			navigationList.setExpanded(expanded);
+			oNavigationList.setExpanded(!bExpanded);
+		},
+
+		onHideShowSubItemPress: function () {
+			var navListItem = this.byId('subItemThree');
+
+			navListItem.setVisible(!navListItem.getVisible());
 		}
 	});
-
-
-	return Controller;
 
 });

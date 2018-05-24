@@ -1,4 +1,7 @@
+/*global describe,it,element,by,takeScreenshot,expect*/
+
 describe('sap.m.RadioButtonGroup', function() {
+	"use strict";
 
 	// initial loading
 	it('should load test page', function () {
@@ -31,6 +34,7 @@ describe('sap.m.RadioButtonGroup', function() {
 
 	// 2 columns 200px width
 	it('should vizualize group with 2 columns 200px width', function () {
+		element(by.id('sample2')).click();
 		var group3a = element(by.id('RBG3a'));
 		expect(takeScreenshot(group3a)).toLookAs('5_cutting_2_columns');
 	});

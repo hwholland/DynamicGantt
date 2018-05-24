@@ -1,38 +1,4 @@
-/* global module start test asyncTest expect ok equal deepEqual */
-
-
-/**
- * Test-Function to be used in place of deepEquals which only tests for the existence of the given
- * values, not the absence of others.
- *
- * @param {object} oValue - The value to be tested
- * @param {object} oExpected - The value that is tested against, containing the structure expected inside oValue
- * @param {string} sMessage - Message prefix for every sub-test. The property names of the structure will be prepended to this string
- * @returns {void}
- */
-function deepContains(oValue, oExpected, sMessage) {
-	for (var sKey in oExpected) {
-
-		if (Array.isArray(oExpected[sKey]) === Array.isArray(oValue[sKey])) {
-			equals(typeof oValue[sKey], typeof oExpected[sKey], sMessage + "/" + sKey + " have same type");
-		} else {
-			ok(false, sMessage + "/" + sKey + " - one is an array, the other is not");
-		}
-
-
-		if (Array.isArray(oExpected[sKey]) && Array.isArray(oValue[sKey])) {
-			equal(oValue[sKey].length, oExpected[sKey].length, sMessage + "/" + sKey + " length matches");
-		}
-
-		if (oExpected[sKey] !== null && typeof oExpected[sKey] === "object" && typeof oValue[sKey] === "object") {
-			// Go deeper
-			deepContains(oValue[sKey], oExpected[sKey], sMessage + "/" + sKey);
-		} else {
-			// Compare directly
-			equal(oValue[sKey], oExpected[sKey], sMessage + "/" + sKey + " match");
-		}
-	}
-}
+/*global QUnit */
 
 
 
@@ -63,13 +29,13 @@ function runODataAnnotationsV2Tests() {
 	}, {
 		name             : "Northwind",
 		service          : "fakeService://testdata/odata/northwind/",
-		annotations      : "fakeService://testdata/odata/NOT_EXISTANT",
+		annotations      : "fakeService://testdata/odata/NOT_EXISTENT",
 		serviceValid     : true,
 		annotationsValid : "none"
 	},{
 		name             : "Invalid",
-		service          : "fakeService://testdata/odata/NOT_EXISTANT/",
-		annotations      : "fakeService://testdata/odata/NOT_EXISTANT",
+		service          : "fakeService://testdata/odata/NOT_EXISTENT/",
+		annotations      : "fakeService://testdata/odata/NOT_EXISTENT",
 		serviceValid     : false,
 		annotationsValid : "none"
 	},{
@@ -95,14 +61,14 @@ function runODataAnnotationsV2Tests() {
 	}, {
 		name             : "Northwind",
 		service          : "fakeService://testdata/odata/northwind/",
-		annotations      : "fakeService://testdata/odata/NOT_EXISTANT",
+		annotations      : "fakeService://testdata/odata/NOT_EXISTENT",
 		serviceValid     : true,
 		annotationsValid : "none",
 		sharedMetadata   : true
 	},{
 		name             : "Invalid",
-		service          : "fakeService://testdata/odata/NOT_EXISTANT/",
-		annotations      : "fakeService://testdata/odata/NOT_EXISTANT",
+		service          : "fakeService://testdata/odata/NOT_EXISTENT/",
+		annotations      : "fakeService://testdata/odata/NOT_EXISTENT",
 		serviceValid     : false,
 		annotationsValid : "none",
 		sharedMetadata   : true
@@ -311,8 +277,22 @@ function runODataAnnotationsV2Tests() {
 			],
 			serviceValid     : true,
 			annotationsValid : "all"
+		},
+		"LastModified Header": {
+			service          : "fakeService://testdata/odata/sapdata01/",
+			annotations      : [
+				"fakeService://testdata/odata/multiple-annotations-01.xml",
+				"fakeService://testdata/odata/multiple-annotations-02.xml",
+				"fakeService://testdata/odata/multiple-annotations-03.xml"
+			],
+			serviceValid     : true,
+			annotationsValid : "all"
+		},
+		"NoLastModified Header": {
+			service          : "fakeService://testdata/odata/sapdata02/",
+			serviceValid     : true,
+			annotationsValid : "all"
 		}
-
 	};
 
 	// Add additional tests to stadard tests as well
@@ -323,9 +303,12 @@ function runODataAnnotationsV2Tests() {
 	}
 
 
-	module("Standard Tests for All Annotation Cases")
 
-	var fnTestLoading = function(mService) {
+	QUnit.module("Standard Tests for All Annotation Cases")
+
+	var fnTestLoading = function(mService, assert) {
+		var done = assert.async();
+
 		var oMetadata = new sap.ui.model.odata.ODataMetadata(mService.service + "$metadata", { asnc: true });
 
 		var oAnnotationsLoader = new sap.ui.model.odata.v2.ODataAnnotations(oMetadata, {
@@ -351,12 +334,12 @@ function runODataAnnotationsV2Tests() {
 		function endTest() {
 			oMetadata.destroy();
 			oAnnotationsLoader.destroy();
-			start();
+			done();
 		}
 
 		pLoaded.then(function(aResults) {
-			equal(aResults.length, iNumAnnotations, "The right number of annotations were successfully loaded from sources");
-			equal(iLoaded, iNumAnnotations, "The right number of annotations were loaded including $metadata");
+			assert.equal(aResults.length, iNumAnnotations, "The right number of annotations were successfully loaded from sources");
+			assert.equal(iLoaded, iNumAnnotations, "The right number of annotations were loaded including $metadata");
 
 			if (mService.annotationsValid === "all") {
 				var bNoErrors = (aResults.length === 0) || aResults.reduce(function(bLastResult, oResult) {
@@ -366,13 +349,13 @@ function runODataAnnotationsV2Tests() {
 						return !(oResult instanceof Error);
 					}
 				}, true);
-				equal(bNoErrors, true, "No Errors in the results");
+				assert.equal(bNoErrors, true, "No Errors in the results");
 			}
 			endTest();
 		});
 
 		pLoaded.catch(function(aResults) {
-			ok(false, "With a valid service at least the metadata should have been parsed for annotations successfully");
+			assert.ok(false, "With a valid service at least the metadata should have been parsed for annotations successfully");
 			endTest();
 		});
 
@@ -382,12 +365,14 @@ function runODataAnnotationsV2Tests() {
 
 	for (var i = 0; i < aServices.length; ++i) {
 		if (aServices[i].serviceValid && aServices[i].annotationsValid !== "some") {
-			asyncTest("External Annotation Loading - Service Case: " + aServices[i].name, fnTestLoading.bind(undefined, aServices[i]));
+			QUnit.test("External Annotation Loading - Service Case: " + aServices[i].name, fnTestLoading.bind(undefined, aServices[i]));
 		}
 	}
 
 
-	var fnTestEventsAllSome = function(mService, bSkipMetadata) {
+	var fnTestEventsAllSome = function(mService, bSkipMetadata, assert) {
+		var done = assert.async();
+
 		var oMetadata = new sap.ui.model.odata.ODataMetadata(mService.service + "$metadata", { asnc: true });
 
 		var oAnnotationsLoader = new sap.ui.model.odata.v2.ODataAnnotations(oMetadata, {
@@ -432,14 +417,14 @@ function runODataAnnotationsV2Tests() {
 
 			bSomeLoadedFired = true;
 			var aResults = oEvent.getParameter("result");
-			ok(Array.isArray(aResults), "Result parameter contained an array of results");
-			equals(aResults.length, iAnnotations, "The correct number of Annotations was loaded");
+			assert.ok(Array.isArray(aResults), "Result parameter contained an array of results");
+			assert.equal(aResults.length, iAnnotations, "The correct number of Annotations was loaded");
 
 			var iErrorsInResults = fnCountErrors(aResults);
-			ok(iErrorsInResults < iAnnotations, "The failed event parameter \"result\" should NOT contain ONLY Error objects");
+			assert.ok(iErrorsInResults < iAnnotations, "The failed event parameter \"result\" should NOT contain ONLY Error objects");
 
-			equals(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
-			equals(aResults.length - iErrorsInResults, iSuccesses, "The number of successfully parsed entries in the Results is the same as the number of success-events that occurred")
+			assert.equal(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
+			assert.equal(aResults.length - iErrorsInResults, iSuccesses, "The number of successfully parsed entries in the Results is the same as the number of success-events that occurred")
 		});
 
 		var bAllFailedFired = false;
@@ -449,30 +434,30 @@ function runODataAnnotationsV2Tests() {
 			bAllFailedFired = true;
 			var aErrors = oEvent.getParameter("result");
 
-			ok(Array.isArray(aErrors), "Result parameter contained an array of errors");
-			equals(aErrors.length, iAnnotations, "The correct number of Annotations failed");
+			assert.ok(Array.isArray(aErrors), "Result parameter contained an array of errors");
+			assert.equal(aErrors.length, iAnnotations, "The correct number of Annotations failed");
 
 			var iErrorsInResults = fnCountErrors(aErrors);
-			equals(iErrorsInResults, iAnnotations, "The failed event parameter \"result\" should contain only Error objects");
+			assert.equal(iErrorsInResults, iAnnotations, "The failed event parameter \"result\" should contain only Error objects");
 
-			equals(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
-			equals(iSuccesses, 0, "No success events should have been fired")
+			assert.equal(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
+			assert.equal(iSuccesses, 0, "No success events should have been fired")
 		});
 
 
 		var fnEndTest = function() {
 			oMetadata.destroy();
 			oAnnotationsLoader.destroy();
-			start()
+			done()
 		};
 
 		pLoaded.then(function() {
-			equals(bSomeLoadedFired, true, "Loaded event should have been fired");
-			equals(bAllFailedFired, false, "Failed event should NOT have been fired");
+			assert.equal(bSomeLoadedFired, true, "Loaded event should have been fired");
+			assert.equal(bAllFailedFired, false, "Failed event should NOT have been fired");
 			fnEndTest();
 		}).catch(function() {
-			equals(bSomeLoadedFired, false, "Loaded event should NOT have been fired");
-			equals(bAllFailedFired, true, "Failed event should have been fired");
+			assert.equal(bSomeLoadedFired, false, "Loaded event should NOT have been fired");
+			assert.equal(bAllFailedFired, true, "Failed event should have been fired");
 			fnEndTest();
 		});
 	};
@@ -481,17 +466,19 @@ function runODataAnnotationsV2Tests() {
 	for (var i = 0; i < aServices.length; ++i) {
 		if (aServices[i].serviceValid) {
 			// Test all valid services - parse metadata for annotations
-			asyncTest("Event (All/Some) Parameter Checks with Metadata - Service Case: " + aServices[i].name, fnTestEventsAllSome.bind(undefined, aServices[i], false));
+			QUnit.test("Event (All/Some) Parameter Checks with Metadata - Service Case: " + aServices[i].name, fnTestEventsAllSome.bind(undefined, aServices[i], false));
 		}
 		if (aServices[i].serviceValid && aServices[i].annotations) {
 			// Test all valid services - DO NOT parse metadata for annotations
-			asyncTest("Event (All/Some) Parameter Checks without Metadata - Service Case: " + aServices[i].name, fnTestEventsAllSome.bind(undefined, aServices[i], true));
+			QUnit.test("Event (All/Some) Parameter Checks without Metadata - Service Case: " + aServices[i].name, fnTestEventsAllSome.bind(undefined, aServices[i], true));
 		}
 	}
 
 
 
-	var fnTestEvents = function(mService, bSkipMetadata) {
+	var fnTestEvents = function(mService, bSkipMetadata, assert) {
+		var done = assert.async();
+
 		var oMetadata = new sap.ui.model.odata.ODataMetadata(mService.service + "$metadata", { asnc: true });
 
 		var oAnnotationsLoader = new sap.ui.model.odata.v2.ODataAnnotations(oMetadata, {
@@ -536,14 +523,14 @@ function runODataAnnotationsV2Tests() {
 
 			bLoadedFired = true;
 			var aResults = oEvent.getParameter("result");
-			ok(Array.isArray(aResults), "Result parameter contained an array of results");
-			equals(aResults.length, iAnnotations, "The correct number of Annotations was loaded");
+			assert.ok(Array.isArray(aResults), "Result parameter contained an array of results");
+			assert.equal(aResults.length, iAnnotations, "The correct number of Annotations was loaded");
 
 			var iErrorsInResults = fnCountErrors(aResults);
-			equals(iErrorsInResults, 0, "The failed event parameter \"result\" should NOT contain ANY Error objects");
+			assert.equal(iErrorsInResults, 0, "The failed event parameter \"result\" should NOT contain ANY Error objects");
 
-			equals(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
-			equals(aResults.length, iSuccesses, "The number of successfully parsed entries in the Results is the same as the number of success-events that occurred")
+			assert.equal(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
+			assert.equal(aResults.length, iSuccesses, "The number of successfully parsed entries in the Results is the same as the number of success-events that occurred")
 		});
 
 		var bFailedFired = false;
@@ -553,25 +540,25 @@ function runODataAnnotationsV2Tests() {
 			bFailedFired = true;
 			var aResults = oEvent.getParameter("result");
 
-			ok(Array.isArray(aResults), "Result parameter contained an array of errors");
-			equals(aResults.length, iAnnotations, "The correct number of Annotations failed");
+			assert.ok(Array.isArray(aResults), "Result parameter contained an array of errors");
+			assert.equal(aResults.length, iAnnotations, "The correct number of Annotations failed");
 
 			var iErrorsInResults = fnCountErrors(aResults);
-			ok(iErrorsInResults > 0, "The failed event parameter \"result\" should contain at least one Error object");
+			assert.ok(iErrorsInResults > 0, "The failed event parameter \"result\" should contain at least one Error object");
 
-			equals(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
-			equals(iSuccesses, aResults.length - iErrorsInResults, "No success events should have been fired")
+			assert.equal(iErrorsInResults, iErrors, "The number of Errors in the Results is the same as the number of error-events that occurred")
+			assert.equal(iSuccesses, aResults.length - iErrorsInResults, "No success events should have been fired")
 		});
 
 
 		var fnEndTest = function() {
 			oMetadata.destroy();
 			oAnnotationsLoader.destroy();
-			start()
+			done()
 		};
 
 		pLoaded.catch(function() {}).then(function() {
-			ok(bLoadedFired !== bFailedFired, "Either loaded or failed shoud have been fired but not both");
+			assert.ok(bLoadedFired !== bFailedFired, "Either loaded or failed shoud have been fired but not both");
 			fnEndTest();
 		});
 	};
@@ -579,18 +566,20 @@ function runODataAnnotationsV2Tests() {
 	for (var i = 0; i < aServices.length; ++i) {
 		if (aServices[i].serviceValid) {
 			// Test all valid services - parse metadata for annotations
-			asyncTest("Event Parameter Checks with Metadata - Service Case: " + aServices[i].name, fnTestEvents.bind(undefined, aServices[i], false));
+			QUnit.test("Event Parameter Checks with Metadata - Service Case: " + aServices[i].name, fnTestEvents.bind(undefined, aServices[i], false));
 		}
 		if (aServices[i].serviceValid && aServices[i].annotations) {
 			// Test all valid services - DO NOT parse metadata for annotations
-			asyncTest("Event Parameter Checks without Metadata - Service Case: " + aServices[i].name, fnTestEvents.bind(undefined, aServices[i], true));
+			QUnit.test("Event Parameter Checks without Metadata - Service Case: " + aServices[i].name, fnTestEvents.bind(undefined, aServices[i], true));
 		}
 	}
 
 
-	module("v2.ODataModel Integration Test")
+	QUnit.module("v2.ODataModel Integration Test")
 
-	var fnTestModelLoading = function(mService) {
+	var fnTestModelLoading = function(mService, assert) {
+		var done = assert.async();
+
 		// sap.ui.model.odata.v2.ODataModel.mServiceData = {};
 		var oModel = new sap.ui.model.odata.v2.ODataModel(mService.service, {
 			annotationURI: mService.annotations,
@@ -600,7 +589,7 @@ function runODataAnnotationsV2Tests() {
 
 		function endTest() {
 			oModel.destroy();
-			start();
+			done();
 		}
 
 		var bAnnotationsLoaded = false;
@@ -608,27 +597,27 @@ function runODataAnnotationsV2Tests() {
 
 		oModel.attachAnnotationsLoaded(function() {
 			bAnnotationsLoaded = true;
-			ok(mService.serviceValid, "Service annotations loaded");
-			notEqual(mService.annotationsValid, "none", "Service annotations loaded");
+			assert.ok(mService.serviceValid, "Service annotations loaded");
+			assert.notEqual(mService.annotationsValid, "none", "Service annotations loaded");
 		});
 
 		oModel.attachMetadataLoaded(function() {
 			bMetadataLoaded = true;
-			ok(mService.serviceValid, "Service metadata loaded");
+			assert.ok(mService.serviceValid, "Service metadata loaded");
 
 			if (mService.annotationsValid === "none") {
-				equal(bAnnotationsLoaded, false, "No Annotations loaded")
+				assert.equal(bAnnotationsLoaded, false, "No Annotations loaded")
 			} else if (mService.annotationsValid === "metadata") {
-				equal(bAnnotationsLoaded, false, "No Annotations loaded")
+				assert.equal(bAnnotationsLoaded, false, "No Annotations loaded")
 			} else {
-				equal(bAnnotationsLoaded, true, "Annotations loaded")
+				assert.equal(bAnnotationsLoaded, true, "Annotations loaded")
 			}
 
 			endTest();
 		});
 
 		oModel.attachMetadataFailed(function() {
-			ok(!mService.serviceValid || mService.annotationsValid === "none", "Service metadata or annotations failed");
+			assert.ok(!mService.serviceValid || mService.annotationsValid === "none", "Service metadata or annotations failed");
 			endTest();
 		});
 
@@ -639,14 +628,16 @@ function runODataAnnotationsV2Tests() {
 			// FIXME: test doesn't work in headless PhantomJS test cycle => commented out!
 			//  ==> PhantomJS doesn't fail when loading malformed XML!
 			if (!sap.ui.Device.browser.phantomJS || (aServices[i].serviceValid && aServices[i].annotationsValid !== "none")) {
-				asyncTest("Annotations - Service Case: " + aServices[i].name, fnTestModelLoading.bind(undefined, aServices[i]));
+				QUnit.test("Annotations - Service Case: " + aServices[i].name, fnTestModelLoading.bind(undefined, aServices[i]));
 			}
 		}
 	}
 
 
 
-	var fnTestModelMetadataLoading = function(mService) {
+	var fnTestModelMetadataLoading = function(mService, assert) {
+		var done = assert.async();
+
 		// sap.ui.model.odata.v2.ODataModel.mServiceData = {};
 		var oModel = new sap.ui.model.odata.v2.ODataModel(mService.service, {
 			annotationURI: mService.annotations,
@@ -655,7 +646,7 @@ function runODataAnnotationsV2Tests() {
 
 		function endTest() {
 			oModel.destroy();
-			start();
+			done();
 		}
 
 		var bAnnotationsLoaded = false;
@@ -663,19 +654,19 @@ function runODataAnnotationsV2Tests() {
 
 		oModel.attachAnnotationsLoaded(function() {
 			bAnnotationsLoaded = true;
-			ok(mService.serviceValid, "Service annotations loaded");
+			assert.ok(mService.serviceValid, "Service annotations loaded");
 		});
 
 		oModel.attachMetadataLoaded(function() {
 			bMetadataLoaded = true;
-			ok(mService.serviceValid, "Service metadata failed");
-			equal(bAnnotationsLoaded, true, "Annotations loaded")
+			assert.ok(mService.serviceValid, "Service metadata failed");
+			assert.equal(bAnnotationsLoaded, true, "Annotations loaded")
 
 			endTest();
 		});
 
 		oModel.attachMetadataFailed(function() {
-			ok(!mService.serviceValid, "Service metadata failed");
+			assert.ok(!mService.serviceValid, "Service metadata failed");
 			endTest();
 		});
 
@@ -683,15 +674,194 @@ function runODataAnnotationsV2Tests() {
 
 	for (var i = 0; i < aServices.length; ++i) {
 		if (aServices[i].serviceValid) {
-			asyncTest("Annotations and metadata - Service Case: " + aServices[i].name, fnTestModelMetadataLoading.bind(undefined, aServices[i]));
+			QUnit.test("Annotations and metadata - Service Case: " + aServices[i].name, fnTestModelMetadataLoading.bind(undefined, aServices[i]));
 		}
 	}
 
+	QUnit.module("Misc Test to increase test coverage");
 
-	module("Annotation Test Cases for Bugfixes and Specification Changes")
+	var fnTestMisc1 = function(assert) {
+		var done = assert.async();
+
+		var mService = mAdditionalTestsServices["LastModified Header"];
+
+		var oModel = new sap.ui.model.odata.v2.ODataModel(mService.service, {
+			annotationURI: mService.annotations,
+			skipMetadataAnnotationParsing: false
+		});
+
+		// Instantiate without options argument - use defaults
+		var oAnnotationsFromMetadata = new sap.ui.model.odata.v2.ODataAnnotations(oModel.oMetadata);
+
+		assert.equal(oAnnotationsFromMetadata.getAnnotationsData(), oAnnotationsFromMetadata.getData(), "Check deprecated API");
+
+		var oAnnotations = new sap.ui.model.odata.v2.ODataAnnotations(oModel.oMetadata, { skipMetadata: true });
+
+
+		var fnEvent = function() {
+			assert.ok(false, "Success/Error/Loaded handler should not be called for this instance");
+		};
+		oAnnotations.attachSuccess(fnEvent);
+		oAnnotations.attachError(fnEvent);
+		oAnnotations.attachLoaded(fnEvent);
+		oAnnotations.attachFailed(fnEvent);
+
+
+		// Add empty source
+		oAnnotations.addSource().then(function() {
+			// Add empty source as array
+			oAnnotations.addSource([]).then(function() {
+				oAnnotations.detachSuccess(fnEvent);
+				oAnnotations.detachError(fnEvent);
+				oAnnotations.detachLoaded(fnEvent);
+				oAnnotations.detachFailed(fnEvent);
+
+				// Add invalid source
+				oAnnotations.addSource({
+					type: "invalid"
+				}).then(function() {
+					assert.ok(false, "Adding invalid sources should not be successful");
+				}).catch(function() {
+					assert.ok(true, "Adding invalid sources should lead to an error");
+
+					oAnnotations.addSource({
+						type: "xml",
+						xml: "I am not valid XML"
+					}).then(function() {
+						// This is a phantomJS bug...
+						assert.ok(!!sap.ui.Device.browser.phantomJS, "Adding sources with invalid XML content should not be successful");
+
+						if (sap.ui.Device.browser.phantomJS) {
+							throw "Continue in catch block";
+						}
+
+					}).catch(function() {
+						assert.ok(true, "Adding sources with invalid XML content should lead to an error");
+
+						oAnnotations.addSource({
+							type: "xml",
+							document: { invalid: "I ain't no XML document..." }
+						}).then(function() {
+							// This is a phantomJS bug...
+							assert.ok(!!sap.ui.Device.browser.phantomJS, "Adding sources with invalid XML content should not be successful");
+
+							if (sap.ui.Device.browser.phantomJS) {
+								throw "Continue in catch block";
+							}
+
+						}).catch(function() {
+							assert.ok(true, "Adding sources with invalid XML documents should lead to an error");
+
+
+							// XML Parser is not available should lead to an error
+							var bIsIE = sap.ui.Device.browser.msie;
+							sap.ui.Device.browser.internet_explorer = sap.ui.Device.browser.msie = false;
+							var oOriginalDOMParser = window.DOMParser;
+							window.DOMParser = function() {
+								this.parseFromString = function() {}
+							};
+
+							oAnnotations.addSource({
+								type: "url",
+								data: "fakeService://testdata/odata/multiple-annotations-01.xml"
+							}).then(function() {
+								assert.ok(false, "Adding annotations without having a DOM parser should not be successful");
+							}).catch(function() {
+								assert.ok(true, "Adding annotations without having a DOM parser should lead to an error");
+
+								sap.ui.Device.browser.internet_explorer = sap.ui.Device.browser.msie = bIsIE;
+								window.DOMParser = oOriginalDOMParser;
+
+								// Mock IE XML Parser
+								bIsIE = sap.ui.Device.browser.msie;
+								sap.ui.Device.browser.internet_explorer = sap.ui.Device.browser.msie = true;
+								var oOriginalActiveXObject = window.ActiveXObject;
+								window.ActiveXObject = function() {
+									this.loadXML = function() {}
+								};
+
+								oAnnotations.addSource({
+									type: "url",
+									data: "fakeService://testdata/odata/multiple-annotations-01.xml"
+								}).then(function() {
+									assert.ok(false, "Adding annotations without having a DOM parser should not be successful");
+								}).catch(function() {
+									assert.ok(true, "Adding annotations without having a DOM parser should lead to an error");
+
+
+									window.ActiveXObject = oOriginalActiveXObject;
+									sap.ui.Device.browser.internet_explorer = sap.ui.Device.browser.msie = bIsIE;
+
+									// Clean up
+									oModel.destroy();
+									oAnnotationsFromMetadata.destroy();
+									oAnnotations.destroy();
+
+									done();
+								});
+							});
+						});
+					});
+				});
+			});
+
+		});
+
+
+		var oAnnotationsObject = oModel.getServiceAnnotations();
+
+
+	};
+
+	QUnit.test("Loading and accessing annotations", fnTestMisc1);
 
 
 
+	QUnit.module("Annotation Test Cases for Bugfixes and Specification Changes");
 
+
+	var fnTestLastModified = function(assert) {
+		var done = assert.async();
+
+		assert.expect(4);
+
+		var mService = mAdditionalTestsServices["LastModified Header"];
+
+		var oModel = new sap.ui.model.odata.v2.ODataModel(mService.service, {
+			annotationURI: mService.annotations,
+			skipMetadataAnnotationParsing: false
+		});
+
+		oModel.annotationsLoaded().then(function(aAnnotations) {
+			var iLastModified = new Date("Wed, 15 Nov 1995 04:58:08 GMT").getTime();
+
+			assert.equal(Date.parse(aAnnotations[0].lastModified), iLastModified, "LastModified header exists for first annotation document");
+			assert.equal(Date.parse(aAnnotations[1].lastModified), iLastModified, "LastModified header exists for second annotation document");
+			assert.equal(Date.parse(aAnnotations[2].lastModified), iLastModified, "LastModified header exists for third annotation document");
+			assert.equal(Date.parse(aAnnotations[3].lastModified), iLastModified, "LastModified header exists for fourth annotation document");
+
+			done();
+		});
+
+	};
+
+	QUnit.test("Access to lastModified header", fnTestLastModified);
+
+
+
+	var fnTestNoLastModified = function(assert) {
+		var mService = mAdditionalTestsServices["NoLastModified Header"];
+
+		var oModel = new sap.ui.model.odata.v2.ODataModel(mService.service, {
+			annotationURI: mService.annotations,
+			skipMetadataAnnotationParsing: false
+		});
+
+		return oModel.annotationsLoaded().then(function(aAnnotations) {
+			assert.notOk(aAnnotations[0].lastModified, "LastModified header does not exist for annotation document");
+		});
+	};
+
+	QUnit.test("Access to lastModified header which is not set", fnTestNoLastModified);
 
 }

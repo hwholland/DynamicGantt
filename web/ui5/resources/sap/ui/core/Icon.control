@@ -10,7 +10,7 @@ A set of built in Icons is available and they can be fetched by calling sap.ui.c
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="src" type="sap.ui.core/URI" group="Data">
-            <documentation>This property should be set by the return value of calling sap.ui.core.IconPool.getIconURI with a Icon name parameter and an optional collection parameter which is required when using application extended Icons. A list of standard FontIcon is available here.</documentation>
+            <documentation>This property should be set by the return value of calling sap.ui.core.IconPool.getIconURI with an Icon name parameter and an optional collection parameter which is required when using application extended Icons. A list of standard FontIcon is available here.</documentation>
         </property>
         <property name="size" type="sap.ui.core/CSSSize" group="Dimension">
             <documentation>Since Icon uses font, this property will be applied to the css font-size property on the rendered DOM element.</documentation>

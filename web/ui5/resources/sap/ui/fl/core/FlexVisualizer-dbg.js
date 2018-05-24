@@ -1,7 +1,7 @@
 /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
-
-(c) Copyright 2014-2016 SAP SE. All rights reserved
+ * UI development toolkit for HTML5 (OpenUI5)
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
@@ -10,12 +10,12 @@ sap.ui.define([
 	"use strict";
 
 	/**
-	 * 
-	 * @constructor 
+	 *
+	 * @constructor
 	 * @alias sap.ui.fl.core.FlexVisualizer
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @experimental Since 1.27.0
 	 *
 	 */
@@ -28,7 +28,7 @@ sap.ui.define([
 	 * @param {Object} oAffectedRegistryItems Relevant registry items required by the dialog to display itself correctly
 	 * @param {Boolean} bIsKeyUser Is the current user in key user mode
 	 *
-	 * @public	 
+	 * @public
 	 */
 	FlexVisualizer.showDialog = function(oAffectedRegistryItems, bIsKeyUser) {
 
@@ -37,7 +37,7 @@ sap.ui.define([
 	/**
 	 * Close an open dialog explicitly
 	 *
-	 * @public	 
+	 * @public
 	 */
 	FlexVisualizer.closeDialog = function() {
 

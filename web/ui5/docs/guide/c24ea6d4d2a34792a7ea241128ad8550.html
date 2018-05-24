@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="For the instantiation of fragments, the oController object must not necessarily be a controller. It can also be another object."/>
 <meta name="description" content="For the instantiation of fragments, the oController object must not necessarily be a controller. It can also be another object."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=8020122752560148"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=6293474531455642"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=6293474531455642"/>
 <title>Using Other Objects Instead of Controllers</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loioc24ea6d4d2a34792a7ea241128ad8550">
 <div id="wrapper"><div id="container">
@@ -49,7 +35,7 @@
 			<p class="p">The following example of an HTML fragment can be used in an environment where no MVC is
 				used.</p>
 
-			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint"><samp class="ph codeph">#!js</samp>
+			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint lang-js">
 var oDummyController = { 
 	doSomething: function() { 
 		// do whatever should happen when the button in the fragment is pushed...
@@ -64,19 +50,5 @@ var myButton  = sap.ui.htmlfragment( "my.useful.UiPartZ", oDummyController);
 
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Using Other Objects Instead of Controllers";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

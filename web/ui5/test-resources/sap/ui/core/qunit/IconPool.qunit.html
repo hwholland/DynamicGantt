@@ -2,25 +2,26 @@
 <html>
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>qUnit Page for sap.ui.core.IconPool</title>
+		<title>QUnit Page for sap.ui.core.IconPool</title>
+		<script src="../shared-config.js"></script>
 		<script id="sap-ui-bootstrap"
-			type="text/javascript"
 			src="../../../../../resources/sap-ui-core.js"
-			data-sap-ui-theme="sap_bluecrystal"
 			data-sap-ui-noConflict="true"
 			data-sap-ui-libs="sap.ui.core,sap.m">
 		</script>
 
 		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
-		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
+		<script src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+		<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 		<script>
+
+			QUnit.config.autostart = false;
 
 			sap.ui.require([
 				"sap/ui/core/IconPool",
@@ -45,10 +46,21 @@
 
 				QUnit.module("Methods");
 
+				QUnit.test("insertFontFaceStyle", function(assert) {
+
+					assert.equal(jQuery("head > style[type='text/css']").get(0), null, "Style should not have been inserted.");
+
+					IconPool.insertFontFaceStyle();
+
+					var sCss = jQuery("head > style[type='text/css']").text()
+					assert.ok(sCss.indexOf("url('../../../../../resources/sap/ui/core/themes/base/fonts/SAP-icons") !== -1,
+						"Font should have been include from sap.ui.core base theme folder.");
+
+				});
 				QUnit.test("createControlByURI", function(assert) {
 					var oAssertStub = this.stub(jQuery.sap, "assert", function(bCondition) {
 						if (!bCondition) {
-							ok(false, "Condition check shouldn't fail");
+							assert.ok(false, "Condition check shouldn't fail");
 						}
 					});
 
@@ -137,6 +149,24 @@
 					assert.equal(oIcon7, oIcon8, "Multi-Icons have correct content");
 
 				});
+				QUnit.test("getIconInfo: icons under the undefined collection", function(assert) {
+					var oIconInfo = IconPool.getIconInfo("manager");
+
+					assert.strictEqual(oIconInfo.collectionName, undefined, "The default collection name should be undefined");
+					assert.equal(oIconInfo.uri, "sap-icon://manager", "The default collectionName doesn't appear in uri");
+				});
+				QUnit.test("addIcon: the default icons shouldn't be modified with collection name 'undefined'", function(assert) {
+					var oIconInfo = IconPool.getIconInfo("manager");
+
+					IconPool.addIcon("manager", "undefined", {
+						content: oIconInfo.content.charCodeAt(0) + 0x1000,
+						overWrite: true
+					});
+
+					var oNewIconInfo = IconPool.getIconInfo("manager");
+
+					assert.equal(oNewIconInfo.content, oIconInfo.content, "the defualt collection can't be overwritten");
+				});
 				QUnit.test("isIconURI", function(assert) {
 					assert.equal(IconPool.isIconURI(), false, "Should return 'false' when no URI is provided.");
 					assert.equal(IconPool.isIconURI("sap-icon://"), false, "Should return 'false' when no hostname is provided.");
@@ -154,17 +184,13 @@
 					assert.deepEqual(IconPool.getIconNames("collection-1"), [ "legacy-syntax" ], "Correct set of icons for 'collection-1' should be returned.");
 
 				});
-				QUnit.test("insertFontFaceStyle", function(assert) {
-					IconPool.insertFontFaceStyle();
-					assert.ok(jQuery("head > style[type='text/css']").text().indexOf("font-family: 'SAP-icons'") !== -1, "Style should have been inserted.");
-				});
-				QUnit.test("_calcAbsPath", function(assert) {
-					assert.equal(IconPool._calcAbsPath("themes/base/fonts/", "http://foo.bar/baz/?foo=bar#blub"), "http://foo.bar/baz/themes/base/fonts/", "Correct absolute URI should get calculated.");
-				});
 				QUnit.test("getIconForMimeType", function(assert) {
-					assert.equal(IconPool.getIconForMimeType("image/png"), "sap-icon://attachment-photo", "Should return correct icon URI.");
+					assert.equal(IconPool.getIconForMimeType("image/png"), "sap-icon://attachment-photo", "Should return 'attachment-photo' icon URI for png files.");
+					assert.equal(IconPool.getIconForMimeType("application/vnd.ms-excel"), "sap-icon://excel-attachment", "Should return 'excel-attachment' icon URI for xls files.");
 					assert.equal(IconPool.getIconForMimeType("text/x-foo-bar"), "sap-icon://document", "Should return 'document' icon URI as fallback.");
 				});
+
+				QUnit.start();
 
 			});
 

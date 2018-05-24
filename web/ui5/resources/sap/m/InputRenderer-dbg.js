@@ -1,12 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer'],
-	function(jQuery, Renderer, InputBaseRenderer) {
+sap.ui.define(['sap/ui/core/InvisibleText', 'sap/ui/core/Renderer', './InputBaseRenderer', 'sap/m/library'],
+	function(InvisibleText, Renderer, InputBaseRenderer, library) {
 	"use strict";
+
+
+	// shortcut for sap.m.InputType
+	var InputType = library.InputType;
 
 
 	/**
@@ -53,9 +57,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 	 */
 	InputRenderer.writeInnerAttributes = function(oRm, oControl) {
 		oRm.writeAttribute("type", oControl.getType().toLowerCase());
-		if (oControl.getType() == sap.m.InputType.Number && sap.ui.getCore().getConfiguration().getRTL()) {
+		if (oControl.getType() == InputType.Number && sap.ui.getCore().getConfiguration().getRTL()) {
 			oRm.writeAttribute("dir", "ltr");
 			oRm.addStyle("text-align", "right");
+		}
+
+		if (oControl.getShowSuggestion()) {
+			oRm.writeAttribute("autocomplete", "off");
 		}
 
 		if ((!oControl.getEnabled() && oControl.getType() == "Password")
@@ -81,7 +89,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
 	 */
-	InputRenderer.addInnerStyles = function(oRm, oControl) {
+	InputRenderer.addWrapperStyles = function(oRm, oControl) {
 
 		if (oControl.getDescription()) {
 			oRm.addStyle("width", oControl.getFieldWidth() || "50%");
@@ -89,12 +97,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 	};
 
 	/**
-	 * add extra content to Input
+	 * Write the decorations of the input.
 	 *
-	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
-	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+	 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
 	 */
-	InputRenderer.writeInnerContent = function(oRm, oControl) {
+	InputRenderer.writeDecorations = function(oRm, oControl) {
 
 		var id = oControl.getId(),
 			description = oControl.getDescription();
@@ -102,15 +110,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 		if (!description) {
 			this.writeValueHelpIcon(oRm, oControl);
 		} else {
-			oRm.write("<span id=\"" + oControl.getId() + "-Descr\">");
+			oRm.write("<span>");
 			this.writeValueHelpIcon(oRm, oControl);
+			oRm.write('<span id="' + oControl.getId() + '-Descr" class="sapMInputDescriptionText">');
 			oRm.writeEscaped(description);
-			oRm.write("</span>");
+			oRm.write("</span></span>");
 		}
 
 		if (sap.ui.getCore().getConfiguration().getAccessibility()) {
 			if (oControl.getShowSuggestion() && oControl.getEnabled() && oControl.getEditable()) {
-				oRm.write("<span id=\"" + id + "-SuggDescr\" class=\"sapUiInvisibleText\" role=\"status\" aria-live=\"polite\"></span>");
+				oRm.write("<span id=\"" + id + "-SuggDescr\" class=\"sapUiPseudoInvisibleText\" role=\"status\" aria-live=\"polite\"></span>");
 			}
 		}
 
@@ -154,23 +163,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 
 		var sAriaDescribedBy = InputBaseRenderer.getAriaDescribedBy.apply(this, arguments);
 
+		function append( s ) {
+			sAriaDescribedBy = sAriaDescribedBy ? sAriaDescribedBy + " " + s : s;
+		}
+
 		if (oControl.getShowValueHelp() && oControl.getEnabled() && oControl.getEditable()) {
-			if (sAriaDescribedBy) {
-				sAriaDescribedBy = sAriaDescribedBy + " " + oControl._sAriaValueHelpLabelId;
-			} else {
-				sAriaDescribedBy = oControl._sAriaValueHelpLabelId;
-			}
+			append( InvisibleText.getStaticId("sap.m", "INPUT_VALUEHELP") );
 			if (oControl.getValueHelpOnly()) {
-				sAriaDescribedBy = sAriaDescribedBy + " " + oControl._sAriaInputDisabledLabelId;
+				append( InvisibleText.getStaticId("sap.m", "INPUT_DISABLED") );
 			}
 		}
 
 		if (oControl.getShowSuggestion() && oControl.getEnabled() && oControl.getEditable()) {
-			if (sAriaDescribedBy) {
-				sAriaDescribedBy = sAriaDescribedBy + " " + oControl.getId() + "-SuggDescr";
-			} else {
-				sAriaDescribedBy = oControl.getId() + "-SuggDescr";
-			}
+			append( oControl.getId() + "-SuggDescr" );
 		}
 
 		return sAriaDescribedBy;

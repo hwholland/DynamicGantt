@@ -1,6 +1,6 @@
 /*
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -21,7 +21,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject'],
 	 * @extends sap.ui.base.ManagedObject
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 * @since 1.21.1
 	 *
 	 * @constructor
@@ -221,7 +221,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject'],
 	/**
 	 * Refresh the personalizations (reloads data from service).
 	 *
-	 * @return {jQuery.Promise} <code>jQuery Promise</code> which is resolved once the refresh is finished
+	 * @returns {jQuery.Promise} <code>jQuery Promise</code> which is resolved once the refresh is finished
 	 * @public
 	 */
 	TablePersoController.prototype.refresh = function() {
@@ -249,7 +249,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject'],
 	/**
 	 * Saves the current personalization state.
 	 *
-	 * @return {jQuery.Promise} <code>jQuery Promise</code> which is resolved once the save is finished
+	 * @returns {jQuery.Promise} <code>jQuery Promise</code> which is resolved once the save is finished
 	 * @public
 	 */
 	TablePersoController.prototype.savePersonalizations = function() {
@@ -399,6 +399,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject'],
 
 		// include the mobile library to re-use the sap.m.TablePersoDialog
 		sap.ui.getCore().loadLibrary("sap.m");
+		//TBD: Use async APIs instead (should be possible because open the dialog could be delayed)
 		var TablePersoDialog = sap.ui.requireSync("sap/m/TablePersoDialog");
 
 		// create and open the dialog

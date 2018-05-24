@@ -1,34 +1,26 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 /**
  * Initialization Code and shared classes of library sap.ui.demokit.
  */
-sap.ui.define(['jquery.sap.global', 'sap/ui/Global', 'sap/ui/core/Core', './js/highlight-query-terms',
-	'sap/ui/core/library',  // library dependency
-	'sap/ui/commons/library'], // library dependency
-	function(jQuery, Global, Core) {
+sap.ui.define([
+	'jquery.sap.global',
+	'sap/ui/Global',
+	'sap/ui/core/Core',
+	'./js/highlight-query-terms'
+], function(jQuery, Global) {
 
 	"use strict";
-
-	/**
-	 * SAPUI5 library with non-public controls, used in the UI5 demokit (SDK)
-	 *
-	 * @namespace
-	 * @name sap.ui.demokit
-	 * @author SAP SE
-	 * @version 1.38.33
-	 * @public
-	 */
 
 
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.ui.demokit",
-		version: "1.38.33",
+		version: "1.54.5",
 		dependencies : ["sap.ui.core","sap.ui.commons"],
 		types: [
 			"sap.ui.demokit.UI5EntityCueCardStyle"
@@ -53,15 +45,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Global', 'sap/ui/core/Core', './js/h
 	});
 
 	/* eslint-disable no-undef */
+	/**
+	 * SAPUI5 library with non-public controls, used in the UI5 demokit (SDK)
+	 *
+	 * @namespace
+	 * @alias sap.ui.demokit
+	 * @author SAP SE
+	 * @version 1.54.5
+	 * @private
+	 * @sap-restricted sdk
+	 */
 	var thisLibrary = sap.ui.demokit;
 	/* eslint-enable no-undef */
 
 	/**
-	 * different styles for an entity cue card.
+	 * Different styles for an entity cue card.
 	 *
 	 * @enum {string}
-	 * @public
-	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 * @private
+	 * @sap-restricted sdk
 	 */
 	thisLibrary.UI5EntityCueCardStyle = {
 

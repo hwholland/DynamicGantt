@@ -1,6 +1,19 @@
-sap.ui.define(['jquery.sap.global', 'sap/ui/test/Opa', 'sap/ui/test/Opa5'], function ($, Opa, Opa5) {
+sap.ui.define([
+	"jquery.sap.global",
+	"unitTests/utils/loggerInterceptor"
+], function ($, loggerInterceptor) {
 	"use strict";
-	var sLogPrefix = "Opa5 - finding controls";
+
+	// Opa5 needs to be unloaded because we want to intercept the logger
+	jQuery.sap.unloadResources("sap/ui/test/Opa5.js", false, true, true);
+	// Opa has a config inside remembering state
+	jQuery.sap.unloadResources("sap/ui/test/Opa.js", false, true, true);
+	// all modules that save Opa5 inside their closure and modify it need to be unlaoded too!
+	jQuery.sap.unloadResources("sap/ui/test/opaQunit.js", false, true, true);
+
+	var oLogger = loggerInterceptor.loadAndIntercept("sap.ui.test.Opa5")[2];
+	var Opa5 = sap.ui.test.Opa5;
+	var Opa = sap.ui.test.Opa;
 
 	QUnit.module("Logging", {
 		beforeEach: function () {
@@ -28,7 +41,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/test/Opa', 'sap/ui/test/Opa5'], func
 				}.bind(this);
 			});
 
-			this.debugSpy = sinon.spy($.sap.log, "debug");
+			this.debugSpy = sinon.spy(oLogger, "debug");
 		},
 		afterEach: function () {
 			this.waitForStub.restore();
@@ -37,7 +50,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/test/Opa', 'sap/ui/test/Opa5'], func
 		}
 	});
 
-	QUnit.test("Should log if a control is not found inside a view", function() {
+	QUnit.test("Should log if a control is not found inside a view", function(assert) {
 		// Arrange
 		new Opa5().waitFor({
 			viewName: "bar",
@@ -48,10 +61,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/test/Opa', 'sap/ui/test/Opa5'], func
 		this.check();
 
 		// Assert
-		sinon.assert.calledWith(this.debugSpy, sinon.match(/notExistingId in the view bar/), sLogPrefix);
+		sinon.assert.calledWith(this.debugSpy, "Found no control with ID 'notExistingId' in view 'bar'");
 	});
 
-	QUnit.test("Should log if a view is not found", function() {
+	QUnit.test("Should log if a view is not found", function(assert) {
 		// Arrange
 		new Opa5().waitFor({
 			viewName: "notExistingView"
@@ -61,6 +74,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/test/Opa', 'sap/ui/test/Opa5'], func
 		this.check();
 
 		// Assert
-		sinon.assert.calledWith(this.debugSpy, sinon.match("Found no view with the name: notExistingView"), sLogPrefix);
+		sinon.assert.calledWith(this.debugSpy, "Found no view with the name: 'notExistingView'");
 	});
 });

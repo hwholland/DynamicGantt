@@ -2,7 +2,20 @@
 <control xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>FacetFilterList</name>
     <derived/>
-    <documentation>FacetFilterList represents a list of values for the FacetFilter control.</documentation>
+    <documentation>Represents a list of values for the {@link sap.m.FacetFilter} control.
+
+&lt;b&gt;Note: &lt;/b&gt;&lt;code&gt;FacetFilterList&lt;/code&gt; is a subclass of {@link sap.m.List} and supports
+growing enablement feature via the property &lt;code&gt;growing&lt;/code&gt;. When you use this feature,
+be aware that it only works with one-way data binding.
+Having growing feature enabled when the &lt;code&gt;items&lt;/code&gt; aggregation is bound to
+a model with two-way data binding, may lead to unexpected and/or inconsistent
+behavior across browsers, such as unexpected closing of the list.
+
+While the &lt;code&gt;FacetFilterList&lt;/code&gt; popup is opened (when the user selects a button
+corresponding to the list's name), any other activities leading to focus change will
+close it. For example, when the popup is opened and the app developer loads a
+{@link sap.m.BusyDialog} or any other dialog that obtains the focus, the popup will
+be closed.</documentation>
     <baseType>sap.m/List</baseType>
     <properties>
         <property name="title" type="sap.ui.core/string" group="Appearance">
@@ -13,7 +26,9 @@
         </property>
         <property name="multiSelect" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
             <documentation>Specifies whether multiple or single selection is used.</documentation>
-            <deprecation since="1.20.0">This property is no longer supported. Use the setMode method instead. FacetFilterList overrides the setMode method to restrict the possible modes to MultiSelect and SingleSelectMaster. All other modes are ignored and will not be set.</deprecation>
+            <deprecation since="1.20.0">replaced by &lt;code&gt;setMode&lt;/code&gt; method.
+&lt;code&gt;FacetFilterList&lt;/code&gt; overrides the &lt;code&gt;setMode&lt;/code&gt; method to restrict the possible modes to
+&lt;code&gt;MultiSelect&lt;/code&gt; and &lt;code&gt;SingleSelectMaster&lt;/code&gt;. All other modes are ignored and will not be set.</deprecation>
         </property>
         <property name="active" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
             <documentation>Indicates that the list is displayed as a button when the FacetFilter type is set to &lt;code&gt;Simple&lt;/code&gt;.</documentation>
@@ -70,7 +85,7 @@ Keys are cached separately from the actual FacetFilterItems so that they remain 
 If aKeys is &lt;code&gt;undefined&lt;/code&gt;, &lt;code&gt;null&lt;/code&gt;, or {} (empty object) then all keys are deleted.
 After this method completes, only those items with matching keys will be selected. All other items in the list will be deselected.</documentation>
             <parameters>
-                <parameter name="aKeys" type="sap.ui.core/object">
+                <parameter name="keys" type="sap.ui.core/object">
                     <documentation>Associative array indicating which FacetFilterItems should be selected in the list. Each property must be set to the value of a FacetFilterItem.key property. Each property value should be set to the FacetFilterItem.text property value. The text value is used to display the FacetFilterItem text when the FacetFilterList button or FacetFilter summary bar is displayed. If no property value is set then the property key is used for the text.</documentation>
                 </parameter>
             </parameters>

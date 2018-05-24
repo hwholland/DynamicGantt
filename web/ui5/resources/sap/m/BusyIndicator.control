@@ -3,7 +3,23 @@
     <name>BusyIndicator</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>Control to indicate that the system is busy with some task and the user has to wait.</documentation>
+    <documentation>Informs the user about an ongoing operation.
+&lt;h3&gt;Overview&lt;/h3&gt;
+The busy indicator implies that an action is taking place within a single control.
+You can set the size of the icon, the text, but also define a custom icon to be used instead.
+&lt;h3&gt;Usage&lt;/h3&gt;
+&lt;h4&gt;When to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The user needs to be able to cancel the operation.&lt;/li&gt;
+&lt;li&gt;Only part of the application or a particular control is affected.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;When not to use&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;The operation takes less than one second.&lt;/li&gt;
+&lt;li&gt;You need to block the screen and prevent the user from starting another activity. In this case, use the {@link sap.m.BusyDialog busy dialog}.&lt;/li&gt;
+&lt;li&gt;Do not change the mouse cursor to indicate the ongoing operation.&lt;/li&gt;
+&lt;li&gt;Do not show multiple busy indicators at once&lt;/li&gt;
+&lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
         <property name="text" type="sap.ui.core/string" defaultValue="" group="Data">

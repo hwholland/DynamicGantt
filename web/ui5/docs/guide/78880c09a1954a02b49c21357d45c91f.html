@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-
-
-
-
 <meta name="abstract" content="You can use jQuery.sap.measure to measure the performance of your JavaScript code."/>
 <meta name="description" content="You can use jQuery.sap.measure to measure the performance of your JavaScript code."/>
 
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=0433852608602221"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=9469098077440012"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=9469098077440012"/>
 <title>Performance Measurement Using jQuery.sap.measure</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio78880c09a1954a02b49c21357d45c91f">
 <div id="wrapper"><div id="container">
@@ -38,7 +24,7 @@
 		<p class="p">For each measurement, the result is a time and a duration. The time are the milliseconds (ms) from starting the measurement till its end. The
 			duration is the effective milliseconds, pause phases are not counted here. </p>
 
-		<div class="p">You can measure the categories that are used by the <span class="ph"><span class="ph pname">SAPUI5</span></span> core classes as listed in
+		<div class="p">You can measure the categories that are used by the <span class="ph"><span class="ph pname">OpenUI5</span></span> core classes as listed in
 			the following table:
 <div class="table-wrapper tablenoborder"><table summary="" id="loio78880c09a1954a02b49c21357d45c91f__table_vtv_mb4_w5" class="table" frame="border" border="1" rules="all">
 <colgroup><col width="17.825311942959%"/><col width="82.17468805704101%"/></colgroup>
@@ -47,12 +33,12 @@
 					
 					<thead class="thead" align="left">
 						<tr class="row">
-							<th class="entry" valign="top" width="17.825311942959%" id="d6434220e40">
+							<th class="entry" valign="top" width="17.825311942959%" id="d5851786e40">
 								<p class="p">Category</p>
 
 							</th>
 
-							<th class="entry" valign="top" width="82.174688057041%" id="d6434220e46">
+							<th class="entry" valign="top" width="82.174688057041%" id="d5851786e46">
 								<p class="p">Description</p>
 
 							</th>
@@ -63,12 +49,12 @@
 
 					<tbody class="tbody">
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">javascript</samp> (default)</p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Default measurement category if no category is provided</p>
 
 							</td>
@@ -76,12 +62,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">require</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Identifies the duration of <samp class="ph codeph">jQuery.sap.require</samp> for lazy loading of JavaScipt classes including the
 									loading and parsing times for a class</p>
 
@@ -90,12 +76,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">xmlhttprequest</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Identifies the duration of an <samp class="ph codeph">jQuery.ajax</samp> call</p>
 
 							</td>
@@ -103,12 +89,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">render</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Used for all rendering-related measurements that trigger core rendering of controls within the
 										<samp class="ph codeph">RenderManager</samp> class</p>
 
@@ -120,12 +106,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">control</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Identifies the duration for HTML rendering provided with the <samp class="ph codeph">ControlRender.render</samp> method</p>
 
 							</td>
@@ -133,12 +119,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">after</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Identifies the duration for calls on the control's <samp class="ph codeph">onAfterRendering</samp> method</p>
 
 							</td>
@@ -146,12 +132,12 @@
 						</tr>
 
 						<tr class="row">
-							<td class="entry" valign="top" width="17.825311942959%" headers="d6434220e40 ">
+							<td class="entry" valign="top" width="17.825311942959%" headers="d5851786e40 ">
 								<p class="p"><samp class="ph codeph">preserve</samp></p>
 
 							</td>
 
-							<td class="entry" valign="top" width="82.174688057041%" headers="d6434220e46 ">
+							<td class="entry" valign="top" width="82.174688057041%" headers="d5851786e46 ">
 								<p class="p">Identifies the duration needed to find out whether rendering can be preserved</p>
 
 							</td>
@@ -196,12 +182,12 @@ jQuery.sap.measure.end("myId");</pre></div>
 										
 										<thead class="thead" align="left">
 											<tr class="row">
-												<th class="entry" valign="top" width="50%" id="d6434220e247">
+												<th class="entry" valign="top" width="50%" id="d5851786e247">
 													<p class="p">Action</p>
 
 												</th>
 
-												<th class="entry" valign="top" width="50%" id="d6434220e253">
+												<th class="entry" valign="top" width="50%" id="d5851786e253">
 													<p class="p">Method</p>
 
 												</th>
@@ -212,12 +198,12 @@ jQuery.sap.measure.end("myId");</pre></div>
 
 										<tbody class="tbody">
 											<tr class="row">
-												<td class="entry" valign="top" width="50%" headers="d6434220e247 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e247 ">
 													<p class="p">Start measurement</p>
 
 												</td>
 
-												<td class="entry" valign="top" width="50%" headers="d6434220e253 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e253 ">
 													<p class="p"><samp class="ph codeph">jQuery.sap.measure.start(sId,sInfo,[categories])</samp></p>
 
 												</td>
@@ -225,12 +211,12 @@ jQuery.sap.measure.end("myId");</pre></div>
 											</tr>
 
 											<tr class="row">
-												<td class="entry" valign="top" width="50%" headers="d6434220e247 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e247 ">
 													<p class="p">End measurement</p>
 
 												</td>
 
-												<td class="entry" valign="top" width="50%" headers="d6434220e253 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e253 ">
 													<p class="p"><samp class="ph codeph">jQuery.sap.measure.end(sId)</samp></p>
 
 												</td>
@@ -238,12 +224,12 @@ jQuery.sap.measure.end("myId");</pre></div>
 											</tr>
 
 											<tr class="row">
-												<td class="entry" valign="top" width="50%" headers="d6434220e247 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e247 ">
 													<p class="p">Pause</p>
 
 												</td>
 
-												<td class="entry" valign="top" width="50%" headers="d6434220e253 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e253 ">
 													<p class="p"><samp class="ph codeph">jQuery.sap.measure.pause(sId)</samp></p>
 
 												</td>
@@ -251,12 +237,12 @@ jQuery.sap.measure.end("myId");</pre></div>
 											</tr>
 
 											<tr class="row">
-												<td class="entry" valign="top" width="50%" headers="d6434220e247 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e247 ">
 													<p class="p">Resume</p>
 
 												</td>
 
-												<td class="entry" valign="top" width="50%" headers="d6434220e253 ">
+												<td class="entry" valign="top" width="50%" headers="d5851786e253 ">
 													<p class="p"><samp class="ph codeph">jQuery.sap.measure.resume(sId)</samp></p>
 
 												</td>
@@ -314,12 +300,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 							
 							<thead class="thead" align="left">
 								<tr class="row">
-									<th class="entry" valign="top" width="50%" id="d6434220e401">
+									<th class="entry" valign="top" width="50%" id="d5851786e401">
 										<p class="p">Command</p>
 
 									</th>
 
-									<th class="entry" valign="top" width="50%" id="d6434220e407">
+									<th class="entry" valign="top" width="50%" id="d5851786e407">
 										<p class="p">Returns</p>
 
 									</th>
@@ -330,12 +316,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 
 							<tbody class="tbody">
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.getAllMeasurements()</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of all measures (running and completed)</p>
 
 									</td>
@@ -343,12 +329,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.getAllMeasurements(true)</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of completed measures</p>
 
 									</td>
@@ -356,12 +342,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.getAllMeasurements(false)</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of running (not completed) measures</p>
 
 									</td>
@@ -369,12 +355,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.getMeasurement(string) </samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">One specific measurement by ID</p>
 
 									</td>
@@ -382,12 +368,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.filterMeasurements(func)</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of all measures based on the result of the filter function (running and completed)</p>
 
 									</td>
@@ -395,12 +381,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.filterMeasurements(func, true)</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of completed measures based on the result of the filter function</p>
 
 									</td>
@@ -408,12 +394,12 @@ jQuery.sap.measure.setActive(true,<span class="ph emphasis emphasis">"require"</
 								</tr>
 
 								<tr class="row">
-									<td class="entry" valign="top" width="50%" headers="d6434220e401 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e401 ">
 										<p class="p"><samp class="ph codeph">jQuery.sap.measure.filterMeasurements(func, false)</samp></p>
 
 									</td>
 
-									<td class="entry" valign="top" width="50%" headers="d6434220e407 ">
+									<td class="entry" valign="top" width="50%" headers="d5851786e407 ">
 										<p class="p">Array of running measures based on the result of the filter function</p>
 
 									</td>
@@ -585,25 +571,11 @@ jQuery.sap.measure.filterMeasurements(function(oMeasurement) {
 	<div class="related-links"> 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
 <div><a class="link" href="../../docs/api/symbols/jQuery.sap.measure.html" alt="../../docs/api/symbols/jQuery.sap.measure.html" title="../../docs/api/symbols/jQuery.sap.measure.html">API Reference: <samp class="ph codeph">jQuery.sap.measure.html</samp></a></div>
-<div><a class="link" href="408b40efed3c416681e1bd8cdd8910d4.html" title="If a Web app seems to have performance issues, finding out what's causing this can be both a time-consuming and nerve-consuming task. To help you avoid and maybe already solve performance issues in your app, here are some good practices we've discovered while dealing with SAPUI5 apps.">Performance: Speed Up Your App</a></div>
-<div><a class="link" href="966d67c8cc5046419d1b35556cd9e447.html" title="This section lists some of the most important issues that should be avoided to improve performance in SAPUI5 applications.">Performance Issues</a></div>
+<div><a class="link" href="408b40efed3c416681e1bd8cdd8910d4.html" title="If a web app has performance issues, finding the cause can be both a time-consuming and nerve-consuming task. To help you avoid and solve performance issues in your app, here are some good practices we've discovered while dealing with OpenUI5 apps.">Performance: Speed Up Your App</a></div>
+<div><a class="link" href="966d67c8cc5046419d1b35556cd9e447.html" title="This section lists some of the most important issues that should be avoided to improve performance in OpenUI5 applications.">Performance Issues</a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Performance Measurement Using jQuery.sap.measure";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

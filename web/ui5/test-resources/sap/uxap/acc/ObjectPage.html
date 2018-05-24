@@ -5,12 +5,11 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta charset="utf-8">
 
+	<script src="../shared-config.js"></script>
 	<script
 		id="sap-ui-bootstrap"
-		type="text/javascript"
 		src="../../../../resources/sap-ui-core.js"
 		data-sap-ui-xx-bindingSyntax="complex"
-		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-libs="sap.m, sap.uxap, sap.ui.layout" >
 	</script>
 
@@ -25,8 +24,8 @@
 					objectTitle:"Denise Smith",
 					objectSubtitle: "Web developer",
 					actions: [
-						new sap.uxap.ObjectPageHeaderActionButton ({ icon: "sap-icon://pull-down", text: "show section", type: "Emphasized"}),
-						new sap.uxap.ObjectPageHeaderActionButton ({ icon: "sap-icon://show", text: "show state", type: "Emphasized"})
+						new sap.uxap.ObjectPageHeaderActionButton ({ icon: "sap-icon://pull-down", tooltip: "show section", type: "Emphasized"}),
+						new sap.uxap.ObjectPageHeaderActionButton ({ icon: "sap-icon://show", tooltip: "show state", type: "Emphasized"})
 					]
 				}),
 			headerContent:[

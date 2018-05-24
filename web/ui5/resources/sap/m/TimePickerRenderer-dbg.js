@@ -1,13 +1,16 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for control sap.m.TimePicker
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer', 'sap/ui/core/ValueStateSupport', 'sap/ui/core/LabelEnablement' ],
-	function(jQuery, Renderer, InputBaseRenderer, ValueStateSupport, LabelEnablement) {
+sap.ui.define(['sap/ui/core/Renderer', './InputBaseRenderer', 'sap/ui/core/library'],
+	function(Renderer, InputBaseRenderer, coreLibrary) {
 		"use strict";
+
+		// shortcut for sap.ui.core.ValueState
+		var ValueState = coreLibrary.ValueState;
 
 		/**
 		 * TimePicker renderer.
@@ -40,12 +43,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 		/**
 		 * Adds extra content to the input.
 		 *
-		 * See {@link sap.m.InputBaseRenderer#writeInnerContent}.
+		 * See {@link sap.m.InputBaseRenderer#writeDecorations}.
 		 * @override
 		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
 		 * @param {sap.m.TimePicker} oControl The control that should be rendered
 		 */
-		TimePickerRenderer.writeInnerContent = function(oRm, oControl) {
+		TimePickerRenderer.writeDecorations = function(oRm, oControl) {
 			var aClasses,
 				mAttributes,
 				oRb = oControl._oResourceBundle,
@@ -114,15 +117,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 		 *
 		 * See {@link sap.m.InputBase#getAccessibilityState}.
 		 * @override
-		 * @param oRm {sap.ui.core.RenderManager} The RenderManager that can be used for writing to the render output buffer
-		 * @param oControl {sap.m.TimePicker} An object representation of the control that should be rendered
+		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+		 * @param {sap.m.TimePicker} oControl An object representation of the control that should be rendered
 		 */
 		TimePickerRenderer.getAccessibilityState = function (oControl) {
 			var sAriaLabelledBy = this.getAriaLabelledBy(oControl),
 				sAriaDescribedBy = this.getAriaDescribedBy(oControl),
 				mAccessibilityState = oControl.getAccessibilityInfo();
 
-			if (oControl.getValueState() === sap.ui.core.ValueState.Error) {
+			if (oControl.getValueState() === ValueState.Error) {
 				mAccessibilityState.invalid = true;
 			}
 
@@ -159,5 +162,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', './InputBaseRenderer
 		};
 
 		return TimePickerRenderer;
-
 	}, /* bExport= */ true);

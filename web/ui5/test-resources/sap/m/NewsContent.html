@@ -6,13 +6,13 @@
 
 <title>sap.m.NewsContent</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript"
+<script src="shared-config.js"></script>
+<script src="../../../resources/sap-ui-core.js"
 	id="sap-ui-bootstrap"
-	data-sap-ui-libs="sap.m, sap.ui.layout, sap.ui.ux3"
-	data-sap-ui-theme="sap_bluecrystal">
+	data-sap-ui-libs="sap.m, sap.ui.layout, sap.ui.ux3">
 </script>
 
-<script type="text/javascript">
+<script>
 	function setBackgroundColor(oAnyObject) {
 		var oColors = {
 			white : "#FFFFFF",
@@ -35,7 +35,7 @@
 	}
 </script>
 
-<script type="text/javascript">
+<script>
 	jQuery.sap.initMobile();
 
 	var oConfData = {
@@ -51,17 +51,19 @@
 		sap.m.MessageToast.show("The news content is pressed.");
 	};
 
-	var oTC = new sap.m.TileContent({
-		content: new sap.m.NewsContent("configurable-news-content-", {
-			contentText : "{/contentText}",
-			subheader : "{/subheader}",
-			tooltip : "{/tooltip}",
-			press : fnPress
-		})
+	var oNewsContent = new sap.m.NewsContent("configurable-news-content-", {
+		contentText : "{/contentText}",
+		subheader : "{/subheader}",
+		tooltip : "{/tooltip}",
+		press : fnPress
+	});
+
+	var oTileContent = new sap.m.TileContent({
+		content : oNewsContent
 	}).addStyleClass("sapUiSmallMargin");
 
 	var oFlexBox = new sap.m.FlexBox("flexbox", {
-		items : [oTC],
+		items : [oTileContent],
 		alignItems: "Start",
 		justifyContent: "SpaceAround"
 	});
@@ -110,9 +112,9 @@
 		name : "QuickView tooltip",
 		change : function(oEvent) {
 			var bState = oEvent.getParameter("state");
-			oNC.setTooltip(bState ? new sap.ui.ux3.QuickView({
+			oNewsContent.setTooltip(bState ? new sap.ui.ux3.QuickView({
 				content : new sap.m.Text({
-					text : oTooltipInput.getValue().split("{AltText}").join(oNC.getAltText())
+					text : oTooltipInput.getValue().split("{AltText}").join(oNewsContent.getAltText())
 				})
 			}) : oTooltipInput.getValue());
 		}
@@ -129,9 +131,9 @@
 		change : function(oEvent) {
 			var bState = oEvent.getParameter("state");
 			if (bState) {
-				oNC.attachPress(fnPress);
+				oTileContent.attachPress(fnPress);
 			} else {
-				oNC.detachPress(fnPress);
+				oTileContent.detachPress(fnPress);
 			}
 		}
 	});

@@ -1,10 +1,10 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['jquery.sap.global', './Matcher'], function (jQuery, Matcher) {
+sap.ui.define(['./Matcher'], function(Matcher) {
 	"use strict";
 
 	/**
@@ -47,34 +47,25 @@ sap.ui.define(['jquery.sap.global', './Matcher'], function (jQuery, Matcher) {
 		 */
 
 		isMatching: function (oControl) {
-			var oBindingContext;
 
-			// check if there is a binding path
 			if (!this.getPath()) {
-				jQuery.sap.log.error(this,"matchers.BindingPath: the path needs to be a not empty string", this._sLogPrefix);
+				this._oLogger.error("The binding path property is required but not defined");
 				return false;
 			}
 
-			// check if there is a model name
-			if (this.getModelName()) {
-				oBindingContext = oControl.getBindingContext(this.getModelName());
-			} else {
-				oBindingContext = oControl.getBindingContext();
-			}
+			var sModelName = this.getModelName() || undefined; // ensure nameless models will be retrieved
+			var oBindingContext = oControl.getBindingContext(sModelName);
 
-			// check if there is a binding context
 			if (!oBindingContext) {
-				jQuery.sap.log.debug("The control " + oControl + " has no binding context for the model " + this.getModelName(), this._sLogPrefix);
+				this._oLogger.debug("The control '" + oControl + "' has no binding context" + (sModelName ? " for the model " + sModelName : ""));
 				return false;
 			}
 
-			// check if the binding context is correct
 			var bResult = this.getPath() === oBindingContext.getPath();
 
 			if (!bResult) {
-				jQuery.sap.log.debug("The control " + oControl + " does not " +
-					"have a matching binding context expected " + this.getPath() + " but got " +
-				oBindingContext.getPath(), this._sLogPrefix);
+				this._oLogger.debug("The control '" + oControl + "' has a binding context" + (sModelName ? " for the model " + sModelName : "") +
+					" but its binding path is " + oBindingContext.getPath() + " when it should be " + this.getPath());
 			}
 
 			return bResult;
@@ -82,4 +73,4 @@ sap.ui.define(['jquery.sap.global', './Matcher'], function (jQuery, Matcher) {
 
 	});
 
-}, /* bExport= */ true);
+});

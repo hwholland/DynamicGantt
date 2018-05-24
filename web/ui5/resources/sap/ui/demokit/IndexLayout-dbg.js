@@ -1,12 +1,19 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.demokit.IndexLayout.
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap/ui/core/IntervalTrigger', './library'],
-	function(jQuery, Device, Control, IntervalTrigger, library) {
+sap.ui.define([
+    'jquery.sap.global',
+    'sap/ui/Device',
+    'sap/ui/core/Control',
+    'sap/ui/core/IntervalTrigger',
+    './library',
+    "./IndexLayoutRenderer"
+],
+	function(jQuery, Device, Control, IntervalTrigger, library, IndexLayoutRenderer) {
 	"use strict";
 
 
@@ -22,15 +29,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.5
 	 *
 	 * @constructor
-	 * @public
+	 * @private
+	 * @sap-restricted sdk
 	 * @since 1.17.0
 	 * @experimental Since version 1.17.0.
 	 * API is not yet finished and might change completely
 	 * @alias sap.ui.demokit.IndexLayout
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var IndexLayout = Control.extend("sap.ui.demokit.IndexLayout", /** @lends sap.ui.demokit.IndexLayout.prototype */ { metadata : {
 
@@ -330,9 +337,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 			}
 		},
 
-		onclick : function() {
+		onclick : function(oEvent) {
 			if (!this.getHref()) {
 				this.firePress();
+
+				oEvent.preventDefault();
 			}
 		},
 
@@ -347,9 +356,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 					oRm.writeAttributeEscaped("target", oControl.getTarget());
 				}
 			}	else {
-				/* eslint-disable no-script-url */
-				oRm.writeAttribute("href", "javascript:void(0);");
-				/* eslint-enable no-script-url */
+				oRm.writeAttribute("href", "#");
 			}
 			oRm.writeAttributeEscaped("title", oControl.getDescription());
 			oRm.write(">");

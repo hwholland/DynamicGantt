@@ -2,18 +2,21 @@
 	controllerName="sap.ui.demo.worklist.controller.Worklist"
 	xmlns="sap.m"
 	xmlns:mvc="sap.ui.core.mvc"
-	xmlns:semantic="sap.m.semantic">
+	xmlns:semantic="sap.f.semantic">
 
-	<semantic:FullscreenPage
+	<semantic:SemanticPage
 		id="page"
-		navButtonPress="onNavBack"
-		showNavButton="true"
-		title="{i18n>worklistViewTitle}">
+		headerPinnable="false"
+		toggleHeaderOnTitleClick="false">
+
+		<semantic:titleHeading>
+			<Title text="{i18n>worklistTitle}" />
+		</semantic:titleHeading>
+
 		<semantic:content>
 			<Table
 				id="table"
 				width="auto"
-				class="sapUiResponsiveMargin"
 				items="{
 					path: '/Objects',
 					sorter: {
@@ -44,7 +47,7 @@
 					<Column id="nameColumn">
 						<Text text="{i18n>tableNameColumnTitle}" id="nameColumnTitle"/>
 					</Column>
-					<Column id="unitNumberColumn" hAlign="Right">
+					<Column id="unitNumberColumn" hAlign="End">
 						<Text text="{i18n>tableUnitNumberColumnTitle}" id="unitNumberColumnTitle"/>
 					</Column>
 				</columns>
@@ -73,6 +76,6 @@
 		</semantic:sendEmailAction>
 
 
-	</semantic:FullscreenPage>
+	</semantic:SemanticPage>
 
 </mvc:View>

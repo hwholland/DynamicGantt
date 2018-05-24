@@ -9,21 +9,25 @@
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>QUnit Test for StashedControlSupport</title>
-	<script id="sap-ui-bootstrap" type="text/javascript" src="../../../../../resources/sap-ui-core.js" data-sap-ui-theme="sap_bluecrystal" data-sap-ui-libs="sap.ui.core, sap.m">
+	<script src="../shared-config.js"></script>
+	<script id="sap-ui-bootstrap" src="../../../../../resources/sap-ui-core.js"
+		data-sap-ui-libs="sap.ui.core, sap.m"
+		data-sap-ui-resourceroots='{"test":"./"}'
+		>
 	</script>
 
 
 	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon.js"></script>
 	<!--[if IE]>
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon-ie.js"></script>
 	<![endif]-->
-	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script src="../../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
 
 	<!-- Test functions -->
-	<script language="javascript">
+	<script>
 		sap.ui.require(["sap/ui/core/StashedControlSupport", "sap/ui/core/Component", "sap/m/Button", "sap/m/Panel"],
 		function(StashedControlSupport, Component, Button, Panel) {
 			QUnit.module("Control mixin", {
@@ -62,7 +66,6 @@
 						return [this.oButton];
 					}.bind(this);
 					this.mSettings = {
-							stashedAlias: "alias",
 							sParentId: "parent",
 							sParentAggregationName: "content",
 							fnCreate: this.create
@@ -199,6 +202,47 @@
 				oView.destroy();
 			});
 
+			QUnit.module("Async XMLView", {
+				beforeEach: function() {
+					if (!Button.prototype.getStashed) {
+						// extend the real sap.m.Button for test purposes - once!
+						StashedControlSupport.mixInto(Button);
+					}
+					this.oView = sap.ui.xmlview("view", {
+						viewName: 'test.StashedControl',
+						async: true
+					}).placeAt("content");
+				},
+				afterEach: function() {
+					this.oView.destroy();
+				}
+			});
+
+			QUnit.test("StashedControl support", function(assert) {
+				var done = assert.async();
+				var oView = this.oView;
+
+				var fnTest = function () {
+					oView.onAfterRendering = function() {
+						assert.strictEqual(jQuery("#view--StashedButton").length, 0, "Stashed button is not rendered");
+						var oButton = sap.ui.getCore().byId("view--StashedButton");
+						assert.ok(sap.ui.getCore().byId("view--StashedButton"), "Stashed button is available by id");
+						assert.ok(sap.ui.getCore().byId("view--StashedButton") instanceof sap.ui.core._StashedControl, "Stashed button is a StashedControl");
+						assert.strictEqual(jQuery("#view--Button").length, 1, "Button is rendered");
+						assert.ok(sap.ui.getCore().byId("view--Button") instanceof Button, "Button is a Button");
+						oView.onAfterRendering = function() {
+							assert.strictEqual(jQuery("#view--StashedButton").length, 1, "Stashed button is rendered");
+							assert.ok(sap.ui.getCore().byId("view--StashedButton") instanceof Button, "StashedButton is now a Button");
+							done();
+						};
+						oButton.setStashed(false);
+						oView.invalidate();
+					};
+				};
+
+				oView.loaded().then(fnTest);
+			});
+
 		});
 
 	</script>
@@ -207,7 +251,7 @@
 		<mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m">
 			<Panel id="Panel">
 				<content>
-					<Button id="StashedButton" stashed="true" stashedAlias="a button"/>
+					<Button id="StashedButton" stashed="true"/>
 					<Button id="Button"/>
 				</content>
 			</Panel>

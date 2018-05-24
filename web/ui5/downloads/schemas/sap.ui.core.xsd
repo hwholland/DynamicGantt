@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="sap.ui.core" xmlns:n0="sap.ui.core">
 <xsd:element name="ComponentContainer" type="n0:_ComponentContainerType" substitutionGroup="n0:Control">
 <xsd:annotation>
-<xsd:documentation>Component Container</xsd:documentation>
+<xsd:documentation>Container that embeds a UIComponent in a control tree.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="Control" type="n0:_ControlType" substitutionGroup="n0:Element">
 <xsd:annotation>
-<xsd:documentation>Base Class for Controls.</xsd:documentation>
+<xsd:documentation>Base Class for Controls.
+
+Controls provide the following features:
+&lt;ul&gt;
+&lt;li&gt;&lt;b&gt;Rendering&lt;/b&gt;: the &lt;code&gt;RenderManager&lt;/code&gt; only expects instances of class &lt;code&gt;Control&lt;/code&gt;
+    in its {@link sap.ui.core.RenderManager#renderControl renderControl} method.
+    By convention, each control class has an associated static class that takes care of rendering
+    the control (its 'Renderer').&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;show / hide&lt;/b&gt;: a control can be hidden, although it is still part of the control tree,
+    see property {@link #getVisible visible}&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;local busy indicator&lt;/b&gt;: marks a control visually as 'busy', see properties {@link #getBusy busy}
+    and {@link #getBusyIndicatorDelay busyIndicatorDelay}&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;field groups&lt;/b&gt;: by assigning the same group ID to a set of editable controls, they form a
+    group which can be validated together. See property {@link #getFieldGroupIds fieldGroupIds}
+    and event {@link #event:validateFieldGroup validateFieldGroup}.
+    The term &lt;i&gt;field&lt;/i&gt; was chosen as most often this feature will be used to group editable
+    fields in a form.&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;custom style classes&lt;/b&gt;: all controls allow to add custom CSS classes to their rendered DOM
+    without modifying their renderer code. See methods {@link #addStyleClass addStyleClass},
+    {@link #removeStyleClass removeStyleClass}, {@link #toggleStyleClass toggleStyleClass}
+    and {@link #hasStyleClass hasStyleClass}.&lt;/br&gt;
+    The necessary implementation is encapsulated in {@link sap.ui.core.CustomStyleClassSupport
+    CustomStyleClassSupport} and can be applied to selected element classes as well.&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;browser events&lt;/b&gt;: by calling the methods {@link #attachBrowserEvent attachBrowserEvent} and
+    {@link #detachBrowserEvent detachBrowserEvent}, consumers can let the control class take care of
+    registering / de-registering a given set of event listeners to the control's root DOM node.
+    The framework will adapt the registration whenever the DOM node changes (e.g. before or after
+    rendering or when the control is destroyed).&lt;/li&gt;
+&lt;/ul&gt;
+
+See section "{@link topic:91f1703b6f4d1014b6dd926db0e91070 Developing OpenUI5/SAPUI5 Controls}"
+in the documentation for an introduction to control development.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="CustomData" type="n0:_CustomDataType" substitutionGroup="n0:Element">
@@ -21,7 +52,7 @@
 </xsd:element>
 <xsd:element name="HTML" type="n0:_HTMLType" substitutionGroup="n0:Control">
 <xsd:annotation>
-<xsd:documentation>Embeds standard HTML in a SAPUI5 control tree.
+<xsd:documentation>Embeds standard HTML in an SAPUI5 control tree.
 
 Security Hint: By default, the HTML content (property 'content') is not sanitized and therefore
 open to XSS attacks. Applications that want to show user defined input in an HTML control, should
@@ -110,17 +141,37 @@ sap.ui.base.EventProvider, and sap.ui.base.Object.</xsd:documentation>
 </xsd:element>
 <xsd:element name="UIComponent" type="n0:_UIComponentType" substitutionGroup="n0:Control">
 <xsd:annotation>
-<xsd:documentation>Creates and initializes a new UIComponent with the given &lt;code&gt;sId&lt;/code&gt; and
-settings.
+<xsd:documentation>Base Class for UIComponent.
 
-The set of allowed entries in the &lt;code&gt;mSettings&lt;/code&gt; object depends on
-the concrete subclass and is described there. See {@link sap.ui.core.Component}
-for a general description of this argument.</xsd:documentation>
+If you are extending a UIComponent make sure you read the {@link #.extend} documentation since the metadata is special.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="VariantLayoutData" type="n0:_VariantLayoutDataType" substitutionGroup="n0:LayoutData">
 <xsd:annotation>
-<xsd:documentation>Allows to add multiple LayoutData to one control in case that a easy switch of layouts (e.g. in a Form) is needed.</xsd:documentation>
+<xsd:documentation>Allows to add multiple LayoutData to one control in case that an easy switch of layouts (e.g. in a Form) is needed.</xsd:documentation>
+</xsd:annotation>
+</xsd:element>
+<xsd:element name="DragDropBase" type="n0:_DragDropBaseType" substitutionGroup="n0:Element">
+<xsd:annotation>
+<xsd:documentation>Provides the base class for all drag-and-drop configurations.
+This feature enables a native HTML5 drag-and-drop API for the controls, therefore it is limited to browser support.
+&lt;h3&gt;Limitations&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;There is no mobile device that supports drag and drop.&lt;/li&gt;
+  &lt;li&gt;There is no accessible alternative for drag and drop. Applications which use the drag-and-drop functionality must provide an
+  accessible alternative UI (for example, action buttons or menus) to perform the same operations.&lt;/li&gt;
+  &lt;li&gt;A custom dragging ghost element is not possible in Internet Explorer.&lt;/li&gt;
+  &lt;li&gt;Transparency of the drag ghost element depends on the browser implementation.&lt;/li&gt;
+  &lt;li&gt;Internet Explorer does only support plain text MIME type for the DataTransfer Object.&lt;/li&gt;
+  &lt;li&gt;Constraining a drag position is not possible, therefore there is no snap-to-grid or snap-to-element feature possible.&lt;/li&gt;
+  &lt;li&gt;For controls which do not provide an aggregation &lt;code&gt;dragDropConfig&lt;/code&gt; drag and drop might not work correctly
+  if they are configured as target via {@link sap.ui.core.dnd.DragDropInfo}.&lt;/li&gt;
+&lt;/ul&gt;</xsd:documentation>
+</xsd:annotation>
+</xsd:element>
+<xsd:element name="DragDropInfo" type="n0:_DragDropInfoType" substitutionGroup="n0:DragDropBase">
+<xsd:annotation>
+<xsd:documentation>Provides the configuration for drag-and-drop operations.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="HTMLView" type="n0:_HTMLViewType" substitutionGroup="n0:View">
@@ -147,13 +198,24 @@ for a general description of this argument.</xsd:documentation>
 <xsd:annotation>
 <xsd:documentation>A base class for Views.
 
-Introduces the relationship to a Controller, some basic visual appearance settings like width and height
+Introduces the relationship to a Controller, some basic visual appearance settings like width and height,
 and provides lifecycle events.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="XMLView" type="n0:_XMLViewType" substitutionGroup="n0:View">
 <xsd:annotation>
-<xsd:documentation>A View defined using (P)XML and HTML markup.</xsd:documentation>
+<xsd:documentation>A View defined using (P)XML and HTML markup.
+
+&lt;strong&gt;Note:&lt;/strong&gt;&lt;br&gt;
+Be aware that modifications of the content aggregation of this control are not supported due to technical reasons.
+This includes calls to all content modifying methods like &lt;code&gt;addContent&gt;&lt;/code&gt; etc., but also the implicit
+removal of controls contained by the content aggregation. For example the destruction of a Control via the &lt;code&gt;
+destroy&lt;/code&gt; method. All functions can be called but may not work properly or lead to unexpected side effects.
+
+&lt;strong&gt;Note:&lt;/strong&gt;&lt;br&gt;
+On root level, you can only define content for the default aggregation, e.g. without adding the &lt;code&gt;&amp;lt;content&amp;gt;&lt;/code&gt; tag. If
+you want to specify content for another aggregation of a view like &lt;code&gt;dependents&lt;/code&gt;, place it in a child
+control's dependents aggregation or add it by using {@link sap.ui.core.mvc.XMLView#addDependent}.</xsd:documentation>
 </xsd:annotation>
 </xsd:element>
 <xsd:element name="OpenSearchProvider" type="n0:_OpenSearchProviderType" substitutionGroup="n0:SearchProvider">
@@ -192,23 +254,32 @@ and provides lifecycle events.</xsd:documentation>
 <xsd:extension base="n0:_ControlType">
 <xsd:attribute name="name" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>Component name, the package where the component is contained. The property can only be applied initially.</xsd:documentation>
+<xsd:documentation>Component name, the package where the component is contained. This property can only be applied initially.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="url" type="n0:_URIType">
 <xsd:annotation>
-<xsd:documentation>The URL of the component. The property can only be applied initially.</xsd:documentation>
+<xsd:documentation>The URL of the component. This property can only be applied initially.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="async" type="xsd:boolean">
+<xsd:annotation>
+<xsd:documentation>Flag whether the component should be created sync (default) or async. The default
+will be async when initially the property &lt;code&gt;manifest&lt;/code&gt; is set to a truthy
+value and for the property &lt;code&gt;async&lt;/code&gt; no value has been specified.
+This property can only be applied initially.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="handleValidation" type="xsd:boolean">
 <xsd:annotation>
 <xsd:documentation>Enable/disable validation handling by MessageManager for this component.
-The resulting Messages will be propagated to the controls.</xsd:documentation>
+The resulting Messages will be propagated to the controls.
+This property can only be applied initially.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="settings" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>The settings object passed to the component when created. The property can only be applied initially.</xsd:documentation>
+<xsd:documentation>The settings object passed to the component when created. This property can only be applied initially.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="propagateModel" type="xsd:boolean">
@@ -226,9 +297,55 @@ The resulting Messages will be propagated to the controls.</xsd:documentation>
 <xsd:documentation>Container height in CSS size</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
+<xsd:attribute name="lifecycle" type="n0:_ComponentLifecycleType">
+<xsd:annotation>
+<xsd:documentation>Lifecycle behavior for the Component associated by the &lt;code&gt;ComponentContainer&lt;/code&gt;.
+The default behavior is &lt;code&gt;Legacy&lt;/code&gt;. This  means that the &lt;code&gt;ComponentContainer&lt;/code&gt;
+takes care that the Component is destroyed when the &lt;code&gt;ComponentContainer&lt;/code&gt; is destroyed,
+but it is &lt;b&gt;not&lt;/b&gt; destroyed when a new Component is associated.
+If you use the &lt;code&gt;usage&lt;/code&gt; property to create the Component,
+the default behavior is &lt;code&gt;Container&lt;/code&gt;. This means that
+the Component is destroyed when the &lt;code&gt;ComponentContainer&lt;/code&gt; is destroyed or a new
+Component is associated.
+This property must only be applied before a component instance is created.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="autoPrefixId" type="xsd:boolean">
+<xsd:annotation>
+<xsd:documentation>Flag, whether to auto-prefix the ID of the nested Component or not. If
+this property is set to true the ID of the Component will be prefixed
+with the ID of the ComponentContainer followed by a single dash.
+This property can only be applied initially.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="usage" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The component usage. If the ComponentContainer is used inside a
+Component, this Component can define a usage which will be used for creating
+the Component.
+This property can only be applied initially.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="manifest" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>Controls when and from where to load the manifest for the Component.
+When set to any truthy value, the manifest will be loaded asynchronously by default
+and evaluated before the Component controller, if it is set to a falsy value
+other than &lt;code&gt;undefined&lt;/code&gt;, the manifest will be loaded after the controller.
+A non-empty string value will be interpreted as the URL location from where to load the manifest.
+A non-null object value will be interpreted as manifest content.
+This property can only be applied initially.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
 <xsd:attribute name="component" type="xsd:string">
 <xsd:annotation>
 <xsd:documentation>The component displayed in this ComponentContainer.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="componentCreated" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>Fired when the component instance has been created by the
+ComponentContainer.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 </xsd:extension>
@@ -248,21 +365,44 @@ The resulting Messages will be propagated to the controls.</xsd:documentation>
 <xsd:documentation>The delay in milliseconds, after which the busy indicator will show up for this control.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
+<xsd:attribute name="busyIndicatorSize" type="n0:_BusyIndicatorSizeType">
+<xsd:annotation>
+<xsd:documentation>The size of the BusyIndicator. For controls with a width smaller 3rem a
+&lt;code&gt;sap.ui.core.BusyIndicatorSize.Small&lt;/code&gt; should be used.
+If the size could vary in width and the width could get smaller than 3rem, the
+&lt;code&gt;sap.ui.core.BusyIndicatorSize.Auto&lt;/code&gt; option could be used.
+The default is set to &lt;code&gt;sap.ui.core.BusyIndicatorSize.Medium&lt;/code&gt;
+For a full screen BusyIndicator use &lt;code&gt;sap.ui.core.BusyIndicatorSize.Large&lt;/code&gt;.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
 <xsd:attribute name="visible" type="xsd:boolean">
 <xsd:annotation>
-<xsd:documentation>Whether the control should be visible on the screen. If set to false, a placeholder is rendered instead of the real control</xsd:documentation>
+<xsd:documentation>Whether the control should be visible on the screen.
+
+If set to false, a placeholder will be rendered to mark the location of the invisible
+control in the DOM of the current page. The placeholder will be hidden and have
+zero dimensions (&lt;code&gt;display: none&lt;/code&gt;).
+
+See {@link sap.ui.core.RenderManager#writeInvisiblePlaceholderData RenderManager#writeInvisiblePlaceholderData} for details.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="fieldGroupIds" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>The IDs of a logical field group that this control belongs to. All fields in a logical field group should share the same &lt;code&gt;fieldGroupId&lt;/code&gt;.
-Once a logical field group is left, the validateFieldGroup event is raised.</xsd:documentation>
+<xsd:documentation>The IDs of a logical field group that this control belongs to.
+
+All fields in a logical field group should share the same &lt;code&gt;fieldGroupId&lt;/code&gt;.
+Once a logical field group is left, the &lt;code&gt;validateFieldGroup&lt;/code&gt; event is raised.
+
+See {@link sap.ui.core.Control#attachValidateFieldGroup}.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="validateFieldGroup" type="xsd:string">
 <xsd:annotation>
-<xsd:documentation>Event is fired if a logical field group defined by &lt;code&gt;fieldGroupIds&lt;/code&gt; of a control was left or the user explicitly pressed a validation key combination.
-Use this event to validate data of the controls belonging to a field group.</xsd:documentation>
+<xsd:documentation>Event is fired if a logical field group defined by &lt;code&gt;fieldGroupIds&lt;/code&gt; of a control was left
+or the user explicitly pressed a key combination that triggers validation.
+
+Listen to this event to validate data of the controls belonging to a field group.
+See {@link sap.ui.core.Control#setFieldGroupIds}.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 </xsd:extension>
@@ -388,7 +528,10 @@ Please consider to consult the jQuery documentation as well.
 The HTML control currently doesn't prevent the usage of multiple root nodes in its DOM content
 (e.g. &lt;code&gt;setContent("&amp;lt;div/&gt;&amp;lt;div/&gt;")&lt;/code&gt;), but this is not a guaranteed feature.
 The accepted content might be restricted to single root nodes in future versions.
-To notify applications about this fact, a warning is written in the log when multiple root nodes are used.</xsd:documentation>
+To notify applications about this fact, a warning is written in the log when multiple root nodes are used.
+
+When changing the content dynamically, ensure that the ID of the root node remains the same as the HTML
+control's ID. Otherwise it cannot be guaranteed that certain lifecycle events take place.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="preferDOM" type="xsd:boolean">
@@ -397,7 +540,7 @@ To notify applications about this fact, a warning is written in the log when mul
 
 There are two scenarios where this flag is relevant (when set to true):
 &lt;ul&gt;
-&lt;li&gt;for the initial rendering: when an HTML control is added to an UIArea for the first time
+&lt;li&gt;for the initial rendering: when an HTML control is added to a UIArea for the first time
     and if the root node of that UIArea contained DOM content with the same id as the HTML
     control, then that content will be used for rendering instead of any specified string
     content&lt;/li&gt;
@@ -434,7 +577,7 @@ then this event will fire, but there won't be a DOM node for this control.</xsd:
 <xsd:sequence/>
 <xsd:attribute name="src" type="n0:_URIType">
 <xsd:annotation>
-<xsd:documentation>This property should be set by the return value of calling sap.ui.core.IconPool.getIconURI with a Icon name parameter and an optional collection parameter which is required when using application extended Icons. A list of standard FontIcon is available here.</xsd:documentation>
+<xsd:documentation>This property should be set by the return value of calling sap.ui.core.IconPool.getIconURI with an Icon name parameter and an optional collection parameter which is required when using application extended Icons. A list of standard FontIcon is available here.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="size" type="n0:_CSSSizeType">
@@ -568,7 +711,7 @@ If it's set to true, Icon control never has tab stop no matter whether press eve
 <xsd:attribute name="icon" type="xsd:string">
 <xsd:annotation>
 <xsd:documentation>The icon belonging to this list item instance.
-This can be an URI to an image or an icon font URI.</xsd:documentation>
+This can be a URI to an image or an icon font URI.</xsd:documentation>
 </xsd:annotation>
 </xsd:attribute>
 <xsd:attribute name="additionalText" type="xsd:string">
@@ -790,6 +933,67 @@ Example: "10 3".</xsd:documentation>
 </xsd:complexType>
 </xsd:element>
 </xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<!--type definition for UIElement 'sap.ui.core.dnd.DragDropBase'-->
+<xsd:complexType name="_DragDropBaseType">
+<xsd:complexContent>
+<xsd:extension base="n0:_ElementType"/>
+</xsd:complexContent>
+</xsd:complexType>
+<!--type definition for UIElement 'sap.ui.core.dnd.DragDropInfo'-->
+<xsd:complexType name="_DragDropInfoType">
+<xsd:complexContent>
+<xsd:extension base="n0:_DragDropBaseType">
+<xsd:attribute name="sourceAggregation" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The name of the aggregation from which all children can be dragged. If undefined, the control itself can be dragged.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="targetAggregation" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The aggregation name in the &lt;code&gt;targetElement&lt;/code&gt; which is the target of this drag and drop action. If undefined, the entire
+&lt;code&gt;targetElement&lt;/code&gt; is the target. This can be handy if the target control does not have any aggregations or if the drop
+position within the target does not matter.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="dropEffect" type="n0:_DropEffectType">
+<xsd:annotation>
+<xsd:documentation>Defines the visual drop effect.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="dropPosition" type="n0:_DropPositionType">
+<xsd:annotation>
+<xsd:documentation>Defines the position for the drop action, visualized by a rectangle.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="dropLayout" type="n0:_DropLayoutType">
+<xsd:annotation>
+<xsd:documentation>Defines the layout of the droppable controls if &lt;code&gt;dropPosition&lt;/code&gt; is set to &lt;code&gt;Between&lt;/code&gt; or &lt;code&gt;OnOrBetween&lt;/code&gt;.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="targetElement" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>The target element for this drag and drop action. If undefined, the control with this drag and drop configuration itself is the target.
+Leaving this empty, but defining source and target aggregation, allows you to reorder the children within a control, for example.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="dragStart" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>This event is fired when the user starts dragging an element.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="dragEnter" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>This event is fired when a dragged element enters a drop target.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
+<xsd:attribute name="drop" type="xsd:string">
+<xsd:annotation>
+<xsd:documentation>This event is fired when an element is dropped on a valid drop target, as specified by the drag and drop info.</xsd:documentation>
+</xsd:annotation>
+</xsd:attribute>
 </xsd:extension>
 </xsd:complexContent>
 </xsd:complexType>
@@ -1084,6 +1288,11 @@ Do not set this to "true" if you want to display other content in the same HTML 
 </xsd:choice>
 </xsd:complexType>
 </xsd:element>
+<xsd:simpleType name="_AbsoluteCSSSizeType">
+<xsd:restriction base="xsd:string">
+<xsd:pattern value="[-+]?(0*|([0-9]+|[0-9]*\.[0-9]+)([rR][eE][mM]|[eE][mM]|[eE][xX]|[pP][xX]|[cC][mM]|[mM][mM]|[iI][nN]|[pP][tT]|[pP][cC]))|calc\(\s*(\(\s*)*[-+]?(([0-9]+|[0-9]*\.[0-9]+)([rR][eE][mM]|[eE][mM]|[eE][xX]|[pP][xX]|[cC][mM]|[mM][mM]|[iI][nN]|[pP][tT]|[pP][cC])?)(\s*(\)\s*)*(\s[-+]\s|[*/])\s*(\(\s*)*([-+]?(([0-9]+|[0-9]*\.[0-9]+)([rR][eE][mM]|[eE][mM]|[eE][xX]|[pP][xX]|[cC][mM]|[mM][mM]|[iI][nN]|[pP][tT]|[pP][cC])?)))*\s*(\)\s*)*\)"/>
+</xsd:restriction>
+</xsd:simpleType>
 <xsd:simpleType name="_AccessibleLandmarkRoleType">
 <xsd:restriction base="xsd:string">
 <xsd:enumeration value="None">
@@ -1469,9 +1678,33 @@ Supplement to the normal tooltip processing of the user agent.</xsd:documentatio
 </xsd:enumeration>
 </xsd:restriction>
 </xsd:simpleType>
+<xsd:simpleType name="_BusyIndicatorSizeType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="Auto">
+<xsd:annotation>
+<xsd:documentation>Type: automatic size detection</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Small">
+<xsd:annotation>
+<xsd:documentation>Type: small size</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Medium">
+<xsd:annotation>
+<xsd:documentation>Type: Medium size</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Large">
+<xsd:annotation>
+<xsd:documentation>Type: Large size</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
 <xsd:simpleType name="_CSSColorType">
 <xsd:restriction base="xsd:string">
-<xsd:pattern value="#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgb\(\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*(,\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|rgba\((\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){3}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|hsl\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*(,\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|hsla\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*,(\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){2}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coralcornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silverskyblue|slateblue|slategray|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen|transparent|inherit|"/>
+<xsd:pattern value="#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgb\(\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*(,\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|rgba\((\s*((1?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))|([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){3}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|hsl\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*(,\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*){2}\)|hsla\(\s*([0-2]?[0-9]?[0-9]|3([0-5][0-9]|60))\s*,(\s*(([0-9]?[0-9](\.[0-9]+)?|100(\.0+)?)%)\s*,){2}\s*(0(\.[0-9]+)?|1(\.0+)?)\s*\)|aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgrey|darkgreen|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|grey|green|greenyellow|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgrey|lightgreen|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silverskyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen|transparent|inherit|"/>
 </xsd:restriction>
 </xsd:simpleType>
 <xsd:simpleType name="_CSSSizeType">
@@ -1501,11 +1734,41 @@ Supplement to the normal tooltip processing of the user agent.</xsd:documentatio
 <xsd:documentation>The Japanese emperor calendar</xsd:documentation>
 </xsd:annotation>
 </xsd:enumeration>
+<xsd:enumeration value="Persian">
+<xsd:annotation>
+<xsd:documentation>The Persian Jalali calendar</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
 </xsd:restriction>
 </xsd:simpleType>
 <xsd:simpleType name="_CollisionType">
 <xsd:restriction base="xsd:string">
 <xsd:pattern value="(flip|fit|none)( (flip|fit|none))?"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="_ComponentLifecycleType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="Legacy">
+<xsd:annotation>
+<xsd:documentation>Legacy lifecycle means that the ComponentContainer takes care
+to destroy the Component which is associated with the
+ComponentContainer once the ComponentContainer is destroyed but
+not when a new Component is associated.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Application">
+<xsd:annotation>
+<xsd:documentation>Application managed lifecycle means that the Application takes care
+to destroy the Components associated with the ComponentContainer.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Container">
+<xsd:annotation>
+<xsd:documentation>Container managed lifecycle means that the ComponentContainer takes
+care to destroy the Components associated with the ComponentContainer
+once the ComponentContainer is destroyed or a new Component is associated.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
 </xsd:restriction>
 </xsd:simpleType>
 <xsd:simpleType name="_DesignType">
@@ -1638,7 +1901,7 @@ Supplement to the normal tooltip processing of the user agent.</xsd:documentatio
 </xsd:enumeration>
 <xsd:enumeration value="Success">
 <xsd:annotation>
-<xsd:documentation>Message is an success message</xsd:documentation>
+<xsd:documentation>Message is a success message</xsd:documentation>
 </xsd:annotation>
 </xsd:enumeration>
 </xsd:restriction>
@@ -1923,6 +2186,63 @@ Supplement to the normal tooltip processing of the user agent.</xsd:documentatio
 <xsd:enumeration value="Off">
 <xsd:annotation>
 <xsd:documentation>Wrapping shall not be allowed.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="_DropEffectType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="Copy">
+<xsd:annotation>
+<xsd:documentation>A copy of the source item is made at the new location.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Move">
+<xsd:annotation>
+<xsd:documentation>An item is moved to a new location.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Link">
+<xsd:annotation>
+<xsd:documentation>A link is established to the source at the new location.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="None">
+<xsd:annotation>
+<xsd:documentation>The item cannot be dropped.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="_DropLayoutType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="Vertical">
+<xsd:annotation>
+<xsd:documentation>Droppable controls are arranged vertically.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Horizontal">
+<xsd:annotation>
+<xsd:documentation>Droppable controls are arranged horizontally.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="_DropPositionType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="On">
+<xsd:annotation>
+<xsd:documentation>Drop on the control.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="Between">
+<xsd:annotation>
+<xsd:documentation>Drop between the controls.</xsd:documentation>
+</xsd:annotation>
+</xsd:enumeration>
+<xsd:enumeration value="OnOrBetween">
+<xsd:annotation>
+<xsd:documentation>Drop on the control or between the controls.</xsd:documentation>
 </xsd:annotation>
 </xsd:enumeration>
 </xsd:restriction>

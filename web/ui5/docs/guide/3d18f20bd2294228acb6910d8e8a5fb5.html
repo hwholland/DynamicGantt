@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="OpenUI5 offers hash-based navigation, which allows you to build single-page apps where the navigation is done by changing the hash. In this way the browser does not have to reload the page; instead there is a callback to which the app and especially the affected view can react. A hash string is parsed and matched against patterns which will then inform the handlers."/>
+<meta name="description" content="OpenUI5 offers hash-based navigation, which allows you to build single-page apps where the navigation is done by changing the hash. In this way the browser does not have to reload the page; instead there is a callback to which the app and especially the affected view can react. A hash string is parsed and matched against patterns which will then inform the handlers."/>
 
-
-
-
-
-<meta name="abstract" content="SAPUI5 offers hash-based navigation, which allows you to build single-page apps where the navigation is done by changing the hash. In this way the browser does not have to reload the page; instead there is a callback to which the app and especially the affected view can react. A hash string is parsed and matched against patterns which will then inform the handlers."/>
-<meta name="description" content="SAPUI5 offers hash-based navigation, which allows you to build single-page apps where the navigation is done by changing the hash. In this way the browser does not have to reload the page; instead there is a callback to which the app and especially the affected view can react. A hash string is parsed and matched against patterns which will then inform the handlers."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=35320506099687987"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=2530781957406508"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=2530781957406508"/>
 <title>Routing and Navigation</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio3d18f20bd2294228acb6910d8e8a5fb5">
 <div id="wrapper"><div id="container">
@@ -33,7 +19,7 @@
     <h1 class="title topictitle1">Routing and Navigation</h1>
 
     
-    <div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">SAPUI5</span></span> offers hash-based navigation, which allows you to build single-page apps
+    <div class="body conbody"><p class="shortdesc"><span class="ph"><span class="ph pname">OpenUI5</span></span> offers hash-based navigation, which allows you to build single-page apps
         where the navigation is done by changing the hash. In this way the browser does not have to reload the page; instead there is a callback to which the
         app and especially the affected view can react. A hash string is parsed and matched against patterns which will then inform the handlers.</p>
 
@@ -62,7 +48,7 @@
             <img class="image" id="loio3d18f20bd2294228acb6910d8e8a5fb5__image_dx4_pky_zv" src="loio3b3a63b7581c4d36b9657f07d678f176_LowRes.png"/>
         <div class="figcap">Routing overview</div></div></div>
 
-        <p class="p">In <span class="ph"><span class="ph pname">SAPUI5</span></span>, navigation and routing is implemented using a “router” to forward the hash
+        <p class="p">In <span class="ph"><span class="ph pname">OpenUI5</span></span>, navigation and routing is implemented using a “router” to forward the hash
             change and the data in the hash to one or more views of the app. </p>
 
         <p class="p">You use <span class="ph emphasis emphasis">routes</span> to notify your application that the hash has changed to a certain value. For each route, you define the pattern
@@ -71,9 +57,9 @@
         <p class="p">With <span class="ph emphasis emphasis">targets</span>, you define where a view is loaded and where the view is shown on the UI. By referring to one or multiple targets
             in a route's definition, you can load and show the views once the route's pattern matches the current hash.</p>
 
-        <p class="p">You configure routing in <span class="ph"><span class="ph pname">SAPUI5</span></span> in the descriptor file
+        <p class="p">You configure routing in <span class="ph"><span class="ph pname">OpenUI5</span></span> in the descriptor file
                 (<span class="ph filepath">manifest.json</span>) (see <a class="xref" href="be0cf40f61184b358b5faedaec98b2da.html" title="The descriptor for applications, components, and libraries is inspired by the Web Application Manifest concept introduced by the W3C. The descriptor provides a central, machine-readable and easy-to-access location for storing metadata associated with an application, an application component, or a library.">Descriptor for Applications, Components, and Libraries</a>) or in the <span class="ph filepath">Component.js</span>
-            file (see <a class="xref" href="958ead51e2e94ab8bcdc90fb7e9d53d0.html" title="Components are independent and reusable parts used in SAPUI5 applications.">Components</a> ) to have it available globally throughout your app, but you can also define routes
+            file (see <a class="xref" href="958ead51e2e94ab8bcdc90fb7e9d53d0.html" title="Components are independent and reusable parts used in OpenUI5 applications.">Components</a> ) to have it available globally throughout your app, but you can also define routes
             and targets locally by calling the constructors of the classes, for example under the <samp class="ph codeph">sap.ui.core.routing</samp> and
                 <samp class="ph codeph">sap.m.routing</samp> namespaces.</p>
 
@@ -101,8 +87,7 @@
                     <li class="li">
                         <p class="p"><span class="ph emphasis emphasis">Route with mandatory parameter</span>:</p>
 
-                        <p class="p">You can define mandatory parameters for the pattern by placing the parameter in curly brackets (<samp class="ph codeph">{<em class="ph i">parameter
-                                ID</em>}</samp>). </p>
+                        <p class="p">You can define mandatory parameters for the pattern by placing the parameter in curly brackets (<samp class="ph codeph">{<em class="ph i">parameter ID</em>}</samp>). </p>
 
                         <p class="p">For example, if you define the pattern <samp class="ph codeph">product/{id}</samp>, the hashes <kbd class="ph userinput">product/5</kbd> and
                                 <kbd class="ph userinput">product/3</kbd> (where 3 and 5 are product IDs) match the pattern. The matched event handler gets
@@ -152,9 +137,9 @@
                 </ul>
 </div>
 
-            <div class="note note"><span class="notetitle">Note</span> 
+            <div class="note tip"><span class="tiptitle">Tip</span> 
                 <p class="p">For a better understanding about how patterns work and what matched parameters look like, see the following page in the
-                        <span class="ph uicontrol">Explored</span> app in the Demo Kit: <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview" alt="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview" title="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview">sap.ui.core.sample.PatternMatching/preview</a>.</p>
+                        <span class="ph uicontrol">Samples</span> in the Demo Kit: <a class="xref" target="_blank" href="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview" alt="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview" title="../../explored.html#/sample/sap.ui.core.sample.PatternMatching/preview">sap.ui.core.sample.PatternMatching/preview</a>.</p>
 
             </div>
 
@@ -162,7 +147,7 @@
 
         <div class="section">
             <div class="note note"><span class="notetitle">Note</span> 
-                <p class="p"><span class="ph"><span class="ph pname">SAPUI5</span></span> uses Crossroads.js for parsing the hash and the Hasher framework for
+                <p class="p"><span class="ph"><span class="ph pname">OpenUI5</span></span> uses Crossroads.js for parsing the hash and the Hasher framework for
                     manipulating the hash.</p>
 
             </div>
@@ -175,7 +160,7 @@
 <div class="childtopics"><strong>In this section:</strong></div><ul class="ullinks">
 <div><strong><a class="link" href="902313063d6f45aeaa3388cc4c13c34e.html" title="Routing configuration consists of routes, targets, config, and owner.">Routing Configuration</a></strong><br/>
 </div>
-<div><strong><a class="link" href="516e477e7e0b4e188b19a406e7528c1e.html" title="SAPUI5 provides a method and events for navigation.">Method and Events for Navigation</a></strong><br/>
+<div><strong><a class="link" href="516e477e7e0b4e188b19a406e7528c1e.html" title="OpenUI5 provides a method and events for navigation.">Methods and Events for Navigation</a></strong><br/>
 </div>
 <div><strong><a class="link" href="acdb6cd408ec4b9eb5e1fe45e607abdd.html" title="This topic describes how to initialize routing in a component and access the routing functions.">Initializing and Accessing a Routing Instance</a></strong><br/>
 </div>
@@ -183,32 +168,21 @@
 </div>
 <div><strong><a class="link" href="2c66fb3eb775426087401117cfa6a94e.html" title="If you use nested component definitions in your app, you can connect the routing definition of these components by using a parent-relationship for routes.">Working with Nested Components</a></strong><br/>
 </div>
+<div><strong><a class="link" href="1238d706b130433c9bd6b85cfb77cece.html" title="Routing in OpenUI5 allows you to define titles declaratively in the configuration. The title can be set with valid binding syntax which is then resolved under the scope of the target to which it belongs. This means that the title can be translated when it’s bound to the i18n model or resolved dynamically under the current binding context.">Using the title Property in Targets</a></strong><br/>
+</div>
 </ul>
 
 <div class="relinfo"><div class="relinfotitle ">Related Information</div>
-<div><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="SAPUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in SAPUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of SAPUI5 to your applications.">Tutorial: Navigation and Routing</a></div>
+<div><a class="link" href="1b6dcd39a6a74f528b27ddb22f15af0d.html" title="OpenUI5 comes with a powerful routing API that helps you control the state of your application efficiently. This tutorial will illustrate all major features and APIs related to navigation and routing in OpenUI5 apps by creating a simple and easy to understand mobile app. It represents a set of best practices for applying the navigation and routing features of OpenUI5 to your applications.">Tutorial: Navigation and Routing</a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.ui.core.routing.html" alt="../../docs/api/symbols/sap.ui.core.routing.html" title="../../docs/api/symbols/sap.ui.core.routing.html">API Reference: <samp class="ph codeph">sap.ui.core.routing</samp></a></div>
 <div><a class="link" href="../../docs/api/symbols/sap.m.routing.Router.html" alt="../../docs/api/symbols/sap.m.routing.Router.html" title="../../docs/api/symbols/sap.m.routing.Router.html">API Reference: <samp class="ph codeph">sap.m.routing.Router</samp></a></div>
-<div><a class="link" href="../../docs/api/symbols/sap.ui.core.routing.Route.html#constructor" alt="../../docs/api/symbols/sap.ui.core.routing.Route.html#constructor" title="../../docs/api/symbols/sap.ui.core.routing.Route.html#constructor">API Reference: <samp class="ph codeph">sap.ui.core.routing.Route</samp>: Constructor Detail</a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https://millermedeiros.github.io/crossroads.js/" alt="https://millermedeiros.github.io/crossroads.js/" title="https://millermedeiros.github.io/crossroads.js/">Crossroads.js<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
-<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https://github.com/millermedeiros/hasher/" alt="https://github.com/millermedeiros/hasher/" title="https://github.com/millermedeiros/hasher/">Hasher framework on GitHub<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="link" href="https://ui5.sap.com/sdk/#/api/sap.ui.core.routing.Route/constructor" alt="https://ui5.sap.com/sdk/#/api/sap.ui.core.routing.Route/constructor" title="https://ui5.sap.com/sdk/#/api/sap.ui.core.routing.Route/constructor">API Reference: <samp class="ph codeph">sap.ui.core.routing.Route</samp>: Constructor
+                Detail</a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https%3A%2F%2Fmillermedeiros.github.io%2Fcrossroads.js%2F" alt="https://millermedeiros.github.io/crossroads.js/" title="https://millermedeiros.github.io/crossroads.js/">Crossroads.js<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
+<div><a class="extlink" href="http://help.sap.com/disclaimer?site=https%3A%2F%2Fgithub.com%2Fmillermedeiros%2Fhasher%2F" alt="https://github.com/millermedeiros/hasher/" title="https://github.com/millermedeiros/hasher/">Hasher framework on GitHub<img src="images/3rd_link.png" class="link-external" alt="Information published on non-SAP site" title="Information published on non-SAP site" border="0"/></a></div>
 </div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Routing and Navigation";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

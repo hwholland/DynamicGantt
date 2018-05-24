@@ -71,4 +71,19 @@ If bandwidth is the key for the application, set this value to false.</documenta
             <documentation>Event is fired when the image resource can't be loaded. If densityAware is set to true, the event is fired when none of the fallback resources can be loaded.</documentation>
         </event>
     </events>
+    <aggregations>
+        <aggregation name="detailBox" type="sap.m/LightBox" cardinality="0..1" bindable="bindable">
+            <documentation>A &lt;code&gt;sap.m.LightBox&lt;/code&gt; instance, that will be opened automatically when the user interacts with the &lt;code&gt;Image&lt;/code&gt; control.
+
+The &lt;code&gt;tap&lt;/code&gt; event will still be fired.</documentation>
+        </aggregation>
+    </aggregations>
+    <associations>
+        <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
+            <documentation>Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>
+        </association>
+        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+            <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledBy).</documentation>
+        </association>
+    </associations>
 </control>

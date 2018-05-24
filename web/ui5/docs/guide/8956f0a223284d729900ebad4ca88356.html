@@ -1,31 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="abstract" content="The message model contains all messages and is used to bind to the messages to display them."/>
+<meta name="description" content="The message model contains all messages and is used to bind to the messages to display them."/>
 
-
-
-
-
-<meta name="abstract" content="The message model contains all messages and is used to bind to the messages to display them to the user."/>
-<meta name="description" content="The message model contains all messages and is used to bind to the messages to display them to the user."/>
-
-<link rel="stylesheet" type="text/css" href="css/documentation.css?x=5845903491324783"/>
+<link rel="stylesheet" type="text/css" href="css/prettify.css?x=14426390113507692"/>
+<link rel="stylesheet" type="text/css" href="css/documentation.css?x=14426390113507692"/>
 <title>Message Model</title>
-<!--[if lte IE 7]><style>
-      .codeblock{
-          overflow:visible;
-      }</style><![endif]-->
-
-  <script src="../../resources/sap/ui/thirdparty/jquery.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/highlight-query-terms.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/framewrapper.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/run_prettify.js"></script>
-    <script src="../../resources/sap/ui/demokit/js/google-code-prettify/lang-css.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/themes/base/highlight-query-terms.css" />
     <link rel="stylesheet" type="text/css" href="../../resources/sap/ui/demokit/js/google-code-prettify/prettify.css" />
+    <script src="../../resources/sap/ui/demokit/js/sdk-pagehelper.js"></script>
   </head>
 <body class="" id="loio8956f0a223284d729900ebad4ca88356">
 <div id="wrapper"><div id="container">
@@ -33,8 +19,7 @@
 	<h1 class="title topictitle1">Message Model</h1>
 
 	
-	<div class="body conbody"><p class="shortdesc">The message model contains all messages and is used to bind to the messages to
-		display them to the user.</p>
+	<div class="body conbody"><p class="shortdesc">The message model contains all messages and is used to bind to the messages to display them.</p>
 
 		<p class="p">The message model is retrieved from the message manager by calling the
 				<samp class="ph codeph">getMessageModel()</samp> method.  You can use it directly in the
@@ -42,10 +27,7 @@
 
 		<div class="section"><div class="section_title">Using the Message Model</div><div type="Using the Message Model">
 			
-			<p class="p">You use the message model like any other model to bind an aggregation to a root path
-				("/), for example the items in a list, and add filters and sorters. The
-					<samp class="ph codeph">MessagePopOver</samp> control is used to display the messages to the
-				user:</p>
+			<p class="p">You use the message model like any other model to bind an aggregation to a root path ("/), for example the items in a list, and add filters and sorters. The <samp class="ph codeph">MessagePopover</samp> control is used to display the messages to the user:</p>
 
 			<div class="div_pre_codeblock"><pre class="pre codeblock prettyprint">var oMessagePopoverButton = new sap.m.Button({
     text: "Show MessagePopover",
@@ -85,19 +67,5 @@ oMessagePopoverButton.placeAt("content");</pre></div>
 </div>
 </div></div>
 
-<SCRIPT LANGUAGE="JavaScript"><!--
- var page_title="Message Model";
-
-        if (page_title !='' &&
-        parent.document.title != null) {
- parent.document.title =
-          page_title;
- } 
- var
-        anchor = document.getElementById(location.hash.substring(+1)); if (typeof (anchor)
-        !='undefined' && anchor !=null){
-        var top = anchor.getBoundingClientRect().top; } 
-//-->
-</SCRIPT>
 </body>
 </html>

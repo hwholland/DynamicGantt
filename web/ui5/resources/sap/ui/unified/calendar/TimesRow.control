@@ -28,7 +28,7 @@ So after setting the &lt;code&gt;startDate&lt;/code&gt; the date should be set t
 
 &lt;b&gt;Note:&lt;/b&gt; the start of the interval calculation is always &lt;code&gt;startDat&lt;/code&gt; at 00:00.
 
-A interval longer then 720 minutes is not allowed. Please use the &lt;code&gt;DatesRow&lt;/code&gt; instead.
+An interval longer than 720 minutes is not allowed. Please use the &lt;code&gt;DatesRow&lt;/code&gt; instead.
 
 A day must be divisible by this interval size. One interval must not include more than one day.</documentation>
         </property>

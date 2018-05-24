@@ -1,18 +1,25 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for control sap.m.Title
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
-	function(jQuery, Device) {
+sap.ui.define(["sap/ui/core/library"],
+	function(coreLibrary) {
 	"use strict";
 
 
+	// shortcut for sap.ui.core.TextAlign
+	var TextAlign = coreLibrary.TextAlign;
+
+	// shortcut for sap.ui.core.TitleLevel
+	var TitleLevel = coreLibrary.TitleLevel;
+
+
 	/**
-	 * @class Title renderer.
-	 * @static
+	 * Title renderer.
+	 * @namespace
 	 */
 	var TitleRenderer = {};
 
@@ -23,15 +30,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 	 */
 	TitleRenderer.render = function(oRm, oTitle){
 		var oAssoTitle = oTitle._getTitle(),
-			sLevel = (oAssoTitle ? oAssoTitle.getLevel() : oTitle.getLevel()) || sap.ui.core.TitleLevel.Auto,
-			bAutoLevel = sLevel == sap.ui.core.TitleLevel.Auto,
+			sLevel = (oAssoTitle ? oAssoTitle.getLevel() : oTitle.getLevel()) || TitleLevel.Auto,
+			bAutoLevel = sLevel == TitleLevel.Auto,
 			sTag = bAutoLevel ? "div" : sLevel;
 
 		oRm.write("<", sTag);
 		oRm.writeControlData(oTitle);
 		oRm.addClass("sapMTitle");
-		oRm.addClass("sapMTitleStyle" + (oTitle.getTitleStyle() || sap.ui.core.TitleLevel.Auto));
-		oRm.addClass("sapMTitleNoWrap");
+		oRm.addClass("sapMTitleStyle" + (oTitle.getTitleStyle() || TitleLevel.Auto));
+		oRm.addClass(oTitle.getWrapping() ? "sapMTitleWrap" : "sapMTitleNoWrap");
 		oRm.addClass("sapUiSelectable");
 
 		var sWidth = oTitle.getWidth();
@@ -42,7 +49,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 		}
 
 		var sTextAlign = oTitle.getTextAlign();
-		if (sTextAlign && sTextAlign != sap.ui.core.TextAlign.Initial) {
+		if (sTextAlign && sTextAlign != TextAlign.Initial) {
 			oRm.addClass("sapMTitleAlign" + sTextAlign);
 		}
 

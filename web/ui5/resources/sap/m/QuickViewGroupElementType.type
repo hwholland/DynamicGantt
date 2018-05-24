@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>QuickViewGroupElementType</name>
     <derived/>
-    <documentation>QuickViewGroupElement is a combination of one label and another control (Link or Text) associated to this label</documentation>
+    <documentation>QuickViewGroupElement is a combination of one label and another control (Link or Text) associated to this label.</documentation>
     <enumeration>
         <value name="phone">
             <documentation>Displays a phone number link for direct dialing</documentation>
